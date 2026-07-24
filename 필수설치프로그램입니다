@@ -8,3 +8,5 @@ npm install react-bootstrap
 cmd창에서 Frentversal 폴더까지 들어와서 위 명령어를 하나씩 입력해주면 됩니다.
 clone하여 만든 프로젝트는 D드라이브에 만들도록 합니다.
 경로중에 한글이 포함되면 intellij에서 오류가 발생합니다.
+
+주종찬
