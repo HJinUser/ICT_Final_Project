@@ -14,18 +14,18 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:9000',
+        target: 'http://localhost:9022',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
       // 이미지 경로도 백엔드로 넘김 (백엔드 WebConfig의 /images/** 처리용)
       '/images': {
-        target: 'http://localhost:9000',
+        target: 'http://localhost:9022',
         changeOrigin: true,
       },
       // 업로드 파일도 백엔드로 넘김 (로컬 개발용)
       '/files': {
-        target: 'http://localhost:9000',
+        target: 'http://localhost:9022',
         changeOrigin: true,
       },
     },
