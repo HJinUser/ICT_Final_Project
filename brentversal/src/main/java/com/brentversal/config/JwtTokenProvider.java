@@ -1,6 +1,6 @@
 package com.brentversal.config;
 
-import com.brentversal.entity.Member;
+import com.brentversal.Member.entity.Member;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
