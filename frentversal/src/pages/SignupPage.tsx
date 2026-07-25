@@ -1,7 +1,7 @@
 import axios from "axios";
+import customAxios from "../api/axiosInstance.tsx";
 import { useState } from "react";
 import { Card, Container, Row, Form, Col, Button, Alert } from "react-bootstrap";
-import { API_BASE_URL } from "../config/config";
 import { useNavigate } from "react-router-dom";
 
 function App() {
@@ -25,10 +25,10 @@ function App() {
         event.preventDefault(); // 이벤트 전파 방지
 
         try {
-            const url = `${API_BASE_URL}/member/signup`;
+            const url = '/member/signup';
             const parameters = { name, email, password, address };
             const config = { withCredentials: true };
-            const response = await axios.post(url, parameters, config);
+            const response = await customAxios.post(url, parameters, config);
 
             if (response.status === 200) { /* 스프링의 MemberController 파일 참조 */
                 alert('회원 가입 성공');
