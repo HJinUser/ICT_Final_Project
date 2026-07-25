@@ -71,7 +71,6 @@ function App({ onLogin }: Props) {
         }
     };
 
-    console.log('자바스크립트 코딩 영역');
 
     return (
         <Container fluid className="d-flex justify-content-center align-items-center" style={{ height: "70vh" }}>
