@@ -1,6 +1,6 @@
-package com.brentversal.entity;
+package com.brentversal.Member.entity;
 
-import com.brentversal.constant.Role;
+import com.brentversal.Member.constant.Role;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
