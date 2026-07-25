@@ -1,7 +1,7 @@
-package com.brentversal.service;
+package com.brentversal.Member.service;
 
-import com.brentversal.entity.Member;
-import com.brentversal.repository.MemberRepository;
+import com.brentversal.Member.entity.Member;
+import com.brentversal.Member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

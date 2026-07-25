@@ -1,4 +1,4 @@
-package com.brentversal.dto;
+package com.brentversal.Member.dto;
 
 import lombok.Getter;
 import lombok.Setter;

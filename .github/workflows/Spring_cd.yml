@@ -1,0 +1,48 @@
+name: Spring CD - Deploy to EC2
+# CI 워크플로우("Spring CI - Build and Push")가 성공적으로 끝나면 자동 실행
+on:
+  workflow_run:
+    workflows: ["Spring CI - Build and Push"]
+    types:
+      - completed
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # CI가 성공(success)했을 때만 배포 진행
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      # EC2에 SSH 접속해서 배포 명령 실행
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # 1. Docker Hub 로그인
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            # 2. 최신 이미지 받기
+            sudo docker pull "${{ secrets.BACKEND_IMAGE }}"
+            # 3. 기존 백엔드 컨테이너 삭제 (없으면 그냥 넘어감)
+            sudo docker rm -f backend-app || true
+            # 4. 새 백엔드 컨테이너 실행
+            #    --network host: EC2 네트워크 공유 → localhost:3306으로 mysql-db에 연결
+            #    -e SPRING_PROFILES_ACTIVE=prod: 공용 properties의 active=local을 운영용 prod로 덮어씀
+            #    DB/JWT 환경변수 이름은 현재 프로젝트의 application-prod.properties / 공용 properties 플레이스홀더에 맞춤
+            #    (${DB_ENDPOINT}:${DB_PORT}/${DB_NAME}, ${DB_USER_NAME}, ${DB_PWD}, ${JWT_PRIVATE_KEY}, ${JWT_PUBLIC_KEY})
+            #    참고: 현재 백엔드에는 S3 기능이 없어 S3 관련 환경변수는 제외함
+            sudo docker run -d \
+              --name backend-app \
+              --network host \
+              --restart unless-stopped \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DB_ENDPOINT="${{ secrets.DB_ENDPOINT }}" \
+              -e DB_PORT="${{ secrets.DB_PORT }}" \
+              -e DB_NAME="${{ secrets.DB_NAME }}" \
+              -e DB_USER_NAME="${{ secrets.DB_USER_NAME }}" \
+              -e DB_PWD="${{ secrets.DB_PWD }}" \
+              -e JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
+              -e JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}" \
+              "${{ secrets.BACKEND_IMAGE }}"
+            # 5. 안 쓰는 옛날 이미지 정리
+            sudo docker image prune -f

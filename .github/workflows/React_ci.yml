@@ -1,0 +1,28 @@
+name: React CI - Build and Push
+
+# main에 push되고, frentversal 폴더가 바뀔 때만 실행
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frentversal/**'
+      - '.github/workflows/React_ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # 프론트 폴더(frentversal)의 ReactDockerfile로 이미지 빌드
+      # (ReactDockerfile은 node로 빌드 후 nginx로 서빙하는 멀티 스테이지 구조여야 함)
+      - name: Build Docker Image
+        run: docker build -t "${{ secrets.FRONTEND_IMAGE }}" -f ./frentversal/ReactDockerfile ./frentversal
+
+      - name: Push Docker Image
+        run: docker push "${{ secrets.FRONTEND_IMAGE }}"

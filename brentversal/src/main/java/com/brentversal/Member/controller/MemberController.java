@@ -1,9 +1,9 @@
-package com.brentversal.controller;
+package com.brentversal.Member.controller;
 
 import com.brentversal.config.JwtTokenProvider;
-import com.brentversal.dto.LoginDto;
-import com.brentversal.entity.Member;
-import com.brentversal.service.MemberService;
+import com.brentversal.Member.dto.LoginDto;
+import com.brentversal.Member.entity.Member;
+import com.brentversal.Member.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
