@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,12 +35,19 @@ public class MemberController {
     // Long타입과 String타입을 동시에 만족하는 타입은 Object타입이여서 Object타입도 적음
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto dto){
         // 인증 처리
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        dto.getEmail(),
-                        dto.getPassword()
-                )
-        );
+        // 비밀번호가 틀리면 AuthenticationException 이 발생하는데, 잡지 않으면 500 으로 빠져나가
+        // 클라이언트가 원인을 알 수 없다. 여기서 잡아 401 과 메시지로 돌려준다.
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            dto.getEmail(),
+                            dto.getPassword()
+                    )
+            );
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "이메일 또는 비밀 번호가 올바르지 않습니다."));
+        }
 
 
         // 사용자 정보 조회
@@ -88,6 +95,13 @@ public class MemberController {
         if(!jwtTokenProvider.validateToken(refreshToken)){ // refresh token 자체가 유효한 JWT 인지 확인
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED) // 유효하지 않으면 401
                     .body(Map.of("error", "유효하지 않은 refresh token입니다."));
+        }
+
+        // 2-1) refresh 전용 토큰이 맞는지 확인한다.
+        // access token 도 같은 키로 서명되므로 종류 검사가 없으면 access token 으로도 재발급이 가능해진다.
+        if(!jwtTokenProvider.isTokenType(refreshToken, JwtTokenProvider.TYPE_REFRESH)){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "refresh token 이 아닙니다."));
         }
 
         // 3) 토큰의 subject(이메일)로 회원을 조회한다

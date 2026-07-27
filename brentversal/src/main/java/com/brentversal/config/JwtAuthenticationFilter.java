@@ -38,7 +38,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = bearer.substring("Bearer ".length());
 
             // 토큰의 유효성을 검증한다 (validateToken)
-            if(jwtTokenProvider.validateToken(token)){
+            // + access token 인지도 확인한다. refresh token 은 access 와 같은 키로 서명되기 때문에
+            //   이 검사가 없으면 refresh token 을 Authorization 헤더에 넣어도 인증이 통과된다.
+            //   (게다가 refresh 에는 role claim 이 없어 ROLE_null 권한으로 인증되어 버린다)
+            if(jwtTokenProvider.validateToken(token)
+                    && jwtTokenProvider.isTokenType(token, JwtTokenProvider.TYPE_ACCESS)){
                 // 토큰에서 사용자 이메일을 추출한다 (getEmail)
                 String email = jwtTokenProvider.getEmail(token);
                 Claims claims = jwtTokenProvider.getClaims(token);
