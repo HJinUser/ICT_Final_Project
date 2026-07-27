@@ -1,0 +1,30 @@
+# ===== 1단계: 빌드용 컨테이너 (Maven + JDK 21로 jar 만들기) =====
+# eclipse-temurin:21-jdk = "자바21 개발환경"이라는 재료 이미지를 빌려옴
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /app
+
+# 메이븐 래퍼와 설정 먼저 복사 (의존성 캐시 활용해서 빌드 빨라짐)
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B || true
+
+# 소스 전체 복사 후 빌드 → target/cafe.jar 생성 (finalName으로 이름 고정했음)
+COPY src/ src/
+RUN ./mvnw clean package -DskipTests
+
+# ===== 2단계: 실행용 컨테이너 (가벼운 JRE만) =====
+# 빌드 도구는 빼고 실행환경만 있는 가벼운 이미지로 갈아탐
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+# 1단계(build)에서 만든 jar만 가져옴
+COPY --from=build /app/target/project_test.jar app.jar
+
+# 이미지 임시 폴더 (S3 전환 전까지 임시용)
+RUN mkdir -p /app/images
+
+# 컨테이너가 9000번 포트를 쓴다고 표시 (application.properties의 server.port=9000과 일치)
+EXPOSE 9000
+
+# 컨테이너가 시작되면 이 명령으로 스프링 실행 (java -jar app.jar)
+ENTRYPOINT ["java", "-jar", "app.jar"]

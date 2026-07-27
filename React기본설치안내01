@@ -1,17 +1,9 @@
 리액트 관련 라이브러리 설치는 개인 컴퓨터마다 해야함.
 <명령어>
-npm install axios
-npm install react-router-dom
-npm install bootstrap
-npm install react-bootstrap
+npm install
 
 cmd창에서 Frentversal 폴더까지 들어와서 위 명령어를 하나씩 입력해주면 됩니다.
+(오류 발생 시 git bash에서도 가능)
 clone하여 만든 프로젝트는 D드라이브에 만들도록 합니다.
 경로중에 한글이 포함되면 intellij에서 오류가 발생합니다.
-
-권혜진
-김주연
-주종찬
-이현민
-김미경
-하하
+본인 컴퓨터의 이름을 영어로 변경해주시거나 따로 컴파일 설정을 변경해야합니다(ai참고/복잡)
