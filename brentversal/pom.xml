@@ -149,6 +149,8 @@
 	</dependencies>
 
 	<build>
+		<!-- 생성되는 jar 이름을 고정: target/project_test.jar (SpringDockerFile의 COPY 대상과 일치) -->
+		<finalName>project_test</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
