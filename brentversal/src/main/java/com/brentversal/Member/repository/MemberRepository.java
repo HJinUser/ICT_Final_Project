@@ -1,6 +1,6 @@
-package com.brentversal.repository;
+package com.brentversal.Member.repository;
 
-import com.brentversal.entity.Member;
+import com.brentversal.Member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 // 인터페이스들끼리의 참조는 extends임 (implements가 아님)

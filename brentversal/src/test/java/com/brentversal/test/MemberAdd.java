@@ -1,7 +1,7 @@
 package com.brentversal.test;
-import com.brentversal.constant.Role;
-import com.brentversal.entity.Member;
-import com.brentversal.repository.MemberRepository;
+import com.brentversal.Member.constant.Role;
+import com.brentversal.Member.entity.Member;
+import com.brentversal.Member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

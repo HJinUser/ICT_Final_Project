@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, Button, Card, Col, Container, Form, Row } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 
-import axios from "../api/axiosInstance.tsx";
+import customAxios from "../api/axiosInstance.tsx";
 import type { LoginResponse, User } from "../types/User";
 
 interface Props {
@@ -35,7 +35,7 @@ function App({ onLogin }: Props) {
                 }
             };
 
-            const response = await axios.post<LoginResponse>(url, params, config);
+            const response = await customAxios.post<LoginResponse>(url, params, config);
 
             console.log('응답 데이터 : \n' + response.data);
 
@@ -71,7 +71,6 @@ function App({ onLogin }: Props) {
         }
     };
 
-    console.log('자바스크립트 코딩 영역');
 
     return (
         <Container fluid className="d-flex justify-content-center align-items-center" style={{ height: "70vh" }}>
