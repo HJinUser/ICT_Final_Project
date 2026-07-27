@@ -1,5 +1,6 @@
 package com.brentversal.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,7 +40,11 @@ public class SecurityConfig {
                 "/member/signup",
                 "/member/login",
                 "/member/refresh", // [refresh] access token 재발급 요청. 만료된 상태에서 호출되므로 인증 없이 허용해야 한다.
-                "/product/**"
+                "/product/**",
+                // 404, 500 등이 발생하면 서블릿 컨테이너가 /error 로 다시 보내는데(ERROR 디스패치),
+                // 이 경로도 시큐리티를 한 번 더 통과한다. 허용해 두지 않으면 모든 오류가
+                // 원래 상태 코드 대신 403 빈 응답으로 바뀌어 프론트에서 원인을 알 수 없게 된다.
+                "/error"
         };
 
         http
@@ -51,6 +56,18 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(permitUrls).permitAll()
                         .anyRequest().authenticated()
+                )
+                // 인증이 안 된 요청에 대한 응답을 401 로 맞춘다.
+                // 이 설정이 없으면 로그인 방식(formLogin/httpBasic)을 쓰지 않는 구성이라
+                // 시큐리티 기본값인 Http403ForbiddenEntryPoint 가 적용되어 403 이 나간다.
+                // 프론트(axiosInstance)는 401 일 때만 refresh 재발급을 시도하므로 401 이어야 한다.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // sendError() 를 쓰면 /error 로 다시 넘어가므로 상태와 본문을 직접 쓴다
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"error\":\"인증이 필요합니다.\"}");
+                        })
                 );
 
         // JWT 필터 등록 (JwtAuthenticationFilter에 생성되어있음)

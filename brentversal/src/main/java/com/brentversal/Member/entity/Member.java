@@ -49,7 +49,9 @@ public class Member {
 
     // [refresh] 로그인 시 발급한 refresh token 을 DB 에 저장해 두는 컬럼.
     // [refresh] 서버가 값을 보관하므로, 로그아웃하거나 탈취가 의심되면 이 값을 비워서 강제로 무효화할 수 있다.
-    // [refresh] JWT 문자열은 길기 때문에 컬럼 길이를 넉넉히(512) 잡는다. (ddl-auto=update 가 컬럼을 자동 추가한다)
-    @Column(name = "refresh_token", length = 512) // [refresh] members 테이블에 refresh_token 컬럼으로 매핑
+    // [refresh] RSA 2048 서명만 base64 로 344자라, 실제 발급되는 refresh token 이 470자를 넘는다.
+    // [refresh] 이메일이 길수록 토큰도 길어지므로 512 로는 부족하다(저장 시 DataException 발생). 넉넉히 1000 으로 잡는다.
+    // [refresh] 주의: ddl-auto=update 는 컬럼을 추가만 할 뿐 기존 컬럼 길이는 바꿔 주지 않으므로 ALTER TABLE 이 따로 필요하다.
+    @Column(name = "refresh_token", length = 1000) // [refresh] members 테이블에 refresh_token 컬럼으로 매핑
     private String refreshToken ; // [refresh] 이 회원의 현재 유효한 refresh token 문자열(없으면 null)
 }

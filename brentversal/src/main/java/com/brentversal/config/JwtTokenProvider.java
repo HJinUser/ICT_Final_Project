@@ -83,6 +83,12 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
 
+    // 토큰 종류를 구분하기 위한 claim 이름과 값.
+    // access 와 refresh 를 같은 키로 서명하기 때문에, 이 값이 없으면 서버가 둘을 구별할 수 없다.
+    public static final String TOKEN_TYPE_CLAIM = "type";
+    public static final String TYPE_ACCESS = "access";
+    public static final String TYPE_REFRESH = "refresh";
+
     // MemberController 클래스에서 인증 성공한 사용자를 위하여 로그인 증명서(토큰)를 발급하는 데 사용될 예정입니다.
     public String createToken(Member member){ // 매개 변수 : 토큰 안에 사용자 식별값 저장
         return Jwts.builder()
@@ -90,6 +96,7 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
                 .issuedAt(new Date()) // 토큰 발급 시간
                 .expiration(new Date(System.currentTimeMillis() + expiration)) // 토큰 만료 시간
                 .claim("role", member.getRole().name()) // 권한 정보
+                .claim(TOKEN_TYPE_CLAIM, TYPE_ACCESS) // 이 토큰은 API 인증용(access) 이라고 명시
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact(); // 최종 문자열 생성하기
     }
@@ -101,8 +108,19 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
                 .subject(member.getEmail()) // 토큰 주인에 이메일을 넣는다 - 나중에 누구의 refresh 인지 식별
                 .issuedAt(new Date()) // 토큰 발급 시각을 현재 시간으로 기록한다
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration)) // 만료 시각 = 현재시각 + refresh 만료기간
+                .claim(TOKEN_TYPE_CLAIM, TYPE_REFRESH) // 이 토큰은 재발급 전용(refresh) 이라고 명시
                 .signWith(privateKey, Jwts.SIG.RS256) // access token 과 동일한 비밀키로 서명한다(위조 방지)
                 .compact(); // 위 설정들을 하나의 JWT 문자열로 직렬화하여 반환한다
+    }
+
+    // 토큰에 새겨진 종류(access / refresh)가 기대한 값과 같은지 확인한다.
+    // 서명이 같아도 용도가 다르면 거부하기 위한 검사이며, 반드시 validateToken() 통과 후에 호출한다.
+    public boolean isTokenType(String token, String expectedType){
+        try {
+            return expectedType.equals(getClaims(token).get(TOKEN_TYPE_CLAIM, String.class));
+        } catch (Exception e) { // 파싱 자체가 실패하면 종류를 알 수 없으므로 불일치로 본다
+            return false;
+        }
     }
 
     public String getEmail(String token){ // JWT 토큰에서 사용자 정보 가져 오기
