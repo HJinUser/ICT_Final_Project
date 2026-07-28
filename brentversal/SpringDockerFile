@@ -23,8 +23,8 @@ COPY --from=build /app/target/project_test.jar app.jar
 # 이미지 임시 폴더 (S3 전환 전까지 임시용)
 RUN mkdir -p /app/images
 
-# 컨테이너가 9000번 포트를 쓴다고 표시 (application.properties의 server.port=9000과 일치)
-EXPOSE 9000
+# 컨테이너가 9022번 포트를 쓴다고 표시 (application.properties의 server.port=9022과 일치)
+EXPOSE 9022
 
 # 컨테이너가 시작되면 이 명령으로 스프링 실행 (java -jar app.jar)
 ENTRYPOINT ["java", "-jar", "app.jar"]
