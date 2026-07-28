@@ -20,20 +20,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      # 3. Maven으로 jar 빌드
-      #    현재 SpringDockerFile 은 target/*.jar(미리 빌드된 실행 jar)을 복사하는 단일 스테이지 구조라,
-      #    도커 이미지를 만들기 전에 여기서 먼저 jar 를 만들어 둬야 한다. (배포 파이프라인에서는 테스트 생략)
-      - name: Build jar with Maven
-        run: |
-          cd brentversal
-          chmod +x ./mvnw
-          ./mvnw clean package -DskipTests
-      # 4. Docker Hub 로그인
+      # 3. Docker Hub 로그인
       - name: Login to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      # 5. 백엔드 폴더(brentversal)의 Dockerfile로 이미지 빌드
+      # 4. 백엔드 폴더(brentversal)의 Dockerfile로 이미지 빌드
       - name: Build Docker Image
         run: docker build -t "${{ secrets.BACK_DOCKER_IMAGE }}" -f ./brentversal/SpringDockerFile ./brentversal
-      # 6. Docker Hub에 push
+      # 5. Docker Hub에 push
       - name: Push Docker Image
         run: docker push "${{ secrets.BACK_DOCKER_IMAGE }}"
