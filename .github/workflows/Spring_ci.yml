@@ -1,0 +1,31 @@
+name: Spring CI - Build and Push
+# main에 push되고, brentversal 폴더가 바뀔 때만 실행
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'brentversal/**'
+      - '.github/workflows/Spring_ci.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 코드 가져오기
+      - name: Checkout source
+        uses: actions/checkout@v4
+      # 2. JDK 21 설정
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      # 3. Docker Hub 로그인
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      # 4. 백엔드 폴더(brentversal)의 Dockerfile로 이미지 빌드
+      - name: Build Docker Image
+        run: docker build -t "${{ secrets.BACK_DOCKER_IMAGE }}" -f ./brentversal/SpringDockerFile ./brentversal
+      # 5. Docker Hub에 push
+      - name: Push Docker Image
+        run: docker push "${{ secrets.BACK_DOCKER_IMAGE }}"

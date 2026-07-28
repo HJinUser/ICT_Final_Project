@@ -1,0 +1,47 @@
+name: Spring CD - Deploy to EC2
+# CI 워크플로우("Spring CI - Build and Push")가 성공적으로 끝나면 자동 실행
+on:
+  workflow_run:
+    workflows: ["Spring CI - Build and Push"]
+    types:
+      - completed
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # CI가 성공(success)했을 때만 배포 진행
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      # EC2에 SSH 접속해서 배포 명령 실행
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # 1. Docker Hub 로그인
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            # 2. 최신 이미지 받기
+            sudo docker pull "${{ secrets.BACK_DOCKER_IMAGE }}"
+            # 3. 기존 백엔드 컨테이너 삭제 (없으면 그냥 넘어감)
+            sudo docker rm -f "${{ secrets.BACK_DOCKER_CONTAINER }}" || true
+            # 4. 새 백엔드 컨테이너 실행
+            #    --network host: EC2 네트워크 공유 → localhost:3306으로 mysql-db에 연결
+            sudo docker run -d \
+              --name "${{ secrets.BACK_DOCKER_CONTAINER }}" \
+              --network host \
+              --restart unless-stopped \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e JAVA_TOOL_OPTIONS="-Xmx256m" \
+              -e DB_URL="${{ secrets.DB_URL }}" \
+              -e DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e JWT_PRIVATE_KEY="${{ secrets.JWT_PRIVATE_KEY }}" \
+              -e JWT_PUBLIC_KEY="${{ secrets.JWT_PUBLIC_KEY }}" \
+              -e S3_BUCKET="${{ secrets.S3_BUCKET }}" \
+              -e S3_REGION="${{ secrets.S3_REGION }}" \
+              -e S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}" \
+              -e S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}" \
+              "${{ secrets.BACK_DOCKER_IMAGE }}"
+            # 5. 안 쓰는 옛날 이미지 정리
+            sudo docker image prune -f

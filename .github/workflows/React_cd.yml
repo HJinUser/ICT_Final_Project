@@ -1,0 +1,40 @@
+name: React CD - Deploy to EC2
+
+# React CI가 성공으로 끝나면 자동 실행
+on:
+  workflow_run:
+    workflows: ["React CI - Build and Push"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # 1. Docker Hub 로그인
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # 2. 최신 프론트 이미지 받기
+            sudo docker pull "${{ secrets.FRONT_DOCKER_IMAGE }}"
+
+            # 3. 기존 프론트 컨테이너 삭제 (없으면 그냥 넘어감)
+            sudo docker rm -f "${{ secrets.FRONT_DOCKER_CONTAINER }}" || true
+
+            # 4. 새 프론트 컨테이너 실행 (nginx, 80포트)
+            #    --network host: nginx가 localhost:9022(백엔드)로 /api 요청 넘김
+            sudo docker run -d \
+              --name "${{ secrets.FRONT_DOCKER_CONTAINER }}" \
+              --network host \
+              --restart unless-stopped \
+              "${{ secrets.FRONT_DOCKER_IMAGE }}"
+
+            # 5. 안 쓰는 옛날 이미지 정리
+            sudo docker image prune -f
