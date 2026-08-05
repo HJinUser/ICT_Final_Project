@@ -17,9 +17,12 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 리액트의 포트 번호를 여기에 작성
+        // 도메인 주소로 수정
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://127.0.0.1:5173"
+                // 나중에 도메인 주소 추가해야함
+                // ex) "https://{MASKED}" / "https://*.{MASKED}"
         ));
 
         // 허용 HTTP 메소드
