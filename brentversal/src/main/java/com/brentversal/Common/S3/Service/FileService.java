@@ -43,6 +43,7 @@ public class FileService {
     private S3Client s3Client;
 
     // 액세스 키가 있을 때만 S3 클라이언트를 미리 만들어둠
+    // S3 클라이언트 : 스프링에서 AWS S3에 명령을 보내기 위한 S3 객체
     @PostConstruct
     public void init() {
         if (isS3Mode()) {
