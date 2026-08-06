@@ -1,4 +1,4 @@
-package com.brentversal.config;
+package com.brentversal.Common.Config;
 
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;

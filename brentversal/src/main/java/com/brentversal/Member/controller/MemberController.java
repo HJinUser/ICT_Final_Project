@@ -1,6 +1,6 @@
 package com.brentversal.Member.controller;
 
-import com.brentversal.config.JwtTokenProvider;
+import com.brentversal.Common.Config.JwtTokenProvider;
 import com.brentversal.Member.dto.LoginDto;
 import com.brentversal.Member.entity.Member;
 import com.brentversal.Member.service.MemberService;
