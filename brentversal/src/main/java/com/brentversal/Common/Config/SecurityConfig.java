@@ -1,4 +1,4 @@
-package com.brentversal.config;
+package com.brentversal.Common.Config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,9 @@ public class SecurityConfig {
                 // 404, 500 등이 발생하면 서블릿 컨테이너가 /error 로 다시 보내는데(ERROR 디스패치),
                 // 이 경로도 시큐리티를 한 번 더 통과한다. 허용해 두지 않으면 모든 오류가
                 // 원래 상태 코드 대신 403 빈 응답으로 바뀌어 프론트에서 원인을 알 수 없게 된다.
-                "/error"
+                "/error",
+                // S3용 파일경로
+                "/files/**"
         };
 
         http
