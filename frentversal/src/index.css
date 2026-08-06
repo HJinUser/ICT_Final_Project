@@ -50,12 +50,13 @@
   }
 }
 
+/* Vite 기본 템플릿에는 여기에 width:1126px, text-align:center, border-inline 이 들어 있었습니다.
+ * 그 폭이 앱 전체를 감싸는 #root 에 걸려 있어서, 화면을 아무리 키워도 1126px 에서 멈추고
+ * 각 페이지의 .wrap(반응형 폭) 설정이 소용없었습니다. 그래서 폭 제한을 풀었습니다.
+ * (템플릿용 가운데 정렬·좌우 테두리도 함께 제거) */
 #root {
-  width: 1126px;
-  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
