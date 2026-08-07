@@ -1,8 +1,8 @@
 package com.brentversal.test;
 
-import com.brentversal.Agency.dto.AgencyResponseDto;
-import com.brentversal.Agency.repository.AgencyRepository;
-import com.brentversal.Agency.service.AgencyService;
+import com.brentversal.agency.dto.AgencyResponseDto;
+import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.service.AgencyService;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;

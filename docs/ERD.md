@@ -386,6 +386,6 @@ CREATE INDEX idx_ticket_list ON tickets (type, status, created_at DESC);
 
 ## 8. 기존 코드 반영 사항
 
-- [Role.java](../brentversal/src/main/java/com/brentversal/Member/constant/Role.java) — `USER, ADMIN` → **`AGENT` 추가**
-- [Member.java](../brentversal/src/main/java/com/brentversal/Member/entity/Member.java) — `login_id`, `nickname`, `phone`, `status`, `provider`, `provider_uid`, `terms_agreed`, `credential_key`, `public_key`, `sign_count` 컬럼 추가
+- [Role.java](../brentversal/src/main/java/com/brentversal/member/constant/Role.java) — `USER, ADMIN` → **`AGENT` 추가**
+- [Member.java](../brentversal/src/main/java/com/brentversal/member/entity/Member.java) — `login_id`, `nickname`, `phone`, `status`, `provider`, `provider_uid`, `terms_agreed`, `credential_key`, `public_key`, `sign_count` 컬럼 추가
 - `ddl-auto=update`는 컬럼 추가만 하고 길이·제약 변경은 안 하므로, UNIQUE 제약과 인덱스는 위 SQL로 직접 적용
