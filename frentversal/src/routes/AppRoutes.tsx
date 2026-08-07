@@ -7,6 +7,7 @@ import PropertyFormPage from './../pages/PropertyFormPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
 import PropertyPreviewPage from "../pages/PropertyPreviewPage";
+import AgencyPage from './../pages/AgencyPage';
 
 
 interface AppProps {
@@ -24,6 +25,7 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path='/property/form' element={<PropertyFormPage />} />
       <Route path="/property/:id" element={<PropertyPage user={user} />} />
       <Route path="/property/preview" element={<PropertyPreviewPage />} />
+      <Route path="/agency" element={<AgencyPage />} />
     </Routes>
   );
 }

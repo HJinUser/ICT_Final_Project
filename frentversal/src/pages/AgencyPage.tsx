@@ -1,0 +1,282 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+import { getAgencies } from '../api/agencyApi';
+import AgencyMap from '../components/AgencyMap';
+import type { AgencyResponse, AgencyStatus } from '../types/Agency';
+import '../assets/common.css';
+import '../assets/responsive.css'; // 화면 크기별 보정 (common.css 보다 나중에 import 해야 적용됩니다)
+
+// 프로토타입 agency.html 을 옮긴 화면입니다.
+// 중개사무소 목록은 백엔드 GET /agency 에서 받아옵니다.
+// 상단 네비게이션바는 공통 컴포넌트(ui/MenuItems.tsx)가 App.tsx 에서 그리므로 이 화면에는 없습니다.
+// assets/app.js 가 DOM 을 직접 조작하던 부분(토스트, 챗봇)은 state 로 대체했습니다.
+
+// 상담 상태 코드 -> 배지 색상 (common.css 의 .status.green / .orange / .gray)
+// 색상은 화면 표현이므로 서버가 아니라 여기서 매핑합니다.
+const STATUS_COLORS: Record<AgencyStatus, string> = {
+    AVAILABLE: 'green',
+    RESERVED: 'orange',
+    CLOSED: 'gray',
+};
+
+// 지역 필터 (option 의 value 가 서버로 넘어가 주소 검색에 쓰입니다)
+const REGIONS = [
+    { value: '', label: '지역 전체' },
+    { value: '서초구', label: '서초구 전체' },
+    { value: '강남구', label: '강남구 전체' },
+];
+
+const CHAT_QUICK = ['강남역 5억 이하', '조용한 동네 추천', '이 집 시세가 적당해?'];
+
+const BOT_REPLY = '조건을 분석했습니다. 예산과 선호 지역을 기준으로 시세보다 낮은 매물을 우선 보여드릴게요.';
+
+interface ChatMessage {
+    id: number;
+    text: string;
+    mine: boolean;
+}
+
+function AgencyPage() {
+    // 중개사무소 목록 (서버에서 받아옵니다)
+    const [agencies, setAgencies] = useState<AgencyResponse[]>([]);
+    const [verifiedCount, setVerifiedCount] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+
+    // 검색 조건
+    const [keyword, setKeyword] = useState('');
+    const [region, setRegion] = useState('');
+
+    // 토스트
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastTimer = useRef<number | undefined>(undefined);
+
+    const showToast = (message: string) => {
+        setToastMessage(message);
+        setToastVisible(true);
+        window.clearTimeout(toastTimer.current);
+        toastTimer.current = window.setTimeout(() => setToastVisible(false), 1800);
+    };
+
+    useEffect(() => () => window.clearTimeout(toastTimer.current), []);
+
+    // 목록 조회. 검색 버튼과 첫 진입에서 모두 이 함수를 씁니다.
+    const loadAgencies = async (params: { keyword?: string; region?: string } = {}) => {
+        setLoading(true);
+        setLoadError('');
+
+        try {
+            const data = await getAgencies(params);
+
+            setAgencies(data.content);
+            setVerifiedCount(data.verifiedCount);
+        } catch (error) {
+            console.error('중개사무소 목록 조회 실패', error);
+            setLoadError('중개사무소 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
+            setAgencies([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 화면에 처음 들어왔을 때 전체 목록을 불러옵니다.
+    useEffect(() => {
+        loadAgencies();
+    }, []);
+
+    const handleSearch = () => {
+        loadAgencies({ keyword, region });
+        showToast('검색 조건을 적용했습니다.');
+    };
+
+    // 챗봇
+    const [chatOpen, setChatOpen] = useState(false);
+    const [chatInput, setChatInput] = useState('');
+    const [messages, setMessages] = useState<ChatMessage[]>([
+        { id: 0, text: '안녕하세요. 지역, 예산, 원하는 생활환경을 알려주시면 조건에 맞는 집을 찾아드릴게요.', mine: false },
+    ]);
+    const chatBodyRef = useRef<HTMLDivElement>(null);
+    const messageId = useRef(1);
+    const replyTimer = useRef<number | undefined>(undefined);
+
+    const sendMessage = (text: string) => {
+        if (!text.trim()) return;
+        setMessages((prev) => [...prev, { id: messageId.current++, text, mine: true }]);
+        replyTimer.current = window.setTimeout(() => {
+            setMessages((prev) => [...prev, { id: messageId.current++, text: BOT_REPLY, mine: false }]);
+        }, 250);
+    };
+
+    useEffect(() => () => window.clearTimeout(replyTimer.current), []);
+
+    // 새 메시지가 쌓이면 항상 아래로 스크롤
+    useEffect(() => {
+        const body = chatBodyRef.current;
+        if (body) body.scrollTop = body.scrollHeight;
+    }, [messages]);
+
+    const handleChatSend = () => {
+        sendMessage(chatInput);
+        setChatInput('');
+    };
+
+    return (
+        <>
+            <main>
+                <section className="page-hero">
+                    <div className="wrap">
+                        <div>
+                            <div className="eyebrow">Agency</div>
+                            <h1>중개사무소 안내</h1>
+                            <p>검증된 공인중개사와 등록 매물을 지역별로 확인하고 상담을 요청할 수 있습니다.</p>
+                        </div>
+                        <div className="hero-stat">
+                            <span className="mono dim">인증 중개사무소</span>
+                            <strong>{verifiedCount}곳</strong>
+                            <span className="xs dim">서초·강남 지역</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="section">
+                    <div className="wrap">
+                        <div className="toolbar">
+                            <input
+                                className="search-box"
+                                placeholder="중개사무소명, 공인중개사 검색"
+                                value={keyword}
+                                onChange={(event) => setKeyword(event.target.value)}
+                                onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(); }}
+                            />
+                            <select className="search-box" value={region} onChange={(event) => setRegion(event.target.value)}>
+                                {REGIONS.map((item) => (
+                                    <option value={item.value} key={item.value}>{item.label}</option>
+                                ))}
+                            </select>
+                            <button className="solid-btn" onClick={handleSearch} disabled={loading}>
+                                {loading ? '불러오는 중' : '검색'}
+                            </button>
+                        </div>
+
+                        {loadError && <p className="xs" style={{ color: 'var(--red)' }}>{loadError}</p>}
+
+                        {!loading && !loadError && agencies.length === 0 && (
+                            <p className="xs dim">조건에 맞는 중개사무소가 없습니다.</p>
+                        )}
+
+                        <div className="grid-4">
+                            {agencies.map((agency) => (
+                                <Link className="card" to={`/agency/${agency.id}`} key={agency.id}>
+                                    <div className="row between">
+                                        <span className={`status ${STATUS_COLORS[agency.status]}`}>{agency.statusLabel}</span>
+                                        <div className="avatar">{agency.brokerName.charAt(0)}</div>
+                                    </div>
+                                    <h3 style={{ marginTop: 13 }}>
+                                        {agency.name}
+                                        {agency.verified && <span className="xs" style={{ marginLeft: 6, color: 'var(--green)' }}>✓ 인증</span>}
+                                    </h3>
+                                    <p className="xs dim" style={{ marginTop: 6 }}>
+                                        {agency.brokerName} 공인중개사<br />
+                                        {agency.address}
+                                        {agency.hours && <><br />{agency.hours}</>}
+                                    </p>
+                                    <div className="divider" style={{ margin: '15px 0' }}></div>
+                                    <div className="row between">
+                                        <span className="xs dim">★ {agency.ratingAvg.toFixed(1)}</span>
+                                        <strong className="num">{agency.listingCount}건</strong>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+
+                        <div className="section-head" style={{ marginTop: 48 }}>
+                            <div>
+                                <h2>내 근처 중개사무소</h2>
+                                <p>현재 위치 또는 선택한 동네를 기준으로 가까운 곳을 보여줍니다.</p>
+                            </div>
+                            <button className="outline-btn" onClick={() => showToast('현재 위치를 확인했습니다.')}>내 위치 사용</button>
+                        </div>
+
+                        {/* 지도는 카카오맵 API 로 그립니다. 마커 좌표는 서버가 내려주는 latitude/longitude 를 씁니다. */}
+                        <AgencyMap agencies={agencies} />
+                    </div>
+                </section>
+            </main>
+
+            <footer className="site-footer">
+                <div className="wrap">
+                    <div className="footer-grid">
+                        <div>
+                            <Link className="brand" to="/"><b>전세</b>역전</Link>
+                            <p className="xs dim" style={{ marginTop: 9, maxWidth: 280 }}>
+                                공공 실거래가와 사용자 취향을 바탕으로 제값에 가까운 전세 매물을 찾습니다.
+                            </p>
+                        </div>
+                        <div>
+                            <h4>둘러보기</h4>
+                            <Link to="/map">지도 검색</Link>
+                            <Link to="/neighborhood">동네 탐색</Link>
+                            <Link to="/recommend">맞춤 추천</Link>
+                            <Link to="/favorites">관심 목록</Link>
+                        </div>
+                        <div>
+                            <h4>이용안내</h4>
+                            <Link to="/notice">공지사항·FAQ</Link>
+                            <Link to="/support">고객센터</Link>
+                            <Link to="/agency">중개사무소 안내</Link>
+                            <Link to="/member/signup">중개인 등록</Link>
+                        </div>
+                        <div>
+                            <h4>AI·데이터</h4>
+                            <Link to="/report">모델 성능 리포트</Link>
+                            <Link to="/recommend/explain">AI 추천 설명</Link>
+                            <a href="#">국토교통부 실거래가</a>
+                            <a href="#">개인정보처리방침</a>
+                        </div>
+                    </div>
+                    <div className="footer-bottom">
+                        <span>디자인·기능 흐름 확인용 프로토타입이며 수치와 매물 정보는 예시입니다.</span>
+                        <span>© 2026 전세역전</span>
+                    </div>
+                </div>
+            </footer>
+
+            <button className="chat-fab" aria-label="AI 챗봇 열기" onClick={() => setChatOpen((open) => !open)}>✦</button>
+
+            <section className={`chat-panel${chatOpen ? ' open' : ''}`} aria-label="AI 챗봇">
+                <div className="chat-head">
+                    <div>
+                        <strong>전세역전 AI</strong>
+                        <div className="xs dim">매물·동네·시세를 물어보세요</div>
+                    </div>
+                    <button onClick={() => setChatOpen(false)}>×</button>
+                </div>
+                <div className="chat-body" ref={chatBodyRef}>
+                    {messages.map((message) => (
+                        <div className={`chat-msg${message.mine ? ' me' : ''}`} key={message.id}>{message.text}</div>
+                    ))}
+                </div>
+                <div className="chat-quick">
+                    {CHAT_QUICK.map((text) => (
+                        <button key={text} onClick={() => sendMessage(text)}>{text}</button>
+                    ))}
+                </div>
+                <div className="chat-input">
+                    <input
+                        placeholder="질문을 입력하세요"
+                        value={chatInput}
+                        onChange={(event) => setChatInput(event.target.value)}
+                        onKeyDown={(event) => { if (event.key === 'Enter') handleChatSend(); }}
+                    />
+                    <button className="solid-btn" onClick={handleChatSend}>전송</button>
+                </div>
+            </section>
+
+            <div className={`toast${toastVisible ? ' show' : ''}`}>{toastMessage}</div>
+        </>
+    );
+}
+
+export default AgencyPage;
