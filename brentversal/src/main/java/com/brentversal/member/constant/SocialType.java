@@ -1,4 +1,4 @@
-package com.brentversal.Member.constant;
+package com.brentversal.member.constant;
 
 // 소설 로그인 종류
 public enum SocialType {

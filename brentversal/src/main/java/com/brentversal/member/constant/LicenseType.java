@@ -1,4 +1,4 @@
-package com.brentversal.Member.constant;
+package com.brentversal.member.constant;
 
 // 공인중개사의 개설등록번호의 형식 종류
 // 2015년도 기준으로 형식이 달라짐

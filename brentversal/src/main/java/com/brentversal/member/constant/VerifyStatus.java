@@ -1,4 +1,4 @@
-package com.brentversal.Member.constant;
+package com.brentversal.member.constant;
 
 // 중개인의 서류 검증 상태
 public enum VerifyStatus {
