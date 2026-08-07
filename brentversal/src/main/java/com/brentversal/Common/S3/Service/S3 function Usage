@@ -1,0 +1,303 @@
+- 백엔드용
+##### 4. NoticeController.java — createNotice를 multipart로 수정
+1) 기존 createNotice 메서드만 고치면 됨.
+@RequestBody(JSON) → @RequestPart(파일 + 데이터)로 바꾸는 게 핵심.
+
+- 기존 코드
+```java
+@PostMapping
+public ResponseEntity<Long> createNotice(
+        Authentication authentication,
+        @RequestBody NoticeRequestDto request
+) {
+    String loginId = (String) authentication.getDetails();
+    Long noticeId = noticeService.createNotice(loginId, request);
+    return ResponseEntity.ok(noticeId);
+}
+
+- 수정한 코드 (수정도 동일하게 multipart로 바꿔야함)
+// consumes 명시: multipart로 받음 (데이터 + 파일)
+@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<Long> createNotice(
+        Authentication authentication,
+        // 공지 데이터(JSON 문자열) — 프론트가 "data"라는 파트로 보냄
+        @RequestPart("data") NoticeRequestDto request,
+        // 첨부파일 — 없을 수도 있으니 required = false
+        @RequestPart(value = "file", required = false) MultipartFile file
+) {
+    String loginId = (String) authentication.getDetails();
+    Long noticeId = noticeService.createNotice(loginId, request, file);
+    return ResponseEntity.ok(noticeId);
+}
+```
+
+
+2) updateNotice (코드 수정)
+- 코드 수정
+```java
+@PutMapping(value = "/{noticeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<Void> updateNotice(
+        Authentication authentication,
+        @PathVariable Long noticeId,
+        @RequestPart("data") NoticeRequestDto request,
+        @RequestPart(value = "file", required = false) MultipartFile file
+){
+    String loginId = (String) authentication.getDetails();
+    noticeService.updateNotice(loginId, noticeId, request, file);
+    return ResponseEntity.ok().build();
+}
+```
+
+
+##### 5. NoticeService.java — 파일 받아서 업로드 후 URL 저장
+FileService 주입받고, createNotice/updateNotice 시그니처에 MultipartFile file을 추가해서 처리.
+1) 먼저 필드에 주입 추가
+@RequiredArgsConstructor를 쓰고 있으면 final 필드만 추가하면 자동 주입됨
+안 쓰면 생성자에 추가해야 함
+
+- 코드 추가
+```java
+private final FileService fileService;
+```
+
+
+2) createNotice (파일 있으면 올리고 URL을 request에 세팅)
+- 코드 수정
+```java
+@Transactional
+public Long createNotice(String loginId, NoticeRequestDto request, MultipartFile file) {
+	Member member = memberRepository.findByLoginId(loginId)
+			.orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다!"));
+
+	if (member.getRole() != Role.ADMIN) {
+		throw new IllegalArgumentException("관리자만 공지사항을 작성할 수 있습니다!");
+	}
+
+	NoticeCategory noticeCategory = noticeCategoryRepository.findById(request.getNoticeCategoryId())
+			.orElseThrow(() -> new IllegalArgumentException("공지사항 카테고리를 찾을 수 없습니다!"));
+
+	// 파일이 있으면 업로드하고 URL을 attachmentUrl로 세팅
+	String attachmentUrl = null;
+	if (file != null && !file.isEmpty()) {
+		attachmentUrl = fileService.upload(file);
+	}
+
+	Notice notice = new Notice(
+			noticeCategory,        // ← 카테고리를 먼저
+			member,                // ← 멤버를 두 번째
+			request.getTitle(),
+			request.getContents(),
+			attachmentUrl
+	);
+
+	Notice saved = noticeRepository.save(notice);
+	return saved.getNoticeId();
+}
+```
+
+
+3) updateNotice 수정 — 새 파일 오면 기존 파일 삭제 후 교체:
+
+- 코드 수정
+```java
+@Transactional
+public void updateNotice(String loginId, Long noticeId, NoticeRequestDto request, MultipartFile file) {
+    Member member = memberRepository.findByLoginId(loginId)
+            .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다!"));
+
+    if (member.getRole() != Role.ADMIN) {
+        throw new IllegalArgumentException("관리자만 공지사항을 수정할 수 있습니다!");
+    }
+
+    Notice notice = noticeRepository.findById(noticeId)
+            .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다!"));
+
+    NoticeCategory noticeCategory = noticeCategoryRepository.findById(request.getNoticeCategoryId())
+            .orElseThrow(() -> new IllegalArgumentException("공지사항 카테고리를 찾을 수 없습니다!"));
+
+    // 첨부파일 처리
+    String attachmentUrl = request.getAttachmentUrl(); // 기존 값 유지 (변경 없으면)
+    if (file != null && !file.isEmpty()) {
+        // 새 파일이 왔으면 기존 파일 삭제 후 교체
+        fileService.delete(notice.getAttachmentUrl());
+        attachmentUrl = fileService.upload(file);
+    }
+
+    notice.updateNotice(
+            noticeCategory,
+            request.getTitle(),
+            request.getContents(),
+            attachmentUrl
+    );
+}
+```
+
+
+4) deleteNotice 안에서 noticeRepository.delete(notice); 직전에 코드 추가
+
+- 코드 추가 (공지사항 삭제시 실제 로컬에서 파일 삭제되게 하기 - S3에서는 삭제 안됨)
+```java
+// 공지사항 삭제되면 해당 파일도 로컬에서 삭제됨
+// S3에서는 삭제 안됨
+fileService.delete(notice.getAttachmentUrl());
+```
+
+
+
+
+
+
+
+- 프론트용
+##### 8. NoticeContents.tsx — 파일 선택 + multipart 전송
+"첨부파일 URL" 텍스트칸을 파일 선택으로 바꾸고, 제출 때 FormData로 보내기
+
+- 코드 추가
+1) state 추가 (다른 useState 근처)
+```typescript
+// 선택한 파일 객체 (아직 안 올림, 제출 때 같이 보냄)
+const [selectedFile, setSelectedFile] = useState<File | null>(null);
+```
+
+2) 파일 선택 핸들러 (handleSubmit 함수 위에 추가)
+```typescript
+// 파일 선택 핸들러
+const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0] ?? null;
+  setSelectedFile(file);
+};
+```
+
+3) handleSubmit 수정
+(JSON 대신 FormData로. 공지 데이터는 data 파트에 JSON Blob으로, 파일은 file 파트로)
+(복붙하기)
+```typescript
+// 수정 (JSON 대신 FormData로. 공지 데이터는 data 파트에 JSON Blob으로, 파일은 file 파트로)
+const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+
+  if (!formData.title.trim()) {
+    alert("제목을 입력해 주세요.");
+    return;
+  }
+  if (!formData.contents.trim()) {
+    alert("내용을 입력해 주세요.");
+    return;
+  }
+
+  // 공지 데이터 (attachmentUrl은 백엔드가 파일 보고 채우므로 안 넣어도 됨)
+  const noticeData = {
+    noticeCategoryId: formData.noticeCategoryId,
+    title: formData.title,
+    contents: formData.contents,
+    // 수정 시 기존 첨부 유지용으로 현재 값 함께 보냄
+    attachmentUrl:
+      formData.attachmentUrl?.trim() === "" ? null : formData.attachmentUrl,
+  };
+
+  // multipart 조립
+  const body = new FormData();
+  // 공지 데이터는 JSON 문자열을 Blob(application/json)으로 — @RequestPart("data")와 매칭
+  body.append(
+    "data",
+    new Blob([JSON.stringify(noticeData)], { type: "application/json" })
+  );
+  // 파일이 선택됐으면 추가 (@RequestPart("file")과 매칭)
+  if (selectedFile) {
+    body.append("file", selectedFile);
+  }
+
+  try {
+    if (formMode === "create") {
+      // Content-Type 헤더는 직접 지정하지 말 것! (axios가 boundary 포함해 자동 설정)
+      await customAxios.post("/api/notices", body);
+
+      setFormMode("none");
+      setEditingNotice(null);
+      setSelectedFile(null);
+      await fetchNotices();
+      alert("공지사항이 등록되었습니다.");
+    }
+
+    if (formMode === "edit" && editingNotice) {
+      await customAxios.put(`/api/notices/${editingNotice.noticeId}`, body);
+
+      alert("공지사항이 수정되었습니다.");
+      setFormMode("none");
+      setEditingNotice(null);
+      setSelectedFile(null);
+      await fetchNotices();
+    }
+  } catch (error) {
+    console.error(error);
+    alert("공지사항 저장 중 오류가 발생했습니다.");
+  }
+};
+```
+
+
+4) 폼의 "첨부파일 URL" 입력칸을 파일 선택으로 교체
+- 기존 코드
+```typescript
+<label>
+  첨부파일 URL
+  <input
+	type="text"
+	name="attachmentUrl"
+	value={formData.attachmentUrl}
+	onChange={handleChange}
+	placeholder="첨부파일 URL을 입력하세요."
+  />
+</label>
+```
+
+- 기존 코드를 아래 코드로 전체 교체
+```typescript
+<label>
+  첨부파일
+  <input type="file" onChange={handleFileChange} />
+</label>
+
+{selectedFile && (
+  <p className="notice-upload-hint">선택됨: {selectedFile.name}</p>
+)}
+
+{/* 수정 모드일 때 기존 첨부파일 표시 */}
+{formMode === "edit" && formData.attachmentUrl && !selectedFile && (
+  <p className="notice-upload-hint">
+    현재 첨부:{" "}
+    <a href={formData.attachmentUrl} target="_blank" rel="noreferrer">
+      파일 열기
+    </a>
+  </p>
+)}
+```
+
+
+5) 첨부파일 다운로드 버튼 수정
+- 기존 코드
+```typescript
+{notice.attachmentUrl && (
+<a
+  className="notice-item-attachment"
+  href={notice.attachmentUrl}
+  target="_blank"
+  rel="noreferrer"
+>
+  첨부파일 열기
+</a>
+)}
+```
+
+- 수정한 코드 복붙
+```typescript
+{notice.attachmentUrl && (
+<a
+  className="notice-item-attachment"
+  href={notice.attachmentUrl}
+  download
+>
+  첨부파일 다운로드
+</a>
+)}
+```

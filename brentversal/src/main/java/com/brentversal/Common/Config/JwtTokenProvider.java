@@ -1,4 +1,4 @@
-package com.brentversal.config;
+package com.brentversal.Common.Config;
 
 import com.brentversal.Member.entity.Member;
 import io.jsonwebtoken.*;

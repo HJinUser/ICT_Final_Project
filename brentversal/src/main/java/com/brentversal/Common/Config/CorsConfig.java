@@ -1,4 +1,4 @@
-package com.brentversal.config;
+package com.brentversal.Common.Config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +19,11 @@ public class CorsConfig {
         // 리액트의 포트 번호를 여기에 작성
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "http://127.0.0.1:5173"
+                "http://127.0.0.1:5173",
+
+                // 도메인 주소 추가
+                "https://rentversal.site",
+                "https://*.rentversal.site"
         ));
 
         // 허용 HTTP 메소드

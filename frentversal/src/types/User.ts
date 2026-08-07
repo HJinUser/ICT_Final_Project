@@ -9,9 +9,9 @@ role은 오직 "USER" 또는 "ADMIN"만 가능합니다.
 // 로그인을 하면 로그인한 사용자 정보는 여기 들어 있음
 export interface User {
     id: number;
-    name: string ;
-    email: string ;
-    role: "USER" | "ADMIN";
+    name: string;
+    email: string;
+    role: "USER" | "AGENT" | "ADMIN";
 }
 
 /* 서버가 로그인 시 내려주는 응답 */
