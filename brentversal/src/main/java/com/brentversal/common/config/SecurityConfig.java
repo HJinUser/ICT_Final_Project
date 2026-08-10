@@ -1,12 +1,14 @@
 package com.brentversal.common.config;
 
+import com.brentversal.member.service.MemberDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,6 +26,9 @@ public class SecurityConfig {
 
     // CorsConfig.java에 CorsConfigurationSource의 @Bean으로 객체 생성이 되어 있음
     private final CorsConfigurationSource corsConfigurationSource;
+
+    // 로그인 시 email/password를 실제 members 테이블과 대조하기 위해 필요하다.
+    private final MemberDetailsService memberDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -85,10 +90,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // AuthenticationConfiguration.getAuthenticationManager()에 맡기면 등록된 UserDetailsService를
+    // 자동으로 못 찾는 경우가 있어서(Spring Security 7), DaoAuthenticationProvider를 직접 만들어
+    // MemberDetailsService + passwordEncoder를 명시적으로 연결한다.
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
-    ) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(memberDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(provider);
     }
 }
