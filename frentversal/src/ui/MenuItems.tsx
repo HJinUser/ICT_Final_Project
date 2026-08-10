@@ -35,6 +35,9 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
          <Container>
             <Navbar.Brand href='/'>{appName}</Navbar.Brand>
             <Nav className="me-auto">
+               {/* 로그인 여부와 상관없이 항상 보이는 메뉴 */}
+               <Nav.Link onClick={() => navigate(`/agency`)}>중개사무소 안내</Nav.Link>
+
                {renderMenu()}
             </Nav>
          </Container>

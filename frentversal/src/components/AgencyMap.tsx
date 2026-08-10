@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { AgencyResponse } from '../types/Agency';
+// 목록 화면(AgencyResponse)과 상세 화면(AgencyDetail) 모두에서 쓸 수 있도록,
+// 지도를 그리는 데 꼭 필요한 값만 요구한다.
+export interface MapAgency {
+    id: number;
+    name: string;
+    brokerName: string;
+    latitude: number | null;
+    longitude: number | null;
+}
 
 // 중개사무소 위치를 지도에 표시하는 컴포넌트.
 //
@@ -19,7 +27,7 @@ declare global {
 }
 
 interface Props {
-    agencies: AgencyResponse[];
+    agencies: MapAgency[];
 }
 
 // 지도를 처음 띄울 때의 중심 좌표 (강남역). 목록에 좌표가 하나도 없을 때만 쓰입니다.

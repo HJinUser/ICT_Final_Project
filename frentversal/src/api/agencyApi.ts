@@ -3,7 +3,12 @@
 // 이 파일만 고치면 되고 화면 코드는 그대로 둘 수 있다.
 
 import customAxios from './axiosInstance';
-import type { AgencyListResponse, AgencyResponse } from '../types/Agency';
+import type {
+    AgencyDetail,
+    AgencyListResponse,
+    AgencyReview,
+    ConsultationRequest,
+} from '../types/Agency';
 
 export interface AgencySearchParams {
     keyword?: string; // 사무소명 또는 공인중개사명
@@ -24,10 +29,47 @@ export async function getAgencies(params: AgencySearchParams = {}): Promise<Agen
     return response.data;
 }
 
-// 중개사무소 1건 조회 (상세 페이지용)
+// 중개사무소 상세 조회 (상세 페이지용)
 // GET /agency/{id}
-export async function getAgency(id: number): Promise<AgencyResponse> {
-    const response = await customAxios.get<AgencyResponse>(`/agency/${id}`);
+// 사무소 정보 + 담당 매물 + 후기 개수까지 한 번에 받아온다.
+export async function getAgencyDetail(id: number): Promise<AgencyDetail> {
+    const response = await customAxios.get<AgencyDetail>(`/agency/${id}`);
 
     return response.data;
+}
+
+// 이용자 평가(후기) 목록 조회
+// GET /agency/{id}/reviews  (비회원도 볼 수 있다)
+export async function getAgencyReviews(id: number): Promise<AgencyReview[]> {
+    const response = await customAxios.get<AgencyReview[]>(`/agency/${id}/reviews`);
+
+    return response.data;
+}
+
+// 내가 후기를 쓸 수 있는지 확인
+// GET /agency/{id}/reviews/eligibility  (로그인 필요)
+// 비회원이면 서버가 401 을 주므로, 여기서 false 로 바꿔서 돌려준다.
+export async function canWriteReview(id: number): Promise<boolean> {
+    try {
+        const response = await customAxios.get<{ eligible: boolean }>(`/agency/${id}/reviews/eligibility`);
+        return response.data.eligible;
+    } catch {
+        return false;
+    }
+}
+
+// 상담 요청 보내기
+// POST /agency/{id}/consultations  (로그인 + 정보 제공 동의 필요)
+export async function requestConsultation(id: number, request: ConsultationRequest): Promise<string> {
+    const response = await customAxios.post<{ message: string }>(`/agency/${id}/consultations`, request);
+
+    return response.data.message;
+}
+
+// 후기 작성
+// POST /agency/{id}/reviews  (상담을 요청한 적이 있는 회원만 가능)
+export async function writeReview(id: number, rating: number, content: string): Promise<string> {
+    const response = await customAxios.post<{ message: string }>(`/agency/${id}/reviews`, { rating, content });
+
+    return response.data.message;
 }
