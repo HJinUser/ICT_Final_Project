@@ -125,8 +125,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     if (loading) return <Container className="mt-5">불러오는 중...</Container>;
     if (!property) return <Container className="mt-5">매물 정보를 찾을 수 없습니다.</Container>;
 
-    const role = user?.role; // undefined(비회원) | "USER" | "AGENT" | "ADMIN"
-    const isOwner = user?.role === "AGENT" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
+    const role = user?.role; // undefined(비회원) | "USER" | "BROKER" | "ADMIN"
+    const isOwner = user?.role === "BROKER" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
 
     // AI 예상 시세와 현재 가격의 차이 (양수면 시세보다 저렴, 음수면 시세보다 비쌈)
     const priceDiff = property.aiEstimatedPrice - property.price;
@@ -375,7 +375,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         </Link>
                     </Card>
 
-                    {(role === "USER" || role === "AGENT") && (
+                    {(role === "USER" || role === "BROKER") && (
                         <Link to={`/report/form?propertyId=${property.id}`} className="btn btn-outline-danger w-100">
                             허위매물 신고
                         </Link>

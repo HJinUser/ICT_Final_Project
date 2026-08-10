@@ -48,10 +48,21 @@ public class AgencyConsultation {
     @Column(nullable = false)
     private boolean agreed = false ;
 
+    // 진행 상태. 요청이 들어오면 '답변 대기(WAITING)'로 시작한다.
+    // 중개인 마이페이지의 문의 관리에서 이 값으로 필터링한다.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ConsultationStatus status = ConsultationStatus.REQUESTED ;
+    @Column(nullable = false, length = 20)
+    private ConsultationStatus status = ConsultationStatus.WAITING ;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt ;
+    private LocalDateTime createdAt ; // 요청이 들어온 시각 (알림 목록의 정렬 기준)
+
+    // ── 중개인이 보내는 답변 ─────────────────────────────
+    // "답변하기" 화면에서 중개인이 작성한 내용이 여기에 저장된다.
+    // 답변이 저장되면 status 가 ANSWERED 로 바뀐다.
+    @Column(length = 2000)
+    private String reply ;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt ; // 답변을 보낸 시각 (답변 전에는 null)
 }
