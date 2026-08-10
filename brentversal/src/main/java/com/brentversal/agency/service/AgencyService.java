@@ -1,12 +1,19 @@
 package com.brentversal.agency.service;
 
+import com.brentversal.agency.dto.AgencyDetailDto;
+import com.brentversal.agency.dto.AgencyPropertyDto;
 import com.brentversal.agency.dto.AgencyResponseDto;
 import com.brentversal.agency.entity.Agency;
 import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.repository.AgencyReviewRepository;
+import com.brentversal.property.constant.PropertyStatus;
+import com.brentversal.property.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +21,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AgencyService { // AgencyService가 AgencyRepository를 의존하고 있음
     private final AgencyRepository agencyRepository; // 의존 + 무의미한 데이터여서 주입(injection)해야 함 + final로 변경
+
+    // 상세 페이지에서 담당 매물과 후기 개수를 함께 보여줘야 해서 두 리포지토리를 더 주입받는다
+    private final PropertyRepository propertyRepository;
+    private final AgencyReviewRepository agencyReviewRepository;
+
+    // 상세 페이지에 카드로 보여 줄 최근 매물 개수
+    private static final int RECENT_PROPERTY_LIMIT = 2;
 
     // 중개사무소 목록 조회 (검색어 + 지역 필터)
     // readOnly = true : 조회 전용 트랜잭션이라 변경 감지(dirty checking)를 하지 않아 조금 더 가볍다.
@@ -32,12 +46,43 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
                 .toList();
     }
 
-    // 중개사무소 1건 조회 (상세 페이지용)
+    // 중개사무소 1건 조회 (요약)
     // 없는 id 일 수 있으므로 Optional 로 반환하고, 404 로 처리할지는 컨트롤러가 결정한다.
     @Transactional(readOnly = true)
     public Optional<AgencyResponseDto> findById(Long id){
         return agencyRepository.findById(id)
                 .map(AgencyResponseDto::of);
+    }
+
+    // 중개사무소 상세 조회 (상세 페이지용)
+    // 사무소 정보 + 담당 매물(건수·오늘 신규·최근 2건) + 후기 개수를 한 번에 담아 준다.
+    // 화면이 여러 번 요청하지 않도록 여기서 모아서 내려 주는 것이다.
+    @Transactional(readOnly = true)
+    public Optional<AgencyDetailDto> findDetailById(Long id){
+        return agencyRepository.findById(id).map(agency -> {
+            AgencyDetailDto dto = AgencyDetailDto.of(agency);
+
+            // 게시중(ACTIVE)이고 공개 상태인 매물만 화면에 보여 준다
+            dto.setListingCount(propertyRepository.countByAgencyIdAndStatusAndVisibleTrue(id, PropertyStatus.ACTIVE));
+
+            // 오늘 0시 이후에 등록된 매물을 오늘 신규로 센다
+            LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+            dto.setTodayNewCount(propertyRepository
+                    .countByAgencyIdAndStatusAndVisibleTrueAndCreatedAtAfter(id, PropertyStatus.ACTIVE, todayStart));
+
+            // 가장 최근에 올라온 매물 2건만 카드로 보여 준다
+            List<AgencyPropertyDto> recent = propertyRepository
+                    .findByAgencyIdAndStatusAndVisibleTrueOrderByCreatedAtDesc(id, PropertyStatus.ACTIVE)
+                    .stream()
+                    .limit(RECENT_PROPERTY_LIMIT)
+                    .map(AgencyPropertyDto::of)
+                    .toList();
+            dto.setRecentProperties(recent);
+
+            dto.setReviewCount(agencyReviewRepository.countByAgencyId(id));
+
+            return dto;
+        });
     }
 
     // 인증 완료된 중개사무소 개수 (화면 상단 통계용)

@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -46,10 +47,6 @@ public class SecurityConfig {
                 "/member/login",
                 "/member/refresh", // [refresh] access token 재발급 요청. 만료된 상태에서 호출되므로 인증 없이 허용해야 한다.
                 "/product/**",
-                // 중개사무소 안내는 비회원도 볼 수 있는 화면이라 조회 API 를 인증 없이 허용한다.
-                // 나중에 등록·수정(POST/PUT)을 추가하면 그 경로는 여기서 빼고 인증을 받아야 한다.
-                "/agency",
-                "/agency/**",
                 // 404, 500 등이 발생하면 서블릿 컨테이너가 /error 로 다시 보내는데(ERROR 디스패치),
                 // 이 경로도 시큐리티를 한 번 더 통과한다. 허용해 두지 않으면 모든 오류가
                 // 원래 상태 코드 대신 403 빈 응답으로 바뀌어 프론트에서 원인을 알 수 없게 된다.
@@ -66,6 +63,9 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(permitUrls).permitAll()
+                        // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
+                        // 상담 요청·후기 작성(POST)은 아래 anyRequest().authenticated() 에 걸려 로그인이 필요하다.
+                        .requestMatchers(HttpMethod.GET, "/agency", "/agency/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // 인증이 안 된 요청에 대한 응답을 401 로 맞춘다.
