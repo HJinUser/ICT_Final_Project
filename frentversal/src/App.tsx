@@ -7,6 +7,7 @@ import AppRoutes from './routes/AppRoutes';
 import React, { useEffect, useState } from 'react';
 import type { User } from './types/User';
 import { useNavigate } from 'react-router-dom';
+import customAxios from './api/axiosInstance.tsx';
 
 
 function App() {
@@ -37,8 +38,17 @@ function App() {
   const navigate = useNavigate();
 
   // 사용자가 '로그 아웃' 메뉴 클릭
-  const handleLogout = (event: React.MouseEvent<HTMLElement>) => {
+  const handleLogout = async (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
+
+    try {
+      // 서버에 저장된 refresh token 을 지워서 이후 그 토큰으로 재발급이 안 되게 만든다.
+      await customAxios.post('/member/logout');
+    } catch (error) {
+      // 서버 호출이 실패해도(네트워크 오류 등) 로컬 로그아웃은 계속 진행한다.
+      console.error('서버 로그아웃 처리 중 오류가 발생했습니다.', error);
+    }
+
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('accessToken');

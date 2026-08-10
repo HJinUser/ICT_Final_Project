@@ -2,6 +2,7 @@ package com.brentversal.member.controller;
 
 import com.brentversal.common.config.JwtTokenProvider;
 import com.brentversal.member.dto.LoginDto;
+import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.service.MemberService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -55,7 +57,7 @@ public class MemberController {
 
         if(member == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "사용자 정보를 찾을 수 없습니다."));
+                    .body(Map.of("message", "사용자 정보를 찾을 수 없습니다."));
         }else{
             // JWT 토큰 생성하기 (access token)
             String token = jwtTokenProvider.createToken(member);
@@ -120,13 +122,24 @@ public class MemberController {
         return ResponseEntity.ok(Map.of("accessToken", newAccessToken)); // 새 access token 을 응답 본문에 담아 200 반환
     }
 
+    // 로그아웃: 로그인한 사용자의 refresh token 을 서버에서 지워 이후 재발급을 막는다.
+    // Authentication 은 JwtAuthenticationFilter 가 SecurityContextHolder 에 넣어둔 인증 정보를
+    // 스프링이 자동으로 이 파라미터에 주입해 준다. (SecurityConfig 의 permitUrls 에 이 경로를 넣지 않아야
+    // 필터가 인증을 거치고, 이 파라미터가 null 이 아니게 된다.)
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(Authentication authentication){
+        String email = authentication.getName(); // JwtAuthenticationFilter 가 principal 로 넣어둔 이메일
+        memberService.clearRefreshToken(email);
+        return ResponseEntity.ok(Map.of("message", "로그아웃 되었습니다."));
+    }
+
     // @RequestBody : 넘어온 request정보가 JSON형식인데 그것을 Java 형식으로 바꿔주는 것
-    // 원래 VSC(React-프론트앤드)에서 넘어온 데이터는 bean.getName같은거에 있음
-    // Controller까지는 그대로의 데이터이고 그 이후인 Service에서 암호화를 하든 말든 함
+    // 일반 사용자/중개인 요청을 하나로 받아야 하고 Member 컬럼과 안 맞는 값(중개사무소 정보 등)도
+    // 섞여 있어서, LoginDto처럼 전용 요청 DTO(SignupDto)로 받는다. Member로 변환하는 건 Service가 한다.
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody Member bean, BindingResult bindingResult){ // 회원 가입하기
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupDto dto, BindingResult bindingResult){ // 회원 가입하기
         System.out.println("회원 가입 정보");
-        System.out.println(bean);
+        System.out.println(dto);
 
         if(bindingResult.hasErrors()){ // 가입에 뭔가 문제 있음
             Map<String, String> errors = new HashMap<>();
@@ -140,7 +153,7 @@ public class MemberController {
         }
 
         // 이메일 중복 체크
-        Member member = memberService.findByEmail(bean.getEmail());
+        Member member = memberService.findByEmail(dto.getEmail());
         if (member != null){ // member가 null이 아니라는 것은 이미 존재하는 id(맴버)라는 것을 의미함
             // 이미 존재하는 이메일 주소
             return new ResponseEntity<>(Map.of("email", "이미 존재하는 이메일 주소입니다."),
@@ -148,7 +161,15 @@ public class MemberController {
         }
 
         // 회원 가입 처리
-        memberService.insert(bean);
+        // insert()는 비밀번호 정책 위반뿐 아니라 중개인 가입의 필수값 누락(등록번호/사무소명 등)에서도
+        // IllegalArgumentException을 던지므로, 특정 필드가 아니라 general 오류로 돌려준다.
+        try {
+            memberService.insert(dto);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(Map.of("general", e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+
+
         return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK) ; // 회원 가입 성공 (OK라는건 200번대라는 뜻)
     }
 }

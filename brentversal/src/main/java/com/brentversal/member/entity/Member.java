@@ -1,6 +1,7 @@
 package com.brentversal.member.entity;
 
 import com.brentversal.member.constant.Role;
+import com.brentversal.member.constant.SocialType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -14,44 +15,88 @@ import lombok.ToString;
 import java.time.LocalDate;
 
 // 회원 1명을 의미하는 엔터티 클래스
-@Getter @Setter @ToString @Entity
-@Table(name = "members")
+@Getter
+@Setter
+@ToString
+@Entity // JPA에게 이 클래스는 DB랑 연결해서 관리해야 할 클래스라는 것을 알리는 어노테이션
+@Table(name = "members") // 테이블로 설정하고 테이블 이름을 설정함
 public class Member {
-    // 밑에 어노테이션 3개는 바로 밑에 변수에만 적용됨
-    @Id // 프라이머리 키
-    @GeneratedValue(strategy = GenerationType.AUTO) // 숫자 생성할때 AUTO로 생성하겠다.
-
-    @Column(name = "member_id") // pk 컬럼 이름 : 테이블단수명_id
+    @Id // 프라이머리 키로 설정하기
+    @GeneratedValue(strategy = GenerationType.IDENTITY) //AUTO로 쓰면 시퀀스가 하나 더 만들어짐
+    @Column(name = "member_id") // pk컬럼명 : 테이블단수명_id
     private Long id ;
+    // id를 int가 아니라 Long으로 설정 (Long이 더 큰 숫자를 담을 수 있어서 관례임)
 
-    @NotBlank(message = "이름은 필수 입력 사항입니다.") // 빈칸으로 두면 안되게 설정하고 텍스트를 표시함(데이터베이스의 제약조건느낌)
+    @Column(nullable = false)
+    @NotBlank(message = "이름은 필수 입력 사항입니다.")  // 빈칸으로 두면 안되게 설정하고 텍스트를 표시함(데이터베이스의 제약조건느낌)
     private String name ;
 
-    @Column(unique = true, nullable = false) // 실질적인 프라이머리 키
-    @NotBlank(message = "이메일은 필수 입력 사항입니다.") // 빈칸으로 두면 안되게 설정하고 텍스트를 표시함(데이터베이스의 제약조건느낌)
-    @Email(message = "올바른 이메일 형식으로 입력해 주셔야 합니다.") // 이메일 형식인지 아닌지 검사하는 것 / 틀리면 메시지 출력
+    // 010-0000-0000 형태로 하이픈까지 저장(13자리)
+    @Column(unique = true, nullable = false)
+    @NotBlank(message = "휴대폰 번호는 필수 입력 사항입니다.")
+    @Pattern(regexp = "^01[016789]-\\d{3,4}-\\d{4}$", message = "010-0000-0000 형식으로 입력해 주세요.")
+    private String phone ;
+
+    // 이메일은 소셜 로그인의 기준 + 로그인 ID라서 유일해야 함
+    @Column(unique = true, nullable = false)
+    @NotBlank(message = "이메일은 필수 입력 사항입니다.")
+    @Email(message = "올바른 이메일 형식으로 입력해 주셔야 합니다.")
     private String email ;
 
-    @NotBlank(message = "비밀 번호는 필수 입력 사항입니다.") // 빈칸으로 두면 안되게 설정하고 텍스트를 표시함(데이터베이스의 제약조건느낌)
-    @Size(min = 8, max = 255, message = "비밀 번호는 8자리 이상, 255자리 이하로 입력해 주세요.") // 비밀번호의 사이즈 입력 조건 / 틀리면 메시지 출력
-    @Pattern(regexp = ".*[A-Z].*", message = "비밀 번호는 대문자 1개 이상을 포함해야 합니다.")
-    @Pattern(regexp = ".*[!@#$%].*", message = "비밀 번호는 특수 문자 '!@#$%' 중 하나 이상을 포함해야 합니다.")
+    // 소셜로 가입한 회원과 자체가입 중개인은 비밀번호가 없어서 NULL을 허용함
+    // 그래서 여기에는 @NotBlank를 붙이지 않고, 원문 비밀번호 규칙 검증은 DTO에서 함
+    // 저장되는 값은 항상 BCrypt 해시임
+    @ToString.Exclude // 해시라도 로그에 찍히지 않게 제외한다
+    @Size(max = 255, message = "비밀 번호는 255자리 이하로 입력해 주세요.")
     private String password ;
 
-    @NotBlank(message = "주소는 필수 입력 사항입니다.") // 빈칸으로 두면 안되게 설정하고 텍스트를 표시함(데이터베이스의 제약조건느낌)
+    // "OO시 OO구"까지만 받는 선택 항목이라 nullable = false를 걸지 않음
+    @Size(max = 100, message = "주소는 100자리 이하로 입력해 주세요.")
     private String address ;
 
-    @Enumerated(EnumType.STRING) // 나열, 열거하다 (아까 USER, ADMIN 열거)
-    private Role role; // 일반인 또는 관리자
+    // Enum의 상수를 문자열 형태로 DB에 저장하겠다는 어노테이션
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role ;
+
+    // 이메일 소유 인증 완료 여부
+    // 소셜이 검증된 이메일을 준 경우에는 인증 없이 바로 true로 둠
+    @Column(nullable = false)
+    private boolean emailVerified = false ;
+
+    // 소셜 로그인은 회원당 하나만 연결할 수 있고, 한 번 연결하면 영구 고정이다(전환/해지 불가).
+    // 그래서 별도 테이블이 아니라 Member 컬럼 세 개로 둔다. 기본값은 미연결(NONE).
+    @Enumerated(EnumType.STRING)
+    @Column(name = "social_type", nullable = false)
+    private SocialType socialType = SocialType.NONE ;
+
+
+    @Column(name = "social_user_id", unique = true)
+    private String socialUserId ;
+
+    // 연결 당시 제공자가 알려준 이메일. 참고용이며 로그인 키로 쓰지 않는다.
+    @Column(name = "social_email")
+    private String socialEmail ;
+
+    // passwordx1080 등록 여부만 본다. 기기별 이름/최근 사용 시각 같은 상세 관리는 하지 않는다.
+    // 실제 기기 자격증명 관리는 passwordx1080 쪽 책임이고, 우리 DB는 등록 완료 여부만 갖는다.
+    @Column(name = "passwordless_registered", nullable = false)
+    private boolean passwordlessRegistered = false ;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @Column(nullable = false)
     private LocalDate regdate ; // 등록 일자
 
-    // [refresh] 로그인 시 발급한 refresh token 을 DB 에 저장해 두는 컬럼.
-    // [refresh] 서버가 값을 보관하므로, 로그아웃하거나 탈취가 의심되면 이 값을 비워서 강제로 무효화할 수 있다.
-    // [refresh] RSA 2048 서명만 base64 로 344자라, 실제 발급되는 refresh token 이 470자를 넘는다.
-    // [refresh] 이메일이 길수록 토큰도 길어지므로 512 로는 부족하다(저장 시 DataException 발생). 넉넉히 1000 으로 잡는다.
-    // [refresh] 주의: ddl-auto=update 는 컬럼을 추가만 할 뿐 기존 컬럼 길이는 바꿔 주지 않으므로 ALTER TABLE 이 따로 필요하다.
-    @Column(name = "refresh_token", length = 1000) // [refresh] members 테이블에 refresh_token 컬럼으로 매핑
-    private String refreshToken ; // [refresh] 이 회원의 현재 유효한 refresh token 문자열(없으면 null)
+    // 로그인 시 발급한 refresh token을 DB에 저장해 두는 컬럼
+    // 로그아웃하거나 탈취가 의심되면 이 값을 비워서 강제로 무효화할 수 있음
+    // refresh token이 470자를 넘어서 넉넉히 1000으로 잡음
+    @Column(name = "refresh_token", length = 1000)
+    private String refreshToken ;
+
+    // 중개인일 때만 존재하는 1:1 프로필. 일반 사용자는 NULL임
+    // Broker 쪽이 자기 PK와 member_id FK를 따로 가지므로(Cart.member와 같은 방식) 여기는 mappedBy로 위임함
+    // (소셜/패스워드리스는 위에서 Member 컬럼으로 흡수해서, 연관관계로 남은 건 Broker뿐이다)
+    @ToString.Exclude // 양방향 연관을 toString에 넣으면 서로를 무한히 참조한다
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Broker broker ;
 }
