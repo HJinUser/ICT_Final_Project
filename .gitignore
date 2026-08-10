@@ -35,3 +35,4 @@ brentversal/.env
 # 프로젝트 로컬 문서 (깃허브에 올리지 않음)
 /SCAFFOLD_PLAN.md
 /CLAUDE.md
+/planning/
