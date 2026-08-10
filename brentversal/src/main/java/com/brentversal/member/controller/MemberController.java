@@ -2,6 +2,7 @@ package com.brentversal.member.controller;
 
 import com.brentversal.common.config.JwtTokenProvider;
 import com.brentversal.member.dto.LoginDto;
+import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.service.MemberService;
 import jakarta.validation.Valid;
@@ -133,12 +134,12 @@ public class MemberController {
     }
 
     // @RequestBody : 넘어온 request정보가 JSON형식인데 그것을 Java 형식으로 바꿔주는 것
-    // 원래 VSC(React-프론트앤드)에서 넘어온 데이터는 bean.getName같은거에 있음
-    // Controller까지는 그대로의 데이터이고 그 이후인 Service에서 암호화를 하든 말든 함
+    // 일반 사용자/중개인 요청을 하나로 받아야 하고 Member 컬럼과 안 맞는 값(중개사무소 정보 등)도
+    // 섞여 있어서, LoginDto처럼 전용 요청 DTO(SignupDto)로 받는다. Member로 변환하는 건 Service가 한다.
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody Member bean, BindingResult bindingResult){ // 회원 가입하기
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupDto dto, BindingResult bindingResult){ // 회원 가입하기
         System.out.println("회원 가입 정보");
-        System.out.println(bean);
+        System.out.println(dto);
 
         if(bindingResult.hasErrors()){ // 가입에 뭔가 문제 있음
             Map<String, String> errors = new HashMap<>();
@@ -152,7 +153,7 @@ public class MemberController {
         }
 
         // 이메일 중복 체크
-        Member member = memberService.findByEmail(bean.getEmail());
+        Member member = memberService.findByEmail(dto.getEmail());
         if (member != null){ // member가 null이 아니라는 것은 이미 존재하는 id(맴버)라는 것을 의미함
             // 이미 존재하는 이메일 주소
             return new ResponseEntity<>(Map.of("email", "이미 존재하는 이메일 주소입니다."),
@@ -163,7 +164,7 @@ public class MemberController {
         // insert()는 비밀번호 정책 위반뿐 아니라 중개인 가입의 필수값 누락(등록번호/사무소명 등)에서도
         // IllegalArgumentException을 던지므로, 특정 필드가 아니라 general 오류로 돌려준다.
         try {
-            memberService.insert(bean);
+            memberService.insert(dto);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(Map.of("general", e.getMessage()), HttpStatus.BAD_REQUEST);
         }

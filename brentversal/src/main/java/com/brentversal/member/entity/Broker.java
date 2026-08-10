@@ -7,8 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-// 중개인 회원 1명의 자격 정보. Member와 1:1이며, Member의 PK를 그대로 공유한다(공유 기본키).
-// 일반 사용자는 이 행 자체가 존재하지 않는다.
+// 중개인 회원 1명의 자격 정보. Member와 1:1이며, Broker가 FK(member_id)를 가진 주인(owning side)이다.
+// (수업의 Cart.member @OneToOne + @JoinColumn과 같은 방식. unique 제약으로 회원 1명당 1개만 허용한다.)
 @Getter
 @Setter
 @ToString
@@ -16,16 +16,13 @@ import lombok.ToString;
 @Table(name = "brokers")
 public class Broker {
 
-
     @Id
-    @Column(name = "member_id")
-    private Long id ; // Member의 PK를 그대로 사용
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "broker_id")
+    private Long id ;
 
-    // @MapsId : 연관관계 상대(Member)의 PK 값을 그대로 이 엔티티의 PK로 쓰겠다는 뜻.
-    // 별도의 auto-increment 없이 Member 1명당 Broker가 0개 또는 1개만 존재하도록 강제된다.
     @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false, unique = true)
     @ToString.Exclude
     private Member member ;
 
@@ -40,5 +37,5 @@ public class Broker {
     // 서류 검증 상태. 가입 시점에는 항상 미검증이며, 관리자 심사(허가요청)를 거쳐 바뀐다.
     @Enumerated(EnumType.STRING)
     @Column(name = "verify_status", nullable = false)
-    private VerifyStatus verifyStatus = VerifyStatus.UNVERFIED ;
+    private VerifyStatus verifyStatus = VerifyStatus.UNVERIFIED ;
 }

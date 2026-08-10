@@ -1,6 +1,7 @@
 package com.brentversal.member.entity;
 
 import com.brentversal.member.constant.Role;
+import com.brentversal.member.constant.SocialType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -63,6 +64,25 @@ public class Member {
     @Column(nullable = false)
     private boolean emailVerified = false ;
 
+    // 소셜 로그인은 회원당 하나만 연결할 수 있고, 한 번 연결하면 영구 고정이다(전환/해지 불가).
+    // 그래서 별도 테이블이 아니라 Member 컬럼 세 개로 둔다. 기본값은 미연결(NONE).
+    @Enumerated(EnumType.STRING)
+    @Column(name = "social_type", nullable = false)
+    private SocialType socialType = SocialType.NONE ;
+
+
+    @Column(name = "social_user_id", unique = true)
+    private String socialUserId ;
+
+    // 연결 당시 제공자가 알려준 이메일. 참고용이며 로그인 키로 쓰지 않는다.
+    @Column(name = "social_email")
+    private String socialEmail ;
+
+    // passwordx1080 등록 여부만 본다. 기기별 이름/최근 사용 시각 같은 상세 관리는 하지 않는다.
+    // 실제 기기 자격증명 관리는 passwordx1080 쪽 책임이고, 우리 DB는 등록 완료 여부만 갖는다.
+    @Column(name = "passwordless_registered", nullable = false)
+    private boolean passwordlessRegistered = false ;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(nullable = false)
     private LocalDate regdate ; // 등록 일자
@@ -73,38 +93,10 @@ public class Member {
     @Column(name = "refresh_token", length = 1000)
     private String refreshToken ;
 
-    // ---- 아래는 전부 @Transient: DB 컬럼이 아니라 회원가입 요청(JSON)을 받을 때만 잠깐 쓰는 값이다.
-    // Member를 그대로 요청 body로 받는 기존 방식(entity-vs-dto.md의 Signup 사례)을 유지하기 위해
-    // 별도 DTO를 만들지 않고 여기에 임시로 얹었다.
-
-    // "USER" 또는 "BROKER". role은 클라이언트가 직접 정하면 권한 상승 위험이 있어서
-    // 이 값만 받고, 실제 role은 서비스가 이 값을 보고 안전하게 정한다.
-    @Transient
-    private String signupType ;
-
-    @Transient
-    private String licenseNumber ; // 공인중개사 등록번호 -> Broker.licenseNumber 로 저장
-
-    @Transient
-    private String agencyName ; // 중개사무소명 -> Agency.name 으로 저장
-
-    @Transient
-    private String agencyAddress ; // 중개사무소 주소 -> Agency.address 로 저장
-
-    @Transient
-    private String officePhone ; // 사무실 번호 -> Agency.phone 으로 저장
-
-//    // 중개인일 때만 존재하는 1:1 프로필. 일반 사용자는 NULL임
-//    // @JoinColumn이 있는 Broker 쪽이 fk를 가지므로 여기는 mappedBy로 위임함
-//    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-//    private Broker broker ;
-//
-//    // 한 계정에 카카오/구글/네이버를 각각 연결할 수 있으므로 1:N임
-//    // mappedBy에는 자식 엔티티(Social)에 있는 fk 변수명을 적음
-//    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-//    private List<Social> socials ;
-//
-//    // 패스워드리스 등록 기기. 기기 분실에 대비해 여러 대를 등록할 수 있음
-//    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-//    private List<Device> devices ;
+    // 중개인일 때만 존재하는 1:1 프로필. 일반 사용자는 NULL임
+    // Broker 쪽이 자기 PK와 member_id FK를 따로 가지므로(Cart.member와 같은 방식) 여기는 mappedBy로 위임함
+    // (소셜/패스워드리스는 위에서 Member 컬럼으로 흡수해서, 연관관계로 남은 건 Broker뿐이다)
+    @ToString.Exclude // 양방향 연관을 toString에 넣으면 서로를 무한히 참조한다
+    @OneToOne(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Broker broker ;
 }

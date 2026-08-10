@@ -3,6 +3,7 @@ package com.brentversal.member.service;
 import com.brentversal.agency.entity.Agency;
 import com.brentversal.agency.repository.AgencyRepository;
 import com.brentversal.member.constant.Role;
+import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Broker;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
@@ -34,22 +35,29 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
     // insert() 안에서 Member 저장 + (중개인이면) Broker/Agency 저장까지 하나의 트랜잭션으로 묶는다.
     // @Transactional이 없으면 각 save()가 각자 따로 커밋되어서, 중간에 실패했을 때
     // Broker/Agency 없이 Member만 저장된 반쪽짜리 회원이 생길 수 있다.
+    // dto -> Member 변환은 여기서 직접 한다(04-16 OrderDto -> Order Entity 조립과 같은 방식).
     @Transactional
-    public void insert(Member bean){
-        bean.setRegdate(LocalDate.now());
+    public void insert(SignupDto dto){
+        Member member = new Member();
+        member.setName(dto.getName());
+        member.setPhone(dto.getPhone());
+        member.setEmail(dto.getEmail());
+        member.setAddress(dto.getAddress());
+        member.setRegdate(LocalDate.now());
 
         // 클라이언트가 role을 직접 정하게 하면 "ADMIN"을 보내는 식의 권한 상승이 가능해진다.
         // 그래서 role 자체는 안 받고, signupType이라는 제한된 값만 보고 서버가 role을 정한다.
-        boolean isBroker = "BROKER".equals(bean.getSignupType());
+        boolean isBroker = "BROKER".equals(dto.getSignupType());
 
         if (isBroker) {
             // 중개인은 비밀번호 없이 가입하고 이후 패스워드리스로만 로그인한다(Member.password 주석 참고).
             // DB에 아무것도 저장하기 전에 먼저 필수값을 검증한다.
-            validateBrokerFields(bean);
-            bean.setRole(Role.BROKER);
-            bean.setPassword(null);
+            validateBrokerFields(dto);
+            member.setRole(Role.BROKER);
+            member.setPassword(null);
         } else {
-            if (bean.getPassword() == null) {
+            String password = dto.getPassword();
+            if (password == null) {
                 throw new IllegalArgumentException("비밀번호를 입력해 주세요.");
             }
 
@@ -58,7 +66,7 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
             boolean hasDigit = false; //숫자인지
             boolean hasSpecial = false; //특수기호인지
 
-            for(char c : bean.getPassword().toCharArray()) {
+            for(char c : password.toCharArray()) {
                 if(Character.isUpperCase(c)){
                     hasUpper=true;
                 }
@@ -77,47 +85,46 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
                 throw new IllegalArgumentException("비밀번호는 대문자, 소문자, 숫자, 특수문자가 포함되어야합니다.");
             }
 
-            bean.setRole(Role.USER);
-            String encodedPassword = passwordEncoder.encode(bean.getPassword());
-            bean.setPassword(encodedPassword);
+            member.setRole(Role.USER);
+            member.setPassword(passwordEncoder.encode(password));
         }
 
-        memberRepository.save(bean);
+        memberRepository.save(member);
 
         if (isBroker) {
-            saveBrokerProfile(bean);
+            saveBrokerProfile(member, dto);
         }
     }
 
-    // 중개인 가입에서만 쓰는 필수값을 확인한다. 이름/전화번호/이메일은 Member 쪽 @Valid가 이미 검증한다.
-    private void validateBrokerFields(Member bean){
-        if (bean.getLicenseNumber() == null || bean.getLicenseNumber().isBlank()) {
+    // 중개인 가입에서만 쓰는 필수값을 확인한다. 이름/전화번호/이메일은 SignupDto 쪽 @Valid가 이미 검증한다.
+    private void validateBrokerFields(SignupDto dto){
+        if (dto.getLicenseNumber() == null || dto.getLicenseNumber().isBlank()) {
             throw new IllegalArgumentException("공인중개사 등록번호를 입력해 주세요.");
         }
-        if (bean.getAgencyName() == null || bean.getAgencyName().isBlank()) {
+        if (dto.getAgencyName() == null || dto.getAgencyName().isBlank()) {
             throw new IllegalArgumentException("중개사무소명을 입력해 주세요.");
         }
-        if (bean.getAgencyAddress() == null || bean.getAgencyAddress().isBlank()) {
+        if (dto.getAgencyAddress() == null || dto.getAgencyAddress().isBlank()) {
             throw new IllegalArgumentException("중개사무소 주소를 입력해 주세요.");
         }
-        if (bean.getOfficePhone() == null || bean.getOfficePhone().isBlank()) {
+        if (dto.getOfficePhone() == null || dto.getOfficePhone().isBlank()) {
             throw new IllegalArgumentException("사무실 번호를 입력해 주세요.");
         }
     }
 
     // Member 저장 뒤(= member.getId()가 생긴 뒤) 호출해서 Broker와 Agency를 함께 만든다.
-    private void saveBrokerProfile(Member member){
+    private void saveBrokerProfile(Member member, SignupDto dto){
         Broker broker = new Broker();
-        broker.setMember(member); // @MapsId가 member의 PK를 Broker의 PK로 그대로 복사해 간다
-        broker.setLicenseNumber(member.getLicenseNumber());
+        broker.setMember(member); // Broker가 FK(member_id)를 가진 주인이라, Member의 PK를 그대로 참조로 넣는다
+        broker.setLicenseNumber(dto.getLicenseNumber());
         brokerRepository.save(broker);
 
         Agency agency = new Agency();
         agency.setMember(member);
-        agency.setName(member.getAgencyName());
+        agency.setName(dto.getAgencyName());
         agency.setBrokerName(member.getName());
-        agency.setAddress(member.getAgencyAddress());
-        agency.setPhone(member.getOfficePhone());
+        agency.setAddress(dto.getAgencyAddress());
+        agency.setPhone(dto.getOfficePhone());
         agency.setRegdate(LocalDate.now());
         agencyRepository.save(agency);
     }
