@@ -1,5 +1,6 @@
 package com.brentversal.property.entity;
 
+import com.brentversal.agency.entity.Agency;
 import com.brentversal.property.constant.DealType;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.constant.PropertyType;
@@ -23,23 +24,20 @@ public class Property {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id")
+    @Column(name = "property_id")
     private Long id;
-
-    @Column(name = "agency_id", nullable = false)
-    private Long agencyId;
 
     @Column(name = "neighborhood_id")
     private Long neighborhoodId;
 
-    // Agency와 Neighborhood 엔터티가 완성되면 위 Long agencyId와 Long neighborhoodId를 지우고 교체
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "agency_id", nullable = false)
-    // private Agency agency;
-    //
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "neighborhood_id", nullable = false)
-    // private Neighborhood neighborhood;
+    //     Agency와 Neighborhood 엔터티가 완성되면 위 Long agencyId와 Long neighborhoodId를 지우고 교체
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agency_id", nullable = false)
+    private Agency agency;
+
+//     @ManyToOne(fetch = FetchType.LAZY)
+//     @JoinColumn(name = "neighborhood_id", nullable = false)
+//     private Neighborhood neighborhood;
 
     @NotBlank(message = "매물명은 필수 입력 사항입니다.")
     @Column(name = "name", length = 100, nullable = false)
@@ -94,6 +92,9 @@ public class Property {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private PropertyStatus status;
+
+    @Column(name = "visible", nullable = false)
+    private Boolean visible = true; // 공개/비공개 여부. 기본값은 공개(true)
 
     @Column(name = "ai_price")
     private Long aiPrice; // AI 예상 시세
