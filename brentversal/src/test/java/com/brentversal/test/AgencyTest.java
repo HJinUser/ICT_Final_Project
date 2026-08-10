@@ -1,10 +1,21 @@
 package com.brentversal.test;
 
 import com.brentversal.agency.dto.AgencyResponseDto;
+import com.brentversal.agency.dto.ConsultationRequestDto;
+import com.brentversal.agency.dto.ReviewRequestDto;
 import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.service.AgencyConsultationService;
+import com.brentversal.agency.service.AgencyReviewService;
 import com.brentversal.agency.service.AgencyService;
+import com.brentversal.member.entity.Member;
+import com.brentversal.member.repository.MemberRepository;
+import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,6 +26,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +40,11 @@ public class AgencyTest {
     private final AgencyService agencyService ;
     private final AgencyRepository agencyRepository ;
     private final MockMvc mockMvc ;
+
+    // 상세 페이지(상담 요청·이용자 평가) 확인용
+    private final AgencyConsultationService agencyConsultationService ;
+    private final AgencyReviewService agencyReviewService ;
+    private final MemberRepository memberRepository ;
 
     @Test
     @DisplayName("중개사무소 전체 목록 조회")
@@ -100,4 +117,97 @@ public class AgencyTest {
         mockMvc.perform(get("/agency/99999999"))
                 .andExpect(status().isNotFound());
     }
+
+    // ── 중개사무소 상세 페이지에서 쓰는 API ──────────────────────────
+    @Test
+    @DisplayName("GET /agency/{id} - 상세 화면에 필요한 값이 모두 들어 있어야 한다")
+    void detailApiFields() throws Exception {
+        // 1번은 data.sql 로 넣은 반포역전 공인중개사 (매물 2건이 함께 등록돼 있다)
+        mockMvc.perform(get("/agency/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registrationNo").exists())   // 등록번호
+                .andExpect(jsonPath("$.hours").exists())            // 영업시간
+                .andExpect(jsonPath("$.imageUrls").isArray())       // 갤러리 이미지
+                .andExpect(jsonPath("$.listingCount").exists())     // 담당 매물 전체 건수
+                .andExpect(jsonPath("$.todayNewCount").exists())    // 오늘 신규
+                .andExpect(jsonPath("$.recentProperties").isArray())
+                .andExpect(jsonPath("$.recentProperties[0].priceLabel").exists()) // "전세 4억 9,000"
+                .andExpect(jsonPath("$.recentProperties[0].dong").exists())
+                // 매물 카드를 누르면 매물 상세로 이동해야 하므로 id 가 제대로 들어와야 하고,
+                // 서로 다른 매물이 나와야 한다
+                .andExpect(jsonPath("$.recentProperties[0].id").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.recentProperties[1].id")
+                        .value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.is(1))));
+    }
+
+    @Test
+    @DisplayName("GET /agency/{id}/reviews - 후기 목록은 비회원도 볼 수 있어야 한다")
+    void reviewListApi() throws Exception {
+        mockMvc.perform(get("/agency/1/reviews"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @DisplayName("상담 요청·후기 작성은 로그인하지 않으면 401 이어야 한다")
+    void writeApiNeedsLogin() throws Exception {
+        mockMvc.perform(post("/agency/1/consultations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"문의합니다\",\"agreed\":true}"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/agency/1/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":5,\"content\":\"좋았습니다\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // 상담 요청 -> 후기 작성 자격 -> 후기 작성까지의 흐름을 확인한다.
+    // @Transactional 이 붙어 있어서 테스트가 끝나면 저장한 내용은 모두 되돌려진다(DB 가 더러워지지 않는다).
+    @Test
+    @Transactional
+    @DisplayName("상담을 요청한 회원만 후기를 쓸 수 있다")
+    void consultationAndReviewFlow(){
+        // 이미 가입돼 있는 회원 한 명으로 흐름을 확인한다.
+        // (테스트가 끝나면 @Transactional 로 되돌려지므로 이 회원의 데이터는 남지 않는다)
+        List<Member> members = memberRepository.findAll();
+        Assumptions.assumeFalse(members.isEmpty(), "members 테이블에 회원이 없어 이 테스트는 건너뜁니다.");
+
+        String email = members.get(0).getEmail();
+        Long agencyId = agencyRepository.findAll().get(0).getId();
+
+        // 상담을 요청하기 전에는 후기를 쓸 수 없다
+        Assertions.assertFalse(agencyReviewService.canWrite(agencyId, email));
+
+        // 동의하지 않으면 상담 요청이 저장되지 않는다
+        ConsultationRequestDto notAgreed = new ConsultationRequestDto();
+        notAgreed.setContent("문의합니다");
+        notAgreed.setAgreed(false);
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> agencyConsultationService.create(agencyId, email, notAgreed));
+
+        // 정상적인 상담 요청
+        ConsultationRequestDto request = new ConsultationRequestDto();
+        request.setContent("반포동 전세 매물 상담을 받고 싶습니다.");
+        request.setPreferredDate(LocalDate.now().plusDays(1));
+        request.setAgreed(true);
+        Long consultationId = agencyConsultationService.create(agencyId, email, request);
+        Assertions.assertNotNull(consultationId);
+
+        // 이제 후기를 쓸 수 있다
+        Assertions.assertTrue(agencyReviewService.canWrite(agencyId, email));
+
+        ReviewRequestDto review = new ReviewRequestDto();
+        review.setRating(5);
+        review.setContent("매물 장단점을 솔직하게 설명해 주셨습니다.");
+        Assertions.assertNotNull(agencyReviewService.create(agencyId, email, review));
+
+        // 같은 사무소에 두 번은 쓸 수 없다
+        Assertions.assertFalse(agencyReviewService.canWrite(agencyId, email));
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> agencyReviewService.create(agencyId, email, review));
+
+        System.out.println("후기 개수 : " + agencyReviewService.findByAgency(agencyId).size());
+    }
+
 }

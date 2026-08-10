@@ -1,12 +1,14 @@
 package com.brentversal.common.config;
 
+import com.brentversal.member.service.MemberDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,6 +27,9 @@ public class SecurityConfig {
     // CorsConfig.java에 CorsConfigurationSource의 @Bean으로 객체 생성이 되어 있음
     private final CorsConfigurationSource corsConfigurationSource;
 
+    // 로그인 시 email/password를 실제 members 테이블과 대조하기 위해 필요하다.
+    private final MemberDetailsService memberDetailsService;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -42,10 +47,6 @@ public class SecurityConfig {
                 "/member/login",
                 "/member/refresh", // [refresh] access token 재발급 요청. 만료된 상태에서 호출되므로 인증 없이 허용해야 한다.
                 "/product/**",
-                // 중개사무소 안내는 비회원도 볼 수 있는 화면이라 조회 API 를 인증 없이 허용한다.
-                // 나중에 등록·수정(POST/PUT)을 추가하면 그 경로는 여기서 빼고 인증을 받아야 한다.
-                "/agency",
-                "/agency/**",
                 // 404, 500 등이 발생하면 서블릿 컨테이너가 /error 로 다시 보내는데(ERROR 디스패치),
                 // 이 경로도 시큐리티를 한 번 더 통과한다. 허용해 두지 않으면 모든 오류가
                 // 원래 상태 코드 대신 403 빈 응답으로 바뀌어 프론트에서 원인을 알 수 없게 된다.
@@ -64,6 +65,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
                         .requestMatchers(permitUrls).permitAll()
+                        // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
+                        // 상담 요청·후기 작성(POST)은 아래 anyRequest().authenticated() 에 걸려 로그인이 필요하다.
+                        .requestMatchers(HttpMethod.GET, "/agency", "/agency/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // 인증이 안 된 요청에 대한 응답을 401 로 맞춘다.
@@ -88,10 +92,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // AuthenticationConfiguration.getAuthenticationManager()에 맡기면 등록된 UserDetailsService를
+    // 자동으로 못 찾는 경우가 있어서(Spring Security 7), DaoAuthenticationProvider를 직접 만들어
+    // MemberDetailsService + passwordEncoder를 명시적으로 연결한다.
     @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config
-    ) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(memberDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(provider);
     }
 }
