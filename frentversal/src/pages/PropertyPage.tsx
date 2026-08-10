@@ -5,6 +5,9 @@ import customAxios from "../api/axiosInstance";
 import { API_BASE_URL } from "../config/config";
 import type { User } from "../types/User";
 import type { PropertyDetail } from "../types/PropertyDetail";
+import { PROPERTY_STATUS_LABELS } from "../types/PropertyDetail";
+import type { PropertyResponse, PropertyStatusCode } from "../types/Property";
+import type { AgencyResponse } from "../types/Agency";
 import type { Review } from "../types/Review";
 import "../components/PropertyPage.css";
 
@@ -13,6 +16,21 @@ interface PropertyPageProps {
     mockData?: PropertyDetail;
 }
 
+// 거래유형에 따라 실제로 보여줄 가격을 하나로 뽑아준다 (매매=price, 전세=deposit, 월세=monthlyDeposit 기준)
+const getPrimaryPrice = (property: PropertyResponse): number => {
+    if (property.dealType === "SALE") return property.price ?? 0;
+    if (property.dealType === "JEONSE") return property.deposit ?? 0;
+    return property.monthlyDeposit ?? 0; // MONTHLY: 월세 금액(monthlyRent)은 별도로 같이 표시
+};
+
+// 화면에 보여줄 가격 문자열 (월세는 "보증금/월세" 형태)
+const formatPrice = (property: PropertyResponse): string => {
+    if (property.dealType === "MONTHLY") {
+        return `${(property.monthlyDeposit ?? 0).toLocaleString()}/${(property.monthlyRent ?? 0).toLocaleString()}`;
+    }
+    return getPrimaryPrice(property).toLocaleString();
+};
+
 function PropertyPage({ user, mockData }: PropertyPageProps) {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -20,23 +38,42 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const [property, setProperty] = useState<PropertyDetail | null>(mockData ?? null);
     const [loading, setLoading] = useState(!mockData);
 
-    // 비로그인 사용자가 로그인이 필요한 동작(문의/관심매물/한줄평 작성)을 시도했을 때 띄우는 안내 모달
     const [showLoginModal, setShowLoginModal] = useState(false);
 
-    // 한줄평 작성창 관련 상태
     const [isWritingReview, setIsWritingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewContent, setReviewContent] = useState("");
 
-    // id가 바뀔 때마다(혹은 처음 로딩될 때) 매물 상세 정보를 서버에서 받아옴
+    // id가 바뀔 때마다(혹은 처음 로딩될 때) 매물 상세 정보를 서버에서 받아옴.
+    // PropertyResponse엔 agencyId만 있어서, 중개사무소 전체 정보는 GET /agency/{agencyId}를 한 번 더 호출해서 합친다.
     useEffect(() => {
         if (mockData) return; // 미리보기 모드면 실제 API 호출 생략
 
         const fetchDetail = async () => {
             setLoading(true);
             try {
-                const response = await customAxios.get<PropertyDetail>(`${API_BASE_URL}/property/${id}`);
-                setProperty(response.data);
+                const propertyResponse = await customAxios.get<PropertyResponse>(`${API_BASE_URL}/property/${id}`);
+                const agencyResponse = await customAxios.get<AgencyResponse>(
+                    `${API_BASE_URL}/agency/${propertyResponse.data.agencyId}`
+                );
+
+                setProperty({
+                    ...propertyResponse.data,
+                    // 아래는 아직 백엔드가 안 챙겨주는 화면 전용 필드 (TODO: 도메인 완성되면 실제 값으로 교체)
+                    ownerId: 0, // TODO: agency 담당 팀원이 memberId 노출해주면 그 값으로 교체
+                    agencyDetail: {
+                        id: agencyResponse.data.id,
+                        name: agencyResponse.data.name,
+                        registrationNo: "", // AgencyResponse엔 아직 없는 컬럼
+                        address: agencyResponse.data.address,
+                        phone: agencyResponse.data.phone ?? "",
+                        agentName: agencyResponse.data.brokerName,
+                        available: agencyResponse.data.status === "AVAILABLE",
+                    },
+                    priceHistory: [],
+                    reviews: [],
+                    isFavorited: false,
+                });
             } catch (error) {
                 console.error(error);
             } finally {
@@ -47,7 +84,6 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     }, [id]);
 
     // 로그인한 사용자가 상세 페이지를 열면 "최근 본 매물"에 기록 (최대 10개, 최신순).
-    // 7일 이내인지 걸러서 보여주는 건 목록을 보여주는 화면(favorites.html 쪽)에서 처리할 몫이라 여기선 기록만 함.
     useEffect(() => {
         if (!user || !property) return;
         const KEY = "recentlyViewedProperties";
@@ -58,26 +94,23 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         localStorage.setItem(KEY, JSON.stringify(withoutCurrent.slice(0, 10)));
     }, [user, property?.id]);
 
-    // 비로그인 사용자가 문의/관심매물/한줄평 작성을 시도하면 이 함수를 호출해서 안내 모달을 띄움
     const requireLogin = () => {
         setShowLoginModal(true);
     };
 
-    // 관심매물 저장/취소 토글 (로그인 사용자 전용)
+    // 관심매물 저장/취소 토글 (로그인 사용자 전용) — TODO: 관심매물 엔드포인트 연동 전, 화면 상태만 토글
     const toggleFavorite = async () => {
         if (!property) return;
         await customAxios.post(`${API_BASE_URL}/property/${property.id}/favorite`);
         setProperty({ ...property, isFavorited: !property.isFavorited });
     };
 
-    // 좋아요/싫어요 → 추천 데이터에 반영 (일반 사용자 전용)
     const sendFeedback = async (liked: boolean) => {
         if (!property) return;
         await customAxios.post(`${API_BASE_URL}/property/${property.id}/feedback`, { liked });
         alert(liked ? "좋아요로 추천 데이터에 반영했습니다." : "싫어요로 추천 데이터에 반영했습니다.");
     };
 
-    // "한줄평 작성" 버튼 클릭 — 비로그인이면 로그인 안내, 로그인 상태면 인라인 작성창 열기
     const startWritingReview = () => {
         if (!user) {
             requireLogin();
@@ -86,7 +119,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         setIsWritingReview(true);
     };
 
-    // 한줄평 등록
+    // 한줄평 등록 — TODO: Review 도메인 아직 없음, 엔드포인트 생기면 응답 타입 맞춰서 교체
     const submitReview = async () => {
         if (!property) return;
         const response = await customAxios.post<Review>(`${API_BASE_URL}/property/${property.id}/review`, {
@@ -99,41 +132,42 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         setReviewRating(5);
     };
 
-    // 매물 상태 변경 (게시중/거래진행중/거래완료). 거래완료는 되돌릴 수 없음
-    const handleDealStatusChange = async (newStatus: PropertyDetail["dealStatus"]) => {
-        if (!property || property.dealStatus === "거래완료") return;
-        await customAxios.patch(`${API_BASE_URL}/property/${property.id}/status`, { dealStatus: newStatus });
-        setProperty({ ...property, dealStatus: newStatus });
+    // 거래 상태 변경 (게시중/거래진행중/거래완료). 거래완료·등록취소는 되돌릴 수 없음.
+    // 백엔드가 갱신된 매물 전체를 돌려주므로, 그 응답으로 상태를 맞춘다.
+    const handleStatusChange = async (newStatus: PropertyStatusCode) => {
+        if (!property || property.status === "COMPLETED" || property.status === "CANCELLED") return;
+        const response = await customAxios.patch<PropertyResponse>(
+            `${API_BASE_URL}/property/${property.id}/status`,
+            { status: newStatus }
+        );
+        setProperty({ ...property, status: response.data.status });
     };
 
-    // 공개/비공개 전환
+    // 공개/비공개 전환. 백엔드가 현재 값을 반전시켜서 돌려주므로 body 없이 호출한다.
     const togglePublic = async () => {
         if (!property) return;
-        const nextPublic = !property.isPublic;
-        await customAxios.patch(`${API_BASE_URL}/property/${property.id}/visibility`, { isPublic: nextPublic });
-        setProperty({ ...property, isPublic: nextPublic });
+        const response = await customAxios.patch<PropertyResponse>(`${API_BASE_URL}/property/${property.id}/visibility`);
+        setProperty({ ...property, visible: response.data.visible });
     };
 
-    // 등록 취소 (되돌릴 수 없어서 한 번 더 확인)
+    // 등록 취소 (되돌릴 수 없어서 한 번 더 확인). 전용 /cancel 엔드포인트를 쓴다 (body 없음).
     const cancelListing = async () => {
-        if (!property || property.dealStatus === "등록취소") return;
+        if (!property || property.status === "CANCELLED") return;
         if (!window.confirm("정말 매물 등록을 취소하시겠어요? 취소하면 되돌릴 수 없습니다.")) return;
-        await customAxios.patch(`${API_BASE_URL}/property/${property.id}/status`, { dealStatus: "등록취소" });
-        setProperty({ ...property, dealStatus: "등록취소" });
+        const response = await customAxios.patch<PropertyResponse>(`${API_BASE_URL}/property/${property.id}/cancel`);
+        setProperty({ ...property, status: response.data.status });
     };
 
     if (loading) return <Container className="mt-5">불러오는 중...</Container>;
     if (!property) return <Container className="mt-5">매물 정보를 찾을 수 없습니다.</Container>;
 
-    const role = user?.role; // undefined(비회원) | "USER" | "AGENT" | "ADMIN"
-    const isOwner = user?.role === "AGENT" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
+    const role = user?.role;
+    const isOwner = user?.role === "AGENT" && user.id === property.ownerId;
 
-    // AI 예상 시세와 현재 가격의 차이 (양수면 시세보다 저렴, 음수면 시세보다 비쌈)
-    const priceDiff = property.aiEstimatedPrice - property.price;
+    const priceDiff = (property.aiPrice ?? 0) - getPrimaryPrice(property);
 
     return (
         <Container className="mt-4 mb-5">
-            {/* 상단: 매물명 + 가격 관련 배지 + AI 예상 시세 */}
             <Row className="align-items-center mb-4">
                 <Col>
                     <div className="text-muted small">Property Detail</div>
@@ -142,10 +176,9 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         <Badge bg={priceDiff >= 0 ? "success" : "danger"}>
                             시세보다 {Math.abs(priceDiff).toLocaleString()} {priceDiff >= 0 ? "낮음" : "높음"}
                         </Badge>
-                        {/* 중개인이 가격을 변경했을 때만 표시되는 배지 */}
                         {property.priceStatus && (
-                            <Badge bg={property.priceStatus === "하락" ? "success" : "danger"}>
-                                가격 {property.priceStatus}
+                            <Badge bg={property.priceStatus === "DOWN" ? "success" : "danger"}>
+                                가격 {property.priceStatus === "DOWN" ? "하락" : "상승"}
                             </Badge>
                         )}
                     </div>
@@ -154,30 +187,27 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 <Col md="auto">
                     <Card className="p-3 text-center">
                         <span className="text-muted small">AI 예상 시세</span>
-                        <strong className="fs-3">{property.aiEstimatedPrice.toLocaleString()}</strong>
+                        <strong className="fs-3">{(property.aiPrice ?? 0).toLocaleString()}</strong>
                     </Card>
                 </Col>
             </Row>
 
-            {/* 사진 갤러리: 큰 사진 1개 + 작은 사진 2개 */}
             <Row className="g-2 mb-4">
-                {property.photos.map((url, i) => (
-                    <Col key={i} md={i === 0 ? 6 : 3}>
-                        <img src={url} alt={`매물 사진 ${i + 1}`} className="w-100 gallery-photo" />
+                {property.images.map((image, i) => (
+                    <Col key={image.id} md={i === 0 ? 6 : 3}>
+                        <img src={image.url} alt={`매물 사진 ${i + 1}`} className="w-100 gallery-photo" />
                     </Col>
                 ))}
             </Row>
 
             <Row>
-                {/* 좌측: 본문 정보 */}
                 <Col md={8} className="d-flex flex-column gap-3">
                     <Card className="p-3">
                         <div className="d-flex justify-content-between align-items-start mb-2">
                             <h2 className="mb-0">매물 기본정보</h2>
-                            {/* 관리자에게만: 등록한 중개인 정보 */}
                             {role === "ADMIN" && (
                                 <Badge bg="light" text="dark">
-                                    등록: {property.agency.agentName} 공인중개사
+                                    등록: {property.agencyDetail.agentName} 공인중개사
                                 </Badge>
                             )}
                         </div>
@@ -194,11 +224,11 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         <Row>
                             <Col>
                                 <span className="text-muted small">예상 적정 전세가</span>
-                                <strong className="d-block fs-4">{property.aiEstimatedPrice.toLocaleString()}</strong>
+                                <strong className="d-block fs-4">{(property.aiPrice ?? 0).toLocaleString()}</strong>
                             </Col>
                             <Col className="text-end">
                                 <span className="text-muted small">현재 호가</span>
-                                <strong className="d-block fs-5">{property.price.toLocaleString()}</strong>
+                                <strong className="d-block fs-5">{formatPrice(property)}</strong>
                             </Col>
                         </Row>
                         <div className="d-flex align-items-end gap-2 mt-3 bar-chart">
@@ -206,7 +236,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                 <div key={i} className="text-center">
                                     <div
                                         className="bar"
-                                        style={{ height: `${(point.price / property.aiEstimatedPrice) * 100}px` }}
+                                        style={{ height: `${(point.price / (property.aiPrice || 1)) * 100}px` }}
                                     />
                                     <span className="xs">{point.year}</span>
                                 </div>
@@ -218,12 +248,11 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         <h2>주변환경</h2>
                         <div className="mt-2">
                             {property.tags.map((tag) => (
-                                <Badge key={tag} bg="light" text="dark" className="me-2 mb-2">{tag}</Badge>
+                                <Badge key={tag.id} bg="light" text="dark" className="me-2 mb-2">{tag.name}</Badge>
                             ))}
                         </div>
                     </Card>
 
-                    {/* 일반 사용자에게만: 좋아요/싫어요 (추천 데이터 반영) */}
                     {role === "USER" && (
                         <Card className="p-3">
                             <Row className="align-items-center">
@@ -245,7 +274,6 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                             <Button variant="outline-secondary" size="sm" onClick={startWritingReview}>한줄평 작성</Button>
                         </div>
 
-                        {/* 로그인 사용자가 "한줄평 작성"을 누르면 목록 위에 인라인 작성창이 생김 */}
                         {isWritingReview && (
                             <div className="review-composer mt-3 mb-3">
                                 <Form.Select
@@ -285,15 +313,13 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                     </Card>
                 </Col>
 
-                {/* 우측: 가격 패널 + 역할별 액션 */}
                 <Col md={4}>
                     <Card className="p-3 mb-3">
-                        <Badge bg="light" text="dark" className="mb-2 align-self-start">확인 매물</Badge>
-                        <div className="fs-4 fw-bold">{property.dealType} {property.price.toLocaleString()}</div>
+                        <Badge bg="light" text="dark" className="mb-2 align-self-start">{PROPERTY_STATUS_LABELS[property.status]}</Badge>
+                        <div className="fs-4 fw-bold">{property.dealType} {formatPrice(property)}</div>
                         <p className="text-muted">{property.address} · 관리비 {property.maintenanceFee}만 원</p>
                         <hr />
 
-                        {/* 비회원 */}
                         {!user && (
                             <div className="d-grid gap-2">
                                 <Button variant="primary" onClick={requireLogin}>중개사 문의</Button>
@@ -301,7 +327,6 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                             </div>
                         )}
 
-                        {/* 일반 사용자 */}
                         {role === "USER" && (
                             <div className="d-grid gap-2">
                                 <Link to="/inquiry" className="btn btn-primary">중개사 문의</Link>
@@ -311,45 +336,43 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                             </div>
                         )}
 
-                        {/* 중개인 — 본인 매물일 때만 관리 버튼 노출 */}
                         {isOwner && (
                             <div className="d-grid gap-2">
                                 <Link to={`/property/form/${property.id}`} className="btn btn-primary">매물 수정</Link>
                                 <Form.Select
                                     size="sm"
-                                    value={property.dealStatus}
-                                    disabled={property.dealStatus === "거래완료"}
-                                    onChange={(e) => handleDealStatusChange(e.target.value as PropertyDetail["dealStatus"])}
+                                    value={property.status}
+                                    disabled={property.status === "COMPLETED"}
+                                    onChange={(e) => handleStatusChange(e.target.value as PropertyStatusCode)}
                                 >
-                                    <option value="게시중">게시중</option>
-                                    <option value="거래진행중">거래진행중</option>
-                                    <option value="거래완료">거래완료</option>
+                                    <option value="ACTIVE">게시중</option>
+                                    <option value="IN_PROGRESS">거래진행중</option>
+                                    <option value="COMPLETED">거래완료</option>
                                 </Form.Select>
                                 <Button variant="outline-secondary" onClick={togglePublic}>
-                                    {property.isPublic ? "비공개" : "공개"}
+                                    {property.visible ? "비공개" : "공개"}
                                 </Button>
                                 <Button
                                     variant="outline-danger"
                                     onClick={cancelListing}
-                                    disabled={property.dealStatus === "등록취소"}
+                                    disabled={property.status === "CANCELLED"}
                                 >
                                     등록 취소
                                 </Button>
                             </div>
                         )}
 
-                        {/* 관리자 — 누구 매물이든 항상 관리 가능 */}
                         {role === "ADMIN" && (
                             <div className="d-grid gap-2">
                                 <Link to={`/property/form/${property.id}`} className="btn btn-primary">매물 수정</Link>
                                 <Link to={`/property/edit-request/${property.id}`} className="btn btn-outline-secondary">수정 요청</Link>
                                 <Button variant="outline-secondary" onClick={togglePublic}>
-                                    {property.isPublic ? "비공개" : "공개"}
+                                    {property.visible ? "비공개" : "공개"}
                                 </Button>
                                 <Button
                                     variant="outline-danger"
                                     onClick={cancelListing}
-                                    disabled={property.dealStatus === "등록취소"}
+                                    disabled={property.status === "CANCELLED"}
                                 >
                                     등록 취소
                                 </Button>
@@ -359,16 +382,15 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
                     <Card className="p-3 mb-3">
                         <Badge bg="success">상담 가능</Badge>
-                        <h3 className="mt-2">{property.agency.name}</h3>
+                        <h3 className="mt-2">{property.agencyDetail.name}</h3>
                         <p className="text-muted small mt-2 mb-2">
-                            담당: {property.agency.agentName}<br />
-                            등록번호 {property.agency.registrationNo}<br />
-                            {property.agency.address}<br />
-                            {property.agency.phone}
+                            담당: {property.agencyDetail.agentName}<br />
+                            등록번호 {property.agencyDetail.registrationNo}<br />
+                            {property.agencyDetail.address}<br />
+                            {property.agencyDetail.phone}
                         </p>
-                        {/* 중개사무소 상세로 이동하면서, 그쪽 문의 폼에 매물명이 자동 입력되도록 쿼리로 넘김 */}
                         <Link
-                            to={`/agency/${property.agency.id}?propertyName=${encodeURIComponent(property.name)}`}
+                            to={`/agency/${property.agencyId}?propertyName=${encodeURIComponent(property.name)}`}
                             className="btn btn-outline-primary w-100"
                         >
                             중개사무소 상세
@@ -383,7 +405,6 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 </Col>
             </Row>
 
-            {/* 비로그인 사용자가 문의/관심매물/한줄평 작성을 시도했을 때 뜨는 안내 모달 */}
             <Modal show={showLoginModal} onHide={() => setShowLoginModal(false)} centered>
                 <Modal.Body className="text-center py-4">
                     로그인 해주시기 바랍니다.
