@@ -3,7 +3,8 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-
+# "@" 이 기호는 데코레이터(decorator)임
+# FastAPI에서는 이 데코레이터를 이용해서 "/ 주소로 GET 요청이 들어오면 바로 아래 함수를 실행해라"라고 등록함
 @app.get("/")
 def root():
     return {"message": "Hello"}
