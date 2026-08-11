@@ -38,4 +38,9 @@ public class SignupDto {
     private String agencyName ;
     private String agencyAddress ;
     private String officePhone ;
+
+    // 소셜 회원가입 전용. OAuth2LoginSuccessHandler가 발급한 단기 토큰이며,
+    // socialType/socialUserId를 클라이언트가 직접 적어 보내지 못하게(계정 가로채기 방지)
+    // 이 토큰 하나로만 소셜 정보를 받는다. 값이 있으면 소셜 가입으로 처리한다.
+    private String socialToken ;
 }

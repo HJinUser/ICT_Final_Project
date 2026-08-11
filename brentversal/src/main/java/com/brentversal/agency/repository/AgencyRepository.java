@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 // JpaRepository<관리하고자하는엔터티이름, 해당엔터티의기본키의타입> (Agency의 기본키인 id의 타입은 Long)
 public interface AgencyRepository extends JpaRepository<Agency, Long> {
@@ -23,4 +24,8 @@ public interface AgencyRepository extends JpaRepository<Agency, Long> {
 
     // 관리자 인증이 완료된 중개사무소의 개수 (화면 상단 "인증 중개사무소 OO곳" 표시용)
     long countByVerifiedTrue();
+
+    // 로그인한 중개인이 자기 사무소를 열 때 쓴다 ("내 중개사무소" 페이지).
+    // Agency 가 Member 를 @ManyToOne 으로 갖고 member_id 에 unique 제약이 있어 결과는 최대 1건이다.
+    Optional<Agency> findByMemberId(Long memberId);
 }
