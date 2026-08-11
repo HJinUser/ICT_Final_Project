@@ -1,0 +1,28 @@
+.gallery-photo {
+    height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.bar-chart {
+    height: 140px;
+}
+
+.bar-chart .bar {
+    width: 36px;
+    background: linear-gradient(180deg, #bda2d2, #4B0082);
+    border-radius: 5px 5px 0 0;
+}
+
+.review-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f3;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.ai-band {
+    background: linear-gradient(135deg, #ece6f5, #f8f5fb);
+}

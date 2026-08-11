@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brentversal ERD — 14 tables · MySQL 8</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1b1f24; --muted:#8b95a1; --line:#e4e8ed;
+    --hi:#fff8e1; --hi-line:#f0c419;
+    --g-account:#6366f1; --g-property:#12b886; --g-region:#e8590c; --g-ops:#64748b;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+    --radius:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0f1216; --panel:#171b21; --ink:#e6e9ee; --muted:#8b95a1; --line:#282e37;
+      --hi:#2a2410; --hi-line:#8a6d16;
+      --g-account:#8b8df5; --g-property:#38d9a9; --g-region:#ff922b; --g-ops:#94a3b8;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1b1f24; --muted:#8b95a1; --line:#e4e8ed;
+    --hi:#fff8e1; --hi-line:#f0c419;
+    --g-account:#6366f1; --g-property:#12b886; --g-region:#e8590c; --g-ops:#64748b;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.06);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1216; --panel:#171b21; --ink:#e6e9ee; --muted:#8b95a1; --line:#282e37;
+    --hi:#2a2410; --hi-line:#8a6d16;
+    --g-account:#8b8df5; --g-property:#38d9a9; --g-region:#ff922b; --g-ops:#94a3b8;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:Pretendard,"Malgun Gothic",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1560px; margin:0 auto; padding:28px 20px 80px}
+
+  /* ── header ── */
+  header h1{font-size:24px; font-weight:700; margin:0 0 4px; letter-spacing:-.3px}
+  header h1 small{font-size:13px; font-weight:500; color:var(--muted); margin-left:10px; letter-spacing:0}
+  header p.sub{margin:0 0 18px; color:var(--muted); font-size:13px}
+
+  .legend{display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; margin-bottom:18px; font-size:12.5px; color:var(--muted)}
+  .legend b{display:inline-flex; align-items:center; gap:6px; font-weight:500; color:var(--ink)}
+  .dot{width:10px; height:10px; border-radius:3px; display:inline-block}
+
+  /* ── toolbar ── */
+  .toolbar{
+    position:sticky; top:0; z-index:20; margin:0 -20px 22px; padding:12px 20px;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  }
+  .toolbar input[type=search]{
+    flex:1 1 220px; min-width:180px; max-width:340px; padding:8px 12px;
+    border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink);
+    font-family:inherit; font-size:13px; outline:none;
+  }
+  .toolbar input[type=search]:focus{border-color:var(--g-account)}
+  .chip{
+    padding:6px 12px; border:1px solid var(--line); border-radius:20px; background:var(--panel);
+    color:var(--muted); font-size:12.5px; font-family:inherit; cursor:pointer; white-space:nowrap;
+  }
+  .chip[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  .spacer{flex:1}
+  .count{font-size:12.5px; color:var(--muted); white-space:nowrap}
+
+  /* ── card grid ── */
+  /* 카드 높이 편차가 커서(properties 40컬럼) 그리드 대신 메이슨리 흐름 배치 */
+  .grid{ columns:340px 4; column-gap:18px }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); overflow:hidden; scroll-margin-top:80px;
+    break-inside:avoid; -webkit-column-break-inside:avoid;
+    display:inline-block; width:100%; margin:0 0 18px;
+    transition:box-shadow .15s, border-color .15s, opacity .15s;
+  }
+  .card.dim{opacity:.28}
+  .card.rel{border-color:var(--hi-line)}
+  .card.focus{border-color:var(--hi-line); box-shadow:0 0 0 3px color-mix(in srgb, var(--hi-line) 35%, transparent), var(--shadow)}
+  .card[hidden]{display:none}
+
+  .card > h2{
+    margin:0; padding:11px 14px 10px; border-bottom:1px solid var(--line);
+    border-top:3px solid var(--gc); background:color-mix(in srgb, var(--gc) 7%, var(--panel));
+    font-size:15px; font-weight:700; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:-.2px; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;
+  }
+  .card > h2 span{font-family:inherit; font-size:12px; font-weight:500; color:var(--muted);
+    font-family:Pretendard,"Malgun Gothic",sans-serif}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px}
+  tbody tr{border-bottom:1px solid color-mix(in srgb, var(--line) 55%, transparent)}
+  tbody tr:last-child{border-bottom:0}
+  tbody tr.key{background:color-mix(in srgb, var(--gc) 4%, transparent)}
+  td{padding:5px 8px; vertical-align:top}
+  td.flag{width:46px; text-align:right; white-space:nowrap; padding-left:12px}
+  td.col{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; word-break:break-word}
+  td.col.pk{font-weight:700}
+  td.type{text-align:right; color:var(--muted); font-size:11.5px; white-space:nowrap; padding-right:12px}
+  .note{display:block; color:var(--muted); font-size:11px; font-family:Pretendard,"Malgun Gothic",sans-serif; margin-top:1px}
+
+  .badge{font-size:9.5px; font-weight:700; letter-spacing:.4px; padding:1px 4px; border-radius:3px; vertical-align:1px}
+  .b-pk{background:color-mix(in srgb, var(--g-account) 18%, transparent); color:var(--g-account)}
+  .b-fk{background:color-mix(in srgb, var(--g-property) 18%, transparent); color:var(--g-property)}
+  .b-uk{background:color-mix(in srgb, var(--g-region) 18%, transparent); color:var(--g-region)}
+
+  a.ref{
+    color:inherit; text-decoration:none; border-bottom:1px dashed var(--muted); cursor:pointer;
+  }
+  a.ref:hover{border-bottom-style:solid; color:var(--g-property)}
+  a.ref::after{content:" ↗"; font-size:9px; color:var(--muted)}
+
+  /* ── relations ── */
+  section.rels{margin-top:44px}
+  section.rels h2{font-size:17px; margin:0 0 4px}
+  section.rels p{margin:0 0 16px; color:var(--muted); font-size:13px}
+  .rel-grid{display:grid; gap:8px; grid-template-columns:repeat(auto-fill, minmax(340px,1fr))}
+  .rel-row{
+    display:flex; align-items:center; gap:8px; padding:9px 12px; background:var(--panel);
+    border:1px solid var(--line); border-radius:8px; font-size:12.5px;
+  }
+  .rel-row code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px}
+  .card-note{
+    margin-top:32px; padding:14px 16px; border-radius:10px; font-size:13px;
+    background:color-mix(in srgb, var(--g-region) 8%, var(--panel));
+    border:1px solid color-mix(in srgb, var(--g-region) 30%, var(--line));
+  }
+  .card-note b{color:var(--g-region)}
+  .card-note code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px}
+
+  .empty{padding:48px 0; text-align:center; color:var(--muted)}
+  @media (max-width:640px){
+    .wrap{padding:20px 14px 60px}
+    .grid{grid-template-columns:1fr}
+  }
+  @media print{
+    .toolbar{display:none} body{background:#fff} .card{break-inside:avoid; box-shadow:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Brentversal ERD <small>14 tables · MySQL 8</small></h1>
+    <p class="sub">전세 매물 플랫폼 데이터베이스 설계. 컬럼의 <b>FK</b>를 클릭하면 참조 테이블로 이동하고, 카드에 마우스를 올리면 연결된 테이블이 강조됩니다.</p>
+    <div class="legend">
+      <b><i class="dot" style="background:var(--g-account)"></i>회원 · 중개사무소</b>
+      <b><i class="dot" style="background:var(--g-property)"></i>매물</b>
+      <b><i class="dot" style="background:var(--g-region)"></i>지역 · 태그</b>
+      <b><i class="dot" style="background:var(--g-ops)"></i>운영 · CS</b>
+      <span style="margin-left:auto">PK 기본키 · FK 외래키 · UK 유니크</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="테이블 · 컬럼 검색 (예: price, member_id)" autocomplete="off">
+    <button class="chip" data-g="all" aria-pressed="true">전체</button>
+    <button class="chip" data-g="account" aria-pressed="false">회원·사무소</button>
+    <button class="chip" data-g="property" aria-pressed="false">매물</button>
+    <button class="chip" data-g="region" aria-pressed="false">지역·태그</button>
+    <button class="chip" data-g="ops" aria-pressed="false">운영·CS</button>
+    <span class="spacer"></span>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>검색 결과가 없습니다.</div>
+
+  <section class="rels">
+    <h2>관계</h2>
+    <p><code>1</code> = 한 건, <code>N</code> = 여러 건, <code>0..1</code> = 없거나 한 건</p>
+    <div class="rel-grid" id="rels"></div>
+
+    <div class="card-note">
+      <b>다형 참조 주의</b> — <code>tag_links</code>, <code>reviews</code>, <code>recommendations</code>, <code>tickets</code>의
+      <code>target_id</code>는 대상 테이블이 여러 개라 FK 제약을 걸 수 없습니다.
+      대상 삭제 시 고아 레코드가 남으므로 <b>서비스 레이어에서 함께 삭제</b>하거나,
+      매물은 물리 삭제 대신 <code>status = CANCELED</code>로만 처리합니다.
+    </div>
+  </section>
+</div>
+
+<script>
+const G = {account:'회원·중개사무소', property:'매물', region:'지역·태그', ops:'운영·CS'};
+
+// [flags, name, type, note, refTable]
+const TABLES = [
+ {id:'members', ko:'회원', g:'account', desc:'일반/중개인/관리자 계정 + 패스워드리스', cols:[
+  ['PK','member_id','bigint'],
+  ['UK','login_id','varchar(50)','아이디'],
+  ['UK','email','varchar(100)','이메일'],
+  ['','password','varchar(255)','BCrypt · 소셜은 NULL'],
+  ['','name','varchar(50)'],
+  ['','nickname','varchar(50)','프로필 표시명'],
+  ['','phone','varchar(20)'],
+  ['','address','varchar(255)'],
+  ['','role','enum','USER / AGENT / ADMIN'],
+  ['','status','enum','ACTIVE / SUSPENDED / WITHDRAWN / DORMANT'],
+  ['','provider','enum','LOCAL / KAKAO / NAVER / GOOGLE'],
+  ['','provider_uid','varchar(100)'],
+  ['','terms_agreed','boolean'],
+  ['','refresh_token','varchar(1000)'],
+  ['UK','credential_key','varchar(255)','패스워드리스 · NULL = 미등록'],
+  ['','public_key','text','패스워드리스 공개키'],
+  ['','sign_count','bigint'],
+  ['','regdate','date'],
+ ]},
+ {id:'user_preferences', ko:'취향 설정', g:'account', desc:'취향 초기 설정(예산·방·면적·지역)', cols:[
+  ['PK','preference_id','bigint'],
+  ['FK UK','member_id','bigint','','members'],
+  ['','deal_types','varchar(50)','SALE,JEONSE,MONTHLY'],
+  ['','min_price','int','만원'],
+  ['','max_price','int','만원'],
+  ['','room_counts','varchar(20)','1,2,3+'],
+  ['','min_area','decimal','m²'],
+  ['','max_area','decimal','m²'],
+  ['','region_ids','varchar(255)','선호 지역 id 콤마'],
+  ['','updated_at','datetime'],
+ ]},
+ {id:'agencies', ko:'중개사무소 + 중개인', g:'account', desc:'중개인 1명 = 사무소 1개 (1:1)', cols:[
+  ['PK','agency_id','bigint'],
+  ['FK UK','member_id','bigint','중개인 계정 1:1','members'],
+  ['','name','varchar(100)','사무소명'],
+  ['UK','registration_no','varchar(50)','중개사 등록번호'],
+  ['','owner_name','varchar(50)','대표 이름'],
+  ['','approval_status','enum','PENDING / APPROVED / REJECTED'],
+  ['','reject_reason','varchar(255)'],
+  ['','applied_at','datetime','신청일'],
+  ['','approved_at','datetime'],
+  ['FK','region_id','bigint','','regions'],
+  ['','address','varchar(255)'],
+  ['','detail_address','varchar(255)'],
+  ['','latitude','decimal'],
+  ['','longitude','decimal'],
+  ['','phone','varchar(20)'],
+  ['','business_hours','varchar(100)'],
+  ['','consult_type','varchar(50)','방문 / 전화 / 온라인'],
+  ['','description','text','소개글'],
+  ['','amenities','varchar(255)','편의 콤마'],
+  ['','image_urls','text','갤러리 URL 콤마'],
+  ['','avg_rating','decimal','평균 평점(집계)'],
+  ['','property_count','int','등록 매물 수(집계)'],
+ ]},
+ {id:'properties', ko:'매물 (핵심)', g:'property', desc:'매물 + 사진 3장 + 옵션 + AI 예측', cols:[
+  ['PK','property_id','bigint'],
+  ['FK','agency_id','bigint','등록 사무소 = 중개인','agencies'],
+  ['FK','region_id','bigint','동 레벨','regions'],
+  ['','complex_name','varchar(100)','단지명(오피스텔 그룹핑)'],
+  ['','title','varchar(100)','매물명'],
+  ['','summary','varchar(255)','한줄 소개'],
+  ['','property_type','enum','ONE_TWO_ROOM / APARTMENT / HOUSE_VILLA / OFFICETEL'],
+  ['','deal_type','enum','SALE / JEONSE / MONTHLY'],
+  ['','sale_price','int','매매가(만원)'],
+  ['','deposit','int','전세가 · 보증금'],
+  ['','monthly_rent','int','월세'],
+  ['','maintenance_fee','int','관리비'],
+  ['','maintenance_includes','varchar(100)','WATER,INTERNET,TV,COMMON,ETC'],
+  ['','area','decimal','전용면적 m²'],
+  ['','room_count','int'],
+  ['','bathroom_count','int'],
+  ['','floor','int'],
+  ['','total_floor','int'],
+  ['','move_in_type','enum','IMMEDIATE / DATE / NEGOTIABLE'],
+  ['','move_in_date','date'],
+  ['','options','varchar(255)','옵션 코드 콤마'],
+  ['','address','varchar(255)'],
+  ['','detail_address','varchar(255)'],
+  ['','latitude','decimal'],
+  ['','longitude','decimal'],
+  ['','main_image_url','varchar(255)','메인 사진'],
+  ['','sub_image_url1','varchar(255)'],
+  ['','sub_image_url2','varchar(255)'],
+  ['','predicted_price','int','AI 예측 시세'],
+  ['','price_gap_rate','decimal','현재가 대비 편차 %'],
+  ['','price_evaluation','enum','UNDERVALUED / FAIR / OVERVALUED'],
+  ['','predicted_at','datetime'],
+  ['','status','enum','DRAFT / PENDING / REJECTED / ACTIVE / IN_PROGRESS / COMPLETED / CANCELED'],
+  ['','is_private','boolean','중개인 비공개'],
+  ['','is_blinded','boolean','관리자 숨김'],
+  ['','reject_reason','varchar(255)'],
+  ['','draft_step','int','임시저장 단계 1~6'],
+  ['','view_count','int'],
+  ['','created_at','datetime','등록일 (NEW 배지)'],
+  ['','updated_at','datetime'],
+ ]},
+ {id:'property_interactions', ko:'관심 · 좋아요', g:'property', desc:'하트 + 좋아요/싫어요 통합', cols:[
+  ['PK','interaction_id','bigint'],
+  ['FK','member_id','bigint','','members'],
+  ['FK','property_id','bigint','','properties'],
+  ['','type','enum','FAVORITE / LIKE / DISLIKE'],
+  ['','created_at','datetime'],
+ ]},
+ {id:'regions', ko:'지역 계층 + 동네 상세', g:'region', desc:'시/도–구–동 자기참조 + 동네 정보', cols:[
+  ['PK','region_id','bigint'],
+  ['FK','parent_id','bigint','자기참조','regions'],
+  ['','level','enum','SIDO / SIGUNGU / DONG'],
+  ['','name','varchar(50)','연남동'],
+  ['','code','varchar(20)','법정동 코드'],
+  ['','latitude','decimal'],
+  ['','longitude','decimal'],
+  ['','intro_line','varchar(255)','동네 한줄 소개'],
+  ['','description','text','동네 소개글'],
+  ['','thumbnail_url','varchar(255)'],
+  ['','polygon_path','text','카카오맵 영역 좌표'],
+  ['','satisfaction_score','decimal','생활 만족도'],
+  ['','mood_score','decimal'],
+  ['','living_score','decimal'],
+  ['','transport_score','decimal'],
+  ['','nature_score','decimal'],
+  ['','avg_jeonse_price','int','평균 전세가'],
+  ['','property_count','int','매물 수(집계)'],
+  ['','view_count','int','인기순 정렬'],
+  ['','keyword_cloud','text','한줄평 마이닝 결과 JSON'],
+  ['','is_hidden','boolean','관리자 숨김'],
+ ]},
+ {id:'tags', ko:'태그 마스터', g:'region', desc:'분위기 / 생활 / 교통 / 자연 / 매물', cols:[
+  ['PK','tag_id','bigint'],
+  ['','name','varchar(50)','역세권, 조용함, 신축…'],
+  ['','category','enum','MOOD / LIVING / TRANSPORT / NATURE / PROPERTY'],
+  ['','search_count','int','인기 태그 정렬'],
+ ]},
+ {id:'tag_links', ko:'태그 매핑', g:'region', desc:'태그 ↔ 매물 · 동네 · 취향', cols:[
+  ['PK','link_id','bigint'],
+  ['FK','tag_id','bigint','','tags'],
+  ['','target_type','enum','PROPERTY / REGION / PREFERENCE'],
+  ['','target_id','bigint','다형 참조 (FK 제약 불가)'],
+ ]},
+ {id:'member_activities', ko:'검색 · 열람 이력', g:'ops', desc:'최근 본 매물 + 검색 기록', cols:[
+  ['PK','activity_id','bigint'],
+  ['FK','member_id','bigint','','members'],
+  ['','type','enum','VIEW / SEARCH'],
+  ['FK','property_id','bigint','VIEW일 때','properties'],
+  ['','keyword','varchar(100)','SEARCH일 때'],
+  ['FK','region_id','bigint','검색 지역','regions'],
+  ['','created_at','datetime','7일 · 10건 제한'],
+ ]},
+ {id:'reviews', ko:'리뷰 · 한줄평', g:'ops', desc:'매물 + 동네 + 사무소 리뷰 통합', cols:[
+  ['PK','review_id','bigint'],
+  ['FK','member_id','bigint','작성자','members'],
+  ['','target_type','enum','PROPERTY / REGION / AGENCY'],
+  ['','target_id','bigint','다형 참조 (FK 제약 불가)'],
+  ['','rating','int','1~5 · 한줄평은 NULL'],
+  ['','content','text'],
+  ['','reply_content','text','답변 (NULL = 미답변)'],
+  ['','replied_at','datetime'],
+  ['','created_at','datetime'],
+ ]},
+ {id:'recommendations', ko:'AI 추천', g:'ops', desc:'매물 · 동네 추천 결과', cols:[
+  ['PK','recommendation_id','bigint'],
+  ['FK','member_id','bigint','','members'],
+  ['','target_type','enum','PROPERTY / REGION'],
+  ['','target_id','bigint','다형 참조 (FK 제약 불가)'],
+  ['','match_score','decimal','AI 적합도 0~100'],
+  ['','rank','int','동네 1~3'],
+  ['','reason','varchar(255)','추천 이유'],
+  ['','generated_at','datetime'],
+ ]},
+ {id:'tickets', ko:'문의 · 신고 · 수정요청', g:'ops', desc:'제목 + 내용 + 상태 + 답변 1회 구조 통합', cols:[
+  ['PK','ticket_id','bigint'],
+  ['','type','enum','INQUIRY / REPORT / MODIFY_REQUEST'],
+  ['FK','writer_id','bigint','작성자','members'],
+  ['FK','receiver_id','bigint','수신자 · NULL = 관리자','members'],
+  ['FK','property_id','bigint','대상 매물 · NULL 가능','properties'],
+  ['','title','varchar(200)'],
+  ['','content','text'],
+  ['','preferred_date','date','상담 희망일'],
+  ['','status','enum','WAITING / ANSWERED / RESOLVED / REJECTED / CLOSED'],
+  ['','answer_content','text','답변'],
+  ['','answered_at','datetime'],
+  ['','is_visible','boolean','신고 목록 노출 여부'],
+  ['','created_at','datetime'],
+ ]},
+ {id:'notices', ko:'공지사항', g:'ops', desc:'관리자 작성 공지', cols:[
+  ['PK','notice_id','bigint'],
+  ['FK','admin_id','bigint','','members'],
+  ['','title','varchar(200)'],
+  ['','content','text'],
+  ['','view_count','int'],
+  ['','created_at','datetime'],
+ ]},
+ {id:'notifications', ko:'알림', g:'ops', desc:'상단바 알림 · 알림 내역', cols:[
+  ['PK','notification_id','bigint'],
+  ['FK','member_id','bigint','수신자','members'],
+  ['FK','notice_id','bigint','공지 발송 시','notices'],
+  ['','type','enum','NOTICE / ANSWER / REPORT_RESULT / MODIFY_REQUEST / AGENT_APPROVAL'],
+  ['','title','varchar(200)'],
+  ['','content','text'],
+  ['','link_url','varchar(255)','클릭 시 이동'],
+  ['','ref_id','bigint','원본 레코드 id'],
+  ['','is_read','boolean'],
+  ['','created_at','datetime'],
+ ]},
+];
+
+const RELS = [
+  ['members','1','0..1','user_preferences','취향'],
+  ['members','1','0..1','agencies','중개인 1:1 소유'],
+  ['members','1','N','member_activities','검색 · 열람'],
+  ['members','1','N','property_interactions','관심 · 반응'],
+  ['members','1','N','reviews','작성'],
+  ['members','1','N','tickets','문의 · 신고'],
+  ['members','1','N','recommendations','추천 수신'],
+  ['members','1','N','notifications','알림 수신'],
+  ['members','1','N','notices','관리자 작성'],
+  ['regions','1','N','regions','상위–하위 (자기참조)'],
+  ['regions','1','N','properties','소재지'],
+  ['regions','1','N','agencies','소재지'],
+  ['regions','1','N','member_activities','검색 지역'],
+  ['agencies','1','N','properties','등록'],
+  ['properties','1','N','property_interactions',''],
+  ['properties','1','N','member_activities',''],
+  ['properties','1','N','tickets','문의 · 신고 대상'],
+  ['tags','1','N','tag_links',''],
+  ['notices','1','N','notifications','발송'],
+];
+
+/* 관계 그래프 (양방향) */
+const NEIGHBORS = {};
+TABLES.forEach(t => NEIGHBORS[t.id] = new Set());
+RELS.forEach(([a,,,b]) => { NEIGHBORS[a]?.add(b); NEIGHBORS[b]?.add(a); });
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ── 카드 렌더 ── */
+const grid = document.getElementById('grid');
+grid.innerHTML = TABLES.map(t => {
+  const rows = t.cols.map(([flags, name, type, note, ref]) => {
+    const badges = (flags||'').split(' ').filter(Boolean)
+      .map(f => `<span class="badge b-${f.toLowerCase()}">${f}</span>`).join(' ');
+    const isKey = !!flags;
+    const colHtml = ref
+      ? `<a class="ref" href="#${ref}" data-ref="${ref}">${esc(name)}</a>`
+      : esc(name);
+    return `<tr class="${isKey?'key':''}">
+      <td class="flag">${badges}</td>
+      <td class="col ${flags.includes('PK')?'pk':''}">${colHtml}${note?`<span class="note">${esc(note)}</span>`:''}</td>
+      <td class="type">${esc(type)}</td>
+    </tr>`;
+  }).join('');
+  return `<article class="card" id="${t.id}" data-g="${t.g}" style="--gc:var(--g-${t.g})">
+    <h2>${t.id} <span>${esc(t.ko)}</span></h2>
+    <table><tbody>${rows}</tbody></table>
+  </article>`;
+}).join('');
+
+/* ── 관계 렌더 ── */
+document.getElementById('rels').innerHTML = RELS.map(([a,l,r,b,label]) =>
+  `<div class="rel-row">
+     <code><a class="ref" href="#${a}" data-ref="${a}">${a}</a></code>
+     <span style="color:var(--muted)">${l} —— ${r}</span>
+     <code><a class="ref" href="#${b}" data-ref="${b}">${b}</a></code>
+     ${label?`<span style="margin-left:auto;color:var(--muted);font-size:11.5px">${esc(label)}</span>`:''}
+   </div>`).join('');
+
+/* ── 검색 + 그룹 필터 ── */
+const q = document.getElementById('q');
+const countEl = document.getElementById('count');
+const emptyEl = document.getElementById('empty');
+let group = 'all';
+
+function apply(){
+  const term = q.value.trim().toLowerCase();
+  let shown = 0;
+  TABLES.forEach(t => {
+    const card = document.getElementById(t.id);
+    const okG = group === 'all' || t.g === group;
+    const hay = (t.id + ' ' + t.ko + ' ' + t.desc + ' ' +
+      t.cols.map(c => c[1] + ' ' + (c[3]||'')).join(' ')).toLowerCase();
+    const okQ = !term || hay.includes(term);
+    const on = okG && okQ;
+    card.hidden = !on;
+    if (on) shown++;
+  });
+  countEl.textContent = `${shown} / ${TABLES.length} tables`;
+  emptyEl.hidden = shown > 0;
+}
+
+q.addEventListener('input', apply);
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    group = btn.dataset.g;
+    document.querySelectorAll('.chip').forEach(b =>
+      b.setAttribute('aria-pressed', String(b === btn)));
+    apply();
+  });
+});
+apply();
+
+/* ── 호버 시 연결 테이블 강조 ── */
+const cards = [...document.querySelectorAll('.card')];
+function highlight(id){
+  const near = NEIGHBORS[id] || new Set();
+  cards.forEach(c => {
+    c.classList.toggle('focus', c.id === id);
+    c.classList.toggle('rel', near.has(c.id));
+    c.classList.toggle('dim', c.id !== id && !near.has(c.id));
+  });
+}
+function clearHl(){ cards.forEach(c => c.classList.remove('focus','rel','dim')); }
+cards.forEach(c => {
+  c.addEventListener('mouseenter', () => highlight(c.id));
+  c.addEventListener('mouseleave', clearHl);
+});
+
+/* ── FK 클릭 → 대상 테이블로 이동 + 순간 강조 ── */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a.ref');
+  if (!a) return;
+  const target = document.getElementById(a.dataset.ref);
+  if (!target) return;
+  if (target.hidden){ group = 'all'; q.value = '';
+    document.querySelectorAll('.chip').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.g === 'all')));
+    apply();
+  }
+  target.scrollIntoView({behavior:'smooth', block:'start'});
+  highlight(target.id);
+  setTimeout(clearHl, 1600);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+/* 반응형 보정 스타일시트
+ *
+ * common.css 는 프로토타입(HTML)에서 그대로 가져온 파일이라 데스크톱(1180px 이상) 전용으로 만들어져 있습니다.
+ * 원본을 다시 받아올 수 있게 common.css 는 손대지 않고, 화면 크기별 보정만 이 파일에 모았습니다.
+ * common.css 보다 나중에 import 해야 이 파일의 규칙이 적용됩니다. (AgencyPage.tsx 참고)
+ *
+ * 기준점
+ *   1280px 이상 : 큰 화면    - 내용이 가운데 1240px 에 갇히지 않고 화면 폭을 따라 넓어짐
+ *   1100px 이하 : 태블릿 가로 - 카드 4열 -> 2열
+ *    820px 이하 : 태블릿 세로 - 좌우로 나뉘던 영역을 위아래로 쌓음
+ *    620px 이하 : 모바일     - 모든 것을 1열로, 여백과 글자 크기 축소
+ */
+
+/* 원본은 body 에 min-width 가 걸려 있어서 화면이 좁아지면 가로 스크롤이 생깁니다.
+ * 반응형의 출발점이라 가장 먼저 풀어 줍니다. (common.css 의 1200px 미디어쿼리 값도 함께 덮어씁니다) */
+body {
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+/* 지도 영역. 인라인 style 대신 여기서 높이를 정해야 화면 크기별로 조절할 수 있습니다. */
+.agency-map {
+    height: 300px;
+    position: relative;
+    overflow: hidden;
+    background: #e9e7e4;
+}
+
+/* ── 큰 화면 ─────────────────────────────────── */
+/* common.css 는 내용 폭이 --wrap(1240px)으로 고정돼 있어서, 모니터가 커져도 가운데만 쓰고
+ * 양옆이 계속 비어 보입니다. 화면 폭의 92% 까지(최대 1680px) 같이 넓어지도록 풀어 줍니다.
+ * min() 이라 1830px 이 넘어가면 1680px 에서 멈춥니다. 한 줄이 너무 길면 오히려 읽기 힘들어서입니다. */
+@media (min-width: 1280px) {
+    .wrap {
+        max-width: min(1680px, 92vw);
+    }
+
+    /* 카드도 넓어진 폭을 나눠 갖도록 간격을 조금 키웁니다 */
+    .grid-4 {
+        gap: 22px;
+    }
+
+    /* 넓은 화면에서는 지도도 같이 높아지는 편이 자연스럽습니다 */
+    .agency-map {
+        height: 380px;
+    }
+}
+
+/* ── 태블릿 가로 ─────────────────────────────── */
+@media (max-width: 1100px) {
+    .grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* 소개 문구와 통계 상자를 위아래로 쌓습니다 */
+    .page-hero .wrap {
+        min-height: 0;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
+
+    .hero-stat {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* 중개사무소 상세 화면의 2단 배치(본문 + 오른쪽 상담 요청).
+ * 원본은 오른쪽 칸이 370px 로 고정이라, 화면이 좁아지면 왼쪽 본문이 0px 까지 찌그러진다.
+ * 좁은 화면에서는 위아래로 쌓고, 상담 요청 칸이 화면을 따라다니지 않도록 sticky 도 해제한다. */
+@media (max-width: 1000px) {
+    .detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .detail-side {
+        position: static;
+    }
+}
+
+/* ── 태블릿 세로 ─────────────────────────────── */
+@media (max-width: 820px) {
+    .section {
+        padding: 48px 0;
+    }
+
+    /* 제목과 오른쪽 버튼이 한 줄에 안 들어가므로 아래로 내립니다 */
+    .section-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    /* 검색창이 너무 좁아지지 않도록 한 줄을 다 쓰게 합니다 */
+    .toolbar .search-box {
+        max-width: none;
+        flex: 1 1 100%;
+    }
+
+    .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .agency-map {
+        height: 260px;
+    }
+}
+
+/* ── 모바일 ──────────────────────────────────── */
+@media (max-width: 620px) {
+    .wrap {
+        padding: 0 16px;
+    }
+
+    .section {
+        padding: 32px 0;
+    }
+
+    h1 {
+        font-size: 26px;
+    }
+
+    h2 {
+        font-size: 21px;
+    }
+
+    /* 카드와 푸터를 1열로 */
+    .grid-4,
+    .grid-3,
+    .grid-2,
+    .footer-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* 검색 입력·지역 선택·버튼을 각각 한 줄씩 */
+    .toolbar > * {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    /* 담당 매물 카드의 사진 칸(118px 고정)이 좁은 화면에서 너무 크므로 줄인다 */
+    .property-row {
+        grid-template-columns: 92px 1fr;
+    }
+
+    .agency-map {
+        height: 220px;
+    }
+
+    /* 하단 안내 문구가 좌우로 벌어지지 않도록 쌓습니다 */
+    .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    /* 챗봇 창이 화면 밖으로 나가지 않게 좌우 여백만 남기고 채웁니다 */
+    .chat-panel {
+        right: 12px;
+        left: 12px;
+        bottom: 78px;
+        width: auto;
+    }
+
+    .chat-fab {
+        right: 16px;
+        bottom: 16px;
+    }
+}

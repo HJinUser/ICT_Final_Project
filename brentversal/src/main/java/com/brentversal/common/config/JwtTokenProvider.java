@@ -1,0 +1,178 @@
+package com.brentversal.common.config;
+
+import com.brentversal.member.entity.Member;
+import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+import java.util.Date;
+
+@Component
+public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
+
+    private final PrivateKey privateKey;
+    private final PublicKey publicKey;
+
+    public JwtTokenProvider(
+            // 배포할때 사용할 jwt키를 가져오기
+            @Value("${jwt.private-key:}") String privateKeyContent,
+            @Value("${jwt.public-key:}") String publicKeyContent,
+            @Value("${jwt.private-key-path}") String privateKeyPath,
+            @Value("${jwt.public-key-path}") String publicKeyPath
+    ) {
+        try { // 키가 존재하면 키 사용, 키가 없으면 키의 경로로 키를 가져옴
+            this.privateKey = loadPrivateKey(resolveKey(privateKeyContent, privateKeyPath));
+            this.publicKey = loadPublicKey(resolveKey(publicKeyContent, publicKeyPath));
+        } catch (Exception e) {
+            throw new IllegalStateException("JWT 키 파일을 읽는 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    // 키가 있으면 키를 쓰고 키가 없으면 키의 경로를 가져와서 키를 가져오는 함수
+    // 이 클래스의 맴버변수의 값을 어떤걸로 넣을지를 결정함
+    // 내용이 있으면 그대로, 없으면 경로에서 파일을 읽어 내용 반환
+    private String resolveKey(String content, String path) throws Exception {
+        if (content != null && !content.isBlank()) {
+            return content;
+        }
+        // 로컬의 경로에 있는 파일을 가져와서 그 내용을 string으로 만들어서 후 처리 안하게 함
+        return Files.readString(Path.of(path));
+    }
+
+    private PrivateKey loadPrivateKey(String privateKeyContent) throws Exception {
+        String key = privateKeyContent
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s", "");
+
+        byte[] decodedKey = Base64.getDecoder().decode(key);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decodedKey);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePrivate(keySpec);
+    }
+
+    private PublicKey loadPublicKey(String publicKeyContent) throws Exception {
+        System.out.println("현재 실행 위치 = " + System.getProperty("user.dir"));
+
+        String key = publicKeyContent
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s", "");
+
+        byte[] decodedKey = Base64.getDecoder().decode(key);
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedKey);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePublic(keySpec);
+    }
+
+    @Value("${jwt.expiration}")
+    private long expiration; // 만료 1 시간
+
+    // refresh 토큰 파트
+    // 만료 시간(ms)
+    // application.properties 의 jwt.refresh-expiration 값을 주입받는다.
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    // 토큰 종류를 구분하기 위한 claim 이름과 값.
+    // access 와 refresh 를 같은 키로 서명하기 때문에, 이 값이 없으면 서버가 둘을 구별할 수 없다.
+    public static final String TOKEN_TYPE_CLAIM = "type";
+    public static final String TYPE_ACCESS = "access";
+    public static final String TYPE_REFRESH = "refresh";
+    public static final String TYPE_SOCIAL_SIGNUP = "social_signup";
+
+    // 소셜 로그인은 성공했지만(카카오 인증은 통과) 아직 우리 DB에 없는 사람에게 발급하는 단기 토큰.
+    // 회원가입 완료 화면에서 이 토큰을 다시 제출해야 socialType/socialUserId를 인정해 준다.
+    // 이렇게 하지 않으면 아무나 임의의 socialUserId를 회원가입 요청에 적어 보내
+    // 다른 사람의 카카오 계정을 가로챌 수 있다.
+    private static final long SOCIAL_SIGNUP_EXPIRATION = 10 * 60 * 1000L; // 10분
+
+    public String createSocialSignupToken(String socialType, String socialUserId, String socialEmail){
+        return Jwts.builder()
+                .subject(socialUserId) // 토큰 주인 = 소셜 제공자가 알려준 고유 ID
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + SOCIAL_SIGNUP_EXPIRATION))
+                .claim("socialType", socialType) // 어느 제공자(KAKAO 등)인지
+                .claim("socialEmail", socialEmail) // 제공자가 이메일을 줬다면 참고용으로 함께 담는다
+                .claim(TOKEN_TYPE_CLAIM, TYPE_SOCIAL_SIGNUP)
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
+
+    // MemberController 클래스에서 인증 성공한 사용자를 위하여 로그인 증명서(토큰)를 발급하는 데 사용될 예정입니다.
+    public String createToken(Member member){ // 매개 변수 : 토큰 안에 사용자 식별값 저장
+        return Jwts.builder()
+                .subject(member.getEmail()) // 토큰 주인
+                .issuedAt(new Date()) // 토큰 발급 시간
+                .expiration(new Date(System.currentTimeMillis() + expiration)) // 토큰 만료 시간
+                .claim("role", member.getRole().name()) // 권한 정보
+                .claim(TOKEN_TYPE_CLAIM, TYPE_ACCESS) // 이 토큰은 API 인증용(access) 이라고 명시
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact(); // 최종 문자열 생성하기
+    }
+
+    // refresh token 을 발급하는 메소드 
+    // access token 이 만료됐을 때 새 access token 을 재발급받는 용도로만 쓴다.
+    public String createRefreshToken(Member member){ // 토큰 주인을 식별할 회원 정보
+        return Jwts.builder() // JWT 빌더를 시작
+                .subject(member.getEmail()) // 토큰 주인에 이메일을 넣는다 - 나중에 누구의 refresh 인지 식별
+                .issuedAt(new Date()) // 토큰 발급 시각을 현재 시간으로 기록한다
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration)) // 만료 시각 = 현재시각 + refresh 만료기간
+                .claim(TOKEN_TYPE_CLAIM, TYPE_REFRESH) // 이 토큰은 재발급 전용(refresh) 이라고 명시
+                .signWith(privateKey, Jwts.SIG.RS256) // access token 과 동일한 비밀키로 서명한다(위조 방지)
+                .compact(); // 위 설정들을 하나의 JWT 문자열로 직렬화하여 반환한다
+    }
+
+    // 토큰에 새겨진 종류(access / refresh)가 기대한 값과 같은지 확인한다.
+    // 서명이 같아도 용도가 다르면 거부하기 위한 검사이며, 반드시 validateToken() 통과 후에 호출한다.
+    public boolean isTokenType(String token, String expectedType){
+        try {
+            return expectedType.equals(getClaims(token).get(TOKEN_TYPE_CLAIM, String.class));
+        } catch (Exception e) { // 파싱 자체가 실패하면 종류를 알 수 없으므로 불일치로 본다
+            return false;
+        }
+    }
+
+    public String getEmail(String token){ // JWT 토큰에서 사용자 정보 가져 오기
+        return this.getClaims(token).getSubject() ;
+    }
+
+    public Claims getClaims(String token){
+        return Jwts.parser()
+                .verifyWith(publicKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public boolean validateToken(String token){ // JWT 토큰 유효성 검사
+        try {
+            Jwts.parser()
+                    .verifyWith(publicKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return true;
+
+        } catch (ExpiredJwtException e) {
+            System.out.println("토큰 만료됨");
+
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+            System.out.println("토큰 서명/형식 오류");
+
+        } catch (Exception e) {
+            System.out.println("기타 토큰 오류");
+        }
+        return false ;
+    }
+
+}
