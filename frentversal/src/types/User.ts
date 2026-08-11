@@ -11,7 +11,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
-    role: "USER" | "AGENT" | "ADMIN";
+    role: "USER" | "BROKER" | "ADMIN";
 }
 
 /* 서버가 로그인 시 내려주는 응답 */

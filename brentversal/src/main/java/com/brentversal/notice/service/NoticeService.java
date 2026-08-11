@@ -1,64 +1,88 @@
 package com.brentversal.notice.service;
+
+import com.brentversal.member.entity.Member;
+import com.brentversal.member.repository.MemberRepository;
+import com.brentversal.notice.dto.NoticeCreateRequest;
+import com.brentversal.notice.dto.NoticeResponse;
+import com.brentversal.notice.dto.NoticeUpdateRequest;
+import com.brentversal.notice.entity.Notice;
+import com.brentversal.notice.exception.NoticeNotFoundException;
 import com.brentversal.notice.repository.NoticeRepository;
-import com.brentversal.notice.Notice;
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
-    public class NoticeService {
-        private final NoticeRepository noticeRepository;
+public class NoticeService {
 
-    // 공지사항 전체 조회
-    public List<Notice>findAll() {
-        return noticeRepository.findAll();
-    }
+    private final NoticeRepository noticeRepository;
+    private final MemberRepository memberRepository;
 
-    // 공지사항 단건 조회
-    public Notice findById(Long id) {
-        return noticeRepository.findById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "공지사항을 찾을 수 없습니다."
-                        )
-                );
-    }
-    // 공지사항 등록
-    @Transactional
-    public Notice create(Notice notice) {
-        return noticeRepository.save(notice);
-    }
-
-    // 공지사항 수정
-    @Transactional
-    public Notice update(
-            Long id,
-            String title,
-            String content
+    public NoticeService(
+            NoticeRepository noticeRepository,
+            MemberRepository memberRepository
     ) {
-        Notice notice = findById(id);
+        this.noticeRepository = noticeRepository;
+        this.memberRepository = memberRepository;
+    }
 
-        notice.update(
-                title,
-                content,
-                null,
-                null,
-                null
+    public List<NoticeResponse> findAll() {
+        return noticeRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(NoticeResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public NoticeResponse findById(Long id) {
+        Notice notice = getNotice(id);
+        notice.increaseViewCount();
+        return NoticeResponse.from(notice);
+    }
+
+    @Transactional
+    public NoticeResponse create(
+            NoticeCreateRequest request,
+            String adminEmail
+    ) {
+        Member admin = memberRepository.findByEmail(adminEmail);
+        if (admin == null) {
+            throw new IllegalArgumentException("공지사항 작성자를 찾을 수 없습니다.");
+        }
+
+        Notice notice = Notice.create(
+                admin,
+                request.getTitle(),
+                request.getContent()
         );
 
-        return notice;
+        return NoticeResponse.from(noticeRepository.save(notice));
     }
-    // 공지사항 삭제
+
+    @Transactional
+    public NoticeResponse update(
+            Long id,
+            NoticeUpdateRequest request
+    ) {
+        Notice notice = getNotice(id);
+        notice.update(request.getTitle(), request.getContent());
+        return NoticeResponse.from(notice);
+    }
+
     @Transactional
     public void delete(Long id) {
-        Notice notice = findById(id);
+        Notice notice = getNotice(id);
         noticeRepository.delete(notice);
     }
-    // 공지사항 전체 개수 조회
+
     public long count() {
         return noticeRepository.count();
+    }
+
+    private Notice getNotice(Long id) {
+        return noticeRepository.findById(id)
+                .orElseThrow(() -> new NoticeNotFoundException(id));
     }
 }

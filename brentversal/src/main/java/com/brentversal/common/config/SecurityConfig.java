@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -60,6 +61,15 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // 공지 목록과 상세는 비회원도 조회할 수 있다.
+                        .requestMatchers(HttpMethod.GET, "/notices", "/notices/**").permitAll()
+                        // 공지 등록·수정·삭제는 관리자만 가능하다.
+                        .requestMatchers("/notices", "/notices/**").hasRole("ADMIN")
+                        // 일반 사용자와 중개인은 신고를 접수하고 자신의 신고 내역을 조회한다.
+                        .requestMatchers(HttpMethod.POST, "/reports").hasAnyRole("USER", "BROKER")
+                        .requestMatchers(HttpMethod.GET, "/reports/me").hasAnyRole("USER", "BROKER")
+                        // 신고 목록·상세 조회와 처리 권한은 관리자에게만 있다.
+                        .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
                         .requestMatchers(permitUrls).permitAll()
                         .anyRequest().authenticated()
                 )
