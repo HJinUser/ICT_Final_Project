@@ -1,11 +1,16 @@
 package com.brentversal.property.service;
 
+import com.brentversal.property.constant.DealType;
+import com.brentversal.property.constant.PriceChangeStatus;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.dto.PropertyResponseDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.property_image.service.PropertyImageService;
+import com.brentversal.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,9 +24,22 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
 
+    private final PropertyImageService propertyImageService;
+
+    private final TagService tagService;
+
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 매물을 찾을 수 없습니다. id=" + id));
+    }
+
+    // 거래유형에 따라 실제 비교 대상이 되는 가격 하나를 뽑아준다 (매매=price, 전세=deposit, 월세=monthlyDeposit)
+    private Long getPrimaryPrice(Property property) {
+        return switch (property.getDealType()) {
+            case SALE -> property.getPrice();
+            case JEONSE -> property.getDeposit();
+            case MONTHLY -> property.getMonthlyDeposit();
+        };
     }
 
     // 거래유형(dealType)에 맞는 가격 필드가 채워져 있는지 확인.
@@ -52,13 +70,6 @@ public class PropertyService {
         return errors;
     }
 
-    public PropertyResponseDto insert(Property bean) {
-        bean.setStatus(PropertyStatus.PENDING);  // 신규 등록은 무조건 승인대기부터 시작
-        bean.setVisible(true);
-        bean.setCreatedAt(LocalDateTime.now());
-        return PropertyResponseDto.of(propertyRepository.save(bean));
-    }
-
     public Optional<PropertyResponseDto> findById(Long id) {
         return propertyRepository.findById(id)
                 .map(PropertyResponseDto::of);
@@ -73,6 +84,10 @@ public class PropertyService {
     public PropertyResponseDto update(Long id, Property changes) {
         Property property = findPropertyOrThrow(id);
 
+        // 가격 변경 전, 거래유형과 대표 가격을 미리 기록해 둔다 (수정 후와 비교하기 위해)
+        DealType oldDealType = property.getDealType();
+        Long oldPrimaryPrice = getPrimaryPrice(property);
+
         property.setName(changes.getName());
         property.setType(changes.getType());
         property.setDealType(changes.getDealType());
@@ -86,6 +101,19 @@ public class PropertyService {
         property.setMonthlyDeposit(changes.getMonthlyDeposit());
         property.setMonthlyRent(changes.getMonthlyRent());
         property.setMaintenanceFee(changes.getMaintenanceFee());
+        property.setDescription(changes.getDescription());
+        property.setDetailDescription(changes.getDetailDescription());
+        property.setMoveInDate(changes.getMoveInDate());
+        property.setContractStatus(changes.getContractStatus());
+        property.setTags(tagService.findByIds(changes.getTagIds()));
+
+        // 거래유형이 그대로일 때만 가격 등락을 비교한다 (유형이 바뀌면 가격 성격이 달라서 비교 자체가 의미 없음)
+        if (oldDealType == property.getDealType()) {
+            Long newPrimaryPrice = getPrimaryPrice(property);
+            if (oldPrimaryPrice != null && newPrimaryPrice != null && !oldPrimaryPrice.equals(newPrimaryPrice)) {
+                property.setPriceStatus(newPrimaryPrice > oldPrimaryPrice ? PriceChangeStatus.UP : PriceChangeStatus.DOWN);
+            }
+        }
 
         return PropertyResponseDto.of(propertyRepository.save(property));
     }
@@ -119,5 +147,16 @@ public class PropertyService {
 
         property.setVisible(!property.getVisible());
         return PropertyResponseDto.of(propertyRepository.save(property));
+    }
+
+    public PropertyResponseDto insert(Property bean, List<MultipartFile> files) {
+        bean.setStatus(PropertyStatus.PENDING);
+        bean.setVisible(true);
+        bean.setCreatedAt(LocalDateTime.now());
+
+        bean.getImages().addAll(propertyImageService.buildImages(bean, files));
+        bean.setTags(tagService.findByIds(bean.getTagIds()));
+
+        return PropertyResponseDto.of(propertyRepository.save(bean));
     }
 }
