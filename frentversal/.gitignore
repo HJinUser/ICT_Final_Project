@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+## ENV (실제 값 파일은 커밋 금지, 샘플만 추적) ##
+.env
