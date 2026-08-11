@@ -66,6 +66,10 @@ public class SecurityConfig {
                         // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
                         // 상담 요청·후기 작성(POST)은 아래 anyRequest().authenticated() 에 걸려 로그인이 필요하다.
                         .requestMatchers(HttpMethod.GET, "/agency", "/agency/**").permitAll()
+                        // 중개인 전용 화면(내 중개사무소, 문의 답변, 리뷰 관리)은 중개인만 쓸 수 있다.
+                        // JwtAuthenticationFilter 가 권한을 "ROLE_" + role 형태로 넣어 주므로
+                        // hasRole("BROKER") 는 ROLE_BROKER 를 가진 사용자만 통과시킨다.
+                        .requestMatchers("/my-agency/**").hasRole("BROKER")
                         .anyRequest().authenticated()
                 )
                 // 인증이 안 된 요청에 대한 응답을 401 로 맞춘다.

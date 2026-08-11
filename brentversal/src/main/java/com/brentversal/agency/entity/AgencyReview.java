@@ -45,4 +45,13 @@ public class AgencyReview {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt ;
+
+    // ── 중개인이 다는 답변 ───────────────────────────────
+    // 중개인 마이페이지의 "리뷰 관리" 탭에서 작성한다.
+    // 값이 null 이면 미답변 리뷰로 세어 화면 상단에 개수를 표시한다.
+    @Column(length = 1000)
+    private String reply ;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt ; // 답변을 단 시각 (미답변이면 null)
 }
