@@ -26,7 +26,7 @@ public class MemberDetailsService implements UserDetailsService {
         Member member = memberRepository.findByEmail(email);
 
         if (member == null) {
-            // 실제로는 없는 이메일이라고 그대로 알려주지 않는다.
+            // 실제로는 없는 이메일이라고 그대로 알려주지 않는다. (보안문제)
             // MemberController.login()의 catch(AuthenticationException)가 이 예외를 잡아
             // "이메일 또는 비밀 번호가 올바르지 않습니다"라는 동일한 메시지로 돌려준다.
             throw new UsernameNotFoundException("이메일 또는 비밀번호가 올바르지 않습니다.");
