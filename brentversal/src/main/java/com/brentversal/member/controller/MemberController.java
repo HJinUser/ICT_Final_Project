@@ -1,10 +1,14 @@
 package com.brentversal.member.controller;
 
 import com.brentversal.common.config.JwtTokenProvider;
+import com.brentversal.member.dto.FindEmailSendCodeDto;
+import com.brentversal.member.dto.FindEmailVerifyDto;
 import com.brentversal.member.dto.LoginDto;
 import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.service.MemberService;
+import com.brentversal.member.service.PhoneVerificationService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +33,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MemberController {
     private final MemberService memberService ;
+    private final PhoneVerificationService phoneVerificationService ;
 
     private final AuthenticationManager authenticationManager ;
     private final JwtTokenProvider jwtTokenProvider ;
@@ -75,7 +81,9 @@ public class MemberController {
                     "refreshToken", refreshToken, //  프론트가 저장할 refresh token
                     "id", member.getId(),
                     "name", member.getName(), "email", member.getEmail(),
-                    "role", member.getRole().toString())) ;
+                    "role", member.getRole().toString(),
+                    // 프론트가 일반 사용자(USER) + 미완료일 때만 취향 초기 설정 화면으로 보내는 데 쓴다.
+                    "preferenceCompleted", member.isPreferenceCompleted())) ;
         }
 
 
@@ -178,5 +186,65 @@ public class MemberController {
 
 
         return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK) ; // 회원 가입 성공 (OK라는건 200번대라는 뜻)
+    }
+
+    // 취향 초기 설정 화면에서 "메인으로 가기"를 누르면 호출된다. 로그인이 필요하다(permitUrls에 없음).
+    @PatchMapping("/preference/complete")
+    public ResponseEntity<?> completePreference(Authentication authentication){
+        String email = authentication.getName(); // JwtAuthenticationFilter 가 principal 로 넣어둔 이메일
+        try {
+            memberService.completePreferenceSetup(email);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("general", e.getMessage()));
+        }
+        return ResponseEntity.ok(Map.of("message", "설정이 완료되었습니다."));
+    }
+
+    // 이메일 찾기 1단계: 이름 + 전화번호가 일치하는 회원이면 그 전화번호로 인증번호 문자를 보낸다.
+    @PostMapping("/find-email/send-code")
+    public ResponseEntity<?> sendFindEmailCode(@Valid @RequestBody FindEmailSendCodeDto dto, BindingResult bindingResult){
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError fieldError : bindingResult.getFieldErrors()) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            }
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        }
+
+        Member member = memberService.findByNameAndPhone(dto.getName(), dto.getPhone());
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("general", "입력하신 정보와 일치하는 회원이 없습니다."));
+        }
+
+        try {
+            phoneVerificationService.sendCode(dto.getPhone());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("general", e.getMessage()));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "인증번호를 전송했습니다."));
+    }
+
+    // 이메일 찾기 2단계: 인증번호를 확인하고, 맞으면 가려진 이메일을 돌려준다.
+    @PostMapping("/find-email/verify")
+    public ResponseEntity<?> verifyFindEmailCode(@Valid @RequestBody FindEmailVerifyDto dto, BindingResult bindingResult){
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError fieldError : bindingResult.getFieldErrors()) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            }
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            phoneVerificationService.verifyCode(dto.getPhone(), dto.getCode());
+            String maskedEmail = memberService.findMaskedEmailByPhone(dto.getPhone());
+            return ResponseEntity.ok(Map.of("email", maskedEmail));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("general", e.getMessage()));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("general", e.getMessage()));
+        }
     }
 }

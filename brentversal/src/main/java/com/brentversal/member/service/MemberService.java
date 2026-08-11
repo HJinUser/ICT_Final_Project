@@ -11,6 +11,7 @@ import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
 import com.brentversal.member.repository.MemberRepository;
 import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +35,32 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
 
     public Member findByPhone(String phone){
         return memberRepository.findByPhone(phone);
+    }
+
+    public Member findByNameAndPhone(String name, String phone){
+        return memberRepository.findByNameAndPhone(name, phone);
+    }
+
+    // 인증 완료된 전화번호로 회원을 찾아 이메일을 가려서 돌려준다.
+    // (인증번호 자체를 맞았는지는 PhoneVerificationService가 이미 확인한 뒤 호출된다)
+    public String findMaskedEmailByPhone(String phone){
+        Member member = memberRepository.findByPhone(phone);
+        if (member == null) {
+            throw new EntityNotFoundException("일치하는 회원 정보를 찾을 수 없습니다.");
+        }
+        return maskEmail(member.getEmail());
+    }
+
+    // "hjin1234@gmail.com" -> "hjin****@gmail.com" 형태로 로컬 파트 앞부분만 남기고 가린다.
+    private String maskEmail(String email){
+        int at = email.indexOf('@');
+        if (at <= 0) {
+            return email;
+        }
+        String local = email.substring(0, at);
+        String domain = email.substring(at);
+        int visibleLength = Math.min(3, Math.max(1, local.length() - 1));
+        return local.substring(0, visibleLength) + "****" + domain;
     }
 
     @Autowired // 필드 주입 : 맴버 변수에 직접 의존성을 주입하는 방식
@@ -197,5 +224,16 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
             return; // 아무 것도 하지 않고 그냥 종료한다
         }
         member.setRefreshToken(null); // refresh token 을 비운다
+    }
+
+    // 취향 초기 설정 화면(PreferenceSetupPage)에서 "메인으로 가기"를 누르면 호출된다.
+    // 아직 실제 취향 설정 UI는 없어서, 이 호출 자체를 "완료"로 취급해 다음 로그인부터는 이 화면을 건너뛴다.
+    @Transactional
+    public void completePreferenceSetup(String email){
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new EntityNotFoundException("회원 정보를 찾을 수 없습니다.");
+        }
+        member.setPreferenceCompleted(true);
     }
 }

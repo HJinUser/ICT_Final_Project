@@ -49,6 +49,10 @@ jobs:
               -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               -e NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}" \
               -e NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}" \
+              -e SENS_SERVICE_ID="${{ secrets.SENS_SERVICE_ID }}" \
+              -e SENS_ACCESS_KEY="${{ secrets.SENS_ACCESS_KEY }}" \
+              -e SENS_SECRET_KEY="${{ secrets.SENS_SECRET_KEY }}" \
+              -e SENS_SENDER_PHONE="${{ secrets.SENS_SENDER_PHONE }}" \
               "${{ secrets.BACK_DOCKER_IMAGE }}"
             # 5. 안 쓰는 옛날 이미지 정리
             sudo docker image prune -f

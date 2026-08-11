@@ -61,7 +61,13 @@ function App({ onLogin }: Props) {
                 localStorage.setItem("user", JSON.stringify(userData));
             }
 
-            navigate("/");
+            // 취향 초기 설정은 일반 사용자(USER)가 아직 완료하지 않았을 때만, 최초 로그인 시 1회 보여준다.
+            // 중개인/관리자는 이 화면 자체가 해당되지 않으므로 항상 메인으로 보낸다.
+            if (userData.role === "USER" && !userData.preferenceCompleted) {
+                navigate("/preference-setup");
+            } else {
+                navigate("/");
+            }
 
         } catch (error: any) {
             if (error.response) {
@@ -120,6 +126,13 @@ function App({ onLogin }: Props) {
                                                 />
                                             </Col>
                                         </Form.Group>
+
+                                        {/* 아이디(=이메일)가 곧 로그인 이메일이므로 "아이디 찾기"가 아니라 "이메일 찾기"로 안내한다. */}
+                                        <div className="text-end mb-3">
+                                            <Link to="/member/find-email" className="small text-decoration-none">
+                                                이메일 찾기
+                                            </Link>
+                                        </div>
 
                                         <Row className="g-2">
                                             <Col xs={8}>
