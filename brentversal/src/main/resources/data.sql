@@ -8,7 +8,7 @@
 -- verified 컬럼은 bit(1) 타입이라 b'1'(참) / b'0'(거짓) 으로 넣는다.
 -- member_id 는 아직 연결할 중개인 계정이 없어서 NULL 로 둔다.
 INSERT IGNORE INTO agency
-    (agency_id, name, broker_name, address, phone, hours, registration_no, latitude, longitude, verified, rating_avg, status, listing_count, regdate, member_id)
+    (agency_id, name, broker_name, address, phone, hours, latitude, longitude, verified, rating_avg, status, listing_count, regdate, member_id)
 VALUES
     (1, '반포역전 공인중개사', '박지훈', '서울 서초구 신반포로 194', '02-533-1200', '09:00-19:00', '11650-2024-00123', 37.5085, 127.0117, b'1', 4.8, 'AVAILABLE', 24, CURRENT_DATE, NULL),
     (2, '서초센트럴 부동산',   '김서연', '서울 서초구 서초대로 396', '02-587-2300', '09:00-18:30', '11650-2024-00087', 37.4923, 127.0078, b'1', 4.6, 'AVAILABLE', 18, CURRENT_DATE, NULL),
@@ -31,6 +31,22 @@ UPDATE agency SET registration_no = '11680-2024-00219' WHERE agency_id = 4 AND r
 -- 그래서 예시 데이터보다 큰 값(101)으로 올려 둔다. 이미 큰 값이면 건드리지 않는다.
 UPDATE agency_seq SET next_val = 101 WHERE next_val <= 100;
 
+-- 태그(tag) 예시 데이터. 매물 등록 폼의 태그 선택 UI 확인용 (실제 카테고리별 목록은 팀장 확정 전이라 임시)
+INSERT IGNORE INTO tag
+    (id, name, category)
+VALUES
+    (1, '주차 가능',       'LIVING_ENVIRONMENT'),
+    (2, '엘리베이터',       'LIVING_ENVIRONMENT'),
+    (3, '반려동물 가능',    'LIVING_ENVIRONMENT'),
+    (4, '풀옵션',          'LIVING_ENVIRONMENT'),
+    (5, '남향',            'NATURAL_ENVIRONMENT'),
+    (6, '한강뷰',          'NATURAL_ENVIRONMENT'),
+    (7, '공원 인근',        'NATURAL_ENVIRONMENT'),
+    (8, '지하철역 도보 5분', 'TRANSPORTATION'),
+    (9, '버스정류장 인근',   'TRANSPORTATION'),
+    (10, '조용한 분위기',   'ATMOSPHERE');
+
+UPDATE tag_seq SET next_val = 101 WHERE next_val <= 100;
 
 -- ────────────────────────────────────────────────────────────────
 -- 중개사무소 대표 이미지 (상세 페이지 갤러리용)

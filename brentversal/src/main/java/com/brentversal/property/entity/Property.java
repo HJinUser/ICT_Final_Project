@@ -1,9 +1,9 @@
 package com.brentversal.property.entity;
 
 import com.brentversal.agency.entity.Agency;
-import com.brentversal.property.constant.DealType;
-import com.brentversal.property.constant.PropertyStatus;
-import com.brentversal.property.constant.PropertyType;
+import com.brentversal.property.constant.*;
+import com.brentversal.property_image.entity.PropertyImage;
+import com.brentversal.tag.entity.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
@@ -16,7 +16,10 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter @Setter @ToString @Entity
 @Table(name = "property")
@@ -39,9 +42,17 @@ public class Property {
 //     @JoinColumn(name = "neighborhood_id", nullable = false)
 //     private Neighborhood neighborhood;
 
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sortOrder ASC")
+    private List<PropertyImage> images = new ArrayList<>();
+
     @NotBlank(message = "매물명은 필수 입력 사항입니다.")
     @Column(name = "name", length = 100, nullable = false)
     private String name;
+
+    @Lob
+    @Column(name = "description")
+    private String description;         // 소개 글
 
     @NotNull(message = "매물 유형은 필수 선택 사항입니다.")
     @Enumerated(EnumType.STRING)
@@ -88,6 +99,17 @@ public class Property {
     @Column(name = "maintenance_fee")
     private Integer maintenanceFee; // 관리비(만 원)
 
+    @Lob
+    @Column(name = "detail_description")
+    private String detailDescription;   // 상세 설명
+
+    @Column(name = "move_in_date")
+    private LocalDate moveInDate;        // 입주 가능일
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contract_status", length = 20)
+    private ContractStatus contractStatus; // 계약 가능 상태
+
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
@@ -99,7 +121,22 @@ public class Property {
     @Column(name = "ai_price")
     private Long aiPrice; // AI 예상 시세
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "price_status", length = 10)
+    private PriceChangeStatus priceStatus; // 가장 최근 가격 수정의 방향. 수정 이력이 없거나 변동 없으면 null
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @ManyToMany
+    @JoinTable(
+            name = "property_tag",
+            joinColumns = @JoinColumn(name = "property_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags = new ArrayList<>();
+
+    @Transient
+    private List<Long> tagIds; // 요청으로 들어온 태그 id 목록. 저장 전 서비스에서 실제 Tag로 변환됨
 
 }
