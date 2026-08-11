@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Container, Row, Col, Card, Badge, Button, Form, Modal } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
-import { API_BASE_URL } from "../config/config";
 import type { User } from "../types/User";
 import type { PropertyDetail } from "../types/PropertyDetail";
 import { PROPERTY_STATUS_LABELS } from "../types/PropertyDetail";
@@ -52,9 +51,9 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         const fetchDetail = async () => {
             setLoading(true);
             try {
-                const propertyResponse = await customAxios.get<PropertyResponse>(`${API_BASE_URL}/property/${id}`);
+                const propertyResponse = await customAxios.get<PropertyResponse>(`/property/${id}`);
                 const agencyResponse = await customAxios.get<AgencyResponse>(
-                    `${API_BASE_URL}/agency/${propertyResponse.data.agencyId}`
+                    `/agency/${propertyResponse.data.agencyId}`
                 );
 
                 setProperty({
@@ -98,16 +97,16 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         setShowLoginModal(true);
     };
 
-    // 관심매물 저장/취소 토글 (로그인 사용자 전용) — TODO: 관심매물 엔드포인트 연동 전, 화면 상태만 토글
+    // 관심매물 저장/취소 토글 (로그인 사용자 전용)
     const toggleFavorite = async () => {
         if (!property) return;
-        await customAxios.post(`${API_BASE_URL}/property/${property.id}/favorite`);
-        setProperty({ ...property, isFavorited: !property.isFavorited });
+        const response = await customAxios.post<{ favorited: boolean }>(`/property/${property.id}/favorite`);
+        setProperty({ ...property, isFavorited: response.data.favorited });
     };
 
     const sendFeedback = async (liked: boolean) => {
         if (!property) return;
-        await customAxios.post(`${API_BASE_URL}/property/${property.id}/feedback`, { liked });
+        await customAxios.post(`/property/${property.id}/feedback`, { liked });
         alert(liked ? "좋아요로 추천 데이터에 반영했습니다." : "싫어요로 추천 데이터에 반영했습니다.");
     };
 
@@ -122,7 +121,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     // 한줄평 등록 — TODO: Review 도메인 아직 없음, 엔드포인트 생기면 응답 타입 맞춰서 교체
     const submitReview = async () => {
         if (!property) return;
-        const response = await customAxios.post<Review>(`${API_BASE_URL}/property/${property.id}/review`, {
+        const response = await customAxios.post<Review>(`/property/${property.id}/review`, {
             rating: reviewRating,
             content: reviewContent,
         });
@@ -137,7 +136,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const handleStatusChange = async (newStatus: PropertyStatusCode) => {
         if (!property || property.status === "COMPLETED" || property.status === "CANCELLED") return;
         const response = await customAxios.patch<PropertyResponse>(
-            `${API_BASE_URL}/property/${property.id}/status`,
+            `/property/${property.id}/status`,
             { status: newStatus }
         );
         setProperty({ ...property, status: response.data.status });
@@ -146,7 +145,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     // 공개/비공개 전환. 백엔드가 현재 값을 반전시켜서 돌려주므로 body 없이 호출한다.
     const togglePublic = async () => {
         if (!property) return;
-        const response = await customAxios.patch<PropertyResponse>(`${API_BASE_URL}/property/${property.id}/visibility`);
+        const response = await customAxios.patch<PropertyResponse>(`/property/${property.id}/visibility`);
         setProperty({ ...property, visible: response.data.visible });
     };
 
@@ -154,7 +153,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const cancelListing = async () => {
         if (!property || property.status === "CANCELLED") return;
         if (!window.confirm("정말 매물 등록을 취소하시겠어요? 취소하면 되돌릴 수 없습니다.")) return;
-        const response = await customAxios.patch<PropertyResponse>(`${API_BASE_URL}/property/${property.id}/cancel`);
+        const response = await customAxios.patch<PropertyResponse>(`/property/${property.id}/cancel`);
         setProperty({ ...property, status: response.data.status });
     };
 

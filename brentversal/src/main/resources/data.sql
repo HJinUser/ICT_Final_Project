@@ -8,7 +8,7 @@
 -- verified 컬럼은 bit(1) 타입이라 b'1'(참) / b'0'(거짓) 으로 넣는다.
 -- member_id 는 아직 연결할 중개인 계정이 없어서 NULL 로 둔다.
 INSERT IGNORE INTO agency
-    (agency_id, name, broker_name, address, phone, hours, latitude, longitude, verified, rating_avg, status, listing_count, regdate, member_id)
+    (agency_id, name, broker_name, address, phone, hours, registration_no, latitude, longitude, verified, rating_avg, status, listing_count, regdate, member_id)
 VALUES
     (1, '반포역전 공인중개사', '박지훈', '서울 서초구 신반포로 194', '02-533-1200', '09:00-19:00', '11650-2024-00123', 37.5085, 127.0117, b'1', 4.8, 'AVAILABLE', 24, CURRENT_DATE, NULL),
     (2, '서초센트럴 부동산',   '김서연', '서울 서초구 서초대로 396', '02-587-2300', '09:00-18:30', '11650-2024-00087', 37.4923, 127.0078, b'1', 4.6, 'AVAILABLE', 18, CURRENT_DATE, NULL),

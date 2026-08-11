@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { Container, Row, Col, Form, Button, Alert, ListGroup, Card, Spinner } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
-import { API_BASE_URL } from "../config/config";
 import { useNavigate } from "react-router-dom";
 import type { Property } from "../types/Property";
 import type { TagResponse } from "../types/Tag";
@@ -58,7 +57,7 @@ function PropertyFormPage() {
     useEffect(() => {
         const fetchTags = async () => {
             try {
-                const response = await customAxios.get<TagResponse[]>(`${API_BASE_URL}/tag`);
+                const response = await customAxios.get<TagResponse[]>(`/tag`);
                 setAvailableTags(response.data);
             } catch (error) {
                 console.error(error);
@@ -80,7 +79,7 @@ function PropertyFormPage() {
         const fetchEstimate = async () => {
             setAiLoading(true);
             try {
-                const response = await customAxios.get<AiEstimate>(`${API_BASE_URL}/ai/estimate`, {
+                const response = await customAxios.get<AiEstimate>(`/ai/estimate`, {
                     params: { address: property.address, area: property.area, dealType: property.dealType },
                     timeout: 15000,
                 });
@@ -157,7 +156,7 @@ function PropertyFormPage() {
             formData.append("data", new Blob([JSON.stringify(property)], { type: "application/json" }));
             photoFiles.forEach((file) => formData.append("files", file));
 
-            const response = await customAxios.post(`${API_BASE_URL}/property/insert`, formData);
+            const response = await customAxios.post(`/property/insert`, formData);
             console.log("응답 데이터:", response.data);
             alert("관리자 승인 요청을 보냈습니다.");
             navigate("/agent/dashboard");
@@ -176,7 +175,7 @@ function PropertyFormPage() {
 
     const handleDraftSave = async () => {
         // TODO: /property/draft 임시저장 엔드포인트는 아직 백엔드에 없음. 나중에 필요해지면 추가.
-        await customAxios.post(`${API_BASE_URL}/property/draft`, property);
+        await customAxios.post(`/property/draft`, property);
         alert("임시 저장했습니다.");
     };
 

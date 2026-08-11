@@ -62,6 +62,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/property/favorites").authenticated()
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
                         .requestMatchers(permitUrls).permitAll()

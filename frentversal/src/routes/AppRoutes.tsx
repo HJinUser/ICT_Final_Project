@@ -6,9 +6,10 @@ import HomePage from './../pages/HomePage';
 import PropertyFormPage from './../pages/PropertyFormPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
-import PropertyPreviewPage from "../pages/PropertyPreviewPage";
+import ComparePage from './../pages/ComparePage';
 import AgencyPage from './../pages/AgencyPage';
 import AgencyDetailPage from './../pages/AgencyDetailPage';
+import FavoritesPage from "../pages/FavoritesPage.tsx";
 
 
 interface AppProps {
@@ -25,7 +26,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path='/member/login' element={<LoginPage onLogin={handleLoginSuccess} />} />
       <Route path='/property/form' element={<PropertyFormPage />} />
       <Route path="/property/:id" element={<PropertyPage user={user} />} />
-      <Route path="/property/preview" element={<PropertyPreviewPage />} />
+      <Route path="/property/compare" element={<ComparePage />} />
+      <Route path="/favorites" element={<FavoritesPage />} />
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
     </Routes>

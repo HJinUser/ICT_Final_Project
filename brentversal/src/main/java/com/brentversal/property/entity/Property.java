@@ -68,6 +68,13 @@ public class Property {
     @Column(name = "address", length = 200, nullable = false)
     private String address;
 
+    // 주소를 Python이 지오코딩해서 얻은 좌표. 백엔드는 계산 안 하고 값만 받아 저장한다.
+    @Column(name = "latitude")
+    private Double latitude;  // 매물 위도
+
+    @Column(name = "longitude")
+    private Double longitude; // 매물 경도
+
     private BigDecimal area;   // 전용면적(㎡)
     private Integer floor;     // 층수
 
@@ -120,6 +127,10 @@ public class Property {
 
     @Column(name = "ai_price")
     private Long aiPrice; // AI 예상 시세
+
+    // 매물 좌표와 최근접 지하철역 좌표 사이의 유클리드 거리(Python 계산). 단위(m/km)는 Python 담당과 확정 필요.
+    @Column(name = "station_distance")
+    private Double stationDistance; // 최근접 역까지 거리
 
     @Enumerated(EnumType.STRING)
     @Column(name = "price_status", length = 10)

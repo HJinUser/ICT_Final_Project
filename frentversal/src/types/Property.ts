@@ -89,5 +89,10 @@ export interface PropertyResponse {
     aiPrice: number | null;
     priceStatus: PriceChangeStatusCode | null;
 
+    // Python이 지오코딩/유클리드 거리로 계산해서 채워주는 값. 연동 전이라 지금은 대부분 null로 옴.
+    latitude: number | null;
+    longitude: number | null;
+    stationDistance: number | null; // 최근접 역까지 거리 (단위는 Python 연동 시 확정)
+
     createdAt: string; // LocalDateTime -> JSON에선 문자열로 옴
 }
