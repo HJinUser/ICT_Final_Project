@@ -18,6 +18,14 @@ public class AgencyReviewDto {
     @JsonFormat(pattern = "yyyy.MM.dd")
     private LocalDateTime createdAt ;
 
+    // 중개인이 단 답변. 아직 답변하지 않았으면 null 이다.
+    // 중개사무소 상세 페이지에서는 후기 아래에 답변을 함께 보여 주고,
+    // 중개인 마이페이지의 리뷰 관리 탭에서는 이 값이 null 인 것만 "미답변"으로 센다.
+    private String reply ;
+
+    @JsonFormat(pattern = "yyyy.MM.dd")
+    private LocalDateTime repliedAt ;
+
     public static AgencyReviewDto of(AgencyReview bean){
         AgencyReviewDto dto = new AgencyReviewDto();
 
@@ -25,6 +33,8 @@ public class AgencyReviewDto {
         dto.setRating(bean.getRating());
         dto.setContent(bean.getContent());
         dto.setCreatedAt(bean.getCreatedAt());
+        dto.setReply(bean.getReply());
+        dto.setRepliedAt(bean.getRepliedAt());
         dto.setWriterName(mask(bean.getMember() == null ? null : bean.getMember().getName()));
 
         return dto;
