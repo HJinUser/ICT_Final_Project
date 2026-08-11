@@ -88,6 +88,25 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
     public static final String TOKEN_TYPE_CLAIM = "type";
     public static final String TYPE_ACCESS = "access";
     public static final String TYPE_REFRESH = "refresh";
+    public static final String TYPE_SOCIAL_SIGNUP = "social_signup";
+
+    // 소셜 로그인은 성공했지만(카카오 인증은 통과) 아직 우리 DB에 없는 사람에게 발급하는 단기 토큰.
+    // 회원가입 완료 화면에서 이 토큰을 다시 제출해야 socialType/socialUserId를 인정해 준다.
+    // 이렇게 하지 않으면 아무나 임의의 socialUserId를 회원가입 요청에 적어 보내
+    // 다른 사람의 카카오 계정을 가로챌 수 있다.
+    private static final long SOCIAL_SIGNUP_EXPIRATION = 10 * 60 * 1000L; // 10분
+
+    public String createSocialSignupToken(String socialType, String socialUserId, String socialEmail){
+        return Jwts.builder()
+                .subject(socialUserId) // 토큰 주인 = 소셜 제공자가 알려준 고유 ID
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + SOCIAL_SIGNUP_EXPIRATION))
+                .claim("socialType", socialType) // 어느 제공자(KAKAO 등)인지
+                .claim("socialEmail", socialEmail) // 제공자가 이메일을 줬다면 참고용으로 함께 담는다
+                .claim(TOKEN_TYPE_CLAIM, TYPE_SOCIAL_SIGNUP)
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
 
     // MemberController 클래스에서 인증 성공한 사용자를 위하여 로그인 증명서(토큰)를 발급하는 데 사용될 예정입니다.
     public String createToken(Member member){ // 매개 변수 : 토큰 안에 사용자 식별값 저장
