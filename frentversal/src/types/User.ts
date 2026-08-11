@@ -11,6 +11,8 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    // 서버(Member.constant.Role)가 내려주는 값과 똑같이 맞춰야 한다.
+    // 중개인은 "AGENT" 가 아니라 "BROKER" 다. (회원가입 화면도 BROKER 로 보내고 있다)
     role: "USER" | "BROKER" | "ADMIN";
 }
 

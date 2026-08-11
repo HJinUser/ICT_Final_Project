@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Alert, Button, Card, Col, Container, Form, Row } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 
 import customAxios from "../api/axiosInstance.tsx";
+import { API_BASE_URL } from "../config/config";
 import type { LoginResponse, User } from "../types/User";
 
 interface Props {
@@ -80,52 +81,98 @@ function App({ onLogin }: Props) {
                         <Card.Body>
                             <h2 className="text-center mb-4">로그인</h2>
 
-                            {errors && <Alert variant="danger">{errors}</Alert>}
+                            {/*
+                                탭 구조: "일반/소셜 로그인" | "패스워드리스 로그인".
+                                패스워드리스는 아직 미구현이라 자리만 잡아둔다 - 나중에 이 Tab 안쪽만
+                                채우면 되고, 일반 로그인 쪽 구조는 다시 안 건드려도 된다.
+                            */}
+                            <Tabs defaultActiveKey="normal" className="mb-4" justify>
+                                <Tab eventKey="normal" title="일반 로그인">
+                                    {errors && <Alert variant="danger" className="mt-3">{errors}</Alert>}
 
-                            <Form onSubmit={handleLogin}>
-                                <Form.Group as={Row} className="mb-3 align-items-center">
-                                    <Form.Label column sm={3} className="text-end fw-bold text-primary">
-                                        이메일
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="email"
-                                            placeholder="이메일을 입력해 주세요."
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            required
-                                        />
-                                    </Col>
-                                </Form.Group>
+                                    <Form onSubmit={handleLogin} className="mt-3">
+                                        <Form.Group as={Row} className="mb-3 align-items-center">
+                                            <Form.Label column sm={3} className="text-end fw-bold text-primary">
+                                                이메일
+                                            </Form.Label>
+                                            <Col sm={9}>
+                                                <Form.Control
+                                                    type="email"
+                                                    placeholder="이메일을 입력해 주세요."
+                                                    value={email}
+                                                    onChange={(e) => setEmail(e.target.value)}
+                                                    required
+                                                />
+                                            </Col>
+                                        </Form.Group>
 
-                                <Form.Group as={Row} className="mb-3 align-items-center">
-                                    <Form.Label column sm={3} className="text-end fw-bold text-primary">
-                                        비밀 번호
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="password"
-                                            placeholder="비밀 번호을 입력해 주세요."
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            required
-                                        />
-                                    </Col>
-                                </Form.Group>
+                                        <Form.Group as={Row} className="mb-3 align-items-center">
+                                            <Form.Label column sm={3} className="text-end fw-bold text-primary">
+                                                비밀 번호
+                                            </Form.Label>
+                                            <Col sm={9}>
+                                                <Form.Control
+                                                    type="password"
+                                                    placeholder="비밀 번호을 입력해 주세요."
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    required
+                                                />
+                                            </Col>
+                                        </Form.Group>
 
-                                <Row className="g-2">
-                                    <Col xs={8}>
-                                        <Button variant="primary" type="submit" className="w-100">
-                                            로그인
-                                        </Button>
-                                    </Col>
-                                    <Col xs={4}>
-                                        <Link to="/member/signup" className="btn btn-outline-secondary w-100">
-                                            회원 가입
-                                        </Link>
-                                    </Col>
-                                </Row>
-                            </Form>
+                                        <Row className="g-2">
+                                            <Col xs={8}>
+                                                <Button variant="primary" type="submit" className="w-100">
+                                                    로그인
+                                                </Button>
+                                            </Col>
+                                            <Col xs={4}>
+                                                <Link to="/member/signup" className="btn btn-outline-secondary w-100">
+                                                    회원 가입
+                                                </Link>
+                                            </Col>
+                                        </Row>
+                                    </Form>
+
+                                    {/*
+                                        일반 <a> 태그를 쓴다(react-router의 Link가 아님).
+                                        이건 SPA 내부 이동이 아니라, 브라우저가 카카오 로그인 페이지로
+                                        완전히 떠났다가 돌아와야 하는 흐름이라 실제 페이지 이동이 필요하다.
+                                        API_BASE_URL(/api)을 거쳐 vite proxy/nginx가 백엔드로 넘겨준다.
+                                    */}
+                                    <a
+                                        href={`${API_BASE_URL}/oauth2/authorization/kakao`}
+                                        className="btn w-100 mt-3"
+                                        style={{ backgroundColor: "#FEE500", color: "#191919" }}
+                                    >
+                                        카카오로 로그인
+                                    </a>
+
+                                    {/* registrationId만 다른 같은 방식(/oauth2/authorization/{registrationId}) */}
+                                    <a
+                                        href={`${API_BASE_URL}/oauth2/authorization/google`}
+                                        className="btn btn-outline-dark w-100 mt-2"
+                                    >
+                                        구글로 로그인
+                                    </a>
+
+                                    <a
+                                        href={`${API_BASE_URL}/oauth2/authorization/naver`}
+                                        className="btn w-100 mt-2"
+                                        style={{ backgroundColor: "#03C75A", color: "#ffffff" }}
+                                    >
+                                        네이버로 로그인
+                                    </a>
+                                </Tab>
+
+                                {/* 패스워드리스 자리. 나중에 여기 안에 아이디 입력 + QR/등록 버튼을 채운다. */}
+                                <Tab eventKey="passwordless" title="패스워드리스 로그인">
+                                    <div className="text-center text-muted py-5">
+                                        패스워드리스 로그인은 준비 중입니다.
+                                    </div>
+                                </Tab>
+                            </Tabs>
 
                         </Card.Body>
                     </Card>

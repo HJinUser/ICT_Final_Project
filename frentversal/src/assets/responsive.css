@@ -68,6 +68,19 @@ body {
     }
 }
 
+/* 중개사무소 상세 화면의 2단 배치(본문 + 오른쪽 상담 요청).
+ * 원본은 오른쪽 칸이 370px 로 고정이라, 화면이 좁아지면 왼쪽 본문이 0px 까지 찌그러진다.
+ * 좁은 화면에서는 위아래로 쌓고, 상담 요청 칸이 화면을 따라다니지 않도록 sticky 도 해제한다. */
+@media (max-width: 1000px) {
+    .detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .detail-side {
+        position: static;
+    }
+}
+
 /* ── 태블릿 세로 ─────────────────────────────── */
 @media (max-width: 820px) {
     .section {
@@ -127,6 +140,11 @@ body {
     .toolbar > * {
         flex: 1 1 100%;
         max-width: none;
+    }
+
+    /* 담당 매물 카드의 사진 칸(118px 고정)이 좁은 화면에서 너무 크므로 줄인다 */
+    .property-row {
+        grid-template-columns: 92px 1fr;
     }
 
     .agency-map {

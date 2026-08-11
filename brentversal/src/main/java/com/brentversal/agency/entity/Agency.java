@@ -12,6 +12,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 // 중개사무소 1곳을 의미하는 엔터티 클래스
 @Getter @Setter @ToString @Entity
@@ -44,6 +46,21 @@ public class Agency {
     @NotBlank(message = "주소는 필수 입력 사항입니다.")
     @Column(nullable = false)
     private String address ; // 사무소 상세 페이지에 표시할 주소
+
+    // 공인중개사 등록번호. 상세 페이지 기본 정보에 표시한다.
+    // ERD 에는 없지만 화면(중개사무소 상세)에 필요해서 추가했다.
+    @Column(name = "registration_no", length = 50)
+    private String registrationNo ; // 예) "11650-2024-00123"
+
+    // 사무소 외관·내부 대표 이미지 목록 (상세 페이지 갤러리용).
+    // 이미지 몇 장을 순서대로 갖는 단순한 값 목록이라 별도 엔터티 대신 @ElementCollection 을 썼다.
+    // agency_image 테이블이 자동으로 만들어지고, sort_order 컬럼으로 순서가 유지된다.
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "agency_image", joinColumns = @JoinColumn(name = "agency_id"))
+    @OrderColumn(name = "sort_order")
+    @Column(name = "image_url", length = 500)
+    @ToString.Exclude
+    private List<String> imageUrls = new ArrayList<>();
 
     // 숫자와 '-' 만 허용한다. 빈 값은 허용(@NotBlank 를 걸지 않음)하되 형식이 있으면 검사한다.
     @Pattern(regexp = "^$|^[0-9-]{9,20}$", message = "전화번호는 숫자와 '-' 로만 입력해 주세요.")

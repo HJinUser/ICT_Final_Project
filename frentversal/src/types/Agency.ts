@@ -46,3 +46,60 @@ export interface AgencyListResponse {
     totalCount: number;
     verifiedCount: number; // 인증 완료 사무소 수 (화면 상단 통계)
 }
+
+// ── 중개사무소 상세 페이지 (GET /agency/{id}) ──────────────────
+
+// 담당 매물 카드 1건 (백엔드 AgencyPropertyDto)
+export interface AgencyProperty {
+    id: number;
+    name: string;
+    dealType: 'SALE' | 'JEONSE' | 'MONTHLY';
+    priceLabel: string; // "전세 4억 9,000" 처럼 서버가 만들어 준 문구
+    dong: string;       // 동네
+    area: string | null;// "84㎡"
+}
+
+// 상세 화면 전체 응답 (백엔드 AgencyDetailDto)
+// 목록용 AgencyResponse 에 등록번호·이미지·담당 매물·후기 수가 더해진 형태다.
+export interface AgencyDetail {
+    id: number;
+    name: string;
+    brokerName: string;
+    address: string;
+    phone: string | null;
+    hours: string | null;
+    registrationNo: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    verified: boolean;
+    ratingAvg: number;
+    status: AgencyStatus;
+    statusLabel: string;
+    imageUrls: string[];        // 사무소 대표 이미지 (갤러리)
+    listingCount: number;       // 담당 매물 전체 건수
+    todayNewCount: number;      // 오늘 신규 매물 건수
+    recentProperties: AgencyProperty[]; // 최근 등록 매물 2건
+    reviewCount: number;
+}
+
+// 이용자 평가 1건 (백엔드 AgencyReviewDto)
+export interface AgencyReview {
+    id: number;
+    writerName: string; // 가운데를 가린 작성자 이름
+    rating: number;     // 1~5
+    content: string;
+    createdAt: string;  // "2026.08.10"
+
+    // 중개인이 단 답변. 아직 답변하지 않았으면 null 이다.
+    // 중개인 마이페이지의 리뷰 관리 탭에서 이 값이 null 인 것을 "미답변"으로 센다.
+    reply: string | null;
+    repliedAt: string | null;
+}
+
+// 상담 요청 보낼 때 서버로 넘기는 값
+export interface ConsultationRequest {
+    propertyId: number | null;
+    preferredDate: string | null; // "2026-08-11"
+    content: string;
+    agreed: boolean;              // 내 정보 제공 동의
+}

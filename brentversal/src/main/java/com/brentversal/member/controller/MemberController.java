@@ -160,6 +160,13 @@ public class MemberController {
                     HttpStatus.BAD_REQUEST);
         }
 
+        // 전화번호 중복 체크.
+        Member phoneOwner = memberService.findByPhone(dto.getPhone());
+        if (phoneOwner != null){
+            return new ResponseEntity<>(Map.of("phone", "이미 존재하는 전화번호입니다."),
+                    HttpStatus.BAD_REQUEST);
+        }
+
         // 회원 가입 처리
         // insert()는 비밀번호 정책 위반뿐 아니라 중개인 가입의 필수값 누락(등록번호/사무소명 등)에서도
         // IllegalArgumentException을 던지므로, 특정 필드가 아니라 general 오류로 돌려준다.
