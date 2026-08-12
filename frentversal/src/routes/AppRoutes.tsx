@@ -6,7 +6,7 @@ import HomePage from './../pages/HomePage';
 import PropertyFormPage from './../pages/PropertyFormPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
-import PropertyPreviewPage from "../pages/PropertyPreviewPage";
+import ComparePage from './../pages/ComparePage';
 import AgencyPage from './../pages/AgencyPage';
 import NoticeListPage from '../pages/NoticeListPage';
 import NoticeDetailPage from '../pages/NoticeDetailPage';
@@ -23,6 +23,8 @@ import BrokerMyPage from './../pages/BrokerMyPage';
 import MyAgencyPage from './../pages/MyAgencyPage';
 import ConsultationReplyPage from './../pages/ConsultationReplyPage';
 import BrokerVerificationPage from './../pages/BrokerVerificationPage';
+import FavoritesPage from "../pages/FavoritesPage.tsx";
+import MyPropertiesPage from "../pages/MyPropertiesPage.tsx";
 import NotFoundPage from './../pages/NotFoundPage';
 import AdminConsolePage from './../pages/AdminConsolePage';
 import AdminHomePanel from './../pages/AdminHomePanel';
@@ -51,8 +53,11 @@ function App({ user, handleLoginSuccess }: AppProps) {
       {/* 일반 사용자(USER)가 최초 로그인 시 1회 거치는 취향 초기 설정. 지금은 스텁 화면이다. */}
       <Route path='/preference-setup' element={<PreferenceSetupPage />} />
       <Route path='/property/form' element={<PropertyFormPage />} />
+      <Route path='/property/form/:id' element={<PropertyFormPage />} />
+      <Route path="/broker/properties" element={<MyPropertiesPage />} />
       <Route path="/property/:id" element={<PropertyPage user={user} />} />
-      <Route path="/property/preview" element={<PropertyPreviewPage />} />
+      <Route path="/property/compare" element={<ComparePage />} />
+      <Route path="/favorites" element={<FavoritesPage />} />
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
 

@@ -68,6 +68,13 @@ public class Property {
     @Column(name = "address", length = 200, nullable = false)
     private String address;
 
+    // 주소를 Python이 지오코딩해서 얻은 좌표. 백엔드는 계산 안 하고 값만 받아 저장한다.
+    @Column(name = "latitude")
+    private Double latitude;  // 매물 위도
+
+    @Column(name = "longitude")
+    private Double longitude; // 매물 경도
+
     private BigDecimal area;   // 전용면적(㎡)
     private Integer floor;     // 층수
 
@@ -125,6 +132,10 @@ public class Property {
     @Column(name = "ai_price")
     private Long aiPrice; // AI 예상 시세
 
+    // 매물 좌표와 최근접 지하철역 좌표 사이의 유클리드 거리(Python 계산). 단위(m/km)는 Python 담당과 확정 필요.
+    @Column(name = "station_distance")
+    private Double stationDistance; // 최근접 역까지 거리
+
     @Enumerated(EnumType.STRING)
     @Column(name = "price_status", length = 10)
     private PriceChangeStatus priceStatus; // 가장 최근 가격 수정의 방향. 수정 이력이 없거나 변동 없으면 null
@@ -143,4 +154,6 @@ public class Property {
     @Transient
     private List<Long> tagIds; // 요청으로 들어온 태그 id 목록. 저장 전 서비스에서 실제 Tag로 변환됨
 
+    @Transient
+    private List<Long> keepImageIds; // 수정 시 유지할 기존 사진 id 목록. 여기 없는 기존 사진은 삭제됨
 }

@@ -99,9 +99,11 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         setShowLoginModal(true);
     };
 
-    // 관심매물 저장/취소 토글 (로그인 사용자 전용) — TODO: 관심매물 엔드포인트 연동 전, 화면 상태만 토글
+    // 관심매물 저장/취소 토글 (로그인 사용자 전용)
     const toggleFavorite = async () => {
         if (!property) return;
+        const response = await customAxios.post<{ favorited: boolean }>(`/property/${property.id}/favorite`);
+        setProperty({ ...property, isFavorited: response.data.favorited });
         await customAxios.post(`/property/${property.id}/favorite`);
         setProperty({ ...property, isFavorited: !property.isFavorited });
     };
