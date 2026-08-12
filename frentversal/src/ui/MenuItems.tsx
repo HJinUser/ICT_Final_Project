@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Navbar, Container, Nav, Badge, Dropdown } from "react-bootstrap";
 
 import { useNavigate } from "react-router-dom";
-import { getNotifications } from "../api/myAgencyApi";
-import type { Notification } from "../types/MyAgency";
+import { getNotifications } from "../api/notificationApi";
+import type { Notification } from "../types/Notification";
 import type { User } from "../types/User";
 
 type MenuItemsProps = {
@@ -22,13 +22,17 @@ const NOTIFICATION_INTERVAL = 30_000;
 function App({ appName, user, handleLogout }: MenuItemsProps) {
    const navigate = useNavigate();
 
-   // 중개인에게만 보이는 알림 목록
+   // 로그인한 사용자에게 보이는 알림 목록.
+   // 담기는 항목은 서버가 역할에 맞게 정한다.
+   //   공통   : 최근 공지사항 "[공지] 제목"
+   //   중개인 : 미답변 상담 요청, 미답변 리뷰
+   //   관리자 : 승인 대기 매물, 심사 대기 인증 신청
    const [notifications, setNotifications] = useState<Notification[]>([]);
    const timerRef = useRef<number | undefined>(undefined);
 
    useEffect(() => {
-      // 중개인이 아니면 알림을 조회하지 않는다 (서버도 중개인만 통과시킨다)
-      if (user?.role !== "BROKER") {
+      // 비로그인 상태에서는 알림을 조회하지 않는다 (서버도 로그인한 사람만 통과시킨다)
+      if (!user) {
          setNotifications([]);
          return;
       }
@@ -69,18 +73,32 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
                {/* 로그인 여부와 상관없이 항상 보이는 메뉴 */}
                <Nav.Link onClick={() => navigate(`/agency`)}>중개사무소 안내</Nav.Link>
 
+               {/* 마이페이지는 역할마다 화면이 다르다 (화면정의서 1-2의 "내 정보" 자리).
+                   상담 답변 확인 같은 사용자 기능은 네비게이션이 아니라 마이페이지 안에 둔다. */}
+               {user?.role === "USER" && (
+                  <Nav.Link onClick={() => navigate(`/mypage`)}>마이페이지</Nav.Link>
+               )}
+
                {/* 중개인에게만 보이는 메뉴 */}
                {user?.role === "BROKER" && (
                   <Nav.Link onClick={() => navigate(`/broker/mypage`)}>마이페이지</Nav.Link>
                )}
 
+               {/* 관리자에게만 보이는 메뉴 (화면정의서 1-1의 관리자 자리) */}
+               {user?.role === "ADMIN" && (
+                  <Nav.Link onClick={() => navigate(`/admin/properties`)}>매물 관리</Nav.Link>
+               )}
+
                {renderMenu()}
             </Nav>
 
-            {/* ── 알림 (중개인 전용) ─────────────────────────────
+            {/* ── 알림 (로그인한 사용자 전체) ─────────────────────
                 종 모양을 누르면 목록이 펼쳐지고, 항목을 누르면 해당 화면으로 이동한다.
-                답변을 하면 목록에서 사라지므로 따로 "읽음" 처리를 하지 않는다. */}
-            {user?.role === "BROKER" && (
+                  [공지] 제목      -> 공지사항 상세
+                  상담 요청·리뷰   -> 답변 화면 (중개인)
+                  승인·인증 대기   -> 관리 화면 (관리자)
+                처리하고 나면 목록에서 사라지므로 따로 "읽음" 처리를 하지 않는다. */}
+            {user && (
                <Dropdown align="end">
                   <Dropdown.Toggle variant="dark" id="notification-menu" className="border-0">
                      🔔
@@ -107,10 +125,16 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
                         </Dropdown.Item>
                      ))}
 
-                     {notifications.length > 0 && (
+                     {notifications.length > 0 && user.role === "BROKER" && (
                         <>
                            <Dropdown.Divider />
                            <Dropdown.Item onClick={() => navigate("/broker/mypage")}>모두 보기</Dropdown.Item>
+                        </>
+                     )}
+                     {notifications.length > 0 && user.role === "ADMIN" && (
+                        <>
+                           <Dropdown.Divider />
+                           <Dropdown.Item onClick={() => navigate("/admin/properties")}>매물 관리로 이동</Dropdown.Item>
                         </>
                      )}
                   </Dropdown.Menu>

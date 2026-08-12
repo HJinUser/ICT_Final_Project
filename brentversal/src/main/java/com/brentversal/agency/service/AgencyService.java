@@ -6,6 +6,8 @@ import com.brentversal.agency.dto.AgencyResponseDto;
 import com.brentversal.agency.entity.Agency;
 import com.brentversal.agency.repository.AgencyRepository;
 import com.brentversal.agency.repository.AgencyReviewRepository;
+import com.brentversal.common.geocoding.KakaoGeocodingService;
+import com.brentversal.member.entity.Member;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +28,44 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
     private final PropertyRepository propertyRepository;
     private final AgencyReviewRepository agencyReviewRepository;
 
+    // 사무소를 새로 만들 때 주소로 좌표(위도·경도)를 채우기 위해 쓴다
+    private final KakaoGeocodingService kakaoGeocodingService;
+
     // 상세 페이지에 카드로 보여 줄 최근 매물 개수
     private static final int RECENT_PROPERTY_LIMIT = 2;
+
+    // 중개인에게 사무소가 없으면 인증 신청 정보로 만들어 준다. 이미 있으면 그대로 돌려준다.
+    //
+    // 사무소는 원래 중개인 회원가입(MemberService.saveBrokerProfile)에서 함께 만들어진다.
+    // 하지만 일반 회원으로 가입한 뒤 중개인 인증을 신청하는 길도 열려 있어서,
+    // 그 경우에는 사무소 없이 중개인 자격만 생겨 "내 중개사무소" 화면이 열리지 않았다.
+    // 인증 신청 때 받는 상호·소재지·대표자가 사무소에 필요한 값과 같으므로 그대로 사용한다.
+    @Transactional
+    public Agency createIfAbsent(Member member, String name, String brokerName,
+                                 String address, String registrationNo){
+
+        Optional<Agency> found = agencyRepository.findByMemberId(member.getId());
+
+        if(found.isPresent()) return found.get();
+
+        Agency agency = new Agency();
+
+        agency.setMember(member);
+        agency.setName(name);
+        agency.setBrokerName(brokerName);
+        agency.setAddress(address);
+        agency.setRegistrationNo(registrationNo);
+        agency.setRegdate(LocalDate.now());
+
+        // 좌표를 못 찾아도(카카오 키가 없거나 검색 실패) 사무소 등록은 정상적으로 끝나야 한다.
+        // 지도에 안 보일 뿐이고, 나중에 사무소 정보를 저장할 때 다시 채워진다.
+        kakaoGeocodingService.findCoordinates(address).ifPresent(coordinates -> {
+            agency.setLatitude(coordinates.latitude());
+            agency.setLongitude(coordinates.longitude());
+        });
+
+        return agencyRepository.save(agency);
+    }
 
     // 중개사무소 목록 조회 (검색어 + 지역 필터)
     // readOnly = true : 조회 전용 트랜잭션이라 변경 감지(dirty checking)를 하지 않아 조금 더 가볍다.

@@ -15,6 +15,10 @@ import BrokerMyPage from './../pages/BrokerMyPage';
 import MyAgencyPage from './../pages/MyAgencyPage';
 import ConsultationReplyPage from './../pages/ConsultationReplyPage';
 import BrokerVerificationPage from './../pages/BrokerVerificationPage';
+import AdminPropertyPage from './../pages/AdminPropertyPage';
+import AdminBrokerPage from './../pages/AdminBrokerPage';
+import MyConsultationPage from './../pages/MyConsultationPage';
+import MyPage from './../pages/MyPage';
 
 
 interface AppProps {
@@ -39,11 +43,21 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
 
+      {/* 사용자 마이페이지. 중개인·관리자는 각자 전용 화면으로 보낸다. */}
+      <Route path="/mypage" element={<MyPage user={user} />} />
+
+      {/* 내가 보낸 상담과 받은 답변 (마이페이지 > 내 활동 > 알림내역에서 들어온다) */}
+      <Route path="/my-consultations" element={<MyConsultationPage user={user} />} />
+
       {/* 중개인 전용 화면. 서버에서도 /my-agency/** 를 중개인만 통과시킨다. */}
       <Route path="/broker/mypage" element={<BrokerMyPage user={user} />} />
       <Route path="/broker/agency" element={<MyAgencyPage />} />
       <Route path="/broker/consultations/:id" element={<ConsultationReplyPage />} />
       <Route path="/broker/verification" element={<BrokerVerificationPage />} />
+
+      {/* 관리자 전용 화면. 서버에서도 /admin/** 을 관리자만 통과시킨다. */}
+      <Route path="/admin/properties" element={<AdminPropertyPage user={user} />} />
+      <Route path="/admin/brokers" element={<AdminBrokerPage user={user} />} />
     </Routes>
   );
 }
