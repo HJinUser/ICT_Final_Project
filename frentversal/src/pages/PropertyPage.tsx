@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Container, Row, Col, Card, Badge, Button, Form, Modal } from "react-bootstrap";
+// customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/1" 처럼 그 뒤만 적는다.
+// 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/1" 이 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
 import type { User } from "../types/User";
 import type { PropertyDetail } from "../types/PropertyDetail";
@@ -102,6 +104,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         if (!property) return;
         const response = await customAxios.post<{ favorited: boolean }>(`/property/${property.id}/favorite`);
         setProperty({ ...property, isFavorited: response.data.favorited });
+        await customAxios.post(`/property/${property.id}/favorite`);
+        setProperty({ ...property, isFavorited: !property.isFavorited });
     };
 
     const sendFeedback = async (liked: boolean) => {

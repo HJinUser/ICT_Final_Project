@@ -21,8 +21,9 @@ function App({ onLogin }: Props) {
         const name = searchParams.get('name');
         const email = searchParams.get('email');
         const role = searchParams.get('role');
+        const preferenceCompleted = searchParams.get('preferenceCompleted');
 
-        if (!accessToken || !refreshToken || !id || !name || !email || !role) {
+        if (!accessToken || !refreshToken || !id || !name || !email || !role || preferenceCompleted === null) {
             alert('소셜 로그인 처리 중 오류가 발생했습니다.');
             navigate('/member/login');
             return;
@@ -33,6 +34,7 @@ function App({ onLogin }: Props) {
             name,
             email,
             role: role as User['role'],
+            preferenceCompleted: preferenceCompleted === 'true',
         };
 
         localStorage.setItem('accessToken', accessToken);
@@ -40,7 +42,13 @@ function App({ onLogin }: Props) {
         localStorage.setItem('user', JSON.stringify(userData));
 
         onLogin(userData);
-        navigate('/');
+
+        // 일반 로그인(LoginPage)과 동일한 규칙: 일반 사용자(USER)가 아직 취향 초기 설정을 안 했으면 그 화면으로 먼저 보낸다.
+        if (userData.role === 'USER' && !userData.preferenceCompleted) {
+            navigate('/preference-setup');
+        } else {
+            navigate('/');
+        }
         // 이 페이지는 리다이렉트로 딱 한 번 들어오는 화면이라 최초 진입 시 한 번만 실행한다.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

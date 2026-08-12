@@ -69,7 +69,23 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/property/favorites").authenticated()
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
+                        // 매물 등록·수정·상태변경은 중개인만 할 수 있다.
+                        // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
+                        // "내 사무소의 매물이 맞는지"는 PropertyService 에서 한 번 더 확인한다.
+                        .requestMatchers(HttpMethod.POST, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.PUT, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
+                        // 공지 목록과 상세는 비회원도 조회할 수 있다.
+                        .requestMatchers(HttpMethod.GET, "/notices", "/notices/**").permitAll()
+                        // 공지 등록·수정·삭제는 관리자만 가능하다.
+                        .requestMatchers("/notices", "/notices/**").hasRole("ADMIN")
+                        // 일반 사용자와 중개인은 신고를 접수하고 자신의 신고 내역을 조회한다.
+                        .requestMatchers(HttpMethod.POST, "/reports").hasAnyRole("USER", "BROKER")
+                        .requestMatchers(HttpMethod.GET, "/reports/me").hasAnyRole("USER", "BROKER")
+                        // 신고 목록·상세 조회와 처리 권한은 관리자에게만 있다.
+                        .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
                         .requestMatchers(permitUrls).permitAll()
                         // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
                         // 상담 요청·후기 작성(POST)은 아래 anyRequest().authenticated() 에 걸려 로그인이 필요하다.
