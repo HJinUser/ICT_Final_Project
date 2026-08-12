@@ -16,7 +16,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     // 소셜 로그인 성공 시, 이 소셜 계정이 이미 연결된 회원인지 찾는 메소드
     Member findBySocialTypeAndSocialUserId(SocialType socialType, String socialUserId);
-
-    // 이메일 찾기 1단계 본인 확인용. phone이 unique이므로 이름까지 일치해야 결과가 나온다.
-    Member findByNameAndPhone(String name, String phone);
 }

@@ -47,9 +47,6 @@ public class SecurityConfig {
                 "/member/signup",
                 "/member/login",
                 "/member/refresh", // [refresh] access token 재발급 요청. 만료된 상태에서 호출되므로 인증 없이 허용해야 한다.
-                // 이메일 찾기: 로그인 전(비회원) 상태에서 접근하는 화면이라 인증 없이 허용해야 한다.
-                "/member/find-email/send-code",
-                "/member/find-email/verify",
                 // 카카오 로그인 시작(/oauth2/authorization/kakao)과 콜백(/login/oauth2/code/kakao) 경로.
                 // 로그인 전에 접근하는 경로라서 인증 없이 허용해야 한다.
                 "/oauth2/**",

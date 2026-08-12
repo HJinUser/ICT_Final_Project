@@ -11,12 +11,12 @@ import AgencyPage from './../pages/AgencyPage';
 import AgencyDetailPage from './../pages/AgencyDetailPage';
 import OAuthCallbackPage from './../pages/OAuthCallbackPage';
 import SocialSignupPage from './../pages/SocialSignupPage';
-import FindEmailPage from './../pages/FindEmailPage';
 import PreferenceSetupPage from './../pages/PreferenceSetupPage';
 import BrokerMyPage from './../pages/BrokerMyPage';
 import MyAgencyPage from './../pages/MyAgencyPage';
 import ConsultationReplyPage from './../pages/ConsultationReplyPage';
 import BrokerVerificationPage from './../pages/BrokerVerificationPage';
+import NotFoundPage from './../pages/NotFoundPage';
 
 
 interface AppProps {
@@ -35,8 +35,6 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path='/oauth/callback' element={<OAuthCallbackPage onLogin={handleLoginSuccess} />} />
       {/* 카카오 최초 로그인 시 추가정보를 받는 페이지 (신규 회원) */}
       <Route path='/oauth/signup' element={<SocialSignupPage />} />
-      {/* 이메일 찾기 (아이디 = 이메일이라 "아이디 찾기"는 따로 없다) */}
-      <Route path='/member/find-email' element={<FindEmailPage />} />
       {/* 일반 사용자(USER)가 최초 로그인 시 1회 거치는 취향 초기 설정. 지금은 스텁 화면이다. */}
       <Route path='/preference-setup' element={<PreferenceSetupPage />} />
       <Route path='/property/form' element={<PropertyFormPage />} />
@@ -50,6 +48,14 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/broker/agency" element={<MyAgencyPage />} />
       <Route path="/broker/consultations/:id" element={<ConsultationReplyPage />} />
       <Route path="/broker/verification" element={<BrokerVerificationPage />} />
+
+      {/*
+        위 어느 경로에도 걸리지 않는 주소는 모두 404 화면으로 보낸다.
+        헤더/푸터 메뉴에는 아직 안 만든 화면이 있는데, 그쪽은 navigateOrNotice가
+        "준비 중" 안내로 막아 주므로 여기까지 오지 않는다.
+        이 라우트는 사용자가 주소를 직접 잘못 입력한 경우를 위한 것이다.
+      */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

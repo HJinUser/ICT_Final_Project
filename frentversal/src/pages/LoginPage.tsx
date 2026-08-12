@@ -1,22 +1,31 @@
 import { useState } from "react";
-import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-import customAxios from "../api/axiosInstance.tsx";
+import { login } from "../api/authApi";
 import { API_BASE_URL } from "../config/config";
-import type { LoginResponse, User } from "../types/User";
+import { SOCIAL_BUTTONS } from "../types/Auth";
+import type { User } from "../types/User";
+import "../styles/AuthForm.css";
 
 interface Props {
     // onLogin 프롭스는 User 형식으로 매개 변수를 받고, 반환 타입이 없습니다.
     onLogin: (user: User) => void;
 }
 
+// 왼쪽 사진 영역 배경. 서버에서 받아올 값이 아니라 화면 장식이라 상수로 둔다.
+const VISUAL_IMAGE =
+    "linear-gradient(160deg,rgba(49,0,90,.95),rgba(75,0,130,.72))," +
+    "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=70')";
+
 function App({ onLogin }: Props) {
-    // 이 문서내에서 바뀔 소지가 있는 것들은 state로 만들어 관리 할 수 있음
-    // props는 부모에게서! 받은거고 / state는 자신의 문서 내에서! 있는 것들이고
     // 로그인과 관련된 state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    // 탭: 일반 로그인 / 패스워드리스 로그인
+    // 패스워드리스는 다른 담당자가 맡기로 해서 지금은 자리만 잡아 둔다.
+    const [mode, setMode] = useState<'normal' | 'passwordless'>('normal');
 
     // 에러 관련 메시지
     const [errors, setErrors] = useState('');
@@ -25,41 +34,21 @@ function App({ onLogin }: Props) {
 
     const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        console.log('로그인 시도중입니다.');
+        setErrors('');
 
         try {
-            const url = '/member/login';
-            const params = { email, password }; // 파라미터
-            const config = {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            };
-
-            const response = await customAxios.post<LoginResponse>(url, params, config);
-
-            console.log('응답 데이터 : \n' + response.data);
+            const data = await login({ email, password });
 
             // 서버의 응답을 전개 연산자로 처리합니다.
-            // accessToken는 JWT, userData는 User.ts으로 구성된 객체
-            // refreshToken 도 구조분해로 함께 꺼낸다(응답 본문에 accessToken 과 나란히 들어 있음)
-            const { accessToken, refreshToken, ...userData } = response.data;
+            // accessToken는 JWT, userData는 User.ts로 구성된 객체
+            const { accessToken, refreshToken, ...userData } = data;
 
             localStorage.setItem("accessToken", accessToken);
-            // 서버가 함께 내려준 refresh token 을 localStorage 에 저장한다.
             // 이후 access token 이 만료되면 axiosInstance 가 이 값으로 새 access token 을 재발급받는다.
-            localStorage.setItem("refreshToken", refreshToken); // refresh token 저장
+            localStorage.setItem("refreshToken", refreshToken);
+            localStorage.setItem("user", JSON.stringify(userData));
 
-            console.log('로그인 성공 사용자 : ' + userData);
-
-
-            if (onLogin) {
-                onLogin(userData);
-
-                // userData는 자바스크립트 객체여서 문자열로 바꿔줘야 함
-                // JSON.stringify 함수는 JavaScript 객체를 JSON 문자열로 변환해 줍니다.
-                localStorage.setItem("user", JSON.stringify(userData));
-            }
+            onLogin(userData);
 
             // 취향 초기 설정은 일반 사용자(USER)가 아직 완료하지 않았을 때만, 최초 로그인 시 1회 보여준다.
             // 중개인/관리자는 이 화면 자체가 해당되지 않으므로 항상 메인으로 보낸다.
@@ -69,129 +58,122 @@ function App({ onLogin }: Props) {
                 navigate("/");
             }
 
-        } catch (error: any) {
-            if (error.response) {
-                setErrors(error.response.data.message || "로그인 실패");
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.data) {
+                setErrors(error.response.data.message || "로그인에 실패했습니다.");
             } else {
-                setErrors("Server Error");
+                setErrors("서버와 통신하는 중 오류가 발생했습니다.");
             }
         }
     };
 
-
     return (
-        <Container fluid className="d-flex justify-content-center align-items-center" style={{ height: "70vh" }}>
-            <Row className="w-100 justify-content-center">
-                <Col md={6} sm={10}>
-                    <Card>
-                        <Card.Body>
-                            <h2 className="text-center mb-4">로그인</h2>
+        <div className="auth-shell">
+            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
+            <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
+                <span className="pill">AI 전세 탐색</span>
+                <h2>내 기준을 기억하는<br />전세 검색을 시작하세요</h2>
+                <p>시세 비교, 맞춤 추천, 가격 하락 알림까지 한 번의 로그인으로 이어집니다.</p>
 
-                            {/*
-                                탭 구조: "일반/소셜 로그인" | "패스워드리스 로그인".
-                                패스워드리스는 아직 미구현이라 자리만 잡아둔다 - 나중에 이 Tab 안쪽만
-                                채우면 되고, 일반 로그인 쪽 구조는 다시 안 건드려도 된다.
-                            */}
-                            <Tabs defaultActiveKey="normal" className="mb-4" justify>
-                                <Tab eventKey="normal" title="일반 로그인">
-                                    {errors && <Alert variant="danger" className="mt-3">{errors}</Alert>}
+                <div className="points">
+                    <div className="point"><i>1</i> 실거래가 기반 AI 시세예측</div>
+                    <div className="point"><i>2</i> 관심매물 가격 변동 알림</div>
+                    <div className="point"><i>3</i> 취향에 맞춘 동네·매물 추천</div>
+                </div>
+            </section>
 
-                                    <Form onSubmit={handleLogin} className="mt-3">
-                                        <Form.Group as={Row} className="mb-3 align-items-center">
-                                            <Form.Label column sm={3} className="text-end fw-bold text-primary">
-                                                이메일
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="email"
-                                                    placeholder="이메일을 입력해 주세요."
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    required
-                                                />
-                                            </Col>
-                                        </Form.Group>
+            {/* ── 오른쪽: 입력 폼 ───────────────────────────── */}
+            <section className="auth-area">
+                <div className="eyebrow">Account</div>
+                <h1>로그인</h1>
+                <p>로그인 방식을 선택해 주세요.</p>
 
-                                        <Form.Group as={Row} className="mb-3 align-items-center">
-                                            <Form.Label column sm={3} className="text-end fw-bold text-primary">
-                                                비밀 번호
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="password"
-                                                    placeholder="비밀 번호을 입력해 주세요."
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    required
-                                                />
-                                            </Col>
-                                        </Form.Group>
+                <div className="auth-segmented">
+                    <button
+                        type="button"
+                        className={mode === 'normal' ? 'on' : ''}
+                        onClick={() => setMode('normal')}
+                    >
+                        일반 로그인
+                    </button>
+                    <button
+                        type="button"
+                        className={mode === 'passwordless' ? 'on' : ''}
+                        onClick={() => setMode('passwordless')}
+                    >
+                        패스워드리스 로그인
+                    </button>
+                </div>
 
-                                        {/* 아이디(=이메일)가 곧 로그인 이메일이므로 "아이디 찾기"가 아니라 "이메일 찾기"로 안내한다. */}
-                                        <div className="text-end mb-3">
-                                            <Link to="/member/find-email" className="small text-decoration-none">
-                                                이메일 찾기
-                                            </Link>
-                                        </div>
+                {errors && <div className="auth-alert">{errors}</div>}
 
-                                        <Row className="g-2">
-                                            <Col xs={8}>
-                                                <Button variant="primary" type="submit" className="w-100">
-                                                    로그인
-                                                </Button>
-                                            </Col>
-                                            <Col xs={4}>
-                                                <Link to="/member/signup" className="btn btn-outline-secondary w-100">
-                                                    회원 가입
-                                                </Link>
-                                            </Col>
-                                        </Row>
-                                    </Form>
+                {mode === 'normal' ? (
+                    <>
+                        <form onSubmit={handleLogin}>
+                            <div className="auth-field">
+                                <label htmlFor="login-email">이메일</label>
+                                <input
+                                    id="login-email"
+                                    type="email"
+                                    placeholder="name@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
 
-                                    {/*
-                                        일반 <a> 태그를 쓴다(react-router의 Link가 아님).
-                                        이건 SPA 내부 이동이 아니라, 브라우저가 카카오 로그인 페이지로
-                                        완전히 떠났다가 돌아와야 하는 흐름이라 실제 페이지 이동이 필요하다.
-                                        API_BASE_URL(/api)을 거쳐 vite proxy/nginx가 백엔드로 넘겨준다.
-                                    */}
-                                    <a
-                                        href={`${API_BASE_URL}/oauth2/authorization/kakao`}
-                                        className="btn w-100 mt-3"
-                                        style={{ backgroundColor: "#FEE500", color: "#191919" }}
-                                    >
-                                        카카오로 로그인
-                                    </a>
+                            <div className="auth-field">
+                                <label htmlFor="login-password">비밀번호</label>
+                                <input
+                                    id="login-password"
+                                    type="password"
+                                    placeholder="비밀번호 입력"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
 
-                                    {/* registrationId만 다른 같은 방식(/oauth2/authorization/{registrationId}) */}
-                                    <a
-                                        href={`${API_BASE_URL}/oauth2/authorization/google`}
-                                        className="btn btn-outline-dark w-100 mt-2"
-                                    >
-                                        구글로 로그인
-                                    </a>
+                            <button type="submit" className="auth-solid-btn" style={{ marginTop: 20 }}>
+                                로그인
+                            </button>
+                        </form>
 
-                                    <a
-                                        href={`${API_BASE_URL}/oauth2/authorization/naver`}
-                                        className="btn w-100 mt-2"
-                                        style={{ backgroundColor: "#03C75A", color: "#ffffff" }}
-                                    >
-                                        네이버로 로그인
-                                    </a>
-                                </Tab>
+                        <div className="auth-or">또는 소셜 로그인</div>
 
-                                {/* 패스워드리스 자리. 나중에 여기 안에 아이디 입력 + QR/등록 버튼을 채운다. */}
-                                <Tab eventKey="passwordless" title="패스워드리스 로그인">
-                                    <div className="text-center text-muted py-5">
-                                        패스워드리스 로그인은 준비 중입니다.
-                                    </div>
-                                </Tab>
-                            </Tabs>
+                        {/*
+                            일반 <a> 태그를 쓴다(react-router의 Link가 아님).
+                            이건 SPA 내부 이동이 아니라, 브라우저가 카카오/구글/네이버 로그인 페이지로
+                            완전히 떠났다가 돌아와야 하는 흐름이라 실제 페이지 이동이 필요하다.
+                            API_BASE_URL(/api)을 거쳐 vite proxy/nginx가 백엔드로 넘겨준다.
+                        */}
+                        <div className="auth-socials">
+                            {SOCIAL_BUTTONS.map((social) => (
+                                <a
+                                    key={social.provider}
+                                    href={`${API_BASE_URL}/oauth2/authorization/${social.provider}`}
+                                    className={`auth-social-btn ${social.className}`}
+                                >
+                                    {social.label}
+                                </a>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    // 패스워드리스는 담당자가 따로 있어 화면 자리만 만들어 둔다.
+                    // 나중에 이 블록 안만 채우면 되고 일반 로그인 쪽은 다시 건드릴 필요가 없다.
+                    <div className="auth-soft">
+                        <strong>패스워드리스 로그인</strong>
+                        <p>준비 중입니다. 일반 로그인 또는 소셜 로그인을 이용해 주세요.</p>
+                    </div>
+                )}
 
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
+                <p className="auth-foot">
+                    아직 계정이 없나요?{' '}
+                    <button type="button" onClick={() => navigate('/member/signup')}>회원가입</button>
+                </p>
+            </section>
+        </div>
     );
 };
 

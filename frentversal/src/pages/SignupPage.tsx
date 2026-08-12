@@ -1,15 +1,21 @@
-import axios from "axios";
-import customAxios from "../api/axiosInstance.tsx";
 import { useState } from "react";
-import { Card, Container, Row, Form, Col, Button, Alert, Tabs, Tab } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
+import { signup } from "../api/authApi";
+import { API_BASE_URL } from "../config/config";
+import { SOCIAL_BUTTONS } from "../types/Auth";
+import type { FieldErrors, SignupType } from "../types/Auth";
+import "../styles/AuthForm.css";
+
+// 왼쪽 사진 영역 배경. 서버에서 받아올 값이 아니라 화면 장식이라 상수로 둔다.
+const VISUAL_IMAGE =
+    "linear-gradient(160deg,rgba(49,0,90,.94),rgba(75,0,130,.68))," +
+    "url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1000&q=70')";
 
 function App() {
-    // 회원 가입시 필요한 항목들을 state로 정의하기
-    // 파라미터 관련 state 변수 선언
-
     // 탭으로 고르는 가입 종류. role은 서버가 정하고, 프론트는 이 값만 넘긴다.
-    const [signupType, setSignupType] = useState<'USER' | 'BROKER'>('USER');
+    const [signupType, setSignupType] = useState<SignupType>('USER');
 
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
@@ -27,337 +33,318 @@ function App() {
     const [agencyAddress, setAgencyAddress] = useState('');
     const [officePhone, setOfficePhone] = useState('');
 
-    // 약관 동의 여부. 약관 상세 내용은 아직 확정 전이라 체크박스만 우선 추가한다.
+    // 약관 동의 여부. 약관 상세 내용은 아직 확정 전이라 체크박스만 우선 둔다.
     const [agreedTerms, setAgreedTerms] = useState(false);
+    const [agreedPrivacy, setAgreedPrivacy] = useState(false);
+    const [agreedMarketing, setAgreedMarketing] = useState(false);
 
-
-    // 폼 유효성 검사(Form Validation Check) 관련 state 정의 : 입력 양식에 문제 발생시 값을 저장할 곳
-    // general은 그냥 일반 오류가 있을까봐 적어 놓은 것 (큰 의미 X)
-    const [errors, setErrors] = useState({
-        name: '', phone: '', email: '', password: '', passwordConfirm: '', address: '',
-        licenseNumber: '', agencyName: '', agencyAddress: '', officePhone: '',
-        agreedTerms: '', general: ''
-    });
+    // 입력 양식에 문제가 생기면 필드 이름을 키로 오류 문구를 담는다.
+    const [errors, setErrors] = useState<FieldErrors>({});
 
     const navigate = useNavigate();
 
-    const SingupAction = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault(); // 이벤트 전파 방지
+    const signupAction = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setErrors({});
 
         // 비밀번호 확인은 일반 사용자만 해당한다. 중개인은 비밀번호 필드 자체가 없다.
         if (signupType === 'USER' && password !== passwordConfirm) {
-            setErrors((prev) => ({
-                ...prev,
-                passwordConfirm: '비밀번호가 일치하지 않습니다.',
-            }));
+            setErrors({ passwordConfirm: '비밀번호가 일치하지 않습니다.' });
             return;
         }
 
-        // 약관 동의는 서버에 보내기 전에 프론트에서 먼저 막는다. (약관 상세 내용/저장 여부는 미정)
-        if (!agreedTerms) {
-            setErrors((prev) => ({
-                ...prev,
-                agreedTerms: '약관에 동의해야 회원가입을 진행할 수 있습니다.',
-            }));
+        // 필수 약관은 서버에 보내기 전에 프론트에서 먼저 막는다.
+        if (!agreedTerms || !agreedPrivacy) {
+            setErrors({ agreedTerms: '필수 약관에 모두 동의해야 회원가입을 진행할 수 있습니다.' });
             return;
         }
 
         try {
-            const url = '/member/signup';
             // 두 가입 유형의 필드를 한 번에 보낸다. 서버(MemberService.insert)가 signupType을 보고
             // 필요한 값만 사용하므로, 안 쓰는 값(예: 일반 가입의 licenseNumber)은 그냥 무시된다.
-            const parameters = {
-                signupType, name, phone, email, address,
-                password,
+            await signup({
+                signupType, name, phone, email,
+                password, address,
                 licenseNumber, agencyName, agencyAddress, officePhone,
-            };
-            const config = { withCredentials: true };
-            const response = await customAxios.post(url, parameters, config);
+            });
 
-            if (response.status === 200) { /* 스프링의 MemberController 파일 참조 */
-                alert('회원 가입 성공');
-                navigate('/member/login');
-            }
+            alert('회원 가입이 완료되었습니다.');
+            navigate('/member/login');
 
-        } catch (error) { // error : 예외 객체
-            if (axios.isAxiosError(error)) {
-                if (error.response?.data) {
-                    // 서버에서 받은 오류 정보를 객체로 저장합니다.
-                    setErrors(error.response.data);
-                }
-            } else { // 입력 값 이외에 발생하는 다른 오류과 관련됨
-                setErrors((prev) => ({
-                    ...prev,
-                    general: "회원 가입 중에 오류가 발생하였습니다.",
-                }));
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.data) {
+                // 서버에서 받은 오류 정보를 그대로 화면에 뿌린다.
+                setErrors(error.response.data);
+            } else {
+                setErrors({ general: '회원 가입 중에 오류가 발생하였습니다.' });
             }
         }
     };
 
     return (
-        <Container className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
-            <Row className="w-100 justify-content-center">
-                <Col md={6}>
-                    <Card>
-                        <Card.Body>
-                            <h2 className="text-center mb-4">회원 가입</h2>
+        <div className="auth-shell">
+            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
+            <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
+                <span className="pill">3 Role System</span>
+                <h2>사용자와 중개인에게<br />필요한 화면을 다르게</h2>
+                <p>역할에 맞는 정보만 입력하고, 가입 후 알맞은 화면으로 이동합니다.</p>
 
-                            {/* 가입 유형 탭: 일반 사용자 / 중개인. eventKey를 signupType state와 그대로 연결한다. */}
-                            <Tabs
-                                activeKey={signupType}
-                                onSelect={(key) => {
-                                    if (key === 'USER' || key === 'BROKER') {
-                                        setSignupType(key);
-                                    }
-                                }}
-                                className="mb-4"
-                                justify
-                            >
-                                <Tab eventKey="USER" title="일반 사용자" />
-                                <Tab eventKey="BROKER" title="중개인" />
-                            </Tabs>
+                <div className="points">
+                    <div className="point"><i>U</i> 사용자: 취향 기반 매물 추천</div>
+                    <div className="point"><i>B</i> 중개인: 매물 등록과 승인 관리</div>
+                    <div className="point"><i>✓</i> 소셜 계정으로도 가입 가능</div>
+                </div>
+            </section>
 
-                            {/* 일반 오류 발생시 사용자에게 alert 메시지를 보여 줍니다. */}
-                            {/* contextual : 상황에 맞는 적절한 스타일 색상을 지정하는 기법 */}
-                            {errors.general && <Alert variant="danger">{errors.general}</Alert>}
+            {/* ── 오른쪽: 입력 폼 ───────────────────────────── */}
+            <section className="auth-area">
+                <div className="eyebrow">Join</div>
+                <h1>회원가입</h1>
+                <p>역할을 선택하면 입력 항목이 달라집니다.</p>
 
-                            {/*
-                                !! 연산자는 어떠한 값을 강제로 boolean 형태로 변환해주는 자바스크립트 기법입니다.
+                {/* 가입 유형: 일반 사용자 / 중개인 */}
+                <div className="auth-role-cards">
+                    <button
+                        type="button"
+                        className={`auth-role-card ${signupType === 'USER' ? 'on' : ''}`}
+                        onClick={() => setSignupType('USER')}
+                    >
+                        <strong>사용자</strong>
+                        <span>집을 찾고 추천받습니다.</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`auth-role-card ${signupType === 'BROKER' ? 'on' : ''}`}
+                        onClick={() => setSignupType('BROKER')}
+                    >
+                        <strong>중개인</strong>
+                        <span>중개사무소와 매물을 관리합니다.</span>
+                    </button>
+                </div>
 
-                                isInvalid 속성은 해당 control의 유효성을 검사하는 속성입니다.
-                                값이 true이면 Form.Control.Feedback에 빨간 색상으로 오류 메시지를 보여 줍니다.
-                            */}
+                {errors.general && <div className="auth-alert">{errors.general}</div>}
 
-                            <Form onSubmit={SingupAction}>
-                                {/* 이름 */}
-                                <Form.Group as={Row} className="mb-3"> {/* as는 자격임 Row의 자격으로써 이 구문을 보겠다. */}
-                                    <Form.Label column sm={3}> {/* grid에서 3칸 */}
-                                        *이름
-                                    </Form.Label>
+                <form onSubmit={signupAction}>
+                    {/* 두 유형 공통 입력 */}
+                    <div className="auth-fields-2">
+                        <div className="auth-field">
+                            <label htmlFor="signup-name">이름</label>
+                            <input
+                                id="signup-name"
+                                type="text"
+                                placeholder="이름"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={errors.name ? 'invalid' : ''}
+                                required
+                            />
+                            {errors.name && <span className="msg">{errors.name}</span>}
+                        </div>
 
-                                    {/* HTML의 input이 JSX에서는 Control*/} {/* grid에서 9칸 */}
-                                    <Col sm={9}>
-                                        {/* 속성들 적기 */}
-                                        {/* value={name} 이 태그의 값과 내가 원하는 변수?와 연결 */}
-                                        {/* onChange={(e) => setName(e.target.value)} 이 태그의 값이 바뀌면 연결된 변수도 값이 변함 */}
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="이름을 입력해 주세요."
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            isInvalid={!!errors.name}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.name}
-                                        </Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+                        <div className="auth-field">
+                            <label htmlFor="signup-phone">전화번호</label>
+                            <input
+                                id="signup-phone"
+                                type="text"
+                                placeholder="010-0000-0000"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className={errors.phone ? 'invalid' : ''}
+                                required
+                            />
+                            {errors.phone && <span className="msg">{errors.phone}</span>}
+                        </div>
+                    </div>
 
-                                {/* 전화번호 */}
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={3}>
-                                        *전화번호
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="010-0000-0000"
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
-                                            isInvalid={!!errors.phone}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.phone}
-                                        </Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+                    <div className="auth-field">
+                        <label htmlFor="signup-email">이메일</label>
+                        <input
+                            id="signup-email"
+                            type="email"
+                            placeholder="name@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className={errors.email ? 'invalid' : ''}
+                            required
+                        />
+                        {errors.email && <span className="msg">{errors.email}</span>}
+                    </div>
 
-                                {/* 이메일 */}
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={3}>
-                                        *이메일
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="이메일을 입력해 주세요."
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            isInvalid={!!errors.email}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.email}
-                                        </Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
-
-                                {/* 일반 사용자 전용 필드: 중개인은 비밀번호 없이 가입하고 이후 패스워드리스만 사용한다 */}
-                                {signupType === 'USER' && (
-                                    <>
-                                        {/* 비밀번호 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *비밀번호
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="password"
-                                                    placeholder="비밀 번호를 입력해 주세요."
-                                                    value={password}
-                                                    onChange={(e) => setPassword(e.target.value)}
-                                                    isInvalid={!!errors.password}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.password}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-
-                                        {/* 비밀번호 확인 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *비밀번호 확인
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="password"
-                                                    placeholder="비밀 번호를 다시 입력해 주세요."
-                                                    value={passwordConfirm}
-                                                    onChange={(e) => setPasswordConfirm(e.target.value)}
-                                                    isInvalid={!!errors.passwordConfirm}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.passwordConfirm}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-
-                                        {/* 주소 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                주소
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="주소를 입력해 주세요."
-                                                    value={address}
-                                                    onChange={(e) => setAddress(e.target.value)}
-                                                    isInvalid={!!errors.address}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.address}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-                                    </>
-                                )}
-
-                                {/* 중개인 전용 필드 */}
-                                {signupType === 'BROKER' && (
-                                    <>
-                                        {/* 공인중개사 등록번호 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *등록번호
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="공인중개사 등록번호를 입력해 주세요."
-                                                    value={licenseNumber}
-                                                    onChange={(e) => setLicenseNumber(e.target.value)}
-                                                    isInvalid={!!errors.licenseNumber}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.licenseNumber}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-
-                                        {/* 중개사무소명 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *중개사무소명
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="사무소명 또는 사업자 등록번호를 입력해 주세요."
-                                                    value={agencyName}
-                                                    onChange={(e) => setAgencyName(e.target.value)}
-                                                    isInvalid={!!errors.agencyName}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.agencyName}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-
-                                        {/* 중개사무소 주소 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *사무소 주소
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="중개사무소 주소를 입력해 주세요."
-                                                    value={agencyAddress}
-                                                    onChange={(e) => setAgencyAddress(e.target.value)}
-                                                    isInvalid={!!errors.agencyAddress}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.agencyAddress}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-
-                                        {/* 사무실 번호 */}
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *사무실 번호
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="02-0000-0000"
-                                                    value={officePhone}
-                                                    onChange={(e) => setOfficePhone(e.target.value)}
-                                                    isInvalid={!!errors.officePhone}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.officePhone}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-                                    </>
-                                )}
-
-                                {/* 약관 동의 : 약관 상세 내용은 아직 미정이라 체크박스만 우선 추가한다 */}
-                                <Form.Group className="mb-3">
-                                    <Form.Check
-                                        type="checkbox"
-                                        label="이용약관에 동의합니다. (약관 내용 준비 중)"
-                                        checked={agreedTerms}
-                                        onChange={(e) => setAgreedTerms(e.target.checked)}
-                                        isInvalid={!!errors.agreedTerms}
-                                        feedback={errors.agreedTerms}
-                                        feedbackType="invalid"
+                    {/* 일반 사용자 전용: 중개인은 비밀번호 없이 가입한다 */}
+                    {signupType === 'USER' && (
+                        <>
+                            <div className="auth-fields-2">
+                                <div className="auth-field">
+                                    <label htmlFor="signup-password">비밀번호</label>
+                                    <input
+                                        id="signup-password"
+                                        type="password"
+                                        placeholder="대문자+소문자+숫자+특수기호"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className={errors.password ? 'invalid' : ''}
+                                        required
                                     />
-                                </Form.Group>
+                                    {errors.password && <span className="msg">{errors.password}</span>}
+                                </div>
 
-                                <Button variant="primary" type="submit" className="w-100">
-                                    회원 가입
-                                </Button>
+                                <div className="auth-field">
+                                    <label htmlFor="signup-password-confirm">비밀번호 확인</label>
+                                    <input
+                                        id="signup-password-confirm"
+                                        type="password"
+                                        placeholder="다시 입력"
+                                        value={passwordConfirm}
+                                        onChange={(e) => setPasswordConfirm(e.target.value)}
+                                        className={errors.passwordConfirm ? 'invalid' : ''}
+                                        required
+                                    />
+                                    {errors.passwordConfirm && <span className="msg">{errors.passwordConfirm}</span>}
+                                </div>
+                            </div>
 
+                            <div className="auth-field">
+                                <label htmlFor="signup-address">주소 (선택)</label>
+                                <input
+                                    id="signup-address"
+                                    type="text"
+                                    placeholder="OO시 OO구 까지"
+                                    value={address}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    className={errors.address ? 'invalid' : ''}
+                                />
+                                {errors.address && <span className="msg">{errors.address}</span>}
+                            </div>
+                        </>
+                    )}
 
-                            </Form>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container >
+                    {/* 중개인 전용 */}
+                    {signupType === 'BROKER' && (
+                        <>
+                            <div className="auth-field">
+                                <label htmlFor="signup-license">공인중개사 등록번호</label>
+                                <input
+                                    id="signup-license"
+                                    type="text"
+                                    placeholder="등록번호 입력"
+                                    value={licenseNumber}
+                                    onChange={(e) => setLicenseNumber(e.target.value)}
+                                    className={errors.licenseNumber ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.licenseNumber && <span className="msg">{errors.licenseNumber}</span>}
+                            </div>
+
+                            <div className="auth-field">
+                                <label htmlFor="signup-agency-name">중개사무소명</label>
+                                <input
+                                    id="signup-agency-name"
+                                    type="text"
+                                    placeholder="사무소명 또는 사업자등록번호"
+                                    value={agencyName}
+                                    onChange={(e) => setAgencyName(e.target.value)}
+                                    className={errors.agencyName ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.agencyName && <span className="msg">{errors.agencyName}</span>}
+                            </div>
+
+                            <div className="auth-field">
+                                <label htmlFor="signup-agency-address">중개사무소 주소</label>
+                                <input
+                                    id="signup-agency-address"
+                                    type="text"
+                                    placeholder="중개사무소 주소"
+                                    value={agencyAddress}
+                                    onChange={(e) => setAgencyAddress(e.target.value)}
+                                    className={errors.agencyAddress ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.agencyAddress && <span className="msg">{errors.agencyAddress}</span>}
+                            </div>
+
+                            <div className="auth-field">
+                                <label htmlFor="signup-office-phone">사무실 번호</label>
+                                <input
+                                    id="signup-office-phone"
+                                    type="text"
+                                    placeholder="02-0000-0000"
+                                    value={officePhone}
+                                    onChange={(e) => setOfficePhone(e.target.value)}
+                                    className={errors.officePhone ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.officePhone && <span className="msg">{errors.officePhone}</span>}
+                            </div>
+
+                            <div className="auth-soft" style={{ marginTop: 16 }}>
+                                <strong>등록번호는 가입 후 확인합니다</strong>
+                                <p>
+                                    공인중개사 등록번호와 중개사무소의 사실 여부는 가입 이후
+                                    "내 정보 → 허가 요청" 단계에서 공공 데이터로 검증합니다.
+                                </p>
+                            </div>
+                        </>
+                    )}
+
+                    {/* 약관 동의: 상세 내용은 아직 미정이라 체크박스만 둔다 */}
+                    <div className="auth-checks">
+                        <label className="auth-check">
+                            <input
+                                type="checkbox"
+                                checked={agreedTerms}
+                                onChange={(e) => setAgreedTerms(e.target.checked)}
+                            />
+                            [필수] 이용약관에 동의합니다. (약관 내용 준비 중)
+                        </label>
+                        <label className="auth-check">
+                            <input
+                                type="checkbox"
+                                checked={agreedPrivacy}
+                                onChange={(e) => setAgreedPrivacy(e.target.checked)}
+                            />
+                            [필수] 개인정보 처리 방침에 동의합니다. (내용 준비 중)
+                        </label>
+                        <label className="auth-check">
+                            <input
+                                type="checkbox"
+                                checked={agreedMarketing}
+                                onChange={(e) => setAgreedMarketing(e.target.checked)}
+                            />
+                            [선택] 맞춤 매물과 마케팅 정보 수신에 동의합니다.
+                        </label>
+                        {errors.agreedTerms && <span className="msg" style={{ color: '#c0392b' }}>{errors.agreedTerms}</span>}
+                    </div>
+
+                    <button type="submit" className="auth-solid-btn" style={{ marginTop: 20 }}>
+                        회원가입 완료
+                    </button>
+                </form>
+
+                <div className="auth-or">소셜 계정으로 가입</div>
+
+                {/*
+                    소셜 가입도 로그인과 같은 주소로 시작한다. 처음 들어온 계정이면
+                    백엔드가 추가정보 입력 화면(/oauth/signup)으로 보내 준다.
+                */}
+                <div className="auth-socials">
+                    {SOCIAL_BUTTONS.map((social) => (
+                        <a
+                            key={social.provider}
+                            href={`${API_BASE_URL}/oauth2/authorization/${social.provider}`}
+                            className={`auth-social-btn ${social.className}`}
+                        >
+                            {social.label}
+                        </a>
+                    ))}
+                </div>
+
+                <p className="auth-foot">
+                    이미 계정이 있나요?{' '}
+                    <button type="button" onClick={() => navigate('/member/login')}>로그인</button>
+                </p>
+            </section>
+        </div>
     );
 };
 
