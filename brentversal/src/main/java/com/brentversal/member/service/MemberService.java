@@ -11,6 +11,7 @@ import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
 import com.brentversal.member.repository.MemberRepository;
 import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -204,5 +205,16 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
             return; // 아무 것도 하지 않고 그냥 종료한다
         }
         member.setRefreshToken(null); // refresh token 을 비운다
+    }
+
+    // 취향 초기 설정 화면(PreferenceSetupPage)에서 "메인으로 가기"를 누르면 호출된다.
+    // 아직 실제 취향 설정 UI는 없어서, 이 호출 자체를 "완료"로 취급해 다음 로그인부터는 이 화면을 건너뛴다.
+    @Transactional
+    public void completePreferenceSetup(String email){
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new EntityNotFoundException("회원 정보를 찾을 수 없습니다.");
+        }
+        member.setPreferenceCompleted(true);
     }
 }
