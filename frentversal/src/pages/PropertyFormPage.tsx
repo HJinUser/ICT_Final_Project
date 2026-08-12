@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { Container, Row, Col, Form, Button, Alert, ListGroup, Card, Spinner } from "react-bootstrap";
+// customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/insert" 처럼 그 뒤만 적는다.
+// 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/insert" 가 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
-import { API_BASE_URL } from "../config/config";
 import { useNavigate } from "react-router-dom";
 import type { Property } from "../types/Property";
 import type { TagResponse } from "../types/Tag";
@@ -20,8 +21,10 @@ const TAG_CATEGORY_LABELS: Record<TagResponse["category"], string> = {
     NATURAL_ENVIRONMENT: "자연환경",
 };
 
+// 어느 중개사무소의 매물인지는 보내지 않는다.
+// 서버가 로그인한 중개인(JWT)의 사무소로 정하기 때문이다.
+// 여기서 보내 봐야 무시되고, 보낼 수 있게 두면 남의 사무소 번호를 넣는 요청도 가능해진다.
 const initial_value: Property = {
-    agency: { id: 1 }, // TODO: 로그인 연동 전이라 임시로 data.sql의 1번 중개사무소로 고정. 회원 도메인 완성되면 로그인한 중개인의 agency id로 교체
     name: "", description: "", type: "ONE_TWO_ROOM", dealType: "JEONSE",
     address: "", area: 0, floor: 0, roomCount: 0, bathroomCount: 0,
     price: 0, maintenanceFee: 0,
@@ -58,7 +61,7 @@ function PropertyFormPage() {
     useEffect(() => {
         const fetchTags = async () => {
             try {
-                const response = await customAxios.get<TagResponse[]>(`${API_BASE_URL}/tag`);
+                const response = await customAxios.get<TagResponse[]>(`/tag`);
                 setAvailableTags(response.data);
             } catch (error) {
                 console.error(error);
@@ -80,7 +83,7 @@ function PropertyFormPage() {
         const fetchEstimate = async () => {
             setAiLoading(true);
             try {
-                const response = await customAxios.get<AiEstimate>(`${API_BASE_URL}/ai/estimate`, {
+                const response = await customAxios.get<AiEstimate>(`/ai/estimate`, {
                     params: { address: property.address, area: property.area, dealType: property.dealType },
                     timeout: 15000,
                 });
@@ -157,10 +160,10 @@ function PropertyFormPage() {
             formData.append("data", new Blob([JSON.stringify(property)], { type: "application/json" }));
             photoFiles.forEach((file) => formData.append("files", file));
 
-            const response = await customAxios.post(`${API_BASE_URL}/property/insert`, formData);
+            const response = await customAxios.post(`/property/insert`, formData);
             console.log("응답 데이터:", response.data);
             alert("관리자 승인 요청을 보냈습니다.");
-            navigate("/agent/dashboard");
+            navigate("/broker/agency"); // 방금 등록한 매물이 "내 중개사무소 > 요약"에 바로 보인다
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response) {
                 setErrors((prev) => ({
@@ -176,7 +179,7 @@ function PropertyFormPage() {
 
     const handleDraftSave = async () => {
         // TODO: /property/draft 임시저장 엔드포인트는 아직 백엔드에 없음. 나중에 필요해지면 추가.
-        await customAxios.post(`${API_BASE_URL}/property/draft`, property);
+        await customAxios.post(`/property/draft`, property);
         alert("임시 저장했습니다.");
     };
 

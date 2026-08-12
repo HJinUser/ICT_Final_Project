@@ -8,6 +8,7 @@ import com.brentversal.agency.entity.AgencyReview;
 import com.brentversal.agency.repository.AgencyConsultationRepository;
 import com.brentversal.agency.repository.AgencyRepository;
 import com.brentversal.agency.repository.AgencyReviewRepository;
+import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.property.constant.PropertyStatus;
@@ -36,6 +37,9 @@ public class MyAgencyService {
     private final AgencyReviewRepository agencyReviewRepository ;
     private final PropertyRepository propertyRepository ;
     private final MemberRepository memberRepository ;
+
+    // 사무소 주소를 저장할 때 위도·경도를 채우기 위해 쓴다 (카카오 로컬 API)
+    private final KakaoGeocodingService kakaoGeocodingService ;
 
     // 등록 매물 카드는 2행 3열이라 한 페이지에 6개, 리뷰는 한 페이지에 10개씩 보여 준다.
     private static final int PROPERTY_PAGE_SIZE = 6 ;
@@ -218,6 +222,9 @@ public class MyAgencyService {
     public AgencyDetailDto updateMyAgency(String email, AgencyDetailDto dto){
         Agency agency = findMyAgency(email);
 
+        // 주소가 바뀌었는지 미리 확인해 둔다. 바뀌었으면 좌표를 다시 조회해야 하기 때문이다.
+        String previousAddress = agency.getAddress();
+
         if(dto.getName() != null && !dto.getName().isBlank()) agency.setName(dto.getName().trim());
         if(dto.getBrokerName() != null && !dto.getBrokerName().isBlank()) agency.setBrokerName(dto.getBrokerName().trim());
         if(dto.getAddress() != null && !dto.getAddress().isBlank()) agency.setAddress(dto.getAddress().trim());
@@ -227,6 +234,10 @@ public class MyAgencyService {
         agency.setRegistrationNo(dto.getRegistrationNo());
         agency.setLatitude(dto.getLatitude());
         agency.setLongitude(dto.getLongitude());
+
+        // 주소로 좌표(위도·경도)를 채운다.
+        // 중개인이 좌표를 직접 입력할 수는 없으므로, 주소를 저장할 때 서버가 대신 찾아 넣는다.
+        updateCoordinates(agency, previousAddress);
 
         // 상담 가능 상태(AVAILABLE / RESERVED / CLOSED)는 중개인이 직접 바꿀 수 있는 값이다
         if(dto.getStatus() != null && !dto.getStatus().isBlank()){
@@ -272,6 +283,27 @@ public class MyAgencyService {
                 Comparator.nullsLast(Comparator.reverseOrder())));
 
         return notifications;
+    }
+
+    // 주소를 좌표로 바꿔 사무소에 저장한다.
+    //
+    // 다시 조회하는 경우는 두 가지다.
+    //   1) 주소가 바뀌었을 때  : 예전 좌표는 더 이상 맞지 않는다
+    //   2) 좌표가 비어 있을 때 : 예전에 등록돼 좌표가 없는 사무소를 저장하면 이때 채워진다
+    // 좌표를 못 찾으면(카카오 키가 없거나 검색 실패) 기존 값을 그대로 두고 넘어간다.
+    // 지도에 안 보일 뿐, 사무소 정보 저장은 정상적으로 끝나야 하기 때문이다.
+    private void updateCoordinates(Agency agency, String previousAddress){
+        String address = agency.getAddress();
+
+        boolean addressChanged = address != null && !address.equals(previousAddress);
+        boolean coordinatesMissing = agency.getLatitude() == null || agency.getLongitude() == null;
+
+        if(!addressChanged && !coordinatesMissing) return;
+
+        kakaoGeocodingService.findCoordinates(address).ifPresent(coordinates -> {
+            agency.setLatitude(coordinates.latitude());
+            agency.setLongitude(coordinates.longitude());
+        });
     }
 
     // 알림 목록에 문의 내용을 통째로 넣으면 너무 길어서 앞부분만 잘라 쓴다.

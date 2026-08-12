@@ -14,7 +14,8 @@ export type PriceChangeStatusCode = "UP" | "DOWN";
 export interface Property {
     id?: number;
 
-    agency: { id: number };         // 중개사무소 id
+    // 중개사무소 id 는 요청에 넣지 않는다.
+    // 서버가 로그인한 중개인의 사무소를 직접 찾아 채우고, 본문으로 온 값은 무시한다.
     neighborhoodId?: number;        // 동네 id
 
     name: string;                   // 매물명
