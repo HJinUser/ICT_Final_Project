@@ -2,29 +2,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Container, Table, Badge, Alert } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
-import type { PropertyResponse, DealTypeCode } from "../types/Property";
+import type { PropertyResponse } from "../types/Property";
 import "../components/ComparePage.css";
-
-// 거래유형에 따라 실제로 비교할 대표 가격 하나를 뽑는다 (PropertyPage.tsx의 getPrimaryPrice와 동일 규칙)
-const getPrimaryPrice = (property: PropertyResponse): number => {
-    if (property.dealType === "SALE") return property.price ?? 0;
-    if (property.dealType === "JEONSE") return property.deposit ?? 0;
-    return property.monthlyDeposit ?? 0;
-};
-
-// 화면에 보여줄 가격 문자열 (월세는 "보증금/월세" 형태로 합쳐서 표시)
-const formatPrice = (property: PropertyResponse): string => {
-    if (property.dealType === "MONTHLY") {
-        return `${(property.monthlyDeposit ?? 0).toLocaleString()}/${(property.monthlyRent ?? 0).toLocaleString()}`;
-    }
-    return getPrimaryPrice(property).toLocaleString();
-};
-
-const DEAL_TYPE_LABELS: Record<DealTypeCode, string> = {
-    SALE: "매매",
-    JEONSE: "전세",
-    MONTHLY: "월세",
-};
+import { getPrimaryPrice, formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 // 여러 매물 중 어떤 값이 "더 좋은지" 골라서 그 인덱스를 돌려주는 헬퍼.
 // direction="lower"면 값이 작을수록 좋음(가격/관리비/역거리), "higher"면 값이 클수록 좋음(면적).

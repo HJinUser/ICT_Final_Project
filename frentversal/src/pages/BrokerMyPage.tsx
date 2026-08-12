@@ -164,6 +164,11 @@ function BrokerMyPage({ user }: Props) {
                             <p className="xs dim" style={{ marginTop: 6 }}>새 매물을 등록합니다.</p>
                         </Link>
 
+                        <Link className="card" to="/broker/properties">
+                            <h3>내 매물 관리</h3>
+                            <p className="xs dim" style={{ marginTop: 6 }}>등록한 매물을 수정하고 상태를 관리합니다.</p>
+                        </Link>
+
                         <Link className="card" to="/broker/agency">
                             <h3>내 중개사무소</h3>
                             <p className="xs dim" style={{ marginTop: 6 }}>등록 매물·상담 내역·평점을 확인합니다.</p>

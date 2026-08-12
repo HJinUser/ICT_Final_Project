@@ -2,27 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container, Row, Col, Card, Badge, Button, Alert } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
-import type { PropertyResponse, DealTypeCode } from "../types/Property";
+import type { PropertyResponse } from "../types/Property";
 import "../components/FavoritesPage.css";
-
-const getPrimaryPrice = (property: PropertyResponse): number => {
-    if (property.dealType === "SALE") return property.price ?? 0;
-    if (property.dealType === "JEONSE") return property.deposit ?? 0;
-    return property.monthlyDeposit ?? 0;
-};
-
-const formatPrice = (property: PropertyResponse): string => {
-    if (property.dealType === "MONTHLY") {
-        return `${(property.monthlyDeposit ?? 0).toLocaleString()}/${(property.monthlyRent ?? 0).toLocaleString()}`;
-    }
-    return getPrimaryPrice(property).toLocaleString();
-};
-
-const DEAL_TYPE_LABELS: Record<DealTypeCode, string> = {
-    SALE: "매매",
-    JEONSE: "전세",
-    MONTHLY: "월세",
-};
+import { formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 // 관심목록 페이지. 목업(favorites.html)의 3개 탭(관심매물/알림/최근본매물) 중
 // "관심매물" 탭만 우선 구현한다. 알림/최근본매물 탭은 나중에 추가.

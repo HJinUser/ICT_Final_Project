@@ -154,4 +154,6 @@ public class Property {
     @Transient
     private List<Long> tagIds; // 요청으로 들어온 태그 id 목록. 저장 전 서비스에서 실제 Tag로 변환됨
 
+    @Transient
+    private List<Long> keepImageIds; // 수정 시 유지할 기존 사진 id 목록. 여기 없는 기존 사진은 삭제됨
 }

@@ -1,0 +1,10 @@
+.my-properties-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.my-properties-table td {
+    vertical-align: middle;
+}

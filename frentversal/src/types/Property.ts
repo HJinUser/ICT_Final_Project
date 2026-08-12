@@ -13,6 +13,7 @@ export type PriceChangeStatusCode = "UP" | "DOWN";
 // 여기 넣지 않는다 — 폼에서 별도의 File[] 상태로 들고 있다가 제출할 때 FormData로 합친다.
 export interface Property {
     id?: number;
+    keepImageIds?: number[];
 
     // 중개사무소 id 는 요청에 넣지 않는다.
     // 서버가 로그인한 중개인의 사무소를 직접 찾아 채우고, 본문으로 온 값은 무시한다.

@@ -68,6 +68,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/property/favorites").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/property/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
                         // 매물 등록·수정·상태변경은 중개인만 할 수 있다.
                         // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
