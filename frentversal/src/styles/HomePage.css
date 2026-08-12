@@ -1,0 +1,721 @@
+/* 메인 홈페이지. 프로토타입 index.html의 히어로 / 섹션 / 카드 규칙을 옮겨 온 것이다. */
+
+/* ============================================================
+   히어로 (첫 화면)
+   ============================================================ */
+.home-hero {
+    position: relative;
+    height: 640px;
+    overflow: hidden;
+}
+
+/* 배경 사진. 흑백에 가깝게 낮춰서 위에 얹는 흰 글씨가 잘 읽히게 한다. */
+.home-hero .shot {
+    position: absolute;
+    inset: 0;
+    background: #2a2a30 center/cover no-repeat;
+    filter: grayscale(.72);
+    transform: scale(1.04);
+    /* 아주 천천히 확대·이동해서 정지 화면처럼 보이지 않게 한다 */
+    animation: home-drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes home-drift {
+    from { transform: scale(1.04) translateY(0); }
+    to { transform: scale(1.1) translateY(-14px); }
+}
+
+/* 사진 위에 덮는 보라~검정 그라데이션 */
+.home-hero .veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(49, 0, 90, .34) 0%, rgba(17, 17, 20, .52) 46%, rgba(17, 17, 20, .82) 100%);
+}
+
+.home-hero .inner {
+    position: relative;
+    height: 100%;
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+}
+
+.home-hero .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    background: rgba(255, 255, 255, .14);
+    border: 1px solid rgba(255, 255, 255, .28);
+    backdrop-filter: blur(6px);
+    border-radius: 100px;
+    padding: 6px 15px;
+    font-size: var(--fs-xs);
+}
+
+.home-hero .pill .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #c9a6f0;
+}
+
+.home-hero h1 {
+    font-size: 46px;
+    margin: 22px 0 14px;
+    letter-spacing: -.04em;
+    line-height: 1.18;
+}
+
+/* "시세"만 밝은 보라로 강조 */
+.home-hero h1 em {
+    font-style: normal;
+    color: #c9a6f0;
+}
+
+.home-hero .sub {
+    font-size: var(--fs-lg);
+    color: rgba(255, 255, 255, .82);
+    max-width: 520px;
+}
+
+/* 히어로 중앙의 큰 검색창 */
+.home-hero .bigsearch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 34px;
+    width: 660px;
+    max-width: 100%;
+    background: #fff;
+    border-radius: 100px;
+    padding: 7px 8px 7px 22px;
+    box-shadow: 0 14px 40px rgba(17, 17, 20, .28);
+}
+
+.home-hero .bigsearch svg {
+    color: var(--ink-3);
+    flex: none;
+}
+
+.home-hero .bigsearch input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    font-size: 15px;
+    padding: 12px 0;
+    background: none;
+    color: var(--ink);
+}
+
+.home-hero .bigsearch input::placeholder { color: var(--ink-3); }
+
+.home-hero .bigsearch .go {
+    background: var(--v);
+    color: #fff;
+    border: 0;
+    cursor: pointer;
+    border-radius: 100px;
+    padding: 12px 26px;
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+    transition: background .2s;
+}
+
+.home-hero .bigsearch .go:hover { background: var(--v-deep); }
+
+/* 검색창 아래 추천 키워드 */
+.home-hero .quick {
+    display: flex;
+    gap: 7px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.home-hero .quick button {
+    font-size: var(--fs-xs);
+    color: rgba(255, 255, 255, .86);
+    background: none;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 100px;
+    padding: 5px 13px;
+    backdrop-filter: blur(6px);
+    transition: .2s;
+}
+
+.home-hero .quick button:hover {
+    background: #fff;
+    color: var(--v);
+    border-color: #fff;
+}
+
+/* 우측 하단에 떠 있는 저평가 매물 수 카드 */
+.home-hero .floatcard {
+    position: absolute;
+    right: 32px;
+    bottom: 52px;
+    background: #fff;
+    border-radius: var(--r-l);
+    padding: 20px 24px;
+    width: 236px;
+    box-shadow: 0 18px 50px rgba(17, 17, 20, .3);
+}
+
+.home-hero .floatcard .v {
+    font-size: 34px;
+    letter-spacing: -.04em;
+    line-height: 1;
+    color: var(--v);
+}
+
+.home-hero .floatcard .k {
+    font-size: var(--fs-xs);
+    color: var(--ink-2);
+    margin-top: 9px;
+    line-height: 1.5;
+}
+
+.home-hero .floatcard .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 14px;
+    font-size: var(--fs-xs);
+    color: var(--v);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: gap .2s;
+}
+
+.home-hero .floatcard .go:hover { gap: 9px; }
+
+/* ============================================================
+   섹션 공통
+   ============================================================ */
+.home-sec { padding: 92px 0; }
+.home-sec.alt { background: var(--bg-2); }
+
+/* 섹션 제목 + 우측 "전체 보기" 링크 */
+.home-shead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.home-shead h2 { letter-spacing: -.035em; }
+
+.home-shead p {
+    color: var(--ink-2);
+    margin-top: 9px;
+    max-width: 520px;
+}
+
+.home-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--fs-sm);
+    color: var(--v);
+    white-space: nowrap;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: gap .2s;
+}
+
+.home-more:hover { gap: 10px; }
+
+/* 시세 평가 배지 */
+.home-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--fs-xs);
+    padding: 3px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    white-space: nowrap;
+    background: #fff;
+}
+
+.home-badge.low {
+    color: var(--sig-low);
+    border-color: #cfe0d7;
+    background: #f3f8f5;
+}
+
+.home-badge.mid {
+    color: var(--ink-2);
+    background: var(--bg-2);
+}
+
+.home-badge.high {
+    color: var(--sig-high);
+    border-color: #e8d5c6;
+    background: #fbf5f1;
+}
+
+/* ============================================================
+   바로가기 4장
+   ============================================================ */
+.home-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.home-sc {
+    position: relative;
+    height: 268px;
+    border-radius: var(--r-l);
+    overflow: hidden;
+    background: #e9e9ee;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: transform .3s var(--ease);
+}
+
+.home-sc:hover { transform: translateY(-4px); }
+
+.home-sc .ph {
+    position: absolute;
+    inset: 0;
+    background: #e2e2e8 center/cover no-repeat;
+    filter: grayscale(.7);
+    transition: filter .5s var(--ease), transform .6s var(--ease);
+}
+
+/* 마우스를 올린 카드만 원래 색을 되찾는다 */
+.home-sc:hover .ph {
+    filter: grayscale(.1);
+    transform: scale(1.05);
+}
+
+.home-sc .ov {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(17, 17, 20, .06) 0%, rgba(17, 17, 20, .58) 62%, rgba(49, 0, 90, .82) 100%);
+}
+
+.home-sc .txt {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 20px;
+    color: #fff;
+    text-align: left;
+}
+
+.home-sc .txt h3 { font-size: 18px; }
+
+.home-sc .txt p {
+    font-size: var(--fs-xs);
+    color: rgba(255, 255, 255, .8);
+    margin-top: 6px;
+    line-height: 1.5;
+}
+
+.home-sc .arrow {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .2);
+    border: 1px solid rgba(255, 255, 255, .36);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    backdrop-filter: blur(5px);
+    transition: .25s;
+}
+
+.home-sc:hover .arrow {
+    background: #fff;
+    color: var(--v);
+}
+
+/* ============================================================
+   매물 카드
+   ============================================================ */
+.home-plist {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+}
+
+.home-pcard {
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+    background: #fff;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .25s, transform .25s var(--ease);
+}
+
+.home-pcard:hover {
+    border-color: #d6d0e2;
+    transform: translateY(-3px);
+}
+
+.home-pcard .ph {
+    position: relative;
+    height: 170px;
+    background: var(--line-2) center/cover no-repeat;
+    filter: grayscale(.58);
+    transition: filter .45s var(--ease);
+}
+
+.home-pcard:hover .ph { filter: grayscale(0); }
+
+.home-pcard .ph .bd {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+}
+
+.home-pcard .pb { padding: 15px 17px 17px; }
+.home-pcard .price { font-size: 17px; }
+
+.home-pcard .meta {
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+    margin-top: 3px;
+}
+
+.home-pcard .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid var(--line-2);
+}
+
+.home-pcard .diff {
+    font-size: var(--fs-xs);
+    color: var(--v);
+}
+
+/* 시세 막대: 가운데 세로선이 동네 평균, 동그란 점이 이 매물의 호가 위치 */
+.home-gauge { padding: 8px 0 0; }
+
+.home-gauge .track {
+    position: relative;
+    height: 1px;
+    background: var(--line);
+}
+
+.home-gauge .fill {
+    position: absolute;
+    top: 0;
+    height: 1px;
+    background: var(--v);
+}
+
+.home-gauge .pin {
+    position: absolute;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--v);
+    transform: translate(-50%, -50%);
+}
+
+.home-gauge .base {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1px;
+    height: 9px;
+    background: var(--ink-3);
+    transform: translate(-50%, -50%);
+}
+
+/* ============================================================
+   동네 타일
+   ============================================================ */
+.home-hoods {
+    display: grid;
+    grid-template-columns: 1.42fr 1fr;
+    gap: 20px;
+}
+
+.home-hood {
+    position: relative;
+    border-radius: var(--r-l);
+    overflow: hidden;
+    background: #e9e9ee;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    width: 100%;
+}
+
+.home-hood.tall { height: 472px; }
+.home-hood.short { height: 226px; }
+
+.home-hoods .col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.home-hood .ph {
+    position: absolute;
+    inset: 0;
+    background: #e2e2e8 center/cover no-repeat;
+    filter: grayscale(.68);
+    transition: filter .55s var(--ease), transform .7s var(--ease);
+}
+
+.home-hood:hover .ph {
+    filter: grayscale(.05);
+    transform: scale(1.04);
+}
+
+.home-hood .ov {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(17, 17, 20, .02) 40%, rgba(17, 17, 20, .66) 100%);
+}
+
+.home-hood .txt {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 22px;
+    color: #fff;
+    text-align: left;
+}
+
+/* 군집 분석으로 붙은 동네 성격 라벨 */
+.home-hood .kind {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: .04em;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: rgba(255, 255, 255, .18);
+    border: 1px solid rgba(255, 255, 255, .34);
+    backdrop-filter: blur(6px);
+    margin-bottom: 10px;
+}
+
+.home-hood.tall .txt h3 {
+    font-size: 30px;
+    letter-spacing: -.04em;
+}
+
+.home-hood.short .txt h3 { font-size: 20px; }
+
+.home-hood .line {
+    display: flex;
+    gap: 12px;
+    font-size: var(--fs-xs);
+    color: rgba(255, 255, 255, .82);
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.home-hood .htags {
+    display: flex;
+    gap: 5px;
+    margin-top: 11px;
+    flex-wrap: wrap;
+}
+
+.home-hood .htags span {
+    font-size: 11.5px;
+    border: 1px solid rgba(255, 255, 255, .34);
+    border-radius: var(--r-s);
+    padding: 2px 8px;
+}
+
+/* ============================================================
+   동네 이야기 (한줄평 + 워드클라우드)
+   ============================================================ */
+.home-storygrid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 44px;
+    align-items: start;
+}
+
+.home-voice {
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    padding: 20px 22px;
+    background: #fff;
+}
+
+.home-voice + .home-voice { margin-top: 14px; }
+
+.home-voice .vh {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 7px;
+}
+
+.home-voice .who {
+    font-size: var(--fs-xs);
+    color: var(--v);
+}
+
+.home-voice p {
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+    line-height: 1.68;
+}
+
+.home-cloudbox {
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    padding: 28px 30px;
+    background: #fff;
+}
+
+/* 자주 나온 단어일수록 크게. weight 1이 가장 크다. */
+.home-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 9px 16px;
+    line-height: 1.2;
+    margin-top: 16px;
+}
+
+.home-cloud span {
+    color: var(--ink-3);
+    transition: color .25s;
+    cursor: default;
+}
+
+.home-cloud span:hover { color: var(--v); }
+.home-cloud .w1 { font-size: 30px; color: var(--v); }
+.home-cloud .w2 { font-size: 23px; color: var(--ink); }
+.home-cloud .w3 { font-size: 18px; color: var(--ink-2); }
+.home-cloud .w4 { font-size: 15px; }
+.home-cloud .w5 { font-size: 13px; }
+
+/* ============================================================
+   이용 방법
+   ============================================================ */
+.home-hows {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--line);
+}
+
+.home-how {
+    padding: 28px 30px 30px;
+    border-right: 1px solid var(--line);
+}
+
+.home-how:last-child { border-right: 0; }
+
+.home-how .ic {
+    color: var(--v);
+    margin-bottom: 16px;
+}
+
+.home-how h3 {
+    font-size: 17px;
+    margin-bottom: 8px;
+}
+
+.home-how p {
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+}
+
+/* ============================================================
+   맨 아래 가입 유도 영역
+   ============================================================ */
+.home-cta {
+    position: relative;
+    overflow: hidden;
+    padding: 104px 0;
+    text-align: center;
+    color: #fff;
+}
+
+.home-cta .ph {
+    position: absolute;
+    inset: 0;
+    background: #2a2a30 center/cover no-repeat;
+    filter: grayscale(.85);
+}
+
+.home-cta .ov {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(49, 0, 90, .78), rgba(17, 17, 20, .88));
+}
+
+.home-cta .inner { position: relative; }
+
+.home-cta h2 {
+    font-size: 32px;
+    margin-bottom: 12px;
+}
+
+.home-cta p { color: rgba(255, 255, 255, .76); }
+
+.home-cta .btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 26px;
+    border-radius: 100px;
+    font-size: var(--fs-sm);
+    border: 0;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.home-btn.fill {
+    background: #fff;
+    color: var(--v-deep);
+}
+
+.home-btn.fill:hover { background: var(--v-pale); }
+
+.home-btn.line {
+    border: 1px solid rgba(255, 255, 255, .4);
+    color: #fff;
+    background: none;
+}
+
+.home-btn.line:hover { background: rgba(255, 255, 255, .12); }
+
+/* 데이터를 불러오는 동안 보여 주는 자리 */
+.home-loading {
+    padding: 120px 0;
+    text-align: center;
+    color: var(--ink-3);
+}

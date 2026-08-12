@@ -5,7 +5,6 @@ import com.brentversal.agency.dto.AgencyReviewDto;
 import com.brentversal.agency.dto.ConsultationResponseDto;
 import com.brentversal.agency.dto.MyAgencyDashboardDto;
 import com.brentversal.agency.dto.MyPropertyCardDto;
-import com.brentversal.agency.dto.NotificationDto;
 import com.brentversal.agency.service.AgencyService;
 import com.brentversal.agency.service.MyAgencyService;
 import lombok.RequiredArgsConstructor;
@@ -193,20 +192,8 @@ public class MyAgencyController {
         }
     }
 
-    // 알림 목록 (헤더 종 아이콘)
-    // GET /my-agency/notifications
-    // 사무소가 아직 없는 중개인도 헤더는 보이므로, 이 API 는 오류 대신 빈 목록을 돌려준다.
-    @GetMapping("/notifications")
-    public ResponseEntity<Map<String, Object>> notifications(Principal principal){
-        try {
-            List<NotificationDto> list = myAgencyService.getNotifications(principal.getName());
-
-            return ResponseEntity.ok(Map.of("content", list, "unreadCount", list.size()));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.ok(Map.of("content", List.of(), "unreadCount", 0));
-        }
-    }
+    // 헤더 종 아이콘의 알림은 역할과 상관없이 GET /notifications 하나로 통일했다.
+    // (NotificationController 참고)
 
     // 아래 두 메소드는 오류 응답 형태를 통일하려고 따로 뺐다.
     private ResponseEntity<Map<String, String>> notFound(Exception e){

@@ -205,43 +205,7 @@ function AgencyPage() {
                 </section>
             </main>
 
-            <footer className="site-footer">
-                <div className="wrap">
-                    <div className="footer-grid">
-                        <div>
-                            <Link className="brand" to="/"><b>전세</b>역전</Link>
-                            <p className="xs dim" style={{ marginTop: 9, maxWidth: 280 }}>
-                                공공 실거래가와 사용자 취향을 바탕으로 제값에 가까운 전세 매물을 찾습니다.
-                            </p>
-                        </div>
-                        <div>
-                            <h4>둘러보기</h4>
-                            <Link to="/map">지도 검색</Link>
-                            <Link to="/neighborhood">동네 탐색</Link>
-                            <Link to="/recommend">맞춤 추천</Link>
-                            <Link to="/favorites">관심 목록</Link>
-                        </div>
-                        <div>
-                            <h4>이용안내</h4>
-                            <Link to="/notice">공지사항·FAQ</Link>
-                            <Link to="/support">고객센터</Link>
-                            <Link to="/agency">중개사무소 안내</Link>
-                            <Link to="/member/signup">중개인 등록</Link>
-                        </div>
-                        <div>
-                            <h4>AI·데이터</h4>
-                            <Link to="/report">모델 성능 리포트</Link>
-                            <Link to="/recommend/explain">AI 추천 설명</Link>
-                            <a href="#">국토교통부 실거래가</a>
-                            <a href="#">개인정보처리방침</a>
-                        </div>
-                    </div>
-                    <div className="footer-bottom">
-                        <span>디자인·기능 흐름 확인용 프로토타입이며 수치와 매물 정보는 예시입니다.</span>
-                        <span>© 2026 전세역전</span>
-                    </div>
-                </div>
-            </footer>
+
 
             <button className="chat-fab" aria-label="AI 챗봇 열기" onClick={() => setChatOpen((open) => !open)}>✦</button>
 

@@ -65,4 +65,12 @@ public class AgencyConsultation {
 
     @Column(name = "replied_at")
     private LocalDateTime repliedAt ; // 답변을 보낸 시각 (답변 전에는 null)
+
+    // 요청한 사용자가 답변을 확인한 시각 (확인 전에는 null)
+    //
+    // 헤더 알림은 "답변이 왔는데 아직 안 본 상담"을 보여 준다.
+    // 중개인 알림은 답변을 하면 목록에서 사라지지만, 사용자 알림은 그런 계기가 없어서
+    // 이 값을 두지 않으면 한 번 온 답변 알림이 영원히 남는다.
+    @Column(name = "reply_checked_at")
+    private LocalDateTime replyCheckedAt ;
 }

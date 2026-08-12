@@ -21,4 +21,11 @@ public interface AgencyConsultationRepository extends JpaRepository<AgencyConsul
 
     // 상태별 건수. 대시보드 숫자와 알림 배지(답변 대기 건수)에 쓴다.
     long countByAgencyIdAndStatus(Long agencyId, ConsultationStatus status);
+
+    // ── 사용자의 "내 상담" 화면에서 쓰는 조회 ─────────────────────────
+    // 내가 보낸 상담 요청 전체 (최신순)
+    List<AgencyConsultation> findByMemberIdOrderByCreatedAtDesc(Long memberId);
+
+    // 답변이 왔는데 아직 확인하지 않은 상담. 헤더 알림에 쓴다.
+    List<AgencyConsultation> findByMemberIdAndReplyIsNotNullAndReplyCheckedAtIsNullOrderByRepliedAtDesc(Long memberId);
 }

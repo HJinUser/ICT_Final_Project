@@ -93,6 +93,8 @@ public class SecurityConfig {
                         // JwtAuthenticationFilter 가 권한을 "ROLE_" + role 형태로 넣어 주므로
                         // hasRole("BROKER") 는 ROLE_BROKER 를 가진 사용자만 통과시킨다.
                         .requestMatchers("/my-agency/**").hasRole("BROKER")
+                        // 관리자 전용 화면(매물 승인 등)은 관리자만 쓸 수 있다.
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 // 카카오 로그인 성공 후 처리를 OAuth2LoginSuccessHandler가 대신 맡는다.
