@@ -108,11 +108,23 @@ public class PropertyController {
         }
     }
 
-    // 매물 수정
+    // 로그인한 중개인이 등록한 매물 전체 조회 ("내 매물" 화면용)
+    @GetMapping("/mine")
+    public ResponseEntity<?> mine(Principal principal) {
+        try {
+            return ResponseEntity.ok(propertyService.findMine(principal.getName()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // 매물 수정 (내 사무소의 매물만 가능)
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Property bean,
-                                    BindingResult bindingResult, Principal principal) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> update(@PathVariable Long id,
+                                    @Valid @RequestPart("data") Property bean,
+                                    BindingResult bindingResult,
+                                    @RequestPart(value = "files", required = false) List<MultipartFile> files,
+                                    Principal principal) {
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -121,7 +133,7 @@ public class PropertyController {
             return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
         }
         try {
-            return ResponseEntity.ok(propertyService.update(id, bean, principal.getName()));
+            return ResponseEntity.ok(propertyService.update(id, bean, files, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }

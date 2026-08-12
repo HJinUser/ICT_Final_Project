@@ -7,13 +7,17 @@ import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.dto.PropertyResponseDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.agency.entity.Agency;
+import com.brentversal.property_image.entity.PropertyImage;
 import com.brentversal.property_image.service.PropertyImageService;
 import com.brentversal.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +107,7 @@ public class PropertyService {
                 .toList();
     }
 
-    public PropertyResponseDto update(Long id, Property changes, String email) {
+    public PropertyResponseDto update(Long id, Property changes, List<MultipartFile> newFiles, String email) {
         Property property = findMyPropertyOrThrow(id, email);
 
         // 가격 변경 전, 거래유형과 대표 가격을 미리 기록해 둔다 (수정 후와 비교하기 위해)
@@ -128,6 +132,7 @@ public class PropertyService {
         property.setMoveInDate(changes.getMoveInDate());
         property.setContractStatus(changes.getContractStatus());
         property.setTags(tagService.findByIds(changes.getTagIds()));
+        property.setStatus(PropertyStatus.PENDING); // 수정하면 다시 관리자 승인을 받아야 한다
 
         // 거래유형이 그대로일 때만 가격 등락을 비교한다 (유형이 바뀌면 가격 성격이 달라서 비교 자체가 의미 없음)
         if (oldDealType == property.getDealType()) {
@@ -136,6 +141,35 @@ public class PropertyService {
                 property.setPriceStatus(newPrimaryPrice > oldPrimaryPrice ? PriceChangeStatus.UP : PriceChangeStatus.DOWN);
             }
         }
+
+        // ── 사진 갱신: keepImageIds에 없는 기존 사진은 저장소에서 지우고, 새로 올라온 파일을 추가한다 ──
+        List<Long> keepIds = changes.getKeepImageIds() != null ? changes.getKeepImageIds() : List.of();
+
+        List<PropertyImage> remaining = new ArrayList<>();
+        for (PropertyImage image : property.getImages()) {
+            if (keepIds.contains(image.getId())) {
+                remaining.add(image);
+            } else {
+                propertyImageService.deleteFile(image.getUrl()); // 저장소 파일만 지움. DB 행 삭제는 아래 orphanRemoval이 처리
+            }
+        }
+
+        int newFileCount = (newFiles == null) ? 0
+                : (int) newFiles.stream().filter(f -> f != null && !f.isEmpty()).count();
+        if (remaining.size() + newFileCount > PropertyImageService.MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException("사진은 최대 " + PropertyImageService.MAX_IMAGE_COUNT + "장까지 등록할 수 있습니다.");
+        }
+
+        remaining.addAll(propertyImageService.buildImages(property, newFiles));
+
+        // sortOrder를 다시 매기고, 첫 장을 대표 사진으로 지정
+        for (int i = 0; i < remaining.size(); i++) {
+            remaining.get(i).setSortOrder(i);
+            remaining.get(i).setIsMain(i == 0);
+        }
+
+        property.getImages().clear();
+        property.getImages().addAll(remaining);
 
         return PropertyResponseDto.of(propertyRepository.save(property));
     }
@@ -185,5 +219,15 @@ public class PropertyService {
         bean.setTags(tagService.findByIds(bean.getTagIds()));
 
         return PropertyResponseDto.of(propertyRepository.save(bean));
+    }
+
+    // 로그인한 중개인이 등록한 매물 전체 조회 ("내 매물" 화면용)
+    public List<PropertyResponseDto> findMine(String email) {
+        Agency agency = myAgencyService.findMyAgency(email);
+
+        return propertyRepository.findByAgencyIdOrderByCreatedAtDesc(agency.getId(), Pageable.unpaged())
+                .stream()
+                .map(PropertyResponseDto::of)
+                .toList();
     }
 }

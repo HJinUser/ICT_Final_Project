@@ -61,7 +61,8 @@ export const USER_MENU: NavItem[] = [
     // 마이페이지 안의 "내 활동 > 알림내역"에서 상담 답변(/my-consultations)을 확인한다.
     { label: '마이페이지', path: '/mypage', ready: true, roles: ['USER', 'ADMIN'] },
     { label: '마이페이지', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
-    { label: '관심 목록', path: '/favorites', ready: false, roles: ['USER'] },
+    { label: '내 매물 관리', path: '/broker/properties', ready: true, roles: ['BROKER'] },
+    { label: '관심 목록', path: '/favorites', ready: true, roles: ['USER'] },
     { label: '내 중개사무소', path: '/broker/agency', ready: true, roles: ['BROKER'] },
     // 내가 접수한 신고 내역. 관리자는 위 헤더의 "신고 관리"에서 전체를 처리하므로 여기 넣지 않는다.
     { label: '내 신고', path: '/report/me', ready: true, roles: ['USER', 'BROKER'] },
@@ -78,7 +79,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
             { label: '동네 탐색', path: '/neighborhood', ready: false },
             { label: '매물 확인', path: '/listings', ready: false },
             { label: '맞춤 추천', path: '/recommend', ready: false },
-            { label: '관심 목록', path: '/favorites', ready: false },
+            { label: '관심 목록', path: '/favorites', ready: true },
         ],
     },
     {
