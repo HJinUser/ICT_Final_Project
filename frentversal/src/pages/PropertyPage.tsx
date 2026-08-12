@@ -32,6 +32,13 @@ const formatPrice = (property: PropertyResponse): string => {
     return getPrimaryPrice(property).toLocaleString();
 };
 
+// 거래유형에 따라 AI 예상가 중 실제로 비교할 값 하나를 뽑아준다. 아직 예측 전이면 null
+const getPrimaryAiPrice = (property: PropertyResponse): number | null => {
+    if (property.dealType === "SALE") return property.aiPrice;
+    if (property.dealType === "JEONSE") return property.aiDeposit;
+    return property.aiMonthlyDeposit;
+};
+
 function PropertyPage({ user, mockData }: PropertyPageProps) {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -167,7 +174,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const role = user?.role; // undefined(비회원) | "USER" | "BROKER" | "ADMIN"
     const isOwner = user?.role === "BROKER" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
 
-    const priceDiff = (property.aiPrice ?? 0) - getPrimaryPrice(property);
+    const aiPrice = getPrimaryAiPrice(property);
+    const priceDiff = (aiPrice ?? 0) - getPrimaryPrice(property);
 
     return (
         <Container className="mt-4 mb-5">
@@ -190,7 +198,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 <Col md="auto">
                     <Card className="p-3 text-center">
                         <span className="text-muted small">AI 예상 시세</span>
-                        <strong className="fs-3">{(property.aiPrice ?? 0).toLocaleString()}</strong>
+                        <strong className="fs-3">{(aiPrice ?? 0).toLocaleString()}</strong>
                     </Card>
                 </Col>
             </Row>
@@ -227,7 +235,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         <Row>
                             <Col>
                                 <span className="text-muted small">예상 적정 전세가</span>
-                                <strong className="d-block fs-4">{(property.aiPrice ?? 0).toLocaleString()}</strong>
+                                <strong className="d-block fs-4">{(aiPrice ?? 0).toLocaleString()}</strong>
                             </Col>
                             <Col className="text-end">
                                 <span className="text-muted small">현재 호가</span>
@@ -239,7 +247,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                 <div key={i} className="text-center">
                                     <div
                                         className="bar"
-                                        style={{ height: `${(point.price / (property.aiPrice || 1)) * 100}px` }}
+                                        style={{ height: `${(point.price / (aiPrice || 1)) * 100}px` }}
                                     />
                                     <span className="xs">{point.year}</span>
                                 </div>
