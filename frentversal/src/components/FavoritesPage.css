@@ -1,0 +1,14 @@
+.favorite-thumb {
+    height: 180px;
+    object-fit: cover;
+}
+
+.favorite-heart {
+    color: #4B0082;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+.favorite-heart:hover {
+    color: #380062;
+}

@@ -46,15 +46,12 @@ export const HEADER_NAV: NavItem[] = [
     { label: '매물 확인', path: '/listings', ready: false },
     { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
     { label: '중개사무소 안내', path: '/agency', ready: true, roles: ['GUEST', 'USER'] },
-    // 공지는 비회원을 포함해 누구나 볼 수 있다(서버도 GET /notices 를 permitAll 로 열어 두었다).
-    { label: '공지사항', path: '/notice', ready: true },
-    // 중개인/관리자는 매물을 "찾는" 쪽이 아니라 "관리"하는 쪽이라 다른 메뉴를 본다.
+    // 공지사항은 상단 메뉴에서 빼고 메인 화면에 자리를 마련했다.
+    // (비회원도 볼 수 있고, 전체 목록은 메인의 "전체 보기"로 들어간다)
+    // 중개인은 매물을 "찾는" 쪽이 아니라 "관리"하는 쪽이라 다른 메뉴를 본다.
     { label: '매물 관리', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
-    // 관리자의 매물 관리는 승인 대기 매물을 심사하는 화면이다.
-    // 같은 화면 안의 탭으로 "중개인 인증"(/admin/brokers)까지 오갈 수 있어 메뉴는 하나만 둔다.
-    { label: '매물 관리', path: '/admin/properties', ready: true, roles: ['ADMIN'] },
-    { label: '신고 관리', path: '/admin/reports', ready: true, roles: ['ADMIN'] },
-    { label: '문의 목록', path: '/inquiries', ready: false, roles: ['ADMIN'] },
+    // 관리자의 운영 기능은 상단 메뉴에 두지 않는다.
+    // 콘솔(/admin) 한 곳에 모아 두고, 우측 프로필 메뉴의 "관리자 콘솔"로 들어간다.
 ];
 
 // ── 로그인한 사용자의 우측 드롭다운 메뉴 ──────────────────────
@@ -62,12 +59,12 @@ export const USER_MENU: NavItem[] = [
     // 마이페이지 안의 "내 활동 > 알림내역"에서 상담 답변(/my-consultations)을 확인한다.
     { label: '마이페이지', path: '/mypage', ready: true, roles: ['USER', 'ADMIN'] },
     { label: '마이페이지', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
-    { label: '관심 목록', path: '/favorites', ready: false, roles: ['USER'] },
+    { label: '내 매물 관리', path: '/broker/properties', ready: true, roles: ['BROKER'] },
+    { label: '관심 목록', path: '/favorites', ready: true, roles: ['USER'] },
     { label: '내 중개사무소', path: '/broker/agency', ready: true, roles: ['BROKER'] },
     // 내가 접수한 신고 내역. 관리자는 위 헤더의 "신고 관리"에서 전체를 처리하므로 여기 넣지 않는다.
     { label: '내 신고', path: '/report/me', ready: true, roles: ['USER', 'BROKER'] },
-    { label: '관리자 콘솔', path: '/admin/properties', ready: true, roles: ['ADMIN'] },
-    { label: '공지사항', path: '/notice', ready: true },
+    { label: '관리자 콘솔', path: '/admin', ready: true, roles: ['ADMIN'] },
 ];
 
 // ── 푸터 안내메뉴 ─────────────────────────────────────────────
@@ -80,7 +77,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
             { label: '동네 탐색', path: '/neighborhood', ready: false },
             { label: '매물 확인', path: '/listings', ready: false },
             { label: '맞춤 추천', path: '/recommend', ready: false },
-            { label: '관심 목록', path: '/favorites', ready: false },
+            { label: '관심 목록', path: '/favorites', ready: true },
         ],
     },
     {

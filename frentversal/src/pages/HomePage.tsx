@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getHomeData } from "../api/homeApi";
+import { getNotices } from "../api/noticeApi";
 import type { HomeData, PriceLevel } from "../types/Home";
+import type { Notice } from "../types/Notice";
 import type { NavItem } from "../types/Navigation";
 import { navigateOrNotice } from "../utils/navigateOrNotice";
 import "../styles/HomePage.css";
@@ -40,6 +42,9 @@ const SHORTCUTS: (NavItem & { desc: string; image: string })[] = [
 // 히어로 검색창 아래 추천 키워드
 const QUICK_KEYWORDS = ['서초구 전세', '강남구 전세', '3억 이하', '역 도보 5분', '신축 5년 이내'];
 
+// 메인에 보여 줄 공지 개수. 상단 메뉴에서 내려온 자리라 목록 전체가 아니라 최근 것만 걸어 둔다.
+const HOME_NOTICE_COUNT = 3;
+
 // 시세 평가 값을 배지 색 클래스로 바꾼다.
 const LEVEL_CLASS: Record<PriceLevel, string> = {
     LOW: 'low',
@@ -57,6 +62,9 @@ function App() {
     const [error, setError] = useState('');
     const [keyword, setKeyword] = useState('');
 
+    // 공지사항. 비회원도 볼 수 있어서 로그인 여부와 상관없이 불러온다.
+    const [notices, setNotices] = useState<Notice[]>([]);
+
     useEffect(() => {
         getHomeData()
             .then((result) => setData(result))
@@ -64,6 +72,11 @@ function App() {
                 console.error('메인 화면 데이터를 불러오지 못했습니다.', err);
                 setError('화면 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
             });
+
+        // 공지는 부가 정보라, 못 불러와도 메인 화면 전체를 막지 않고 그 영역만 비운다.
+        getNotices()
+            .then((result) => setNotices(result.slice(0, HOME_NOTICE_COUNT)))
+            .catch((err) => console.error('공지사항을 불러오지 못했습니다.', err));
     }, []);
 
     const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
@@ -161,6 +174,72 @@ function App() {
                                 </div>
                             </button>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── 공지사항 ───────────────────────────────────
+                상단 메뉴에 있던 공지를 메인으로 내렸다.
+                최근 몇 건만 걸어 두고, 전체는 공지사항 목록에서 본다.
+                위쪽 섹션과 이어지는 자리라 여백을 줄이고 테두리 상자로 구분한다. */}
+            <section className="home-sec" style={{ paddingTop: 0, paddingBottom: 56 }}>
+                <div className="rv-wrap">
+                    <div
+                        style={{
+                            border: '1px solid var(--line)',
+                            borderRadius: 14,
+                            padding: '22px 26px',
+                            background: '#fff',
+                        }}
+                    >
+                        <div className="row between" style={{ alignItems: 'baseline' }}>
+                            <h3 style={{ margin: 0, fontSize: 17 }}>공지사항</h3>
+                            <button
+                                onClick={() => navigate('/notice')}
+                                style={{ fontSize: 13, color: 'var(--v)' }}
+                            >
+                                전체 보기 →
+                            </button>
+                        </div>
+
+                        {notices.length === 0 ? (
+                            <p style={{ marginTop: 14, fontSize: 13.5, color: 'var(--ink-3)' }}>
+                                등록된 공지사항이 없습니다.
+                            </p>
+                        ) : (
+                            <div style={{ marginTop: 14, display: 'grid', gap: 2 }}>
+                                {notices.map((notice) => (
+                                    <button
+                                        key={notice.id}
+                                        onClick={() => navigate(`/notice/${notice.id}`)}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            gap: 16,
+                                            padding: '9px 0',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            fontSize: 14,
+                                            color: 'var(--ink-2)',
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            {notice.title}
+                                        </span>
+                                        <span style={{ fontSize: 12.5, color: 'var(--ink-3)', flexShrink: 0 }}>
+                                            {notice.createdAt?.slice(0, 10)}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

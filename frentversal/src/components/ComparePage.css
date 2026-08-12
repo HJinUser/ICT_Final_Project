@@ -1,0 +1,29 @@
+.compare-table th,
+.compare-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.compare-thumb {
+    width: 100%;
+    max-width: 160px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.compare-thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f3ec;
+    color: #9c9c9c;
+    font-size: 12px;
+}
+
+/* 승자로 뽑힌 칸 강조 (목업 compare.html의 .winner 스타일과 같은 취지) */
+.compare-winner {
+    background: #f3ecfa;
+    font-weight: 600;
+    color: #4B0082;
+}

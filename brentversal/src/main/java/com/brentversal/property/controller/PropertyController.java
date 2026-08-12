@@ -1,5 +1,6 @@
 package com.brentversal.property.controller;
 
+import com.brentversal.favorite.service.FavoriteService;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.dto.PropertyResponseDto;
 import com.brentversal.property.entity.Property;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +29,7 @@ import java.util.Optional;
 public class PropertyController {
 
     private final PropertyService propertyService;
+    private final FavoriteService favoriteService;
 
     // 매물 등록
     //
@@ -84,10 +87,44 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.findByIds(idList));
     }
 
+    // 관심매물 토글 (로그인 필요 — SecurityConfig에서 이 경로는 인증 요구)
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<?> toggleFavorite(@PathVariable Long id, Authentication authentication) {
+        try {
+            boolean favorited = favoriteService.toggle(authentication.getName(), id);
+            return ResponseEntity.ok(Map.of("favorited", favorited));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 로그인한 회원의 관심매물 목록 (관심목록 화면용)
+    @GetMapping("/favorites")
+    public ResponseEntity<?> myFavorites(Authentication authentication) {
+        try {
+            return ResponseEntity.ok(favoriteService.findFavoriteProperties(authentication.getName()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 로그인한 중개인이 등록한 매물 전체 조회 ("내 매물" 화면용)
+    @GetMapping("/mine")
+    public ResponseEntity<?> mine(Principal principal) {
+        try {
+            return ResponseEntity.ok(propertyService.findMine(principal.getName()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // 매물 수정 (내 사무소의 매물만 가능)
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Property bean,
-                                    BindingResult bindingResult, Principal principal) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> update(@PathVariable Long id,
+                                    @Valid @RequestPart("data") Property bean,
+                                    BindingResult bindingResult,
+                                    @RequestPart(value = "files", required = false) List<MultipartFile> files,
+                                    Principal principal) {
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -96,7 +133,7 @@ public class PropertyController {
             return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
         }
         try {
-            return ResponseEntity.ok(propertyService.update(id, bean, principal.getName()));
+            return ResponseEntity.ok(propertyService.update(id, bean, files, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }

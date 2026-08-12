@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { approveBroker, getAdminBrokers, rejectBroker } from '../api/adminApi';
-import AdminTabs from '../components/AdminTabs';
 import type { AdminBroker } from '../types/Admin';
 import type { User } from '../types/User';
 import '../assets/common.css';
@@ -34,7 +33,6 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function AdminBrokerPage({ user }: Props) {
-    const navigate = useNavigate();
 
     const [brokers, setBrokers] = useState<AdminBroker[]>([]);
     const [pendingCount, setPendingCount] = useState(0);
@@ -49,13 +47,6 @@ function AdminBrokerPage({ user }: Props) {
     // 반려 사유를 쓰고 있는 신청 id 와 입력값
     const [rejectTarget, setRejectTarget] = useState<number | null>(null);
     const [rejectReason, setRejectReason] = useState('');
-
-    // 관리자가 아니면 홈으로 보낸다 (서버에서도 /admin/** 을 막는다)
-    useEffect(() => {
-        if (user && user.role !== 'ADMIN') {
-            navigate('/');
-        }
-    }, [user, navigate]);
 
     const load = useCallback(async () => {
         // 관리자가 아니면 요청을 보내지 않는다 (401 이 오면 로그인 화면으로 튕긴다)
@@ -115,43 +106,23 @@ function AdminBrokerPage({ user }: Props) {
         }
     };
 
-    if (!user) {
-        return (
-            <main>
-                <section className="section"><div className="wrap">
-                    <p className="dim">로그인이 필요한 화면입니다.</p>
-                    <Link className="solid-btn" to="/member/login" style={{ marginTop: 14, display: 'inline-block' }}>
-                        로그인하러 가기
-                    </Link>
-                </div></section>
-            </main>
-        );
-    }
-
+    // 로그인·권한 확인과 바깥 레이아웃(히어로·사이드바)은 관리자 콘솔(AdminConsolePage)이 맡는다.
+    // 이 화면은 콘솔 오른쪽에 들어가는 패널만 그린다.
     return (
-        <main>
-            <section className="page-hero">
-                <div className="wrap">
-                    <div>
-                        <div className="eyebrow">관리자</div>
-                        <h1>중개인 인증</h1>
-                        <p>제출된 자격증과 사무소 정보를 확인하고 인증 마크를 발급합니다.</p>
+        <>
+            <div className="section-head">
+                        <div>
+                            <h2>중개인 인증 심사</h2>
+                            <p>제출된 자격증과 사무소 정보를 확인하고 인증 마크를 발급합니다. 먼저 신청한 순서로 표시됩니다.</p>
+                        </div>
+                        <span className={`status ${pendingCount > 0 ? 'orange' : 'green'}`}>
+                            심사 대기 {pendingCount}건
+                        </span>
                     </div>
-                    <div className="hero-stat">
-                        <span className="mono dim">심사 대기</span>
-                        <strong>{pendingCount}건</strong>
-                        <span className="xs dim">먼저 신청한 순서로 표시됩니다.</span>
-                    </div>
-                </div>
-            </section>
-
-            <section className="section">
-                <div className="wrap">
-                    <AdminTabs />
 
                     <div className="section-head">
                         <div>
-                            <h2>인증 신청 목록</h2>
+                            <h2 style={{ fontSize: 17 }}>인증 신청 목록</h2>
                             <p>한 페이지에 10건씩 표시됩니다.</p>
                         </div>
                         <select
@@ -298,9 +269,7 @@ function AdminBrokerPage({ user }: Props) {
                             ))}
                         </div>
                     )}
-                </div>
-            </section>
-        </main>
+        </>
     );
 }
 

@@ -18,7 +18,7 @@ public class PropertyImageService {
     private final FileService fileService;
     private final PropertyImageRepository propertyImageRepository;
 
-    private static final int MAX_IMAGE_COUNT = 3;
+    public static final int MAX_IMAGE_COUNT = 3;
 
     // 업로드된 파일들을 PropertyImage 리스트로 변환해서 돌려줌
     // 아직 저장은 안 함 — Property를 저장할 때 cascade로 같이 저장된다
@@ -58,5 +58,9 @@ public class PropertyImageService {
 
         fileService.delete(image.getUrl());
         propertyImageRepository.delete(image);
+    }
+
+    public void deleteFile(String url) {
+        fileService.delete(url);
     }
 }
