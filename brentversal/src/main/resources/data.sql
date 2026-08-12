@@ -31,6 +31,22 @@ UPDATE agency SET registration_no = '11680-2024-00219' WHERE agency_id = 4 AND r
 -- 그래서 예시 데이터보다 큰 값(101)으로 올려 둔다. 이미 큰 값이면 건드리지 않는다.
 UPDATE agency_seq SET next_val = 101 WHERE next_val <= 100;
 
+-- 태그(tag) 예시 데이터. 매물 등록 폼의 태그 선택 UI 확인용 (실제 카테고리별 목록은 팀장 확정 전이라 임시)
+INSERT IGNORE INTO tag
+    (id, name, category)
+VALUES
+    (1, '주차 가능',       'LIVING_ENVIRONMENT'),
+    (2, '엘리베이터',       'LIVING_ENVIRONMENT'),
+    (3, '반려동물 가능',    'LIVING_ENVIRONMENT'),
+    (4, '풀옵션',          'LIVING_ENVIRONMENT'),
+    (5, '남향',            'NATURAL_ENVIRONMENT'),
+    (6, '한강뷰',          'NATURAL_ENVIRONMENT'),
+    (7, '공원 인근',        'NATURAL_ENVIRONMENT'),
+    (8, '지하철역 도보 5분', 'TRANSPORTATION'),
+    (9, '버스정류장 인근',   'TRANSPORTATION'),
+    (10, '조용한 분위기',   'ATMOSPHERE');
+
+UPDATE tag_seq SET next_val = 101 WHERE next_val <= 100;
 
 -- ────────────────────────────────────────────────────────────────
 -- 중개사무소 대표 이미지 (상세 페이지 갤러리용)

@@ -7,12 +7,14 @@ import com.brentversal.property.service.PropertyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.channels.IllegalSelectorException;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +29,14 @@ public class PropertyController {
     private final PropertyService propertyService;
 
     // 매물 등록
-    @PostMapping("/insert")
-    public ResponseEntity<?> insert(@Valid @RequestBody Property bean, BindingResult bindingResult){
+    //
+    // Principal : 시큐리티가 넣어 주는 로그인 사용자 정보(JwtAuthenticationFilter 가 이메일을 담아 둔다).
+    // 어느 사무소의 매물인지는 이 값으로 서버가 정한다. 요청 본문의 agency 는 쓰지 않는다.
+    @PostMapping(value = "/insert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> insert(@Valid @RequestPart("data") Property bean,
+                                    BindingResult bindingResult,
+                                    @RequestPart(value = "files", required = false) List<MultipartFile> files,
+                                    Principal principal){
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -43,8 +51,12 @@ public class PropertyController {
             return new ResponseEntity<>(pricingErrors, HttpStatus.BAD_REQUEST);
         }
 
-        PropertyResponseDto saved = propertyService.insert(bean);
-        return new ResponseEntity<>(saved, HttpStatus.OK);
+        try {
+            PropertyResponseDto saved = propertyService.insert(bean, files, principal.getName());
+            return new ResponseEntity<>(saved, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
     }
 
     // 매물 상세 조회
@@ -72,9 +84,10 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.findByIds(idList));
     }
 
-    // 매물 수정
+    // 매물 수정 (내 사무소의 매물만 가능)
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Property bean, BindingResult bindingResult) {
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Property bean,
+                                    BindingResult bindingResult, Principal principal) {
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -83,7 +96,7 @@ public class PropertyController {
             return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
         }
         try {
-            return ResponseEntity.ok(propertyService.update(id, bean));
+            return ResponseEntity.ok(propertyService.update(id, bean, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
@@ -91,10 +104,11 @@ public class PropertyController {
 
     // 거래 상태 변경 (게시중/거래진행중/거래완료)
     @PatchMapping("/{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> request){
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> request,
+                                          Principal principal){
         try{
             PropertyStatus newStatus = PropertyStatus.valueOf(request.get("status"));
-            return ResponseEntity.ok(propertyService.updateStatus(id, newStatus));
+            return ResponseEntity.ok(propertyService.updateStatus(id, newStatus, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
         } catch (IllegalStateException e) {
@@ -104,9 +118,9 @@ public class PropertyController {
 
     // 등록 취소
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<?> cancel(@PathVariable Long id) {
+    public ResponseEntity<?> cancel(@PathVariable Long id, Principal principal) {
         try {
-            return ResponseEntity.ok(propertyService.cancel(id));
+            return ResponseEntity.ok(propertyService.cancel(id, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
@@ -114,9 +128,9 @@ public class PropertyController {
 
     // 공개/비공개 전환
     @PatchMapping("/{id}/visibility")
-    public ResponseEntity<?> toggleVisibility(@PathVariable Long id) {
+    public ResponseEntity<?> toggleVisibility(@PathVariable Long id, Principal principal) {
         try {
-            return ResponseEntity.ok(propertyService.toggleVisibility(id));
+            return ResponseEntity.ok(propertyService.toggleVisibility(id, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }

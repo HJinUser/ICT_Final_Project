@@ -3,6 +3,7 @@ import { Alert, Button, Card, Col, Container, Form, Row, Tab, Tabs } from "react
 import { Link, useNavigate } from "react-router-dom";
 
 import customAxios from "../api/axiosInstance.tsx";
+import { API_BASE_URL } from "../config/config";
 import type { LoginResponse, User } from "../types/User";
 
 interface Props {
@@ -133,6 +134,36 @@ function App({ onLogin }: Props) {
                                             </Col>
                                         </Row>
                                     </Form>
+
+                                    {/*
+                                        일반 <a> 태그를 쓴다(react-router의 Link가 아님).
+                                        이건 SPA 내부 이동이 아니라, 브라우저가 카카오 로그인 페이지로
+                                        완전히 떠났다가 돌아와야 하는 흐름이라 실제 페이지 이동이 필요하다.
+                                        API_BASE_URL(/api)을 거쳐 vite proxy/nginx가 백엔드로 넘겨준다.
+                                    */}
+                                    <a
+                                        href={`${API_BASE_URL}/oauth2/authorization/kakao`}
+                                        className="btn w-100 mt-3"
+                                        style={{ backgroundColor: "#FEE500", color: "#191919" }}
+                                    >
+                                        카카오로 로그인
+                                    </a>
+
+                                    {/* registrationId만 다른 같은 방식(/oauth2/authorization/{registrationId}) */}
+                                    <a
+                                        href={`${API_BASE_URL}/oauth2/authorization/google`}
+                                        className="btn btn-outline-dark w-100 mt-2"
+                                    >
+                                        구글로 로그인
+                                    </a>
+
+                                    <a
+                                        href={`${API_BASE_URL}/oauth2/authorization/naver`}
+                                        className="btn w-100 mt-2"
+                                        style={{ backgroundColor: "#03C75A", color: "#ffffff" }}
+                                    >
+                                        네이버로 로그인
+                                    </a>
                                 </Tab>
 
                                 {/* 패스워드리스 자리. 나중에 여기 안에 아이디 입력 + QR/등록 버튼을 채운다. */}

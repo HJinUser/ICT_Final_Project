@@ -1,23 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { Container, Row, Col, Form, Button, Alert, ListGroup, Card, Spinner } from "react-bootstrap";
+// customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/insert" 처럼 그 뒤만 적는다.
+// 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/insert" 가 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
-import { API_BASE_URL } from "../config/config";
 import { useNavigate } from "react-router-dom";
 import type { Property } from "../types/Property";
+import type { TagResponse } from "../types/Tag";
 import "../components/PropertyFormPage.css"; // 부트스트랩이 못 커버하는 부분만 남긴 커스텀 css
 
-const STEPS = ["기본 정보", "가격·계약", "사진", "주변 시설·옵션", "AI 시세 확인", "관리자 승인 요청"];
-const NUMBER_FIELDS = ["price", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee"];
-const OPTION_CHOICES = ["주차 가능", "엘리베이터", "반려동물", "남향", "풀옵션", "즉시 입주"];
-const MAINTENANCE_CHOICES = ["수도", "인터넷", "TV", "공용관리비", "엘리베이터", "기타"];
+const STEPS = ["기본 정보", "가격·계약", "사진", "태그 선택", "AI 시세 확인", "관리자 승인 요청"];
+const NUMBER_FIELDS = ["price", "deposit", "monthlyDeposit", "monthlyRent", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee"];
+const MAX_PHOTOS = 3; // 백엔드 PropertyImageService.MAX_IMAGE_COUNT 와 동일하게 맞춤
 
+// 태그 category(영문 코드) -> 화면에 보여줄 한글 라벨
+const TAG_CATEGORY_LABELS: Record<TagResponse["category"], string> = {
+    ATMOSPHERE: "분위기",
+    LIVING_ENVIRONMENT: "생활환경",
+    TRANSPORTATION: "교통편의",
+    NATURAL_ENVIRONMENT: "자연환경",
+};
+
+// 어느 중개사무소의 매물인지는 보내지 않는다.
+// 서버가 로그인한 중개인(JWT)의 사무소로 정하기 때문이다.
+// 여기서 보내 봐야 무시되고, 보낼 수 있게 두면 남의 사무소 번호를 넣는 요청도 가능해진다.
 const initial_value: Property = {
-    name: "", description: "", propertyType: "원/투룸", dealType: "전세",
+    name: "", description: "", type: "ONE_TWO_ROOM", dealType: "JEONSE",
     address: "", area: 0, floor: 0, roomCount: 0, bathroomCount: 0,
-    price: 0, maintenanceFee: 0, maintenanceIncludes: [],
-    moveInDate: "", contractStatus: "즉시 계약 가능",
-    photos: [], options: [], detailDescription: "",
+    price: 0, maintenanceFee: 0,
+    moveInDate: "", contractStatus: "IMMEDIATE",
+    detailDescription: "", tagIds: [],
 };
 
 function PropertyFormPage() {
@@ -29,6 +41,34 @@ function PropertyFormPage() {
 
     // 필드별 오류 메시지 (백엔드 응답의 필드별 오류를 그대로 매칭)
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // 사진 파일 자체는 property 객체에 넣지 않고 따로 들고 있다가, 제출할 때 FormData로 합친다
+    const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+    // 파일마다 미리보기용 blob URL을 만들어 둠. photoFiles가 바뀔 때만 새로 계산
+    const photoPreviews = useMemo(
+        () => photoFiles.map((file) => URL.createObjectURL(file)),
+        [photoFiles]
+    );
+    // 컴포넌트가 사라지거나 photoPreviews가 새로 만들어질 때, 이전에 만든 blob URL을 메모리에서 해제
+    useEffect(() => {
+        return () => {
+            photoPreviews.forEach((url) => URL.revokeObjectURL(url));
+        };
+    }, [photoPreviews]);
+
+    // 태그 목록. 서버가 갖고 있는 전체 태그를 받아와서 선택 UI를 그린다
+    const [availableTags, setAvailableTags] = useState<TagResponse[]>([]);
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const response = await customAxios.get<TagResponse[]>(`/tag`);
+                setAvailableTags(response.data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        fetchTags();
+    }, []);
 
     interface AiEstimate {
         estimatedPrice: number;
@@ -43,7 +83,7 @@ function PropertyFormPage() {
         const fetchEstimate = async () => {
             setAiLoading(true);
             try {
-                const response = await customAxios.get<AiEstimate>(`${API_BASE_URL}/ai/estimate`, {
+                const response = await customAxios.get<AiEstimate>(`/ai/estimate`, {
                     params: { address: property.address, area: property.area, dealType: property.dealType },
                     timeout: 15000,
                 });
@@ -66,52 +106,64 @@ function PropertyFormPage() {
         setProperty({ ...property, [name]: isNumber ? Number(value) : value });
     };
 
-    // 체크박스·칩처럼 배열 값을 토글하는 핸들러
-    const toggleArrayValue = (field: "maintenanceIncludes" | "options", value: string) => {
+    // 거래유형이 바뀌면 이전 유형에서 쓰던 가격 필드들을 비워준다.
+    // (예: 매매→전세로 바꿨는데 price 값이 그대로 남아 있으면 헷갈리고, 백엔드도 deposit만 봄)
+    const handleDealTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value as Property["dealType"];
+        setProperty((prev) => ({
+            ...prev,
+            dealType: value,
+            price: undefined,
+            deposit: undefined,
+            monthlyDeposit: undefined,
+            monthlyRent: undefined,
+        }));
+    };
+
+    // 태그 선택/해제 토글
+    const toggleTag = (tagId: number) => {
         setProperty((prev) => {
-            const list = prev[field];
-            const next = list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
-            return { ...prev, [field]: next };
+            const current = prev.tagIds ?? [];
+            const next = current.includes(tagId)
+                ? current.filter((id) => id !== tagId)
+                : [...current, tagId];
+            return { ...prev, tagIds: next };
         });
     };
 
-    // 사진 선택 시 바로 백엔드로 업로드 (백엔드가 S3에 올리고 URL을 응답으로 돌려줌)
-    const FileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // 사진 선택. 실제 업로드는 안 하고 파일만 들고 있다가 최종 제출(handleSubmit)에서 한 번에 보낸다
+    const FileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { files } = event.target;
         if (!files || files.length === 0) {
             alert("사진을 선택해 주셔야 합니다.");
             return;
         }
-        for (const file of Array.from(files)) {
-            const formData = new FormData();
-            formData.append("file", file);
-            try {
-                const response = await customAxios.post<{ url: string }>(
-                    `${API_BASE_URL}/property/photo`,
-                    formData,
-                    { headers: { "Content-Type": "multipart/form-data" } }
-                );
-                setProperty((prev) => ({ ...prev, photos: [...prev.photos, response.data.url] }));
-            } catch (error) {
-                console.error(error);
-                alert("사진 업로드에 실패했습니다.");
-            }
+        const selected = Array.from(files);
+        if (photoFiles.length + selected.length > MAX_PHOTOS) {
+            alert(`사진은 최대 ${MAX_PHOTOS}장까지 등록할 수 있습니다.`);
+            return;
         }
+        setPhotoFiles((prev) => [...prev, ...selected]);
+        event.target.value = ""; // 같은 파일을 다시 선택할 수 있도록 입력값 초기화
     };
 
     const removePhoto = (index: number) => {
-        setProperty((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
+        setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
     };
 
-    // 관리자 승인 요청 (ProductInsertForm의 SubmitAction과 동일 패턴)
+    // 관리자 승인 요청. 백엔드가 멀티파트(consumes = MULTIPART_FORM_DATA_VALUE)로 받으므로
+    // "data" 파트엔 JSON, "files" 파트엔 실제 사진 파일들을 담아 FormData로 함께 보낸다.
+    // Content-Type 헤더는 직접 지정하지 않는다 — axios가 FormData를 보고 boundary까지 포함해 자동으로 설정해준다.
     const handleSubmit = async () => {
         try {
-            const url = `${API_BASE_URL}/property/insert`;
-            const config = { headers: { "Content-Type": "application/json" } };
-            const response = await customAxios.post(url, property, config);
+            const formData = new FormData();
+            formData.append("data", new Blob([JSON.stringify(property)], { type: "application/json" }));
+            photoFiles.forEach((file) => formData.append("files", file));
+
+            const response = await customAxios.post(`/property/insert`, formData);
             console.log("응답 데이터:", response.data);
             alert("관리자 승인 요청을 보냈습니다.");
-            navigate("/agent/dashboard");
+            navigate("/broker/agency"); // 방금 등록한 매물이 "내 중개사무소 > 요약"에 바로 보인다
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response) {
                 setErrors((prev) => ({
@@ -126,7 +178,8 @@ function PropertyFormPage() {
     };
 
     const handleDraftSave = async () => {
-        await customAxios.post(`${API_BASE_URL}/property/draft`, property);
+        // TODO: /property/draft 임시저장 엔드포인트는 아직 백엔드에 없음. 나중에 필요해지면 추가.
+        await customAxios.post(`/property/draft`, property);
         alert("임시 저장했습니다.");
     };
 
@@ -185,19 +238,19 @@ function PropertyFormPage() {
                             <Form.Group as={Row} className="mb-3">
                                 <Form.Label column sm={2}>매물 유형</Form.Label>
                                 <Col sm={4}>
-                                    <Form.Select name="propertyType" value={property.propertyType} onChange={ControlChange}>
-                                        <option>원/투룸</option>
-                                        <option>아파트</option>
-                                        <option>주택/빌라</option>
-                                        <option>오피스텔</option>
+                                    <Form.Select name="type" value={property.type} onChange={ControlChange}>
+                                        <option value="ONE_TWO_ROOM">원/투룸</option>
+                                        <option value="APARTMENT">아파트</option>
+                                        <option value="VILLA">주택/빌라</option>
+                                        <option value="OFFICETEL">오피스텔</option>
                                     </Form.Select>
                                 </Col>
                                 <Form.Label column sm={2}>거래 유형</Form.Label>
                                 <Col sm={4}>
-                                    <Form.Select name="dealType" value={property.dealType} onChange={ControlChange}>
-                                        <option>매매</option>
-                                        <option>전세</option>
-                                        <option>월세</option>
+                                    <Form.Select name="dealType" value={property.dealType} onChange={handleDealTypeChange}>
+                                        <option value="SALE">매매</option>
+                                        <option value="JEONSE">전세</option>
+                                        <option value="MONTHLY">월세</option>
                                     </Form.Select>
                                 </Col>
                             </Form.Group>
@@ -239,51 +292,87 @@ function PropertyFormPage() {
                     )}
 
                     {step === 1 && (
-                        <Card className="p-3 mb-3">
-                            <h2>2. 가격·계약</h2>
+                    <Card className="p-3 mb-3">
+                        <h2>2. 가격·계약</h2>
 
+                        {property.dealType === "SALE" && (
                             <Form.Group as={Row} className="mb-3">
-                                <Form.Label column sm={2}>가격(만 원)</Form.Label>
+                                <Form.Label column sm={2}>매매가(만 원)</Form.Label>
                                 <Col sm={4}>
-                                    <Form.Control type="number" name="price" value={property.price} onChange={ControlChange} />
+                                    <Form.Control
+                                        type="number" name="price" value={property.price ?? 0}
+                                        onChange={ControlChange} isInvalid={!!errors.price}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.price}</Form.Control.Feedback>
                                 </Col>
                                 <Form.Label column sm={2}>관리비(만 원)</Form.Label>
                                 <Col sm={4}>
                                     <Form.Control type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
                                 </Col>
                             </Form.Group>
+                        )}
 
-                            <Form.Group className="mb-3">
-                                <Form.Label>관리비 포함 항목</Form.Label>
-                                <div>
-                                    {MAINTENANCE_CHOICES.map((item) => (
-                                        <Form.Check
-                                            key={item}
-                                            inline
-                                            label={item}
-                                            type="checkbox"
-                                            checked={property.maintenanceIncludes.includes(item)}
-                                            onChange={() => toggleArrayValue("maintenanceIncludes", item)}
-                                        />
-                                    ))}
-                                </div>
-                            </Form.Group>
-
+                        {property.dealType === "JEONSE" && (
                             <Form.Group as={Row} className="mb-3">
-                                <Form.Label column sm={2}>입주 가능일</Form.Label>
+                                <Form.Label column sm={2}>전세가(만 원)</Form.Label>
                                 <Col sm={4}>
-                                    <Form.Control type="date" name="moveInDate" value={property.moveInDate} onChange={ControlChange} />
+                                    <Form.Control
+                                        type="number" name="deposit" value={property.deposit ?? 0}
+                                        onChange={ControlChange} isInvalid={!!errors.deposit}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.deposit}</Form.Control.Feedback>
                                 </Col>
-                                <Form.Label column sm={2}>계약 가능 상태</Form.Label>
+                                <Form.Label column sm={2}>관리비(만 원)</Form.Label>
                                 <Col sm={4}>
-                                    <Form.Select name="contractStatus" value={property.contractStatus} onChange={ControlChange}>
-                                        <option>즉시 계약 가능</option>
-                                        <option>협상 후 결정</option>
-                                    </Form.Select>
+                                    <Form.Control type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
                                 </Col>
                             </Form.Group>
-                        </Card>
-                    )}
+                        )}
+
+                        {property.dealType === "MONTHLY" && (
+                            <>
+                                <Form.Group as={Row} className="mb-3">
+                                    <Form.Label column sm={2}>월세 보증금(만 원)</Form.Label>
+                                    <Col sm={4}>
+                                        <Form.Control
+                                            type="number" name="monthlyDeposit" value={property.monthlyDeposit ?? 0}
+                                            onChange={ControlChange} isInvalid={!!errors.monthlyDeposit}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{errors.monthlyDeposit}</Form.Control.Feedback>
+                                    </Col>
+                                    <Form.Label column sm={2}>월세 금액(만 원)</Form.Label>
+                                    <Col sm={4}>
+                                        <Form.Control
+                                            type="number" name="monthlyRent" value={property.monthlyRent ?? 0}
+                                            onChange={ControlChange} isInvalid={!!errors.monthlyRent}
+                                        />
+                                        <Form.Control.Feedback type="invalid">{errors.monthlyRent}</Form.Control.Feedback>
+                                    </Col>
+                                </Form.Group>
+                                <Form.Group as={Row} className="mb-3">
+                                    <Form.Label column sm={2}>관리비(만 원)</Form.Label>
+                                    <Col sm={4}>
+                                        <Form.Control type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
+                                    </Col>
+                                </Form.Group>
+                            </>
+                        )}
+
+                        <Form.Group as={Row} className="mb-3">
+                            <Form.Label column sm={2}>입주 가능일</Form.Label>
+                            <Col sm={4}>
+                                <Form.Control type="date" name="moveInDate" value={property.moveInDate} onChange={ControlChange} />
+                            </Col>
+                            <Form.Label column sm={2}>계약 가능 상태</Form.Label>
+                            <Col sm={4}>
+                                <Form.Select name="contractStatus" value={property.contractStatus} onChange={ControlChange}>
+                                    <option value="IMMEDIATE">즉시 계약 가능</option>
+                                    <option value="NEGOTIABLE">협상 후 결정</option>
+                                </Form.Select>
+                            </Col>
+                        </Form.Group>
+                    </Card>
+                )}
 
                     {step === 2 && (
                         <Card className="p-3 mb-3">
@@ -292,7 +381,7 @@ function PropertyFormPage() {
                                 <Form.Control type="file" multiple accept="image/*" onChange={FileSelect} />
                             </Form.Group>
                             <div className="photo-preview-list">
-                                {property.photos.map((url, i) => (
+                                {photoPreviews.map((url, i) => (
                                     <div key={i} className="photo-preview">
                                         <img src={url} alt={`매물 사진 ${i + 1}`} />
                                         <Button size="sm" variant="dark" onClick={() => removePhoto(i)}>삭제</Button>
@@ -304,20 +393,27 @@ function PropertyFormPage() {
 
                     {step === 3 && (
                         <Card className="p-3 mb-3">
-                            <h2>4. 주변 시설·옵션</h2>
-                            <div className="mb-3">
-                                {OPTION_CHOICES.map((item) => (
-                                    <Button
-                                        key={item}
-                                        size="sm"
-                                        className="me-2 mb-2"
-                                        variant={property.options.includes(item) ? "primary" : "outline-secondary"}
-                                        onClick={() => toggleArrayValue("options", item)}
-                                    >
-                                        {item}
-                                    </Button>
-                                ))}
-                            </div>
+                            <h2>4. 태그 선택</h2>
+                            {(Object.keys(TAG_CATEGORY_LABELS) as TagResponse["category"][]).map((category) => {
+                                const tagsInCategory = availableTags.filter((tag) => tag.category === category);
+                                if (tagsInCategory.length === 0) return null;
+                                return (
+                                    <div key={category} className="mb-3">
+                                        <Form.Label className="d-block">{TAG_CATEGORY_LABELS[category]}</Form.Label>
+                                        {tagsInCategory.map((tag) => (
+                                            <Button
+                                                key={tag.id}
+                                                size="sm"
+                                                className="me-2 mb-2"
+                                                variant={(property.tagIds ?? []).includes(tag.id) ? "primary" : "outline-secondary"}
+                                                onClick={() => toggleTag(tag.id)}
+                                            >
+                                                {tag.name}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                );
+                            })}
                             <Form.Group controlId="formDetail">
                                 <Form.Label>상세 설명</Form.Label>
                                 <Form.Control
@@ -339,7 +435,7 @@ function PropertyFormPage() {
                                 <div>
                                     <strong>AI 예상 시세 {aiEstimate.estimatedPrice.toLocaleString()}만 원</strong>
                                     <p className="text-muted mb-0">
-                                        입력 가격 {property.price.toLocaleString()}만 원은 예상 시세보다 약{" "}
+                                        입력 가격 {(property.price ?? 0).toLocaleString()}만 원은 예상 시세보다 약{" "}
                                         {Math.abs(aiEstimate.diffPercent)}%{" "}
                                         {aiEstimate.diffPercent < 0 ? "낮습니다" : "높습니다"}.
                                     </p>

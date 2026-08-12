@@ -89,6 +89,11 @@ export interface AgencyReview {
     rating: number;     // 1~5
     content: string;
     createdAt: string;  // "2026.08.10"
+
+    // 중개인이 단 답변. 아직 답변하지 않았으면 null 이다.
+    // 중개인 마이페이지의 리뷰 관리 탭에서 이 값이 null 인 것을 "미답변"으로 센다.
+    reply: string | null;
+    repliedAt: string | null;
 }
 
 // 상담 요청 보낼 때 서버로 넘기는 값
