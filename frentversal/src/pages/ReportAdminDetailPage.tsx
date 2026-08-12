@@ -56,7 +56,7 @@ function ReportAdminDetailPage({ user }: ReportAdminDetailPageProps) {
     }, [reportId, user]);
 
     if (user?.role !== 'ADMIN') {
-        return <main className="report-page-bg"><section className="section"><div className="wrap report-narrow"><div className="report-state report-error">관리자만 접근할 수 있습니다.</div></div></section></main>;
+        return <div className="report-state report-error">관리자만 접근할 수 있습니다.</div>;
     }
 
     const handleProcess = async (event: FormEvent<HTMLFormElement>) => {
@@ -75,8 +75,9 @@ function ReportAdminDetailPage({ user }: ReportAdminDetailPageProps) {
         }
     };
 
+    // 바깥 레이아웃은 관리자 콘솔(AdminConsolePage)이 맡는다. 여기서는 패널 내용만 그린다.
     return (
-        <main className="report-page-bg"><section className="section"><div className="wrap report-detail-wrap">
+        <div className="report-detail-wrap">
             <div className="breadcrumb"><Link to="/admin/reports">신고 관리</Link> / 상세</div>
             {loading && <div className="report-state">신고 내용을 불러오는 중입니다.</div>}
             {!loading && !report && <div className="report-state report-error">{error || '신고 내용을 찾을 수 없습니다.'}</div>}
@@ -98,7 +99,7 @@ function ReportAdminDetailPage({ user }: ReportAdminDetailPageProps) {
                 </aside>
             </div>}
             <div className="report-actions"><Link className="ghost-btn" to="/admin/reports">목록으로</Link></div>
-        </div></section></main>
+        </div>
     );
 }
 
