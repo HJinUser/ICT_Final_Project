@@ -65,6 +65,20 @@ function App({ user, handleLogout }: MenuItemsProps) {
       return () => window.clearInterval(timerRef.current);
    }, [user]);
 
+   // user 프롭스를 사용하여 상단에 보이는 메뉴를 분기 처리합니다.
+   const renderMenu = () => {
+      if (user) {
+         // 로그인 상태 : 역할에 맞는 신고 메뉴와 로그아웃 노출
+         return (
+            <>
+               {user.role === 'ADMIN' ? (
+                  <Nav.Link onClick={() => navigate('/admin/reports')}>신고 관리</Nav.Link>
+               ) : (
+                  <Nav.Link onClick={() => navigate('/report/me')}>내 신고</Nav.Link>
+               )}
+               <Nav.Link onClick={handleLogout}>로그 아웃</Nav.Link>
+            </>
+         );
    // 다른 화면으로 이동하면 열려 있던 드롭다운을 닫는다.
    useEffect(() => {
       setOpenMenu('none');
@@ -98,6 +112,9 @@ function App({ user, handleLogout }: MenuItemsProps) {
             ))}
          </nav>
 
+               <Nav.Link onClick={() => navigate('/notice')}>공지사항</Nav.Link>
+               {renderMenu()}
+            </Nav>
          <span className="spacer" />
 
          <form className="minisearch" onSubmit={submitSearch}>
