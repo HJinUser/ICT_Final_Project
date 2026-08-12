@@ -45,7 +45,9 @@ export const HEADER_NAV: NavItem[] = [
     { label: '동네 탐색', path: '/neighborhood', ready: false },
     { label: '매물 확인', path: '/listings', ready: false },
     { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
-    { label: '중개사무소 안내', path: '/agency', ready: true, roles: ['GUEST', 'USER'] },
+    // 중개사무소 목록·상세는 서버도 비회원까지 열어 둔 공개 화면이라 역할을 가리지 않고 보여 준다.
+    // (기획서 매트릭스에는 사용자 전용으로 되어 있으니, 되돌리려면 roles: ['GUEST', 'USER'] 를 다시 붙이면 된다)
+    { label: '중개사무소 안내', path: '/agency', ready: true },
     // 공지사항은 상단 메뉴에서 빼고 메인 화면에 자리를 마련했다.
     // (비회원도 볼 수 있고, 전체 목록은 메인의 "전체 보기"로 들어간다)
     // 중개인은 매물을 "찾는" 쪽이 아니라 "관리"하는 쪽이라 다른 메뉴를 본다.
