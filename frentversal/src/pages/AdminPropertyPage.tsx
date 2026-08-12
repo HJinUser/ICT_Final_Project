@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { approveProperty, getAdminProperties, rejectProperty } from '../api/adminApi';
-import AdminTabs from '../components/AdminTabs';
 import type { AdminProperty } from '../types/Admin';
 import type { User } from '../types/User';
 import '../assets/common.css';
@@ -37,8 +36,6 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function AdminPropertyPage({ user }: Props) {
-    const navigate = useNavigate();
-
     const [properties, setProperties] = useState<AdminProperty[]>([]);
     const [pendingCount, setPendingCount] = useState(0);
 
@@ -48,14 +45,6 @@ function AdminPropertyPage({ user }: Props) {
 
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
-
-    // 관리자가 아니면 이 화면을 볼 이유가 없으므로 홈으로 보낸다.
-    // 서버에서도 /admin/** 을 관리자만 통과시키므로 화면 처리는 안내 목적이다.
-    useEffect(() => {
-        if (user && user.role !== 'ADMIN') {
-            navigate('/');
-        }
-    }, [user, navigate]);
 
     // 목록 조회. 승인·반려 후에도 다시 불러와야 해서 따로 뺐다.
     const load = useCallback(async () => {
@@ -116,43 +105,23 @@ function AdminPropertyPage({ user }: Props) {
         }
     };
 
-    if (!user) {
-        return (
-            <main>
-                <section className="section"><div className="wrap">
-                    <p className="dim">로그인이 필요한 화면입니다.</p>
-                    <Link className="solid-btn" to="/member/login" style={{ marginTop: 14, display: 'inline-block' }}>
-                        로그인하러 가기
-                    </Link>
-                </div></section>
-            </main>
-        );
-    }
-
+    // 로그인·권한 확인과 바깥 레이아웃(히어로·사이드바)은 관리자 콘솔(AdminConsolePage)이 맡는다.
+    // 이 화면은 콘솔 오른쪽에 들어가는 패널만 그린다.
     return (
-        <main>
-            <section className="page-hero">
-                <div className="wrap">
-                    <div>
-                        <div className="eyebrow">관리자</div>
-                        <h1>매물 관리</h1>
-                        <p>중개인이 등록한 매물을 확인하고 승인합니다. 승인해야 지도와 중개사무소 화면에 노출됩니다.</p>
+        <>
+            <div className="section-head">
+                        <div>
+                            <h2>매물 관리</h2>
+                            <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. 오래 기다린 매물이 위에 옵니다.</p>
+                        </div>
+                        <span className={`status ${pendingCount > 0 ? 'orange' : 'green'}`}>
+                            승인 대기 {pendingCount}건
+                        </span>
                     </div>
-                    <div className="hero-stat">
-                        <span className="mono dim">승인 대기</span>
-                        <strong>{pendingCount}건</strong>
-                        <span className="xs dim">오래 기다린 매물이 위에 옵니다.</span>
-                    </div>
-                </div>
-            </section>
-
-            <section className="section">
-                <div className="wrap">
-                    <AdminTabs />
 
                     <div className="section-head">
                         <div>
-                            <h2>매물 목록</h2>
+                            <h2 style={{ fontSize: 17 }}>매물 목록</h2>
                             <p>한 페이지에 10건씩 표시됩니다.</p>
                         </div>
                         <select
@@ -242,9 +211,7 @@ function AdminPropertyPage({ user }: Props) {
                             ))}
                         </div>
                     )}
-                </div>
-            </section>
-        </main>
+        </>
     );
 }
 
