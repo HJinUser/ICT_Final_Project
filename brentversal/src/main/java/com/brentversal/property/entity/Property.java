@@ -106,6 +106,18 @@ public class Property {
     @Column(name = "maintenance_fee")
     private Integer maintenanceFee; // 관리비(만 원)
 
+    @Column(name = "ai_price")
+    private Long aiPrice;              // AI 예상 매매가(만원)
+
+    @Column(name = "ai_deposit")
+    private Long aiDeposit;            // AI 예상 전세가(만원)
+
+    @Column(name = "ai_monthly_deposit")
+    private Long aiMonthlyDeposit;     // AI 예상 월세 보증금(만원)
+
+    @Column(name = "ai_monthly_rent")
+    private Long aiMonthlyRent;        // AI 예상 월세 금액(만원)
+
     @Lob
     @Column(name = "detail_description")
     private String detailDescription;   // 상세 설명
@@ -128,9 +140,6 @@ public class Property {
 
     @Column(name = "visible", nullable = false)
     private Boolean visible = true; // 공개/비공개 여부. 기본값은 공개(true)
-
-    @Column(name = "ai_price")
-    private Long aiPrice; // AI 예상 시세
 
     // 매물 좌표와 최근접 지하철역 좌표 사이의 유클리드 거리(Python 계산). 단위(m/km)는 Python 담당과 확정 필요.
     @Column(name = "station_distance")
