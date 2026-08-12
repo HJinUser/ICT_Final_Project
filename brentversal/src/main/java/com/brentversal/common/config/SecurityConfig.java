@@ -71,6 +71,13 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
+                        // 매물 등록·수정·상태변경은 중개인만 할 수 있다.
+                        // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
+                        // "내 사무소의 매물이 맞는지"는 PropertyService 에서 한 번 더 확인한다.
+                        .requestMatchers(HttpMethod.POST, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.PUT, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
                         .requestMatchers(permitUrls).permitAll()
                         // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
