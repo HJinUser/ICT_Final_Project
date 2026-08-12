@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { getNotices } from '../api/noticeApi';
 import type { Notice } from '../types/Notice';
@@ -21,6 +21,7 @@ function formatDate(value: string) {
 }
 
 function NoticeListPage({ user }: NoticeListPageProps) {
+    const navigate = useNavigate();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [keyword, setKeyword] = useState('');
     const [loading, setLoading] = useState(true);
@@ -86,7 +87,13 @@ function NoticeListPage({ user }: NoticeListPageProps) {
                             />
                         </label>
                         {user?.role === 'ADMIN' && (
-                            <Link className="solid-btn" to="/notice/new">공지 작성</Link>
+                            <button
+                                className="solid-btn notice-register-btn"
+                                type="button"
+                                onClick={() => navigate('/notice/new')}
+                            >
+                                ＋ 공지사항 등록
+                            </button>
                         )}
                     </div>
 

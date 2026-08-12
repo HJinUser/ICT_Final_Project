@@ -94,6 +94,7 @@ function NoticeFormPage({ user }: NoticeFormPageProps) {
             const savedNotice = editing && noticeId !== null
                 ? await updateNotice(noticeId, { title: normalizedTitle, content: normalizedContent })
                 : await createNotice({ title: normalizedTitle, content: normalizedContent });
+            window.alert(editing ? '공지사항이 수정되었습니다.' : '공지사항이 등록되었습니다.');
             navigate(`/notice/${savedNotice.id}`, { replace: true });
         } catch (requestError) {
             console.error('공지사항 저장 실패', requestError);
@@ -143,7 +144,7 @@ function NoticeFormPage({ user }: NoticeFormPageProps) {
                             <div className="notice-actions">
                                 <Link className="ghost-btn" to={editing && noticeId ? `/notice/${noticeId}` : '/notice'}>취소</Link>
                                 <button className="solid-btn" type="submit" disabled={submitting}>
-                                    {submitting ? '저장 중' : editing ? '수정 완료' : '등록'}
+                                    {submitting ? '저장 중' : editing ? '수정 완료' : '등록하기'}
                                 </button>
                             </div>
                         </form>
