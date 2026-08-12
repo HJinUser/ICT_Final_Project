@@ -10,7 +10,6 @@ import type {
     ConsultationStatus,
     MyAgencyDashboard,
     MyPropertyCard,
-    NotificationResponse,
     PagedResponse,
 } from '../types/MyAgency';
 
@@ -93,13 +92,4 @@ export async function replyToReview(id: number, reply: string): Promise<string> 
     return response.data.message;
 }
 
-// 알림 목록 (헤더 종 아이콘)
-// 사무소가 아직 없거나 오류가 나면 빈 목록으로 처리해서 헤더가 깨지지 않게 한다.
-export async function getNotifications(): Promise<NotificationResponse> {
-    try {
-        const response = await customAxios.get<NotificationResponse>('/my-agency/notifications');
-        return response.data;
-    } catch {
-        return { content: [], unreadCount: 0 };
-    }
-}
+// 헤더 종 아이콘의 알림은 역할 공용이라 api/notificationApi.ts 로 옮겼다.

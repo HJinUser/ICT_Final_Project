@@ -61,20 +61,7 @@ export interface Consultation {
     repliedAt: string | null;
 }
 
-// ── 알림 (NotificationDto) ───────────────────────────────────
-export interface Notification {
-    type: 'CONSULTATION' | 'REVIEW';
-    targetId: number;
-    title: string;
-    message: string;
-    linkPath: string; // 클릭했을 때 이동할 주소
-    createdAt: string;
-}
-
-export interface NotificationResponse {
-    content: Notification[];
-    unreadCount: number; // 종 아이콘 옆 빨간 배지 숫자
-}
+// 알림 타입은 역할 공용이라 types/Notification.ts 로 옮겼다.
 
 // ── 중개인 인증 신청 (BrokerVerificationDto) ─────────────────
 export type VerifyStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED';

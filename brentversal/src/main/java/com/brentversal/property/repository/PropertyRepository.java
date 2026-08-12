@@ -31,4 +31,14 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     // 대시보드의 "게시 중 / 거래 진행 중 / 거래 완료" 건수 (공개 여부와 상관없이 센다)
     long countByAgencyIdAndStatus(Long agencyId, PropertyStatus status);
 
+    // ↓ 관리자 "매물 관리" 화면에서 쓰는 조회 메소드들
+    // 승인 대기 목록은 오래 기다린 것부터 처리해야 하므로 등록일 오름차순으로 가져온다.
+    Page<Property> findByStatusOrderByCreatedAtAsc(PropertyStatus status, Pageable pageable);
+
+    // 상태 구분 없이 전체를 볼 때는 최신 등록순으로 보여 준다.
+    Page<Property> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    // 상단 요약의 "승인 대기" 건수
+    long countByStatus(PropertyStatus status);
+
 }
