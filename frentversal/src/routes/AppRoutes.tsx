@@ -8,6 +8,13 @@ import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
 import PropertyPreviewPage from "../pages/PropertyPreviewPage";
 import AgencyPage from './../pages/AgencyPage';
+import NoticeListPage from '../pages/NoticeListPage';
+import NoticeDetailPage from '../pages/NoticeDetailPage';
+import NoticeFormPage from '../pages/NoticeFormPage';
+import ReportFormPage from '../pages/ReportFormPage';
+import MyReportPage from '../pages/MyReportPage';
+import ReportAdminListPage from '../pages/ReportAdminListPage';
+import ReportAdminDetailPage from '../pages/ReportAdminDetailPage';
 import AgencyDetailPage from './../pages/AgencyDetailPage';
 import OAuthCallbackPage from './../pages/OAuthCallbackPage';
 import SocialSignupPage from './../pages/SocialSignupPage';
@@ -44,6 +51,14 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/broker/agency" element={<MyAgencyPage />} />
       <Route path="/broker/consultations/:id" element={<ConsultationReplyPage />} />
       <Route path="/broker/verification" element={<BrokerVerificationPage />} />
+      <Route path="/notice" element={<NoticeListPage user={user} />} />
+      <Route path="/notice/new" element={<NoticeFormPage user={user} />} />
+      <Route path="/notice/:id" element={<NoticeDetailPage user={user} />} />
+      <Route path="/notice/:id/edit" element={<NoticeFormPage user={user} />} />
+      <Route path="/report/form" element={<ReportFormPage user={user} />} />
+      <Route path="/report/me" element={<MyReportPage user={user} />} />
+      <Route path="/admin/reports" element={<ReportAdminListPage user={user} />} />
+      <Route path="/admin/reports/:id" element={<ReportAdminDetailPage user={user} />} />
     </Routes>
   );
 }
