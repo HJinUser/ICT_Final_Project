@@ -37,6 +37,11 @@ public class PropertyResponseDto {
     private Long monthlyRent;    // 월세 금액(만원)
     private Integer maintenanceFee; // 관리비(만원)
 
+    private Long aiPrice;
+    private Long aiDeposit;
+    private Long aiMonthlyDeposit;
+    private Long aiMonthlyRent;
+
     private String description;      // 소개 글
     private String detailDescription; // 상세 설명
     private String moveInDate;       // 입주 가능일
@@ -47,7 +52,6 @@ public class PropertyResponseDto {
 
     private String status;   // PropertyStatus enum 이름
     private Boolean visible; // 공개/비공개 여부
-    private Long aiPrice;    // AI 예상 시세
     private Double stationDistance; // 최근접 역까지 유클리드 거리
     private String priceStatus; // "UP" / "DOWN" / null (수정 이력 없거나 변동 없음)
 
@@ -88,6 +92,11 @@ public class PropertyResponseDto {
         dto.setMonthlyRent(bean.getMonthlyRent());
         dto.setMaintenanceFee(bean.getMaintenanceFee());
 
+        dto.setAiPrice(bean.getAiPrice());
+        dto.setAiDeposit(bean.getAiDeposit());
+        dto.setAiMonthlyDeposit(bean.getAiMonthlyDeposit());
+        dto.setAiMonthlyRent(bean.getAiMonthlyRent());
+
         dto.setImages(bean.getImages().stream()
                 .map(PropertyImageResponseDto::of)
                 .toList());
@@ -107,7 +116,6 @@ public class PropertyResponseDto {
             dto.setStatus(bean.getStatus().name());
         }
         dto.setVisible(bean.getVisible());
-        dto.setAiPrice(bean.getAiPrice());
         dto.setStationDistance(bean.getStationDistance());
         dto.setCreatedAt(bean.getCreatedAt());
 
