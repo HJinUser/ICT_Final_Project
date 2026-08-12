@@ -3,6 +3,7 @@ import './App.css';
 // 외부 컴포넌트 import하기
 // import 컴포넌트이름 from '경로와 파일명';
 import MenuItems from './ui/MenuItems';
+import SiteFooter from './ui/SiteFooter';
 import AppRoutes from './routes/AppRoutes';
 import React, { useEffect, useState } from 'react';
 import type { User } from './types/User';
@@ -61,10 +62,7 @@ function App() {
     <>
       <MenuItems appName={appName} user={user} handleLogout={handleLogout} />
       <AppRoutes user={user} handleLoginSuccess={handleLoginSuccess} />
-
-      <footer className="bg-dark text-light text-center py-3 mt-5">
-        <p>&copy; 2026 {appName}. All rights reserved.</p>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
