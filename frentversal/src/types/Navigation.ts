@@ -50,20 +50,23 @@ export const HEADER_NAV: NavItem[] = [
     { label: '공지사항', path: '/notice', ready: true },
     // 중개인/관리자는 매물을 "찾는" 쪽이 아니라 "관리"하는 쪽이라 다른 메뉴를 본다.
     { label: '매물 관리', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
-    { label: '매물 관리', path: '/admin', ready: false, roles: ['ADMIN'] },
+    // 관리자의 매물 관리는 승인 대기 매물을 심사하는 화면이다.
+    // 같은 화면 안의 탭으로 "중개인 인증"(/admin/brokers)까지 오갈 수 있어 메뉴는 하나만 둔다.
+    { label: '매물 관리', path: '/admin/properties', ready: true, roles: ['ADMIN'] },
     { label: '신고 관리', path: '/admin/reports', ready: true, roles: ['ADMIN'] },
     { label: '문의 목록', path: '/inquiries', ready: false, roles: ['ADMIN'] },
 ];
 
 // ── 로그인한 사용자의 우측 드롭다운 메뉴 ──────────────────────
 export const USER_MENU: NavItem[] = [
-    { label: '마이페이지', path: '/mypage', ready: false, roles: ['USER', 'ADMIN'] },
+    // 마이페이지 안의 "내 활동 > 알림내역"에서 상담 답변(/my-consultations)을 확인한다.
+    { label: '마이페이지', path: '/mypage', ready: true, roles: ['USER', 'ADMIN'] },
     { label: '마이페이지', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
     { label: '관심 목록', path: '/favorites', ready: false, roles: ['USER'] },
     { label: '내 중개사무소', path: '/broker/agency', ready: true, roles: ['BROKER'] },
     // 내가 접수한 신고 내역. 관리자는 위 헤더의 "신고 관리"에서 전체를 처리하므로 여기 넣지 않는다.
     { label: '내 신고', path: '/report/me', ready: true, roles: ['USER', 'BROKER'] },
-    { label: '관리자 콘솔', path: '/admin', ready: false, roles: ['ADMIN'] },
+    { label: '관리자 콘솔', path: '/admin/properties', ready: true, roles: ['ADMIN'] },
     { label: '공지사항', path: '/notice', ready: true },
 ];
 

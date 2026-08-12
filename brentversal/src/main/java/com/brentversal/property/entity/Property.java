@@ -117,10 +117,14 @@ public class Property {
     @Column(name = "contract_status", length = 20)
     private ContractStatus contractStatus; // 계약 가능 상태
 
+    // 거래 상태는 클라이언트가 보내는 값이 아니라 서버가 정한다(등록 시 PENDING, 이후 관리자 승인으로 ACTIVE).
+    // 그런데 @Valid 검증은 서비스가 값을 채우기 전에 돌기 때문에, 기본값이 없으면
+    // 요청 본문에 status 가 없다는 이유로 등록이 항상 400 으로 막힌다.
+    // 그래서 "새 매물은 승인 대기로 시작한다"는 뜻을 기본값으로 적어 둔다.
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
-    private PropertyStatus status;
+    private PropertyStatus status = PropertyStatus.PENDING;
 
     @Column(name = "visible", nullable = false)
     private Boolean visible = true; // 공개/비공개 여부. 기본값은 공개(true)

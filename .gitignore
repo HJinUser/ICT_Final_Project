@@ -12,6 +12,10 @@ application-secret.properties
 /frentversal/build/
 /frentversal/.env
 
+# Python 가상환경 (각자 컴퓨터에서 만드는 것이라 깃에 올리지 않는다)
+/prentversal/
+.venv/
+
 /nbproject/private/
 /nbbuild/
 /dist/

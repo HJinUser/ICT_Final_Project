@@ -166,11 +166,21 @@ function PropertyFormPage() {
             navigate("/broker/agency"); // 방금 등록한 매물이 "내 중개사무소 > 요약"에 바로 보인다
         } catch (error: unknown) {
             if (axios.isAxiosError(error) && error.response) {
-                setErrors((prev) => ({
-                    ...prev,
-                    ...error.response?.data?.errors,
-                    general: error.response?.data?.message || "매물 등록 중 오류가 발생했습니다.",
-                }));
+                // 서버가 돌려주는 400 응답은 두 가지 모양이다.
+                //   ① 필드별 검증 오류 : { "name": "매물명은 필수...", "roomCount": "..." }  (본문이 곧 오류 목록)
+                //   ② 그 외 오류      : { "message": "등록된 중개사무소가 없습니다." }
+                // ①을 data.errors 안에서 찾으면 아무것도 못 찾아 원인이 화면에 안 보인다.
+                const { message, ...fieldErrors } = error.response.data ?? {};
+
+                // 입력 칸이 없는 필드(status 등)의 오류도 묻히지 않도록 상단에 함께 보여 준다
+                const detail = Object.entries(fieldErrors)
+                    .map(([field, text]) => `${field}: ${text}`)
+                    .join(" / ");
+
+                setErrors({
+                    ...fieldErrors,
+                    general: message || detail || "매물 등록 중 오류가 발생했습니다.",
+                });
             } else {
                 setErrors({ general: "서버와의 통신 중 오류가 발생했습니다." });
             }

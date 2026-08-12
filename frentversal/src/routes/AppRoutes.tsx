@@ -25,6 +25,10 @@ import ConsultationReplyPage from './../pages/ConsultationReplyPage';
 import BrokerVerificationPage from './../pages/BrokerVerificationPage';
 import FavoritesPage from "../pages/FavoritesPage.tsx";
 import NotFoundPage from './../pages/NotFoundPage';
+import AdminPropertyPage from './../pages/AdminPropertyPage';
+import AdminBrokerPage from './../pages/AdminBrokerPage';
+import MyConsultationPage from './../pages/MyConsultationPage';
+import MyPage from './../pages/MyPage';
 
 
 interface AppProps {
@@ -52,17 +56,29 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
 
+      {/* 공지사항. 목록·상세는 누구나 볼 수 있고, 작성·수정은 화면에서 관리자만 열린다. */}
+      <Route path="/notice" element={<NoticeListPage user={user} />} />
+      <Route path="/notice/new" element={<NoticeFormPage user={user} />} />
+      <Route path="/notice/:id" element={<NoticeDetailPage user={user} />} />
+      <Route path="/notice/:id/edit" element={<NoticeFormPage user={user} />} />
+
+      {/* 신고. 접수와 내 신고 내역은 사용자·중개인, 신고 관리는 관리자 화면이다. */}
+      <Route path="/report/form" element={<ReportFormPage user={user} />} />
+      <Route path="/report/me" element={<MyReportPage user={user} />} />
+
+      {/* 사용자 마이페이지. 내 활동 > 알림내역에서 상담 답변 화면으로 간다. */}
+      <Route path="/mypage" element={<MyPage user={user} />} />
+      <Route path="/my-consultations" element={<MyConsultationPage user={user} />} />
+
       {/* 중개인 전용 화면. 서버에서도 /my-agency/** 를 중개인만 통과시킨다. */}
       <Route path="/broker/mypage" element={<BrokerMyPage user={user} />} />
       <Route path="/broker/agency" element={<MyAgencyPage />} />
       <Route path="/broker/consultations/:id" element={<ConsultationReplyPage />} />
       <Route path="/broker/verification" element={<BrokerVerificationPage />} />
-      <Route path="/notice" element={<NoticeListPage user={user} />} />
-      <Route path="/notice/new" element={<NoticeFormPage user={user} />} />
-      <Route path="/notice/:id" element={<NoticeDetailPage user={user} />} />
-      <Route path="/notice/:id/edit" element={<NoticeFormPage user={user} />} />
-      <Route path="/report/form" element={<ReportFormPage user={user} />} />
-      <Route path="/report/me" element={<MyReportPage user={user} />} />
+
+      {/* 관리자 전용 화면. 서버에서도 /admin/** 를 관리자만 통과시킨다. */}
+      <Route path="/admin/properties" element={<AdminPropertyPage user={user} />} />
+      <Route path="/admin/brokers" element={<AdminBrokerPage user={user} />} />
       <Route path="/admin/reports" element={<ReportAdminListPage user={user} />} />
       <Route path="/admin/reports/:id" element={<ReportAdminDetailPage user={user} />} />
 

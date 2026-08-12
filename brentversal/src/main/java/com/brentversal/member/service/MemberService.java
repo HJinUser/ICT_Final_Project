@@ -1,7 +1,7 @@
 package com.brentversal.member.service;
 
 import com.brentversal.agency.entity.Agency;
-import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.service.AgencyService;
 import com.brentversal.common.config.JwtTokenProvider;
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.constant.SocialType;
@@ -26,7 +26,10 @@ import java.util.Optional;
 public class MemberService { // MemberService가 MemberRepository를 의존하고 있음
     private final MemberRepository memberRepository; // 의존 + 무의미한 데이터여서 주입(injection)해야 함 + final로 변경
     private final BrokerRepository brokerRepository; // 중개인 가입 시 자격 정보 저장용
-    private final AgencyRepository agencyRepository; // 중개인 가입 시 소속 사무소 생성용
+    // 중개인 가입 시 소속 사무소 생성용.
+    // 사무소를 직접 만들지 않고 이 서비스에 맡기는 이유는, 주소로 좌표(위도·경도)를 채우는 일까지
+    // 함께 처리해 주기 때문이다. 좌표가 없으면 중개사무소 안내 지도에 마커가 찍히지 않는다.
+    private final AgencyService agencyService;
     private final JwtTokenProvider jwtTokenProvider; // 소셜 가입 토큰(socialToken) 검증용
 
     public Member findByEmail(String email){
@@ -163,14 +166,18 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         broker.setLicenseNumber(dto.getLicenseNumber());
         brokerRepository.save(broker);
 
-        Agency agency = new Agency();
-        agency.setMember(member);
-        agency.setName(dto.getAgencyName());
-        agency.setBrokerName(member.getName());
-        agency.setAddress(dto.getAgencyAddress());
+        // 사무소 생성(좌표 조회 포함)은 AgencyService 가 맡는다.
+        // 여기서 new Agency() 로 직접 만들면 좌표가 비어 지도에 표시되지 않는다.
+        Agency agency = agencyService.createIfAbsent(
+                member,
+                dto.getAgencyName(),
+                member.getName(),
+                dto.getAgencyAddress(),
+                dto.getLicenseNumber());
+
+        // 사무실 번호는 가입 폼에서만 받는 값이라 여기서 채운다.
+        // 같은 트랜잭션 안이라 값만 바꿔도 커밋 시점에 UPDATE 가 실행된다.
         agency.setPhone(dto.getOfficePhone());
-        agency.setRegdate(LocalDate.now());
-        agencyRepository.save(agency);
     }
 
     public Optional<Member> findMemberById(Long memberId){
