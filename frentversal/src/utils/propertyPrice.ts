@@ -12,6 +12,13 @@ export const getPrimaryPrice = (property: PropertyResponse): number => {
     return property.monthlyDeposit ?? 0;
 };
 
+// 거래유형에 따라 AI 예상가 중 실제로 비교할 값 하나를 뽑아준다. 아직 예측 전이면 null.
+export const getPrimaryAiPrice = (property: PropertyResponse): number | null => {
+    if (property.dealType === "SALE") return property.aiPrice;
+    if (property.dealType === "JEONSE") return property.aiDeposit;
+    return property.aiMonthlyDeposit;
+};
+
 // 화면에 보여줄 가격 문자열. 월세만 "보증금/월세" 형태로 따로 표시한다.
 export const formatPrice = (property: PropertyResponse): string => {
     if (property.dealType === "MONTHLY") {

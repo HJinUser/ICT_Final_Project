@@ -4,7 +4,7 @@ import { Container, Table, Badge, Alert } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
 import type { PropertyResponse } from "../types/Property";
 import "../components/ComparePage.css";
-import { getPrimaryPrice, formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
+import { getPrimaryPrice, getPrimaryAiPrice, formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 // 여러 매물 중 어떤 값이 "더 좋은지" 골라서 그 인덱스를 돌려주는 헬퍼.
 // direction="lower"면 값이 작을수록 좋음(가격/관리비/역거리), "higher"면 값이 클수록 좋음(면적).
@@ -83,7 +83,10 @@ function ComparePage() {
     // 행마다 쓸 값들을 미리 뽑아서 승자 계산에 재사용한다.
     const prices = properties.map(getPrimaryPrice);
     // 시세 차이 = AI 시세 - 실제 가격. 음수(마이너스)일수록 시세보다 싸게 나온 매물이라 유리 → lower가 승자.
-    const priceDiffs = properties.map((p, i) => (p.aiPrice != null ? p.aiPrice - prices[i] : null));
+    const priceDiffs = properties.map((p, i) => {
+        const aiPrice = getPrimaryAiPrice(p);
+        return aiPrice != null ? aiPrice - prices[i] : null;
+    });
     const areas = properties.map((p) => p.area);
     const maintenanceFees = properties.map((p) => p.maintenanceFee);
     const stationDistances = properties.map((p) => p.stationDistance);
@@ -140,7 +143,7 @@ function ComparePage() {
                 <tr>
                     <td>AI 시세</td>
                     {properties.map((p) => (
-                        <td key={p.id}>{p.aiPrice != null ? p.aiPrice.toLocaleString() : "정보 없음"}</td>
+                        <td key={p.id}>{getPrimaryAiPrice(p) != null ? getPrimaryAiPrice(p)!.toLocaleString() : "정보 없음"}</td>
                     ))}
                 </tr>
 
