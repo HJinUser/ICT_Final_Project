@@ -46,9 +46,12 @@ export const HEADER_NAV: NavItem[] = [
     { label: '매물 확인', path: '/listings', ready: false },
     { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
     { label: '중개사무소 안내', path: '/agency', ready: true, roles: ['GUEST', 'USER'] },
+    // 공지는 비회원을 포함해 누구나 볼 수 있다(서버도 GET /notices 를 permitAll 로 열어 두었다).
+    { label: '공지사항', path: '/notice', ready: true },
     // 중개인/관리자는 매물을 "찾는" 쪽이 아니라 "관리"하는 쪽이라 다른 메뉴를 본다.
     { label: '매물 관리', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
     { label: '매물 관리', path: '/admin', ready: false, roles: ['ADMIN'] },
+    { label: '신고 관리', path: '/admin/reports', ready: true, roles: ['ADMIN'] },
     { label: '문의 목록', path: '/inquiries', ready: false, roles: ['ADMIN'] },
 ];
 
@@ -58,8 +61,10 @@ export const USER_MENU: NavItem[] = [
     { label: '마이페이지', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
     { label: '관심 목록', path: '/favorites', ready: false, roles: ['USER'] },
     { label: '내 중개사무소', path: '/broker/agency', ready: true, roles: ['BROKER'] },
+    // 내가 접수한 신고 내역. 관리자는 위 헤더의 "신고 관리"에서 전체를 처리하므로 여기 넣지 않는다.
+    { label: '내 신고', path: '/report/me', ready: true, roles: ['USER', 'BROKER'] },
     { label: '관리자 콘솔', path: '/admin', ready: false, roles: ['ADMIN'] },
-    { label: '공지사항', path: '/notice', ready: false },
+    { label: '공지사항', path: '/notice', ready: true },
 ];
 
 // ── 푸터 안내메뉴 ─────────────────────────────────────────────
@@ -78,7 +83,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
     {
         title: '이용안내',
         items: [
-            { label: '공지사항', path: '/notice', ready: false },
+            { label: '공지사항', path: '/notice', ready: true },
             { label: '자주 묻는 질문', path: '/support', ready: false },
             { label: '중개사무소 안내', path: '/agency', ready: true },
             { label: '중개인 등록', path: '/member/signup', ready: true },
@@ -91,7 +96,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
             { label: '국토교통부 실거래가', path: '/data/molit', ready: false },
             { label: '서울 열린데이터광장', path: '/data/seoul', ready: false },
             { label: '예측 정확도 공개', path: '/report', ready: false },
-            { label: '개인정보 처리 방침', path: '/personalInfo', ready: false}
+            { label: '개인정보처리 방침', path: '/personalInfo', ready: false}
         ],
     },
 ];
