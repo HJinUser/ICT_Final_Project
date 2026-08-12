@@ -81,12 +81,12 @@ SELECT 4, 0, 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=
 -- visible(공개 여부)은 나중에 추가된 컬럼이며 NOT NULL 이라 값을 꼭 넣어야 한다. b'1' = 공개
 INSERT IGNORE INTO property
     (property_id, agency_id, neighborhood_id, name, type, deal_type, address, area, floor, room_count, bathroom_count,
-     price, deposit, monthly_deposit, monthly_rent, maintenance_fee, status, visible, ai_price, created_at)
+     price, deposit, monthly_deposit, monthly_rent, maintenance_fee, status, visible, ai_price, ai_deposit, ai_monthly_deposit, ai_monthly_rent, created_at)
 VALUES
-    (1, 1, NULL, '반포 리버뷰 84㎡',   'APARTMENT', 'JEONSE', '서울 서초구 반포동 30-1', 84, 12, 3, 2, NULL, 49000, NULL, NULL, 12, 'ACTIVE', b'1', 51000, NOW()),
-    (2, 1, NULL, '잠원 한강 74㎡',     'APARTMENT', 'JEONSE', '서울 서초구 잠원동 12-3', 74,  8, 2, 1, NULL, 52000, NULL, NULL, 10, 'ACTIVE', b'1', 51500, NOW()),
-    (3, 2, NULL, '서초 센트럴 59㎡',   'OFFICETEL', 'JEONSE', '서울 서초구 서초동 1305', 59,  5, 2, 1, NULL, 38000, NULL, NULL,  9, 'ACTIVE', b'1', 37500, NOW()),
-    (4, 4, NULL, '역삼 스카이 45㎡',   'ONE_TWO_ROOM', 'MONTHLY', '서울 강남구 역삼동 736', 45, 3, 1, 1, NULL, NULL, 1000, 60, 7, 'ACTIVE', b'1', NULL, NOW());
+    (1, 1, NULL, '반포 리버뷰 84㎡',   'APARTMENT', 'JEONSE', '서울 서초구 반포동 30-1', 84, 12, 3, 2, NULL, 49000, NULL, NULL, 12, 'ACTIVE', b'1', NULL, 51000, NULL, NULL, NOW()),
+    (2, 1, NULL, '잠원 한강 74㎡',     'APARTMENT', 'JEONSE', '서울 서초구 잠원동 12-3', 74,  8, 2, 1, NULL, 52000, NULL, NULL, 10, 'ACTIVE', b'1', NULL, 51500, NULL, NULL, NOW()),
+    (3, 2, NULL, '서초 센트럴 59㎡',   'OFFICETEL', 'JEONSE', '서울 서초구 서초동 1305', 59,  5, 2, 1, NULL, 38000, NULL, NULL,  9, 'ACTIVE', b'1', NULL, 37500, NULL, NULL, NOW()),
+    (4, 4, NULL, '역삼 스카이 45㎡',   'ONE_TWO_ROOM', 'MONTHLY', '서울 강남구 역삼동 736', 45, 3, 1, 1, NULL, NULL, 1000, 60, 7, 'ACTIVE', b'1', NULL, NULL, 1050, 62, NOW());
 
 -- visible 컬럼이 나중에 추가되면서 기존 예시 매물은 0(비공개)으로 채워졌으므로 공개로 되돌린다.
 UPDATE property SET visible = b'1' WHERE property_id <= 4 AND visible = b'0';
