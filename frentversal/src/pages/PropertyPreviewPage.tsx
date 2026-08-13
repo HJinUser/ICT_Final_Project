@@ -10,6 +10,10 @@ const DUMMY_PROPERTY: PropertyDetail = {
     type: "APARTMENT",
     dealType: "JEONSE",
     address: "서울 서초구 반포동",
+    // PropertyResponse 에 나중에 추가된 값들. 디자인 확인용이라 반포동 근처 좌표를 넣어 둔다.
+    latitude: 37.5085,
+    longitude: 127.0117,
+    stationDistance: 320,
     area: 84,
     floor: 12,
     roomCount: 3,
@@ -71,7 +75,7 @@ const DUMMY_PROPERTY: PropertyDetail = {
 // 역할 바꿔가며 확인하고 싶으면 이 값의 role만 "USER" | "BROKER" | "ADMIN"으로 바꿔서 새로고침
 // role을 "BROKER"로 바꾸면 id가 DUMMY_PROPERTY.ownerId(1)와 같아서 "내 매물" 전용 버튼도 보입니다.
 // undefined로 바꾸면(= 아예 user prop을 안 넘기면) 비회원 화면도 확인 가능합니다.
-const PREVIEW_USER = { id: 1, name: "김서초", email: "test@test.com", role: "ADMIN" as const };
+const PREVIEW_USER = { id: 1, name: "김서초", email: "test@test.com", role: "ADMIN" as const, preferenceCompleted: true };
 
 function PropertyPreviewPage() {
     return <PropertyPage user={PREVIEW_USER} mockData={DUMMY_PROPERTY} />;

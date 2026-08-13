@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter @Setter @ToString @Entity
-@Table(name = "property")
+@Table(name = "properties")
 public class Property {
 
     @Id
@@ -68,6 +68,13 @@ public class Property {
     @Column(name = "address", length = 200, nullable = false)
     private String address;
 
+    // 주소를 Python이 지오코딩해서 얻은 좌표. 백엔드는 계산 안 하고 값만 받아 저장한다.
+    @Column(name = "latitude")
+    private Double latitude;  // 매물 위도
+
+    @Column(name = "longitude")
+    private Double longitude; // 매물 경도
+
     private BigDecimal area;   // 전용면적(㎡)
     private Integer floor;     // 층수
 
@@ -99,6 +106,18 @@ public class Property {
     @Column(name = "maintenance_fee")
     private Integer maintenanceFee; // 관리비(만 원)
 
+    @Column(name = "ai_price")
+    private Long aiPrice;              // AI 예상 매매가(만원)
+
+    @Column(name = "ai_deposit")
+    private Long aiDeposit;            // AI 예상 전세가(만원)
+
+    @Column(name = "ai_monthly_deposit")
+    private Long aiMonthlyDeposit;     // AI 예상 월세 보증금(만원)
+
+    @Column(name = "ai_monthly_rent")
+    private Long aiMonthlyRent;        // AI 예상 월세 금액(만원)
+
     @Lob
     @Column(name = "detail_description")
     private String detailDescription;   // 상세 설명
@@ -110,16 +129,21 @@ public class Property {
     @Column(name = "contract_status", length = 20)
     private ContractStatus contractStatus; // 계약 가능 상태
 
+    // 거래 상태는 클라이언트가 보내는 값이 아니라 서버가 정한다(등록 시 PENDING, 이후 관리자 승인으로 ACTIVE).
+    // 그런데 @Valid 검증은 서비스가 값을 채우기 전에 돌기 때문에, 기본값이 없으면
+    // 요청 본문에 status 가 없다는 이유로 등록이 항상 400 으로 막힌다.
+    // 그래서 "새 매물은 승인 대기로 시작한다"는 뜻을 기본값으로 적어 둔다.
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
-    private PropertyStatus status;
+    private PropertyStatus status = PropertyStatus.PENDING;
 
     @Column(name = "visible", nullable = false)
     private Boolean visible = true; // 공개/비공개 여부. 기본값은 공개(true)
 
-    @Column(name = "ai_price")
-    private Long aiPrice; // AI 예상 시세
+    // 매물 좌표와 최근접 지하철역 좌표 사이의 유클리드 거리(Python 계산). 단위(m/km)는 Python 담당과 확정 필요.
+    @Column(name = "station_distance")
+    private Double stationDistance; // 최근접 역까지 거리
 
     @Enumerated(EnumType.STRING)
     @Column(name = "price_status", length = 10)
@@ -130,7 +154,7 @@ public class Property {
 
     @ManyToMany
     @JoinTable(
-            name = "property_tag",
+            name = "property_tags",
             joinColumns = @JoinColumn(name = "property_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
@@ -139,4 +163,6 @@ public class Property {
     @Transient
     private List<Long> tagIds; // 요청으로 들어온 태그 id 목록. 저장 전 서비스에서 실제 Tag로 변환됨
 
+    @Transient
+    private List<Long> keepImageIds; // 수정 시 유지할 기존 사진 id 목록. 여기 없는 기존 사진은 삭제됨
 }

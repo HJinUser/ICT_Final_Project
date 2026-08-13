@@ -49,10 +49,21 @@ function ReportAdminListPage({ user }: ReportAdminListPageProps) {
     }, [status, targetType, user]);
 
     if (user?.role !== 'ADMIN') {
-        return <main className="report-page-bg"><section className="section"><div className="wrap report-narrow"><div className="report-state report-error">관리자만 접근할 수 있습니다.</div></div></section></main>;
+        return <div className="report-state report-error">관리자만 접근할 수 있습니다.</div>;
     }
 
+    // 바깥 레이아웃(히어로·사이드바)은 관리자 콘솔(AdminConsolePage)이 맡는다.
+    // 이 화면은 콘솔 오른쪽에 들어가는 패널만 그린다.
     return (
+        <>
+            <div className="section-head">
+                <div>
+                    <h2>신고/한줄평 관리</h2>
+                    <p>접수된 신고를 확인하고 처리 결과와 답변을 등록합니다.</p>
+                </div>
+                <span className="status orange">{STATUS_LABELS[status]} {reports.length}건</span>
+            </div>
+            <div className="report-admin-wrap">
         <main className="report-page-bg">
             <section className="page-hero report-hero"><div className="wrap">
                 <div><div className="eyebrow">Admin</div><h1>신고 관리</h1><p>접수된 신고를 확인하고 처리 결과와 답변을 등록합니다.</p></div>
@@ -89,8 +100,8 @@ function ReportAdminListPage({ user }: ReportAdminListPageProps) {
                         </tr>)}
                     </tbody></table></div>
                 )}
-            </div></section>
-        </main>
+            </div>
+        </>
     );
 }
 

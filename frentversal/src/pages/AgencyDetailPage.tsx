@@ -11,7 +11,9 @@ import {
 } from '../api/agencyApi';
 import AgencyMap from '../components/AgencyMap';
 import type { AgencyDetail, AgencyReview, AgencyStatus } from '../types/Agency';
+import type { NavItem } from '../types/Navigation';
 import type { User } from '../types/User';
+import { navigateOrNotice } from '../utils/navigateOrNotice';
 import '../assets/common.css';
 import '../assets/responsive.css';
 
@@ -20,6 +22,10 @@ import '../assets/responsive.css';
 // 상단 네비게이션바와 푸터는 App.tsx 의 공통 컴포넌트가 그리므로 여기에는 없다.
 
 // 상담 상태 코드 -> 배지 색상 (common.css 의 .status.green / .orange / .gray)
+// "전체 N건" 버튼이 가려는 지도 검색 화면.
+// 지도 검색이 keyword 파라미터를 지역 필터로 받으므로, 사무소가 있는 지역으로 넘긴다.
+const MAP_SEARCH_ITEM: NavItem = { label: '지도 검색', path: '/map', ready: true };
+
 const STATUS_COLORS: Record<AgencyStatus, string> = {
     AVAILABLE: 'green',
     RESERVED: 'orange',
@@ -334,10 +340,17 @@ function AgencyDetailPage({ user }: Props) {
                                             <h2>담당 매물</h2>
                                             <p className="muted" style={{ marginTop: 6 }}>현재 노출 중인 확인 매물입니다.</p>
                                         </div>
-                                        {/* 지도 검색 화면에서 이 중개인 이름으로 검색되도록 넘긴다 */}
-                                        <Link className="outline-btn" to={`/map?keyword=${encodeURIComponent(agency.brokerName)}`}>
+                                        {/* 지도 검색 화면이 생기면 이 중개인 이름으로 검색되도록 넘긴다.
+                                            아직 /map 라우트가 없어서 헤더 메뉴와 같은 "준비 중" 안내를 띄운다. */}
+                                        <button
+                                            className="outline-btn"
+                                            onClick={() => navigateOrNotice(
+                                                { ...MAP_SEARCH_ITEM, path: `/map?keyword=${encodeURIComponent(agency.address.split(' ')[1] ?? '')}` },
+                                                navigate,
+                                            )}
+                                        >
                                             전체 {agency.listingCount}건
-                                        </Link>
+                                        </button>
                                     </div>
 
                                     {agency.recentProperties.length === 0 ? (
@@ -349,7 +362,11 @@ function AgencyDetailPage({ user }: Props) {
                                                     {/* 매물 사진은 property 테이블에 이미지 컬럼이 생기면 여기에 연결한다 */}
                                                     <div className="thumb" />
                                                     <div>
-                                                        <span className="status green">확인 매물</span>
+                                                        {/* 지금은 게시중 매물만 조회하지만, 조건이 바뀌어도
+                                                            실제 상태가 그대로 보이도록 서버 값을 쓴다 */}
+                                                        <span className={`status ${property.status === 'ACTIVE' ? 'green' : 'gray'}`}>
+                                                            {property.status === 'ACTIVE' ? '확인 매물' : property.statusLabel}
+                                                        </span>
                                                         <h3>{property.priceLabel}</h3>
                                                         <p>{property.dong}{property.area ? ` · ${property.area}` : ''}</p>
                                                     </div>
@@ -444,7 +461,8 @@ function AgencyDetailPage({ user }: Props) {
                                             onChange={(event) => setPropertyId(event.target.value)}
                                         >
                                             <option value="">매물을 선택하지 않고 문의</option>
-                                            {agency.recentProperties.map((property) => (
+                                            {/* 카드에 보이는 최근 2건이 아니라 담당 매물 전체에서 고를 수 있어야 한다 */}
+                                            {agency.properties.map((property) => (
                                                 <option value={property.id} key={property.id}>
                                                     {property.name} ({property.priceLabel})
                                                 </option>

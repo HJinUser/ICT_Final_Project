@@ -14,6 +14,9 @@ export interface User {
     // 서버(Member.constant.Role)가 내려주는 값과 똑같이 맞춰야 한다.
     // 중개인은 "AGENT" 가 아니라 "BROKER" 다. (회원가입 화면도 BROKER 로 보내고 있다)
     role: "USER" | "BROKER" | "ADMIN";
+    // 취향 초기 설정(온보딩) 완료 여부. 일반 사용자(USER)가 최초 로그인이면 false로 내려온다.
+    // 로그인 성공 직후에만 리다이렉트 판단용으로 쓰고, 그 뒤로는 참조하지 않는다.
+    preferenceCompleted: boolean;
 }
 
 /* 서버가 로그인 시 내려주는 응답 */

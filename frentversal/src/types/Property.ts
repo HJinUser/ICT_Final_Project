@@ -13,8 +13,10 @@ export type PriceChangeStatusCode = "UP" | "DOWN";
 // 여기 넣지 않는다 — 폼에서 별도의 File[] 상태로 들고 있다가 제출할 때 FormData로 합친다.
 export interface Property {
     id?: number;
+    keepImageIds?: number[];
 
-    agency: { id: number };         // 중개사무소 id
+    // 중개사무소 id 는 요청에 넣지 않는다.
+    // 서버가 로그인한 중개인의 사무소를 직접 찾아 채우고, 본문으로 온 값은 무시한다.
     neighborhoodId?: number;        // 동네 id
 
     name: string;                   // 매물명
@@ -87,7 +89,15 @@ export interface PropertyResponse {
     status: PropertyStatusCode;
     visible: boolean;
     aiPrice: number | null;
+    aiDeposit: number | null;
+    aiMonthlyDeposit: number | null;
+    aiMonthlyRent: number | null;
     priceStatus: PriceChangeStatusCode | null;
+
+    // Python이 지오코딩/유클리드 거리로 계산해서 채워주는 값. 연동 전이라 지금은 대부분 null로 옴.
+    latitude: number | null;
+    longitude: number | null;
+    stationDistance: number | null; // 최근접 역까지 거리 (단위는 Python 연동 시 확정)
 
     createdAt: string; // LocalDateTime -> JSON에선 문자열로 옴
 }

@@ -83,6 +83,11 @@ public class Member {
     @Column(name = "passwordless_registered", nullable = false)
     private boolean passwordlessRegistered = false ;
 
+    // 취향 초기 설정(온보딩) 완료 여부. 일반 사용자(USER)가 최초 로그인 시 1회만 보게 하려고 둔다.
+    // 중개인/관리자는 애초에 이 화면으로 보내지 않으므로 항상 의미 없는 기본값(false)으로 둔다.
+    @Column(name = "preference_completed", nullable = false)
+    private boolean preferenceCompleted = false ;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(nullable = false)
     private LocalDate regdate ; // 등록 일자

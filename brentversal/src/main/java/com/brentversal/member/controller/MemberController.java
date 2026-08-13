@@ -5,6 +5,7 @@ import com.brentversal.member.dto.LoginDto;
 import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.service.MemberService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,7 +77,9 @@ public class MemberController {
                     "refreshToken", refreshToken, //  프론트가 저장할 refresh token
                     "id", member.getId(),
                     "name", member.getName(), "email", member.getEmail(),
-                    "role", member.getRole().toString())) ;
+                    "role", member.getRole().toString(),
+                    // 프론트가 일반 사용자(USER) + 미완료일 때만 취향 초기 설정 화면으로 보내는 데 쓴다.
+                    "preferenceCompleted", member.isPreferenceCompleted())) ;
         }
 
 
@@ -178,5 +182,17 @@ public class MemberController {
 
 
         return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK) ; // 회원 가입 성공 (OK라는건 200번대라는 뜻)
+    }
+
+    // 취향 초기 설정 화면에서 "메인으로 가기"를 누르면 호출된다. 로그인이 필요하다(permitUrls에 없음).
+    @PatchMapping("/preference/complete")
+    public ResponseEntity<?> completePreference(Authentication authentication){
+        String email = authentication.getName(); // JwtAuthenticationFilter 가 principal 로 넣어둔 이메일
+        try {
+            memberService.completePreferenceSetup(email);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("general", e.getMessage()));
+        }
+        return ResponseEntity.ok(Map.of("message", "설정이 완료되었습니다."));
     }
 }

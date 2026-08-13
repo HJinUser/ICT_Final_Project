@@ -8,6 +8,7 @@ import com.brentversal.agency.entity.AgencyReview;
 import com.brentversal.agency.repository.AgencyConsultationRepository;
 import com.brentversal.agency.repository.AgencyRepository;
 import com.brentversal.agency.repository.AgencyReviewRepository;
+import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.property.constant.PropertyStatus;
@@ -20,8 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 // 로그인한 중개인이 자기 사무소를 관리하는 화면("내 중개사무소", 중개인 마이페이지)의 서비스
@@ -36,6 +35,9 @@ public class MyAgencyService {
     private final AgencyReviewRepository agencyReviewRepository ;
     private final PropertyRepository propertyRepository ;
     private final MemberRepository memberRepository ;
+
+    // 사무소 주소를 저장할 때 위도·경도를 채우기 위해 쓴다 (카카오 로컬 API)
+    private final KakaoGeocodingService kakaoGeocodingService ;
 
     // 등록 매물 카드는 2행 3열이라 한 페이지에 6개, 리뷰는 한 페이지에 10개씩 보여 준다.
     private static final int PROPERTY_PAGE_SIZE = 6 ;
@@ -64,6 +66,7 @@ public class MyAgencyService {
         MyAgencyDashboardDto dto = new MyAgencyDashboardDto();
 
         // 매물 현황
+        dto.setTotalCount(propertyRepository.countByAgencyId(agencyId));
         dto.setActiveCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.ACTIVE));
         dto.setInProgressCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.IN_PROGRESS));
         dto.setCompletedCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.COMPLETED));
@@ -218,6 +221,9 @@ public class MyAgencyService {
     public AgencyDetailDto updateMyAgency(String email, AgencyDetailDto dto){
         Agency agency = findMyAgency(email);
 
+        // 주소가 바뀌었는지 미리 확인해 둔다. 바뀌었으면 좌표를 다시 조회해야 하기 때문이다.
+        String previousAddress = agency.getAddress();
+
         if(dto.getName() != null && !dto.getName().isBlank()) agency.setName(dto.getName().trim());
         if(dto.getBrokerName() != null && !dto.getBrokerName().isBlank()) agency.setBrokerName(dto.getBrokerName().trim());
         if(dto.getAddress() != null && !dto.getAddress().isBlank()) agency.setAddress(dto.getAddress().trim());
@@ -228,6 +234,10 @@ public class MyAgencyService {
         agency.setLatitude(dto.getLatitude());
         agency.setLongitude(dto.getLongitude());
 
+        // 주소로 좌표(위도·경도)를 채운다.
+        // 중개인이 좌표를 직접 입력할 수는 없으므로, 주소를 저장할 때 서버가 대신 찾아 넣는다.
+        updateCoordinates(agency, previousAddress);
+
         // 상담 가능 상태(AVAILABLE / RESERVED / CLOSED)는 중개인이 직접 바꿀 수 있는 값이다
         if(dto.getStatus() != null && !dto.getStatus().isBlank()){
             agency.setStatus(com.brentversal.agency.constant.AgencyStatus.valueOf(dto.getStatus()));
@@ -236,48 +246,25 @@ public class MyAgencyService {
         return AgencyDetailDto.of(agency);
     }
 
-    // 헤더 종 아이콘에 표시할 알림 목록.
-    // 답변하지 않은 상담 요청과 리뷰를 최신순으로 합쳐서 돌려준다.
-    @Transactional(readOnly = true)
-    public List<NotificationDto> getNotifications(String email){
-        Agency agency = findMyAgency(email);
+    // 주소를 좌표로 바꿔 사무소에 저장한다.
+    //
+    // 다시 조회하는 경우는 두 가지다.
+    //   1) 주소가 바뀌었을 때  : 예전 좌표는 더 이상 맞지 않는다
+    //   2) 좌표가 비어 있을 때 : 예전에 등록돼 좌표가 없는 사무소를 저장하면 이때 채워진다
+    // 좌표를 못 찾으면(카카오 키가 없거나 검색 실패) 기존 값을 그대로 두고 넘어간다.
+    // 지도에 안 보일 뿐, 사무소 정보 저장은 정상적으로 끝나야 하기 때문이다.
+    private void updateCoordinates(Agency agency, String previousAddress){
+        String address = agency.getAddress();
 
-        List<NotificationDto> notifications = new ArrayList<>();
+        boolean addressChanged = address != null && !address.equals(previousAddress);
+        boolean coordinatesMissing = agency.getLatitude() == null || agency.getLongitude() == null;
 
-        // (1) 아직 답변하지 않은 상담 요청
-        agencyConsultationRepository
-                .findByAgencyIdAndStatusOrderByCreatedAtDesc(agency.getId(), ConsultationStatus.REQUESTED)
-                .forEach(bean -> notifications.add(NotificationDto.of(
-                        "CONSULTATION",
-                        bean.getId(),
-                        "새 상담 요청이 도착했습니다.",
-                        summarize(bean.getContent()),
-                        "/broker/consultations/" + bean.getId(), // 답변하기 페이지 주소
-                        bean.getCreatedAt())));
+        if(!addressChanged && !coordinatesMissing) return;
 
-        // (2) 아직 답변하지 않은 리뷰
-        agencyReviewRepository
-                .findByAgencyIdAndReplyIsNullOrderByIdDesc(agency.getId(), PageRequest.of(0, REVIEW_PAGE_SIZE))
-                .forEach(bean -> notifications.add(NotificationDto.of(
-                        "REVIEW",
-                        bean.getId(),
-                        "답변하지 않은 리뷰가 있습니다.",
-                        summarize(bean.getContent()),
-                        "/broker/agency?tab=reviews",
-                        bean.getCreatedAt())));
-
-        // 두 종류를 합쳤으므로 시간 순서가 섞여 있다. 최신 것이 위로 오도록 다시 정렬한다.
-        // createdAt 이 비어 있는 예전 데이터가 섞여도 오류가 나지 않게 null 을 뒤로 보낸다.
-        notifications.sort(Comparator.comparing(NotificationDto::getCreatedAt,
-                Comparator.nullsLast(Comparator.reverseOrder())));
-
-        return notifications;
-    }
-
-    // 알림 목록에 문의 내용을 통째로 넣으면 너무 길어서 앞부분만 잘라 쓴다.
-    private String summarize(String text){
-        if(text == null) return "";
-        return text.length() <= 40 ? text : text.substring(0, 40) + "…";
+        kakaoGeocodingService.findCoordinates(address).ifPresent(coordinates -> {
+            agency.setLatitude(coordinates.latitude());
+            agency.setLongitude(coordinates.longitude());
+        });
     }
 
     // 문자열로 들어온 상태값을 열거형으로 바꾼다. 잘못된 값이면 안내 메시지를 준다.

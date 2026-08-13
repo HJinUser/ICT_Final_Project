@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Container, Row, Col, Card, Badge, Button, Form, Modal } from "react-bootstrap";
+// customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/1" 처럼 그 뒤만 적는다.
+// 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/1" 이 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
-import { API_BASE_URL } from "../config/config";
 import type { User } from "../types/User";
 import type { PropertyDetail } from "../types/PropertyDetail";
 import { PROPERTY_STATUS_LABELS } from "../types/PropertyDetail";
@@ -31,6 +32,13 @@ const formatPrice = (property: PropertyResponse): string => {
     return getPrimaryPrice(property).toLocaleString();
 };
 
+// 거래유형에 따라 AI 예상가 중 실제로 비교할 값 하나를 뽑아준다. 아직 예측 전이면 null
+const getPrimaryAiPrice = (property: PropertyResponse): number | null => {
+    if (property.dealType === "SALE") return property.aiPrice;
+    if (property.dealType === "JEONSE") return property.aiDeposit;
+    return property.aiMonthlyDeposit;
+};
+
 function PropertyPage({ user, mockData }: PropertyPageProps) {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -52,9 +60,9 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         const fetchDetail = async () => {
             setLoading(true);
             try {
-                const propertyResponse = await customAxios.get<PropertyResponse>(`${API_BASE_URL}/property/${id}`);
+                const propertyResponse = await customAxios.get<PropertyResponse>(`/property/${id}`);
                 const agencyResponse = await customAxios.get<AgencyResponse>(
-                    `${API_BASE_URL}/agency/${propertyResponse.data.agencyId}`
+                    `/agency/${propertyResponse.data.agencyId}`
                 );
 
                 setProperty({
@@ -99,16 +107,18 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         setShowLoginModal(true);
     };
 
-    // 관심매물 저장/취소 토글 (로그인 사용자 전용) — TODO: 관심매물 엔드포인트 연동 전, 화면 상태만 토글
+    // 관심매물 저장/취소 토글 (로그인 사용자 전용)
     const toggleFavorite = async () => {
         if (!property) return;
-        await customAxios.post(`${API_BASE_URL}/property/${property.id}/favorite`);
+        const response = await customAxios.post<{ favorited: boolean }>(`/property/${property.id}/favorite`);
+        setProperty({ ...property, isFavorited: response.data.favorited });
+        await customAxios.post(`/property/${property.id}/favorite`);
         setProperty({ ...property, isFavorited: !property.isFavorited });
     };
 
     const sendFeedback = async (liked: boolean) => {
         if (!property) return;
-        await customAxios.post(`${API_BASE_URL}/property/${property.id}/feedback`, { liked });
+        await customAxios.post(`/property/${property.id}/feedback`, { liked });
         alert(liked ? "좋아요로 추천 데이터에 반영했습니다." : "싫어요로 추천 데이터에 반영했습니다.");
     };
 
@@ -123,7 +133,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     // 한줄평 등록 — TODO: Review 도메인 아직 없음, 엔드포인트 생기면 응답 타입 맞춰서 교체
     const submitReview = async () => {
         if (!property) return;
-        const response = await customAxios.post<Review>(`${API_BASE_URL}/property/${property.id}/review`, {
+        const response = await customAxios.post<Review>(`/property/${property.id}/review`, {
             rating: reviewRating,
             content: reviewContent,
         });
@@ -138,7 +148,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const handleStatusChange = async (newStatus: PropertyStatusCode) => {
         if (!property || property.status === "COMPLETED" || property.status === "CANCELLED") return;
         const response = await customAxios.patch<PropertyResponse>(
-            `${API_BASE_URL}/property/${property.id}/status`,
+            `/property/${property.id}/status`,
             { status: newStatus }
         );
         setProperty({ ...property, status: response.data.status });
@@ -147,7 +157,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     // 공개/비공개 전환. 백엔드가 현재 값을 반전시켜서 돌려주므로 body 없이 호출한다.
     const togglePublic = async () => {
         if (!property) return;
-        const response = await customAxios.patch<PropertyResponse>(`${API_BASE_URL}/property/${property.id}/visibility`);
+        const response = await customAxios.patch<PropertyResponse>(`/property/${property.id}/visibility`);
         setProperty({ ...property, visible: response.data.visible });
     };
 
@@ -155,7 +165,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const cancelListing = async () => {
         if (!property || property.status === "CANCELLED") return;
         if (!window.confirm("정말 매물 등록을 취소하시겠어요? 취소하면 되돌릴 수 없습니다.")) return;
-        const response = await customAxios.patch<PropertyResponse>(`${API_BASE_URL}/property/${property.id}/cancel`);
+        const response = await customAxios.patch<PropertyResponse>(`/property/${property.id}/cancel`);
         setProperty({ ...property, status: response.data.status });
     };
 
@@ -165,7 +175,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const role = user?.role; // undefined(비회원) | "USER" | "BROKER" | "ADMIN"
     const isOwner = user?.role === "BROKER" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
 
-    const priceDiff = (property.aiPrice ?? 0) - getPrimaryPrice(property);
+    const aiPrice = getPrimaryAiPrice(property);
+    const priceDiff = (aiPrice ?? 0) - getPrimaryPrice(property);
 
     return (
         <Container className="mt-4 mb-5">
@@ -188,7 +199,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 <Col md="auto">
                     <Card className="p-3 text-center">
                         <span className="text-muted small">AI 예상 시세</span>
-                        <strong className="fs-3">{(property.aiPrice ?? 0).toLocaleString()}</strong>
+                        <strong className="fs-3">{(aiPrice ?? 0).toLocaleString()}</strong>
                     </Card>
                 </Col>
             </Row>
@@ -225,7 +236,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         <Row>
                             <Col>
                                 <span className="text-muted small">예상 적정 전세가</span>
-                                <strong className="d-block fs-4">{(property.aiPrice ?? 0).toLocaleString()}</strong>
+                                <strong className="d-block fs-4">{(aiPrice ?? 0).toLocaleString()}</strong>
                             </Col>
                             <Col className="text-end">
                                 <span className="text-muted small">현재 호가</span>
@@ -237,7 +248,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                 <div key={i} className="text-center">
                                     <div
                                         className="bar"
-                                        style={{ height: `${(point.price / (property.aiPrice || 1)) * 100}px` }}
+                                        style={{ height: `${(point.price / (aiPrice || 1)) * 100}px` }}
                                     />
                                     <span className="xs">{point.year}</span>
                                 </div>

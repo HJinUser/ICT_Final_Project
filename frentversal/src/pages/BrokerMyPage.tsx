@@ -105,7 +105,9 @@ function BrokerMyPage({ user }: Props) {
                     <div className="hero-stat">
                         <span className="mono dim">상담 요청</span>
                         <strong>{dashboard?.requestedConsultationCount ?? 0}건</strong>
-                        <span className="xs dim">미답변 리뷰 {dashboard?.unansweredReviewCount ?? 0}건</span>
+                        <span className="xs dim">
+                            미답변 리뷰 {dashboard?.unansweredReviewCount ?? 0}건 · 평점 ★ {(dashboard?.ratingAvg ?? 0).toFixed(1)}
+                        </span>
                     </div>
                 </div>
             </section>
@@ -121,9 +123,18 @@ function BrokerMyPage({ user }: Props) {
                         </div>
                     )}
 
-                    {/* ── 대시보드 : 매물 현황을 위에서 아래로 배치 ────────── */}
+                    {/* ── 대시보드 : 매물이 거치는 4단계를 순서대로 배치 ──────
+                        새로 등록한 매물은 "승인 대기"로 시작한다. 이 칸이 없으면
+                        등록 직후 네 숫자가 모두 0으로 보여서 등록이 안 된 것처럼 보인다. */}
                     <h2>대시보드</h2>
                     <div className="grid-4" style={{ marginTop: 16 }}>
+                        <div className="card">
+                            <span className="xs dim">승인 대기</span>
+                            <strong className="num" style={{ display: 'block', marginTop: 6, fontSize: 26 }}>
+                                {dashboard?.pendingCount ?? 0}
+                            </strong>
+                            <span className="xs dim">관리자 승인 후 노출됩니다.</span>
+                        </div>
                         <div className="card">
                             <span className="xs dim">게시 중 매물</span>
                             <strong className="num" style={{ display: 'block', marginTop: 6, fontSize: 26 }}>
@@ -142,12 +153,6 @@ function BrokerMyPage({ user }: Props) {
                                 {dashboard?.completedCount ?? 0}
                             </strong>
                         </div>
-                        <div className="card">
-                            <span className="xs dim">평균 평점</span>
-                            <strong className="num" style={{ display: 'block', marginTop: 6, fontSize: 26 }}>
-                                ★ {(dashboard?.ratingAvg ?? 0).toFixed(1)}
-                            </strong>
-                        </div>
                     </div>
 
                     {/* ── 바로가기 카드 ──────────────────────────────── */}
@@ -162,6 +167,11 @@ function BrokerMyPage({ user }: Props) {
                         <Link className="card" to="/property/form">
                             <h3>매물 등록</h3>
                             <p className="xs dim" style={{ marginTop: 6 }}>새 매물을 등록합니다.</p>
+                        </Link>
+
+                        <Link className="card" to="/broker/properties">
+                            <h3>내 매물 관리</h3>
+                            <p className="xs dim" style={{ marginTop: 6 }}>등록한 매물을 수정하고 상태를 관리합니다.</p>
                         </Link>
 
                         <Link className="card" to="/broker/agency">

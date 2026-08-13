@@ -1,0 +1,37 @@
+/* 404 화면. 버튼 모양은 AuthForm.css의 .auth-solid-btn / .auth-outline-btn을 그대로 쓴다. */
+
+@import './AuthForm.css';
+
+.notfound {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 120px 32px 140px;
+    text-align: center;
+}
+
+.notfound .code {
+    font-size: 64px;
+    line-height: 1;
+    color: var(--v-pale);
+    margin-bottom: 18px;
+}
+
+.notfound h2 {
+    letter-spacing: -.035em;
+}
+
+.notfound p {
+    margin-top: 10px;
+    color: var(--ink-2);
+}
+
+.notfound .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+/* AuthForm.css의 버튼은 width:100%라서, 나란히 놓기 위해 여기서 폭을 나눈다 */
+.notfound .actions > button {
+    flex: 1;
+}

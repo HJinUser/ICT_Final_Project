@@ -27,12 +27,20 @@ public class PropertyResponseDto {
     private Integer roomCount;    // 방 개수
     private Integer bathroomCount; // 욕실 개수
 
+    private Double latitude;   // 매물 위도
+    private Double longitude;  // 매물 경도
+
     // 거래유형에 따라 쓰이는 필드가 다름 (validatePricingFields와 동일한 규칙)
     private Long price;          // 매매가(만원)
     private Long deposit;        // 전세가(만원)
     private Long monthlyDeposit; // 월세 보증금(만원)
     private Long monthlyRent;    // 월세 금액(만원)
     private Integer maintenanceFee; // 관리비(만원)
+
+    private Long aiPrice;
+    private Long aiDeposit;
+    private Long aiMonthlyDeposit;
+    private Long aiMonthlyRent;
 
     private String description;      // 소개 글
     private String detailDescription; // 상세 설명
@@ -44,7 +52,7 @@ public class PropertyResponseDto {
 
     private String status;   // PropertyStatus enum 이름
     private Boolean visible; // 공개/비공개 여부
-    private Long aiPrice;    // AI 예상 시세
+    private Double stationDistance; // 최근접 역까지 유클리드 거리
     private String priceStatus; // "UP" / "DOWN" / null (수정 이력 없거나 변동 없음)
 
     private LocalDateTime createdAt; // 등록일시
@@ -75,11 +83,19 @@ public class PropertyResponseDto {
         dto.setRoomCount(bean.getRoomCount());
         dto.setBathroomCount(bean.getBathroomCount());
 
+        dto.setLatitude(bean.getLatitude());
+        dto.setLongitude(bean.getLongitude());
+
         dto.setPrice(bean.getPrice());
         dto.setDeposit(bean.getDeposit());
         dto.setMonthlyDeposit(bean.getMonthlyDeposit());
         dto.setMonthlyRent(bean.getMonthlyRent());
         dto.setMaintenanceFee(bean.getMaintenanceFee());
+
+        dto.setAiPrice(bean.getAiPrice());
+        dto.setAiDeposit(bean.getAiDeposit());
+        dto.setAiMonthlyDeposit(bean.getAiMonthlyDeposit());
+        dto.setAiMonthlyRent(bean.getAiMonthlyRent());
 
         dto.setImages(bean.getImages().stream()
                 .map(PropertyImageResponseDto::of)
@@ -100,7 +116,7 @@ public class PropertyResponseDto {
             dto.setStatus(bean.getStatus().name());
         }
         dto.setVisible(bean.getVisible());
-        dto.setAiPrice(bean.getAiPrice());
+        dto.setStationDistance(bean.getStationDistance());
         dto.setCreatedAt(bean.getCreatedAt());
 
         if (bean.getPriceStatus() != null) {
