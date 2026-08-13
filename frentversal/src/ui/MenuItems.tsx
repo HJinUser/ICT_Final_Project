@@ -20,6 +20,14 @@ type MenuItemsProps = {
 // 나중에 방식을 바꾸더라도 이 파일만 고치면 되기 때문이다.
 const NOTIFICATION_INTERVAL = 30_000;
 
+// 알림을 마지막으로 확인한 시각을 보관하는 자리 (회원마다 따로).
+//
+// 알림 자체는 서버가 그때그때 모아서 주고 "읽음" 여부를 저장하지 않는다.
+// 상담·리뷰·승인은 처리하면 목록에서 사라지지만, 공지사항은 그런 계기가 없어서
+// 배지 숫자가 계속 남는다. 그래서 "종을 눌러 확인한 시점"을 브라우저에 적어 두고,
+// 그보다 나중에 생긴 알림만 새 것으로 센다.
+const SEEN_AT_KEY = (memberId: number) => `notificationsSeenAt:${memberId}`;
+
 // 알림 목록 아래에 붙는 "모두 보기" 링크. 역할마다 가야 할 화면이 다르다.
 const NOTIFICATION_MORE: Record<User['role'], { label: string; path: string }> = {
    USER: { label: '내 상담 보기', path: '/my-consultations' },
@@ -35,11 +43,14 @@ function App({ user, handleLogout }: MenuItemsProps) {
 
    // 로그인한 사용자에게 보이는 알림 목록.
    // 담기는 항목은 서버가 역할에 맞게 정한다.
-   //   공통   : 내가 보낸 상담에 도착한 답변
+   //   공통   : 최근 공지사항, 내가 보낸 상담에 도착한 답변
    //   중개인 : 미답변 상담 요청, 미답변 리뷰
    //   관리자 : 승인 대기 매물, 심사 대기 인증 신청
    const [notifications, setNotifications] = useState<Notification[]>([]);
    const timerRef = useRef<number | undefined>(undefined);
+
+   // 마지막으로 알림을 확인한 시각. 이 값보다 나중에 생긴 알림만 배지에 센다.
+   const [seenAt, setSeenAt] = useState('');
 
    // 열려 있는 드롭다운. 한 번에 하나만 열리게 하려고 문자열 하나로 관리한다.
    const [openMenu, setOpenMenu] = useState<'none' | 'user' | 'noti'>('none');
@@ -52,11 +63,20 @@ function App({ user, handleLogout }: MenuItemsProps) {
    const userMenuItems = visibleFor(USER_MENU, viewerRole);
 
    useEffect(() => {
-      // 비로그인 또는 중개인이 아닌 사용자는 알림을 조회하지 않는다.
-      if (!user || user.role !== "BROKER") {
+      // 비로그인 상태에서는 알림을 조회하지 않는다 (서버도 로그인한 사람만 통과시킨다).
+      //
+      // 중개인만 거르지 않는 이유: 알림은 이제 역할별로 담기는 내용이 다르다.
+      //   공통   : 공지사항, 내가 보낸 상담의 답변
+      //   중개인 : 미답변 상담 요청·리뷰
+      //   관리자 : 승인 대기 매물, 심사 대기 인증 신청
+      // 어떤 항목을 담을지는 서버(NotificationService)가 정하므로 여기서 역할을 가리지 않는다.
+      if (!user) {
          setNotifications([]);
          return;
       }
+
+      // 이 회원이 알림을 마지막으로 확인한 시각을 불러온다
+      setSeenAt(window.localStorage.getItem(SEEN_AT_KEY(user.id)) ?? '');
 
       const load = () => {
          getNotifications()
@@ -79,6 +99,34 @@ function App({ user, handleLogout }: MenuItemsProps) {
    useEffect(() => {
       setOpenMenu('none');
    }, [location.pathname]);
+
+   // 아직 확인하지 않은 알림 개수.
+   // 시각은 "2026-08-13 14:30" 형태라 문자열끼리 비교해도 시간 순서가 맞는다.
+   // 시각이 없는 알림은 새 것인지 알 수 없으므로 세지 않는다(배지가 영영 안 사라지는 것을 막는다).
+   const unreadCount = notifications.filter(
+      (item) => item.createdAt && item.createdAt > seenAt,
+   ).length;
+
+   // 종을 눌러 목록을 펼치면 "여기까지 확인했다"고 적어 둔다.
+   const toggleNotifications = () => {
+      const opening = openMenu !== 'noti';
+
+      setOpenMenu(opening ? 'noti' : 'none');
+
+      if (!opening || !user || notifications.length === 0) return;
+
+      // 지금 목록에서 가장 최근 시각을 확인 지점으로 삼는다
+      const newest = notifications
+         .map((item) => item.createdAt)
+         .filter(Boolean)
+         .sort()
+         .at(-1);
+
+      if (!newest) return;
+
+      window.localStorage.setItem(SEEN_AT_KEY(user.id), newest);
+      setSeenAt(newest);
+   };
 
    const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
@@ -135,6 +183,7 @@ function App({ user, handleLogout }: MenuItemsProps) {
             <div className="auth">
                {/* ── 알림 (로그인한 사용자 전체) ─────────────────────
                    종 모양을 누르면 목록이 펼쳐지고, 항목을 누르면 해당 화면으로 이동한다.
+                     [공지] 제목      -> 공지 상세 (누구나)
                      상담 답변       -> 내 상담 화면 (누구나)
                      상담 요청·리뷰   -> 답변 화면 (중개인)
                      승인·인증 대기   -> 관리 화면 (관리자)
@@ -143,13 +192,15 @@ function App({ user, handleLogout }: MenuItemsProps) {
                   <button
                      className="bell"
                      aria-label="알림"
-                     onClick={() => setOpenMenu(openMenu === 'noti' ? 'none' : 'noti')}
+                     onClick={toggleNotifications}
                   >
                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3">
                         <path d="M18 9a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7" />
                         <path d="M13.7 20a2 2 0 0 1-3.4 0" />
                      </svg>
-                     {notifications.length > 0 && <span className="dot">{notifications.length}</span>}
+                     {/* 확인하지 않은 알림이 있을 때만 숫자를 띄운다.
+                         목록을 한 번 펼쳐 보면 사라지고, 새 알림이 오면 다시 생긴다. */}
+                     {unreadCount > 0 && <span className="dot">{unreadCount}</span>}
                   </button>
 
                   {openMenu === 'noti' && (

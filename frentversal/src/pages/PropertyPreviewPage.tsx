@@ -44,7 +44,11 @@ const DUMMY_PROPERTY: PropertyDetail = {
     ],
     status: "ACTIVE",
     visible: true,
-    aiPrice: 54200,
+    // AI 예상 시세는 거래유형마다 쓰는 칸이 다르다. 이 더미는 전세라 aiDeposit 만 값이 있다.
+    aiPrice: null,
+    aiDeposit: 54200,
+    aiMonthlyDeposit: null,
+    aiMonthlyRent: null,
     priceStatus: "DOWN", // "가격 하락" 배지 확인용. null로 바꾸면 배지가 안 보임
     createdAt: "2026-07-01T00:00:00",
 
