@@ -2,6 +2,7 @@ package com.brentversal.report.controller;
 
 import com.brentversal.report.service.ReportMemberNotFoundException;
 import com.brentversal.report.service.ReportNotFoundException;
+import com.brentversal.report.service.ReportTargetNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,9 +13,9 @@ import java.util.Map;
 @RestControllerAdvice(basePackageClasses = ReportController.class)
 public class ReportExceptionHandler {
 
-    @ExceptionHandler(ReportNotFoundException.class)
+    @ExceptionHandler({ReportNotFoundException.class, ReportTargetNotFoundException.class})
     public ResponseEntity<Map<String, String>> handleNotFound(
-            ReportNotFoundException exception
+            RuntimeException exception
     ) {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)

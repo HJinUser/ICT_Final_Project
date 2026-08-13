@@ -1,6 +1,7 @@
 package com.brentversal.report.controller;
 
 import com.brentversal.report.dto.ReportCreateRequest;
+import com.brentversal.report.dto.PublicReportResponse;
 import com.brentversal.report.dto.ReportProcessRequest;
 import com.brentversal.report.dto.ReportResponse;
 import com.brentversal.report.entity.ReportStatus;
@@ -52,6 +53,11 @@ public class ReportController {
         return ResponseEntity.ok(
                 reportService.findMine(authentication.getName())
         );
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<List<PublicReportResponse>> findPublicHistory() {
+        return ResponseEntity.ok(reportService.findPublicHistory());
     }
 
     @GetMapping

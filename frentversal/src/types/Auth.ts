@@ -27,11 +27,16 @@ export type SignupRequest = {
     // 일반 사용자 전용 (중개인은 비밀번호 없이 가입하고 이후 패스워드리스/소셜로 로그인한다)
     password?: string;
     address?: string;
+    // 주소 검색이 함께 준 지역 조각 (도로명 주소에는 동이 없어 따로 보낸다)
+    sigungu?: string;
+    dong?: string;
 
     // 중개인 전용
     licenseNumber?: string;
     agencyName?: string;
     agencyAddress?: string;
+    agencySigungu?: string;
+    agencyDong?: string;
     officePhone?: string;
 
     // 소셜 회원가입 전용. OAuth2LoginSuccessHandler가 발급한 단기 토큰이며,
@@ -59,3 +64,31 @@ export const SOCIAL_BUTTONS: SocialButton[] = [
     { provider: 'naver', label: '네이버로 계속하기', className: 'naver' },
     { provider: 'google', label: 'Google로 계속하기', className: '' },
 ];
+
+// ── 패스워드리스 ──────────────────────────────────────────────
+
+// 등록(QR) 요청 응답
+export type PasswordlessRegisterInfo = {
+    qrDataUrl: string;
+    serverUrl: string;
+    registerKey: string;
+};
+
+// 로그인 1단계(인증 시작) 응답
+export type PasswordlessAuthStart = {
+    sessionId: string;
+    servicePassword: string;
+    term: number;
+};
+
+// 로그인 2단계(폴링) 응답
+export type PasswordlessLoginResult = {
+    status: "W" | "Y" | "N";
+    accessToken?: string;
+    refreshToken?: string;
+    id?: number;
+    name?: string;
+    email?: string;
+    role?: "USER" | "BROKER" | "ADMIN";
+    preferenceCompleted?: boolean;
+};

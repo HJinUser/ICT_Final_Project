@@ -13,7 +13,6 @@ export interface PriceHistoryPoint {
 // 아직 백엔드가 못 챙겨주는 화면 전용 필드만 추가한다.
 export interface PropertyDetail extends PropertyResponse {
     // 이 매물을 등록한 중개인의 회원 id. 로그인한 중개인 본인 소유인지 판단할 때 씀.
-    // TODO: agency 담당 팀원이 AgencyResponseDto에 memberId를 노출해주면,
     // 이 필드 대신 agencyDetail.memberId를 쓰는 걸로 교체 (agency 도메인은 그쪽 담당이라 지금은 안 건드림)
     ownerId: number;
 

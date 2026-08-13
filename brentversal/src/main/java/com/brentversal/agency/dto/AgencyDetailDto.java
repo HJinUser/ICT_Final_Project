@@ -14,9 +14,12 @@ import java.util.List;
 public class AgencyDetailDto {
     // 기본 정보
     private Long id ;
+    private Long memberId ;       // 이 사무소를 운영하는 회원(중개인)의 id
     private String name ;
     private String brokerName ;
     private String address ;
+    private String sigungu ; // 주소에서 뽑아 둔 구 (지역 검색·지도 묶기에 쓴다)
+    private String dong ;    // 주소에서 뽑아 둔 동
     private String phone ;
     private String hours ;
     private String registrationNo ; // 등록번호
@@ -49,9 +52,14 @@ public class AgencyDetailDto {
         AgencyDetailDto dto = new AgencyDetailDto();
 
         dto.setId(bean.getId());
+        if (bean.getMember() != null) {
+            dto.setMemberId(bean.getMember().getId());
+        }
         dto.setName(bean.getName());
         dto.setBrokerName(bean.getBrokerName());
         dto.setAddress(bean.getAddress());
+        dto.setSigungu(bean.getSigungu());
+        dto.setDong(bean.getDong());
         dto.setPhone(bean.getPhone());
         dto.setHours(bean.getHours());
         dto.setRegistrationNo(bean.getRegistrationNo());

@@ -13,6 +13,7 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 }
 
 // 회원가입. 일반/중개인/소셜 가입을 이 함수 하나로 처리한다(서버가 signupType과 socialToken을 보고 분기).
-export async function signup(request: SignupRequest): Promise<void> {
-    await customAxios.post('/member/signup', request);
+export async function signup(request: SignupRequest): Promise<{ passwordlessSignupToken?: string }> {
+    const response = await customAxios.post('/member/signup', request);
+    return response.data;
 }

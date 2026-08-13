@@ -65,6 +65,7 @@ export interface AgencyProperty {
 // 목록용 AgencyResponse 에 등록번호·이미지·담당 매물·후기 수가 더해진 형태다.
 export interface AgencyDetail {
     id: number;
+    memberId: number;
     name: string;
     brokerName: string;
     address: string;
@@ -77,6 +78,8 @@ export interface AgencyDetail {
     ratingAvg: number;
     status: AgencyStatus;
     statusLabel: string;
+    sigungu: string | null;     // 주소에서 뽑아 둔 구
+    dong: string | null;        // 주소에서 뽑아 둔 동
     imageUrls: string[];        // 사무소 대표 이미지 (갤러리)
     listingCount: number;       // 담당 매물 전체 건수
     todayNewCount: number;      // 오늘 신규 매물 건수

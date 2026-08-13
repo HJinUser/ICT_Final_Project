@@ -74,11 +74,17 @@ public class AdminBrokerService {
 
         // 사무소가 없는 상태로 신청이 올라와 있을 수도 있어(인증 신청에서 사무소를 만들기 전에 신청한 경우)
         // 승인 시점에도 한 번 더 확인해서 없으면 신청 정보로 만들어 준다.
+        // 지역 조각(구·동)은 null 로 넘긴다.
+        // 인증을 신청할 때 이미 사무소가 만들어지면서 값이 채워지므로, 이 자리까지 오는 것은
+        // 그 처리가 없던 시절에 신청한 오래된 자료뿐이고 그때는 애초에 받아 둔 값이 없다.
+        // (사무소 정보 화면에서 주소를 한 번 저장하면 채워진다)
         Agency agency = broker.getMember() == null ? null : agencyService.createIfAbsent(
                 broker.getMember(),
                 broker.getBusinessName(),
                 broker.getOwnerName(),
                 broker.getOfficeAddress(),
+                null,
+                null,
                 broker.getLicenseNumber());
 
         if(agency != null){

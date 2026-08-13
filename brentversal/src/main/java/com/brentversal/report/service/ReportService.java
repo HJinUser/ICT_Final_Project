@@ -1,7 +1,11 @@
 package com.brentversal.report.service;
 
+import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.repository.AgencyReviewRepository;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
+import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.report.dto.PublicReportResponse;
 import com.brentversal.report.dto.ReportCreateRequest;
 import com.brentversal.report.dto.ReportProcessRequest;
 import com.brentversal.report.dto.ReportResponse;
@@ -20,13 +24,22 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final MemberRepository memberRepository;
+    private final PropertyRepository propertyRepository;
+    private final AgencyRepository agencyRepository;
+    private final AgencyReviewRepository agencyReviewRepository;
 
     public ReportService(
             ReportRepository reportRepository,
-            MemberRepository memberRepository
+            MemberRepository memberRepository,
+            PropertyRepository propertyRepository,
+            AgencyRepository agencyRepository,
+            AgencyReviewRepository agencyReviewRepository
     ) {
         this.reportRepository = reportRepository;
         this.memberRepository = memberRepository;
+        this.propertyRepository = propertyRepository;
+        this.agencyRepository = agencyRepository;
+        this.agencyReviewRepository = agencyReviewRepository;
     }
 
     @Transactional
@@ -35,6 +48,7 @@ public class ReportService {
             String reporterEmail
     ) {
         Member reporter = getMember(reporterEmail);
+        validateTarget(request.getTargetType(), request.getTargetId());
         ReportEntity report = ReportEntity.create(
                 reporter,
                 request.getTargetType(),
@@ -44,6 +58,13 @@ public class ReportService {
         );
 
         return ReportResponse.from(reportRepository.save(report));
+    }
+
+    public List<PublicReportResponse> findPublicHistory() {
+        return reportRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(PublicReportResponse::from)
+                .toList();
     }
 
     public List<ReportResponse> findMine(String reporterEmail) {
@@ -103,5 +124,17 @@ public class ReportService {
             throw new ReportMemberNotFoundException();
         }
         return member;
+    }
+
+    private void validateTarget(ReportTargetType targetType, Long targetId) {
+        boolean exists = switch (targetType) {
+            case PROPERTY -> propertyRepository.existsById(targetId);
+            case AGENCY -> agencyRepository.existsById(targetId);
+            case REVIEW -> agencyReviewRepository.existsById(targetId);
+        };
+
+        if (!exists) {
+            throw new ReportTargetNotFoundException(targetType, targetId);
+        }
     }
 }

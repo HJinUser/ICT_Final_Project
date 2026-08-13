@@ -180,6 +180,15 @@ public class MemberController {
             return new ResponseEntity<>(Map.of("general", e.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
+        // 중개인은 비밀번호 없이 가입하므로, 패스워드리스 등록 화면에서 본인 확인용으로 쓸 단기 토큰을 같이 내려준다.
+        if ("BROKER".equals(dto.getSignupType())) {
+            Member newMember = memberService.findByEmail(dto.getEmail());
+            String signupToken = jwtTokenProvider.createBrokerSignupToken(newMember);
+            return ResponseEntity.ok(Map.of(
+                    "message", "회원 가입 성공",
+                    "passwordlessSignupToken", signupToken
+            ));
+        }
 
         return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK) ; // 회원 가입 성공 (OK라는건 200번대라는 뜻)
     }

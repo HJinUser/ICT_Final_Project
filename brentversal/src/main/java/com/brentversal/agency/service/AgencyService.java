@@ -42,7 +42,7 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
     // 인증 신청 때 받는 상호·소재지·대표자가 사무소에 필요한 값과 같으므로 그대로 사용한다.
     @Transactional
     public Agency createIfAbsent(Member member, String name, String brokerName,
-                                 String address, String registrationNo){
+                                 String address, String sigungu, String dong, String registrationNo){
 
         Optional<Agency> found = agencyRepository.findByMemberId(member.getId());
 
@@ -54,6 +54,8 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
         agency.setName(name);
         agency.setBrokerName(brokerName);
         agency.setAddress(address);
+        agency.setSigungu(sigungu);
+        agency.setDong(dong);
         agency.setRegistrationNo(registrationNo);
         agency.setRegdate(LocalDate.now());
 

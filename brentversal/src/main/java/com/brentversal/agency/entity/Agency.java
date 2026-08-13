@@ -47,6 +47,14 @@ public class Agency {
     @Column(nullable = false)
     private String address ; // 사무소 상세 페이지에 표시할 주소
 
+    // 주소에서 뽑아 둔 지역 조각 (주소 검색이 함께 돌려주는 값).
+    // 도로명 주소에는 동이 없어서 주소 문자열만으로는 알 수 없기 때문에 따로 보관한다.
+    @Column(length = 30)
+    private String sigungu ; // 영등포구
+
+    @Column(length = 30)
+    private String dong ;    // 당산동4가
+
     // 공인중개사 등록번호. 상세 페이지 기본 정보에 표시한다.
     // ERD 에는 없지만 화면(중개사무소 상세)에 필요해서 추가했다.
     @Column(name = "registration_no", length = 50)

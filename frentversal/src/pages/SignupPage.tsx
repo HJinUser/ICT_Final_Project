@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { signup } from "../api/authApi";
+import AddressInput from "../components/AddressInput";
+import TermsAgreement from "../components/TermsAgreement";
 import { API_BASE_URL } from "../config/config";
 import { SOCIAL_BUTTONS } from "../types/Auth";
 import type { FieldErrors, SignupType } from "../types/Auth";
+import type { AgreementState } from "../types/Terms";
+import { missingRequired } from "../types/Terms";
 import "../styles/AuthForm.css";
 
 // 왼쪽 사진 영역 배경. 서버에서 받아올 값이 아니라 화면 장식이라 상수로 둔다.
@@ -26,17 +30,23 @@ function App() {
     // 비밀번호 확인은 서버에 안 보내고 프론트에서만 password와 일치하는지 비교한다.
     const [passwordConfirm, setPasswordConfirm] = useState('');
     const [address, setAddress] = useState('');
+    // 주소 검색이 함께 준 지역 조각. 지도 검색의 기본 지역을 정할 때 서버가 쓴다.
+    const [sigungu, setSigungu] = useState('');
+    const [dong, setDong] = useState('');
 
     // 중개인 전용
     const [licenseNumber, setLicenseNumber] = useState('');
     const [agencyName, setAgencyName] = useState('');
     const [agencyAddress, setAgencyAddress] = useState('');
+    // 사무소 상세주소(동·호수). 주소를 한 덩어리로 저장하므로 제출할 때 뒤에 합쳐 보낸다.
+    const [agencyAddressDetail, setAgencyAddressDetail] = useState('');
+    const [agencySigungu, setAgencySigungu] = useState('');
+    const [agencyDong, setAgencyDong] = useState('');
     const [officePhone, setOfficePhone] = useState('');
 
-    // 약관 동의 여부. 약관 상세 내용은 아직 확정 전이라 체크박스만 우선 둔다.
-    const [agreedTerms, setAgreedTerms] = useState(false);
-    const [agreedPrivacy, setAgreedPrivacy] = useState(false);
-    const [agreedMarketing, setAgreedMarketing] = useState(false);
+    // 약관 동의 여부. 항목 구성은 types/Terms.ts가 갖고 있고 여기서는 체크 결과만 보관한다.
+    // 가입 유형(사용자/중개인)에 따라 보이는 항목이 달라지므로 코드별 true/false로 둔다.
+    const [agreements, setAgreements] = useState<AgreementState>({});
 
     // 입력 양식에 문제가 생기면 필드 이름을 키로 오류 문구를 담는다.
     const [errors, setErrors] = useState<FieldErrors>({});
@@ -54,19 +64,35 @@ function App() {
         }
 
         // 필수 약관은 서버에 보내기 전에 프론트에서 먼저 막는다.
-        if (!agreedTerms || !agreedPrivacy) {
-            setErrors({ agreedTerms: '필수 약관에 모두 동의해야 회원가입을 진행할 수 있습니다.' });
+        // 어떤 항목이 필수인지는 가입 유형마다 다르므로 Terms.ts의 판단을 그대로 쓴다.
+        const missing = missingRequired(signupType, agreements);
+        if (missing.length > 0) {
+            setErrors({
+                agreedTerms: `필수 항목에 동의해 주세요: ${missing.map((doc) => doc.title).join(', ')}`,
+            });
             return;
         }
 
         try {
             // 두 가입 유형의 필드를 한 번에 보낸다. 서버(MemberService.insert)가 signupType을 보고
             // 필요한 값만 사용하므로, 안 쓰는 값(예: 일반 가입의 licenseNumber)은 그냥 무시된다.
-            await signup({
+            const result = await signup({
                 signupType, name, phone, email,
-                password, address,
-                licenseNumber, agencyName, agencyAddress, officePhone,
+                password, address, sigungu, dong,
+                licenseNumber, agencyName, officePhone,
+                agencySigungu, agencyDong,
+                // 상세주소는 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 보낸다
+                agencyAddress: [agencyAddress, agencyAddressDetail].filter(Boolean).join(' '),
             });
+
+            if (signupType === 'BROKER' && result.passwordlessSignupToken) {
+                // 중개인은 비밀번호 없이 가입해서 패스워드리스 등록이 로그인의 유일한 방법이다.
+                // 가입 직후 바로 등록 화면으로 보내고, 본인 확인용 토큰과 이메일을 함께 넘긴다.
+                navigate('/member/passwordless', {
+                    state: { email, signupToken: result.passwordlessSignupToken },
+                });
+                return;
+            }
 
             alert('회원 가입이 완료되었습니다.');
             navigate('/member/login');
@@ -203,15 +229,20 @@ function App() {
                                 </div>
                             </div>
 
+                            {/* 회원 주소는 "어느 지역에 사는지"만 알면 되므로 상세주소를 받지 않는다.
+                                (나중에 지도 검색의 기본 지역으로 쓸 값이다) */}
                             <div className="auth-field">
-                                <label htmlFor="signup-address">주소 (선택)</label>
-                                <input
-                                    id="signup-address"
-                                    type="text"
-                                    placeholder="OO시 OO구 까지"
+                                <AddressInput
+                                    label="주소 (선택)"
                                     value={address}
-                                    onChange={(e) => setAddress(e.target.value)}
-                                    className={errors.address ? 'invalid' : ''}
+                                    withDetail={false}
+                                    onChange={({ address: selectedAddress, selected }) => {
+                                        setAddress(selectedAddress);
+                                        if (selected) {
+                                            setSigungu(selected.sigungu);
+                                            setDong(selected.dong);
+                                        }
+                                    }}
                                 />
                                 {errors.address && <span className="msg">{errors.address}</span>}
                             </div>
@@ -250,15 +281,19 @@ function App() {
                             </div>
 
                             <div className="auth-field">
-                                <label htmlFor="signup-agency-address">중개사무소 주소</label>
-                                <input
-                                    id="signup-agency-address"
-                                    type="text"
-                                    placeholder="중개사무소 주소"
-                                    value={agencyAddress}
-                                    onChange={(e) => setAgencyAddress(e.target.value)}
-                                    className={errors.agencyAddress ? 'invalid' : ''}
+                                <AddressInput
+                                    label="중개사무소 주소"
                                     required
+                                    value={agencyAddress}
+                                    detail={agencyAddressDetail}
+                                    onChange={({ address: selectedAddress, detail, selected }) => {
+                                        setAgencyAddress(selectedAddress);
+                                        setAgencyAddressDetail(detail);
+                                        if (selected) {
+                                            setAgencySigungu(selected.sigungu);
+                                            setAgencyDong(selected.dong);
+                                        }
+                                    }}
                                 />
                                 {errors.agencyAddress && <span className="msg">{errors.agencyAddress}</span>}
                             </div>
@@ -287,34 +322,13 @@ function App() {
                         </>
                     )}
 
-                    {/* 약관 동의: 상세 내용은 아직 미정이라 체크박스만 둔다 */}
-                    <div className="auth-checks">
-                        <label className="auth-check">
-                            <input
-                                type="checkbox"
-                                checked={agreedTerms}
-                                onChange={(e) => setAgreedTerms(e.target.checked)}
-                            />
-                            [필수] 이용약관에 동의합니다. (약관 내용 준비 중)
-                        </label>
-                        <label className="auth-check">
-                            <input
-                                type="checkbox"
-                                checked={agreedPrivacy}
-                                onChange={(e) => setAgreedPrivacy(e.target.checked)}
-                            />
-                            [필수] 개인정보 처리 방침에 동의합니다. (내용 준비 중)
-                        </label>
-                        <label className="auth-check">
-                            <input
-                                type="checkbox"
-                                checked={agreedMarketing}
-                                onChange={(e) => setAgreedMarketing(e.target.checked)}
-                            />
-                            [선택] 맞춤 매물과 마케팅 정보 수신에 동의합니다.
-                        </label>
-                        {errors.agreedTerms && <span className="msg" style={{ color: '#c0392b' }}>{errors.agreedTerms}</span>}
-                    </div>
+                    {/* 약관 동의. 항목은 가입 유형에 따라 달라진다(중개인은 사무소 정보 공개가 추가). */}
+                    <TermsAgreement
+                        signupType={signupType}
+                        value={agreements}
+                        onChange={setAgreements}
+                        error={errors.agreedTerms}
+                    />
 
                     <button type="submit" className="auth-solid-btn" style={{ marginTop: 20 }}>
                         회원가입 완료

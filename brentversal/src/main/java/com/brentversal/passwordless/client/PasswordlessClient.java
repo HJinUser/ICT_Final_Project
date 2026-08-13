@@ -1,8 +1,9 @@
 package com.brentversal.passwordless.client;
 
 import com.brentversal.passwordless.config.PasswordlessProperties;
-import com.brentversal.passwordless.dto.PasswordlessResponse;
+import com.brentversal.passwordless.backDto.PasswordlessResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -24,12 +25,17 @@ public class PasswordlessClient {
     private final PasswordlessProperties props;
 
     // 공통 POST 호출 (form-urlencoded). 인증서버 API는 전부 이 형태의 POST 요청임
-    private PasswordlessResponse post (String path, MultiValueMap<String, String> form) {
+    private PasswordlessResponse post(String path, MultiValueMap<String, String> form) {
         return passwordlessWebClient.post()
                 .uri("/ap/rest/auth/" + path)
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .body(BodyInserters.fromFormData(form))
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, response ->
+                        response.bodyToMono(String.class)
+                                .defaultIfEmpty("(empty body)")
+                                .map(body -> new IllegalStateException(
+                                        "패스워드리스 서버 오류 [" + response.statusCode() + "] " + path + " : " + body)))
                 .bodyToMono(PasswordlessResponse.class)
                 .block();
     }
@@ -81,21 +87,21 @@ public class PasswordlessClient {
 
     // --- result : 모바일 승인 여부 폴링 ---
     public PasswordlessResponse result(String userId, String sessionId){
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> form = formWithUserId(userId);
         form.add("sessionId", sessionId);
         return post("result", form);
     }
 
     // --- cancel : 인증 취소 ---
     public PasswordlessResponse cancel(String userId, String sessionId){
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> form = formWithUserId(userId);
         form.add("sessionId", sessionId);
         return post("cancel", form);
     }
 
     // --- withdrawalAp : 해지 ---
     public boolean withdrawal(String userId){
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> form = formWithUserId(userId);
         PasswordlessResponse res = post("withdrawalAp", form);
         return res != null && res.isResult();
     }

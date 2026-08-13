@@ -54,6 +54,9 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         member.setPhone(dto.getPhone());
         member.setEmail(dto.getEmail());
         member.setAddress(dto.getAddress());
+        // 주소 검색이 함께 준 지역 조각. 지도 검색의 기본 지역을 정할 때 쓴다.
+        member.setSigungu(dto.getSigungu());
+        member.setDong(dto.getDong());
         member.setRegdate(LocalDate.now());
 
         // 클라이언트가 role을 직접 정하게 하면 "ADMIN"을 보내는 식의 권한 상승이 가능해진다.
@@ -173,6 +176,8 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
                 dto.getAgencyName(),
                 member.getName(),
                 dto.getAgencyAddress(),
+                dto.getAgencySigungu(),
+                dto.getAgencyDong(),
                 dto.getLicenseNumber());
 
         // 사무실 번호는 가입 폼에서만 받는 값이라 여기서 채운다.
