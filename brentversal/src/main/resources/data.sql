@@ -128,10 +128,10 @@ UPDATE properties SET latitude = 37.5006, longitude = 127.0364 WHERE property_id
 -- agencies_seq 와 같은 이유로 properties_seq 도 예시 데이터보다 큰 값으로 올려 둔다.
 UPDATE properties_seq SET next_val = 101 WHERE next_val <= 100;
 -- 예시 매물을 동네 카드의 매물 건수와 연결한다.
-UPDATE property SET neighborhood_id = 1 WHERE property_id = 1;
-UPDATE property SET neighborhood_id = 2 WHERE property_id = 2;
-UPDATE property SET neighborhood_id = 3 WHERE property_id = 3;
-UPDATE property SET neighborhood_id = 4 WHERE property_id = 4;
+UPDATE properties SET neighborhood_id = 1 WHERE property_id = 1;
+UPDATE properties SET neighborhood_id = 2 WHERE property_id = 2;
+UPDATE properties SET neighborhood_id = 3 WHERE property_id = 3;
+UPDATE properties SET neighborhood_id = 4 WHERE property_id = 4;
 
 -- agency_seq 와 같은 이유로 property_seq 도 예시 데이터보다 큰 값으로 올려 둔다.
-UPDATE property_seq SET next_val = 101 WHERE next_val <= 100;
+UPDATE properties_seq SET next_val = 101 WHERE next_val <= 100;

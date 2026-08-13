@@ -61,15 +61,9 @@ function ReportAdminListPage({ user }: ReportAdminListPageProps) {
                     <h2>신고/한줄평 관리</h2>
                     <p>접수된 신고를 확인하고 처리 결과와 답변을 등록합니다.</p>
                 </div>
-                <span className="status orange">{STATUS_LABELS[status]} {reports.length}건</span>
+                <span className="status orange">{REPORT_STATUS_LABELS[status]} {reports.length}건</span>
             </div>
             <div className="report-admin-wrap">
-        <main className="report-page-bg">
-            <section className="page-hero report-hero"><div className="wrap">
-                <div><div className="eyebrow">Admin</div><h1>신고 관리</h1><p>접수된 신고를 확인하고 처리 결과와 답변을 등록합니다.</p></div>
-                <div className="hero-stat"><span className="mono dim">현재 조회 결과</span><strong>{reports.length}건</strong><span className="xs dim">{REPORT_STATUS_LABELS[status]}</span></div>
-            </div></section>
-            <section className="section"><div className="wrap report-admin-wrap">
                 <div className="report-admin-toolbar">
                     <div className="tabs report-tabs">
                         {(['PENDING', 'RESOLVED', 'REJECTED'] as const).map((item) => (

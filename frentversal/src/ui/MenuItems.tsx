@@ -52,11 +52,9 @@ function App({ user, handleLogout }: MenuItemsProps) {
    const userMenuItems = visibleFor(USER_MENU, viewerRole);
 
    useEffect(() => {
-      // 비로그인 상태에서는 알림을 조회하지 않는다 (서버도 로그인한 사람만 통과시킨다)
-      if (!user) {
+      // 비로그인 또는 중개인이 아닌 사용자는 알림을 조회하지 않는다.
+      if (!user || user.role !== "BROKER") {
          setNotifications([]);
-      // 중개인이 아니면 알림을 조회하지 않는다 (서버도 중개인만 통과시킨다)
-      if (user?.role !== "BROKER") {
          return;
       }
 
@@ -86,19 +84,8 @@ function App({ user, handleLogout }: MenuItemsProps) {
       event.preventDefault();
       if (!keyword.trim()) {
          return;
-   // user 프롭스를 사용하여 상단에 보이는 메뉴를 분기 처리합니다.
-   const renderMenu = () => {
-      if (user) {
-         // 로그인 상태 : 관리자는 관리 메뉴가 추가되고, 공통으로 로그아웃을 노출한다.
-         return (
-            <>
-               {user.role === 'ADMIN' && (
-                  <Nav.Link onClick={() => navigate('/admin/reports')}>신고 관리</Nav.Link>
-               )}
-               <Nav.Link onClick={handleLogout}>로그 아웃</Nav.Link>
-            </>
-         );
       }
+
       // 지도 검색이 keyword 를 지역 필터로 받는다
       navigate(`/map?keyword=${encodeURIComponent(keyword.trim())}`);
    };
@@ -108,14 +95,6 @@ function App({ user, handleLogout }: MenuItemsProps) {
          <button className="brand" onClick={() => navigate('/')} aria-label="전세역전 홈으로">
             <span className="flip">전</span><span className="flip">세</span><span>역전</span>
          </button>
-      <Navbar bg="dark" variant="dark" expand="lg">
-         <Container>
-            <Navbar.Brand href='/'>{appName}</Navbar.Brand>
-            <Nav className="me-auto">
-               {/* 로그인 여부와 상관없이 항상 보이는 메뉴 */}
-               <Nav.Link onClick={() => navigate(`/agency`)}>중개사무소 안내</Nav.Link>
-               <Nav.Link onClick={() => navigate('/neighborhood')}>동네 탐색</Nav.Link>
-               <Nav.Link onClick={() => navigate('/report/history')}>신고 처리 내역</Nav.Link>
 
          <nav className="nav">
             {navItems.map((item) => (

@@ -7,7 +7,7 @@ import PropertyFormPage from './../pages/PropertyFormPage';
 import PasswordlessRegisterPage from '../pages/PasswordlessRegisterPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
-import PropertyPreviewPage from "../pages/PropertyPreviewPage";
+import ComparePage from './../pages/ComparePage';
 import AgencyPage from './../pages/AgencyPage';
 import NoticeListPage from '../pages/NoticeListPage';
 import NoticeDetailPage from '../pages/NoticeDetailPage';
