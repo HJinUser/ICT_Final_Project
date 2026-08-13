@@ -14,6 +14,7 @@ import java.util.List;
 public class AgencyDetailDto {
     // 기본 정보
     private Long id ;
+    private Long memberId ;       // 이 사무소를 운영하는 회원(중개인)의 id
     private String name ;
     private String brokerName ;
     private String address ;
@@ -49,6 +50,9 @@ public class AgencyDetailDto {
         AgencyDetailDto dto = new AgencyDetailDto();
 
         dto.setId(bean.getId());
+        if (bean.getMember() != null) {
+            dto.setMemberId(bean.getMember().getId());
+        }
         dto.setName(bean.getName());
         dto.setBrokerName(bean.getBrokerName());
         dto.setAddress(bean.getAddress());

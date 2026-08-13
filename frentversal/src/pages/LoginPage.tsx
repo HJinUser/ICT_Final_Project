@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { login } from "../api/authApi";
+import { startPasswordlessLogin, checkPasswordlessLogin, cancelPasswordlessLogin } from "../api/passwordlessApi";
 import { API_BASE_URL } from "../config/config";
 import { SOCIAL_BUTTONS } from "../types/Auth";
+import type { PasswordlessLoginResult } from "../types/Auth";
 import type { User } from "../types/User";
 import "../styles/AuthForm.css";
 
@@ -18,19 +20,45 @@ const VISUAL_IMAGE =
     "linear-gradient(160deg,rgba(49,0,90,.95),rgba(75,0,130,.72))," +
     "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=70')";
 
+// 패스워드리스 로그인 결과 폴링 주기(밀리초)
+const PWLESS_POLL_INTERVAL = 2000;
+
 function App({ onLogin }: Props) {
     // 로그인과 관련된 state
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     // 탭: 일반 로그인 / 패스워드리스 로그인
-    // 패스워드리스는 다른 담당자가 맡기로 해서 지금은 자리만 잡아 둔다.
     const [mode, setMode] = useState<'normal' | 'passwordless'>('normal');
 
     // 에러 관련 메시지
     const [errors, setErrors] = useState('');
 
     const navigate = useNavigate();
+
+    // 패스워드리스 로그인 진행 상태.
+    //   idle    : 이메일만 입력하고 시작 전
+    //   waiting : 시작 요청을 보내고 휴대폰 승인을 기다리는 중(폴링 중)
+    const [pwlessStage, setPwlessStage] = useState<'idle' | 'waiting'>('idle');
+    const [pwlessSessionId, setPwlessSessionId] = useState('');
+    const [servicePassword, setServicePassword] = useState(''); // 화면에 보여줄 자동패스워드 숫자
+
+    // 로그인 성공 처리(일반 로그인과 동일하게 토큰 저장 + 리다이렉트).
+    // 패스워드리스 로그인 성공 응답도 일반 로그인과 같은 모양으로 오기 때문에 그대로 재사용한다.
+    const handleLoginSuccess = (userData: User, accessToken: string, refreshToken: string) => {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        onLogin(userData);
+
+        // 취향 초기 설정은 일반 사용자(USER)가 아직 완료하지 않았을 때만, 최초 로그인 시 1회 보여준다.
+        if (userData.role === "USER" && !userData.preferenceCompleted) {
+            navigate("/preference-setup");
+        } else {
+            navigate("/");
+        }
+    };
 
     const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -42,21 +70,7 @@ function App({ onLogin }: Props) {
             // 서버의 응답을 전개 연산자로 처리합니다.
             // accessToken는 JWT, userData는 User.ts로 구성된 객체
             const { accessToken, refreshToken, ...userData } = data;
-
-            localStorage.setItem("accessToken", accessToken);
-            // 이후 access token 이 만료되면 axiosInstance 가 이 값으로 새 access token 을 재발급받는다.
-            localStorage.setItem("refreshToken", refreshToken);
-            localStorage.setItem("user", JSON.stringify(userData));
-
-            onLogin(userData);
-
-            // 취향 초기 설정은 일반 사용자(USER)가 아직 완료하지 않았을 때만, 최초 로그인 시 1회 보여준다.
-            // 중개인/관리자는 이 화면 자체가 해당되지 않으므로 항상 메인으로 보낸다.
-            if (userData.role === "USER" && !userData.preferenceCompleted) {
-                navigate("/preference-setup");
-            } else {
-                navigate("/");
-            }
+            handleLoginSuccess(userData, accessToken, refreshToken);
 
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.data) {
@@ -65,6 +79,78 @@ function App({ onLogin }: Props) {
                 setErrors("서버와 통신하는 중 오류가 발생했습니다.");
             }
         }
+    };
+
+    // 패스워드리스 로그인 1단계: 인증 시작. 화면에 보여줄 자동패스워드 숫자를 받아온다.
+    const startPwlessLogin = async () => {
+        setErrors('');
+        if (!email) {
+            setErrors('이메일을 입력해 주세요.');
+            return;
+        }
+
+        try {
+            const start = await startPasswordlessLogin(email);
+            setPwlessSessionId(start.sessionId);
+            setServicePassword(start.servicePassword);
+            setPwlessStage('waiting');
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                setErrors(error.response.data.message);
+            } else {
+                setErrors('패스워드리스 로그인을 시작하지 못했습니다.');
+            }
+        }
+    };
+
+    // 패스워드리스 로그인 2단계: 승인 결과 폴링. waiting 상태인 동안 2초마다 반복 호출한다.
+    useEffect(() => {
+        if (pwlessStage !== 'waiting') return;
+
+        const timer = window.setInterval(async () => {
+            try {
+                const result: PasswordlessLoginResult = await checkPasswordlessLogin(email, pwlessSessionId);
+
+                if (result.status === 'Y' && result.accessToken && result.refreshToken && result.id != null) {
+                    window.clearInterval(timer);
+                    setPwlessStage('idle');
+                    handleLoginSuccess(
+                        {
+                            id: result.id,
+                            name: result.name ?? '',
+                            email: result.email ?? email,
+                            role: result.role ?? 'USER',
+                            preferenceCompleted: result.preferenceCompleted ?? false,
+                        },
+                        result.accessToken,
+                        result.refreshToken
+                    );
+                } else if (result.status === 'N') {
+                    window.clearInterval(timer);
+                    setPwlessStage('idle');
+                    setErrors('로그인이 거절되었습니다.');
+                }
+                // 'W'(대기)면 아무것도 안 하고 다음 폴링을 기다린다.
+            } catch (error) {
+                console.error('패스워드리스 로그인 확인 실패', error);
+            }
+        }, PWLESS_POLL_INTERVAL);
+
+        return () => window.clearInterval(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pwlessStage, email, pwlessSessionId]);
+
+    const cancelPwlessLogin = async () => {
+        if (pwlessSessionId) {
+            try {
+                await cancelPasswordlessLogin(email, pwlessSessionId);
+            } catch (error) {
+                console.error('패스워드리스 로그인 취소 실패', error);
+            }
+        }
+        setPwlessStage('idle');
+        setPwlessSessionId('');
+        setServicePassword('');
     };
 
     return (
@@ -92,14 +178,14 @@ function App({ onLogin }: Props) {
                     <button
                         type="button"
                         className={mode === 'normal' ? 'on' : ''}
-                        onClick={() => setMode('normal')}
+                        onClick={() => { setMode('normal'); setErrors(''); }}
                     >
                         일반 로그인
                     </button>
                     <button
                         type="button"
                         className={mode === 'passwordless' ? 'on' : ''}
-                        onClick={() => setMode('passwordless')}
+                        onClick={() => { setMode('passwordless'); setErrors(''); }}
                     >
                         패스워드리스 로그인
                     </button>
@@ -160,11 +246,51 @@ function App({ onLogin }: Props) {
                         </div>
                     </>
                 ) : (
-                    // 패스워드리스는 담당자가 따로 있어 화면 자리만 만들어 둔다.
-                    // 나중에 이 블록 안만 채우면 되고 일반 로그인 쪽은 다시 건드릴 필요가 없다.
+                    // 패스워드리스 로그인: 이메일만 받아서 시작하고, 결과가 나올 때까지 폴링한다.
                     <div className="auth-soft">
-                        <strong>패스워드리스 로그인</strong>
-                        <p>준비 중입니다. 일반 로그인 또는 소셜 로그인을 이용해 주세요.</p>
+                        {pwlessStage === 'idle' ? (
+                            <>
+                                <div className="auth-field">
+                                    <label htmlFor="pwless-email">이메일</label>
+                                    <input
+                                        id="pwless-email"
+                                        type="email"
+                                        placeholder="name@example.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="auth-solid-btn"
+                                    style={{ marginTop: 20 }}
+                                    onClick={startPwlessLogin}
+                                >
+                                    패스워드리스로 로그인
+                                </button>
+
+                                <p className="auth-foot">
+                                    아직 등록하지 않으셨나요?{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/member/passwordless', { state: { email } })}
+                                    >
+                                        패스워드리스 등록하기
+                                    </button>
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <strong>휴대폰에서 아래 숫자를 확인하고 승인해 주세요</strong>
+                                <p className="pwless-code">{servicePassword}</p>
+                                <p>승인을 기다리는 중입니다...</p>
+                                <button type="button" className="auth-solid-btn" onClick={cancelPwlessLogin}>
+                                    취소
+                                </button>
+                            </>
+                        )}
                     </div>
                 )}
 

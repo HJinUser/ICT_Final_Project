@@ -86,4 +86,4 @@ export type PasswordlessLoginResult = {
     email?: string;
     role?: "USER" | "BROKER" | "ADMIN";
     preferenceCompleted?: boolean;
-}
+};
