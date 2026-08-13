@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter @Entity
-@Table(name = "property_image")
+@Table(name = "property_images")
 public class PropertyImage {
 
     @Id

@@ -9,6 +9,7 @@ import lombok.Setter;
 @Getter @Setter
 public class MyAgencyDashboardDto {
     // 매물 현황 (위에서 아래로 배치되는 항목들)
+    private long totalCount ;       // 등록 매물 수 (상태와 상관없이 전체)
     private long activeCount ;      // 게시 중
     private long inProgressCount ;  // 거래 진행 중
     private long completedCount ;   // 거래 완료
