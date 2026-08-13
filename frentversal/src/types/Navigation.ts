@@ -75,8 +75,8 @@ export const FOOTER_GROUPS: FooterGroup[] = [
     {
         title: '둘러보기',
         items: [
-            { label: '지도 검색', path: '/map', ready: false },
-            { label: '동네 탐색', path: '/neighborhood', ready: false },
+            { label: '지도 검색', path: '/map', ready: true },
+            { label: '동네 탐색', path: '/neighborhood', ready: true },
             { label: '매물 확인', path: '/listings', ready: false },
             { label: '맞춤 추천', path: '/recommend', ready: false },
             { label: '관심 목록', path: '/favorites', ready: true },
