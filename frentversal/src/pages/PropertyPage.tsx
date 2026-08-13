@@ -65,7 +65,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 const agencyResponse = await customAxios.get<AgencyDetail>(
                     `/agency/${propertyResponse.data.agencyId}`
                 );
-                console.log("agency 응답:", agencyResponse.data);
+
                 setProperty({
                     ...propertyResponse.data,
                     // 아래는 아직 백엔드가 안 챙겨주는 화면 전용 필드 (TODO: 도메인 완성되면 실제 값으로 교체)
@@ -175,7 +175,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
     const role = user?.role; // undefined(비회원) | "USER" | "BROKER" | "ADMIN"
     const isOwner = user?.role === "BROKER" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
-    console.log("디버그:", { userId: user?.id, ownerId: property.ownerId, role: user?.role, isOwner });
+
     const aiPrice = getPrimaryAiPrice(property);
     const priceDiff = (aiPrice ?? 0) - getPrimaryPrice(property);
 

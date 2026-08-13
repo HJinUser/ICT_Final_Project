@@ -54,6 +54,19 @@ public class Member {
     @Size(max = 100, message = "주소는 100자리 이하로 입력해 주세요.")
     private String address ;
 
+    // 주소에서 뽑아 둔 지역 조각. 주소 검색(다음 우편번호)이 함께 돌려주는 값을 그대로 저장한다.
+    //
+    // 주소를 도로명으로 통일했더니 문자열에 동이 들어 있지 않아("서울시 영등포구 당산로 222"),
+    // 주소를 쪼개 봐도 동을 알 수 없다. 그래서 받은 값을 따로 보관한다.
+    // 지도 검색의 기본 지역을 회원이 사는 곳으로 맞출 때 쓴다.
+    @Size(max = 30)
+    @Column(length = 30)
+    private String sigungu ; // 영등포구
+
+    @Size(max = 30)
+    @Column(length = 30)
+    private String dong ;    // 당산동4가
+
     // Enum의 상수를 문자열 형태로 DB에 저장하겠다는 어노테이션
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

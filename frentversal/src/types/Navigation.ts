@@ -89,7 +89,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
             { label: '자주 묻는 질문', path: '/support', ready: false },
             { label: '중개사무소 안내', path: '/agency', ready: true },
             { label: '중개인 등록', path: '/member/signup', ready: true },
-
+            { label: '이용약관', path: '/terms/service', ready: true },
         ],
     },
     {
@@ -98,7 +98,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
             { label: '국토교통부 실거래가', path: '/data/molit', ready: false },
             { label: '서울 열린데이터광장', path: '/data/seoul', ready: false },
             { label: '예측 정확도 공개', path: '/report', ready: false },
-            { label: '개인정보처리 방침', path: '/personalInfo', ready: false}
+            { label: '개인정보 수집·이용', path: '/terms/privacy', ready: true },
         ],
     },
 ];

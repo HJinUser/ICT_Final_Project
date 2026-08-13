@@ -68,6 +68,16 @@ public class Property {
     @Column(name = "address", length = 200, nullable = false)
     private String address;
 
+    // 주소에서 뽑아 둔 지역 조각 (주소 검색이 함께 돌려주는 값).
+    //
+    // 주소를 도로명으로 통일하면서 주소 문자열에 동이 사라졌다("서울시 영등포구 당산로 222").
+    // 지도에서 동네끼리 묶으려면 이 값이 있어야 한다.
+    @Column(length = 30)
+    private String sigungu; // 영등포구
+
+    @Column(length = 30)
+    private String dong;    // 당산동4가
+
     // 주소를 Python이 지오코딩해서 얻은 좌표. 백엔드는 계산 안 하고 값만 받아 저장한다.
     @Column(name = "latitude")
     private Double latitude;  // 매물 위도

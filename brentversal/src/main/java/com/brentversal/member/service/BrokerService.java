@@ -103,6 +103,8 @@ public class BrokerService {
                 broker.getBusinessName(),  // 상호 -> 사무소 이름
                 broker.getOwnerName(),     // 대표자 -> 대표 공인중개사
                 broker.getOfficeAddress(), // 소재지 -> 사무소 주소
+                dto.getOfficeSigungu(),    // 주소 검색이 함께 준 구
+                dto.getOfficeDong(),       // 주소 검색이 함께 준 동
                 broker.getLicenseNumber()  // 등록번호
         );
 
