@@ -1,7 +1,7 @@
 package com.brentversal.passwordless.client;
 
 import com.brentversal.passwordless.config.PasswordlessProperties;
-import com.brentversal.passwordless.dto.PasswordlessResponse;
+import com.brentversal.passwordless.backDto.PasswordlessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -81,21 +81,21 @@ public class PasswordlessClient {
 
     // --- result : 모바일 승인 여부 폴링 ---
     public PasswordlessResponse result(String userId, String sessionId){
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> form = formWithUserId(userId);
         form.add("sessionId", sessionId);
         return post("result", form);
     }
 
     // --- cancel : 인증 취소 ---
     public PasswordlessResponse cancel(String userId, String sessionId){
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> form = formWithUserId(userId);
         form.add("sessionId", sessionId);
         return post("cancel", form);
     }
 
     // --- withdrawalAp : 해지 ---
     public boolean withdrawal(String userId){
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> form = formWithUserId(userId);
         PasswordlessResponse res = post("withdrawalAp", form);
         return res != null && res.isResult();
     }

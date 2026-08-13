@@ -1,4 +1,4 @@
-package com.brentversal.passwordless.dto;
+package com.brentversal.passwordless.backDto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
