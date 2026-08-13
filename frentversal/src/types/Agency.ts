@@ -57,6 +57,8 @@ export interface AgencyProperty {
     priceLabel: string; // "전세 4억 9,000" 처럼 서버가 만들어 준 문구
     dong: string;       // 동네
     area: string | null;// "84㎡"
+    status: string;     // 거래 상태 코드 (ACTIVE 등)
+    statusLabel: string;// 게시중 / 거래 진행중 ...
 }
 
 // 상세 화면 전체 응답 (백엔드 AgencyDetailDto)
@@ -78,7 +80,8 @@ export interface AgencyDetail {
     imageUrls: string[];        // 사무소 대표 이미지 (갤러리)
     listingCount: number;       // 담당 매물 전체 건수
     todayNewCount: number;      // 오늘 신규 매물 건수
-    recentProperties: AgencyProperty[]; // 최근 등록 매물 2건
+    recentProperties: AgencyProperty[]; // 카드로 보여 줄 최근 등록 매물 2건
+    properties: AgencyProperty[];       // 담당 매물 전체 (상담 요청 폼의 매물 선택용)
     reviewCount: number;
 }
 

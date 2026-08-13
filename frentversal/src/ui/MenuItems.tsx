@@ -85,8 +85,8 @@ function App({ user, handleLogout }: MenuItemsProps) {
       if (!keyword.trim()) {
          return;
       }
-      // 지도 검색 페이지가 생기면 navigate(`/map?keyword=${keyword}`) 형태로 바꾼다.
-      window.alert('"지도 검색" 화면은 준비 중입니다.');
+      // 지도 검색이 keyword 를 지역 필터로 받는다
+      navigate(`/map?keyword=${encodeURIComponent(keyword.trim())}`);
    };
 
    return (

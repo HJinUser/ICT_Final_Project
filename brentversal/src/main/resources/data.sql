@@ -1,4 +1,4 @@
--- 중개사무소(agency) 예시 데이터
+-- 중개사무소(agencies) 예시 데이터
 -- application.properties 의 spring.sql.init.mode=always 설정으로 서버가 시작될 때마다 실행된다.
 -- (spring.jpa.defer-datasource-initialization=true 덕분에 Hibernate 가 테이블을 만든 뒤에 실행됨)
 --
@@ -7,7 +7,7 @@
 --
 -- verified 컬럼은 bit(1) 타입이라 b'1'(참) / b'0'(거짓) 으로 넣는다.
 -- member_id 는 아직 연결할 중개인 계정이 없어서 NULL 로 둔다.
-INSERT IGNORE INTO agency
+INSERT IGNORE INTO agencies
     (agency_id, name, broker_name, address, phone, hours, registration_no, latitude, longitude, verified, rating_avg, status, listing_count, regdate, member_id)
 VALUES
     (1, '반포역전 공인중개사', '박지훈', '서울 서초구 신반포로 194', '02-533-1200', '09:00-19:00', '11650-2024-00123', 37.5085, 127.0117, b'1', 4.8, 'AVAILABLE', 24, CURRENT_DATE, NULL),
@@ -17,22 +17,22 @@ VALUES
 
 -- 등록번호 컬럼은 나중에 추가한 것이라, 이미 데이터가 들어 있는 DB 에서는 위 INSERT 가 건너뛰어진다.
 -- 그래서 비어 있는 행만 따로 채워 준다.
-UPDATE agency SET registration_no = '11650-2024-00123' WHERE agency_id = 1 AND registration_no IS NULL;
-UPDATE agency SET registration_no = '11650-2024-00087' WHERE agency_id = 2 AND registration_no IS NULL;
-UPDATE agency SET registration_no = '11650-2023-00451' WHERE agency_id = 3 AND registration_no IS NULL;
-UPDATE agency SET registration_no = '11680-2024-00219' WHERE agency_id = 4 AND registration_no IS NULL;
+UPDATE agencies SET registration_no = '11650-2024-00123' WHERE agency_id = 1 AND registration_no IS NULL;
+UPDATE agencies SET registration_no = '11650-2024-00087' WHERE agency_id = 2 AND registration_no IS NULL;
+UPDATE agencies SET registration_no = '11650-2023-00451' WHERE agency_id = 3 AND registration_no IS NULL;
+UPDATE agencies SET registration_no = '11680-2024-00219' WHERE agency_id = 4 AND registration_no IS NULL;
 
 -- 위에서 기본키를 1~4 로 직접 지정했기 때문에 꼭 필요한 처리.
 --
 -- Agency 엔터티가 @GeneratedValue(strategy = GenerationType.AUTO) 라서 Hibernate 는
--- agency_seq 테이블의 next_val 값을 보고 다음 기본키를 정한다.
+-- agencies_seq 테이블의 next_val 값을 보고 다음 기본키를 정한다.
 -- 새 DB 에서는 이 값이 1 이라, 그대로 두면 나중에 중개사무소를 등록할 때
 -- 이미 쓰고 있는 1번을 다시 만들려다 오류가 난다.
 -- 그래서 예시 데이터보다 큰 값(101)으로 올려 둔다. 이미 큰 값이면 건드리지 않는다.
-UPDATE agency_seq SET next_val = 101 WHERE next_val <= 100;
+UPDATE agencies_seq SET next_val = 101 WHERE next_val <= 100;
 
--- 태그(tag) 예시 데이터. 매물 등록 폼의 태그 선택 UI 확인용 (실제 카테고리별 목록은 팀장 확정 전이라 임시)
-INSERT IGNORE INTO tag
+-- 태그(tags) 예시 데이터. 매물 등록 폼의 태그 선택 UI 확인용 (실제 카테고리별 목록은 팀장 확정 전이라 임시)
+INSERT IGNORE INTO tags
     (id, name, category)
 VALUES
     (1, '주차 가능',       'LIVING_ENVIRONMENT'),
@@ -46,40 +46,40 @@ VALUES
     (9, '버스정류장 인근',   'TRANSPORTATION'),
     (10, '조용한 분위기',   'ATMOSPHERE');
 
-UPDATE tag_seq SET next_val = 101 WHERE next_val <= 100;
+UPDATE tags_seq SET next_val = 101 WHERE next_val <= 100;
 
 -- ────────────────────────────────────────────────────────────────
 -- 중개사무소 대표 이미지 (상세 페이지 갤러리용)
--- agency_image 테이블은 Agency 엔터티의 @ElementCollection 이 자동으로 만든다.
+-- agency_images 테이블은 Agency 엔터티의 @ElementCollection 이 자동으로 만든다.
 -- 이 테이블에는 기본키가 없어서 INSERT IGNORE 로는 중복을 막을 수 없다.
 -- 그래서 "같은 자리(agency_id + sort_order)에 값이 없을 때만 넣기" 방식으로 작성했다.
 -- ────────────────────────────────────────────────────────────────
-INSERT INTO agency_image (agency_id, sort_order, image_url)
+INSERT INTO agency_images (agency_id, sort_order, image_url)
 SELECT 1, 0, 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1000&q=70'
-  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_image WHERE agency_id = 1 AND sort_order = 0);
-INSERT INTO agency_image (agency_id, sort_order, image_url)
+  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_images WHERE agency_id = 1 AND sort_order = 0);
+INSERT INTO agency_images (agency_id, sort_order, image_url)
 SELECT 1, 1, 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=70'
-  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_image WHERE agency_id = 1 AND sort_order = 1);
-INSERT INTO agency_image (agency_id, sort_order, image_url)
+  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_images WHERE agency_id = 1 AND sort_order = 1);
+INSERT INTO agency_images (agency_id, sort_order, image_url)
 SELECT 2, 0, 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=70'
-  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_image WHERE agency_id = 2 AND sort_order = 0);
-INSERT INTO agency_image (agency_id, sort_order, image_url)
+  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_images WHERE agency_id = 2 AND sort_order = 0);
+INSERT INTO agency_images (agency_id, sort_order, image_url)
 SELECT 3, 0, 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1000&q=70'
-  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_image WHERE agency_id = 3 AND sort_order = 0);
-INSERT INTO agency_image (agency_id, sort_order, image_url)
+  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_images WHERE agency_id = 3 AND sort_order = 0);
+INSERT INTO agency_images (agency_id, sort_order, image_url)
 SELECT 4, 0, 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1000&q=70'
-  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_image WHERE agency_id = 4 AND sort_order = 0);
+  FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM agency_images WHERE agency_id = 4 AND sort_order = 0);
 
 
 -- ────────────────────────────────────────────────────────────────
--- 매물(property) 예시 데이터
+-- 매물(properties) 예시 데이터
 -- 중개사무소 상세 페이지의 "담당 매물" 영역을 확인하기 위한 최소한의 데이터다.
--- property 테이블은 다른 팀원이 만든 것이라, 그쪽 예시 데이터와 겹치지 않도록 1~4번만 사용한다.
+-- properties 테이블은 다른 팀원이 만든 것이라, 그쪽 예시 데이터와 겹치지 않도록 1~4번만 사용한다.
 -- 금액 단위는 만원이다. (49000 = 4억 9,000만원)
 -- created_at 을 NOW() 로 넣어서 "오늘 신규" 건수에도 잡히게 했다.
 -- ────────────────────────────────────────────────────────────────
 -- visible(공개 여부)은 나중에 추가된 컬럼이며 NOT NULL 이라 값을 꼭 넣어야 한다. b'1' = 공개
-INSERT IGNORE INTO property
+INSERT IGNORE INTO properties
     (property_id, agency_id, neighborhood_id, name, type, deal_type, address, area, floor, room_count, bathroom_count,
      price, deposit, monthly_deposit, monthly_rent, maintenance_fee, status, visible, ai_price, created_at)
 VALUES
@@ -89,7 +89,15 @@ VALUES
     (4, 4, NULL, '역삼 스카이 45㎡',   'ONE_TWO_ROOM', 'MONTHLY', '서울 강남구 역삼동 736', 45, 3, 1, 1, NULL, NULL, 1000, 60, 7, 'ACTIVE', b'1', NULL, NOW());
 
 -- visible 컬럼이 나중에 추가되면서 기존 예시 매물은 0(비공개)으로 채워졌으므로 공개로 되돌린다.
-UPDATE property SET visible = b'1' WHERE property_id <= 4 AND visible = b'0';
+UPDATE properties SET visible = b'1' WHERE property_id <= 4 AND visible = b'0';
 
--- agency_seq 와 같은 이유로 property_seq 도 예시 데이터보다 큰 값으로 올려 둔다.
-UPDATE property_seq SET next_val = 101 WHERE next_val <= 100;
+-- 지도 검색의 핀 좌표.
+-- 좌표가 비어 있으면 지도에 핀이 찍히지 않아서, 예시 매물만이라도 값을 채워 둔다.
+-- (주소 -> 좌표 변환은 아직 매물 등록에 붙어 있지 않다. 그 처리가 생기면 이 UPDATE 는 지워도 된다)
+UPDATE properties SET latitude = 37.5052, longitude = 127.0110 WHERE property_id = 1 AND latitude IS NULL;
+UPDATE properties SET latitude = 37.5133, longitude = 127.0110 WHERE property_id = 2 AND latitude IS NULL;
+UPDATE properties SET latitude = 37.4923, longitude = 127.0078 WHERE property_id = 3 AND latitude IS NULL;
+UPDATE properties SET latitude = 37.5006, longitude = 127.0364 WHERE property_id = 4 AND latitude IS NULL;
+
+-- agencies_seq 와 같은 이유로 properties_seq 도 예시 데이터보다 큰 값으로 올려 둔다.
+UPDATE properties_seq SET next_val = 101 WHERE next_val <= 100;

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 // 중개사무소에 대한 이용자 한줄 평가 1건을 의미하는 엔터티 클래스
 // 상담 요청을 보낸 적이 있는 회원만 작성할 수 있다 (확인은 AgencyReviewService 에서 한다).
 @Getter @Setter @ToString @Entity
-@Table(name = "agency_review")
+@Table(name = "agency_reviews")
 public class AgencyReview {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

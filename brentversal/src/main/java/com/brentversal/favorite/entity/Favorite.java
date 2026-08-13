@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Getter @Setter @Entity
 @Table(
-        name = "favorite",
+        name = "favorites",
         // 같은 회원이 같은 매물을 두 번 찜할 수 없도록 DB 레벨에서 막는다 (토글 로직이 꼬여도 안전망 역할)
         uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "property_id"})
 )

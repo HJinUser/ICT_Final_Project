@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getHomeData } from "../api/homeApi";
+import { getDashboard } from "../api/myAgencyApi";
 import { getNotices } from "../api/noticeApi";
 import type { HomeData, PriceLevel } from "../types/Home";
+import type { MyAgencyDashboard } from "../types/MyAgency";
 import type { Notice } from "../types/Notice";
+import type { User } from "../types/User";
 import type { NavItem } from "../types/Navigation";
 import { navigateOrNotice } from "../utils/navigateOrNotice";
 import "../styles/HomePage.css";
@@ -18,7 +21,7 @@ const CTA_IMAGE = 'https://images.unsplash.com/photo-1449844908441-8829872d2607?
 // 페이지가 만들어지면 types/Navigation.ts와 같은 방식으로 true로 바꾸면 된다.
 const SHORTCUTS: (NavItem & { desc: string; image: string })[] = [
     {
-        label: '지도 검색', path: '/map', ready: false,
+        label: '지도 검색', path: '/map', ready: true,
         desc: '가격대별로 색이 다른 마커로 시세 분포를 한눈에',
         image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=70',
     },
@@ -52,10 +55,14 @@ const LEVEL_CLASS: Record<PriceLevel, string> = {
     HIGH: 'high',
 };
 
-const MAP_ITEM: NavItem = { label: '지도 검색', path: '/map', ready: false };
+const MAP_ITEM: NavItem = { label: '지도 검색', path: '/map', ready: true };
 const NEIGHBORHOOD_ITEM: NavItem = { label: '동네 탐색', path: '/neighborhood', ready: false };
 
-function App() {
+interface Props {
+    user: User | null;
+}
+
+function App({ user }: Props) {
     const navigate = useNavigate();
 
     const [data, setData] = useState<HomeData | null>(null);
@@ -64,6 +71,9 @@ function App() {
 
     // 공지사항. 비회원도 볼 수 있어서 로그인 여부와 상관없이 불러온다.
     const [notices, setNotices] = useState<Notice[]>([]);
+
+    // 화면정의서 2-2 : 중개인은 메인 상단에서 자기 매물 현황을 먼저 본다.
+    const [dashboard, setDashboard] = useState<MyAgencyDashboard | null>(null);
 
     useEffect(() => {
         getHomeData()
@@ -79,9 +89,27 @@ function App() {
             .catch((err) => console.error('공지사항을 불러오지 못했습니다.', err));
     }, []);
 
+    // 중개인 대시보드. 사무소가 아직 없는 중개인은 조회에 실패하므로 조용히 비워 둔다.
+    useEffect(() => {
+        if (user?.role !== 'BROKER') {
+            setDashboard(null);
+            return;
+        }
+
+        getDashboard()
+            .then(setDashboard)
+            .catch(() => setDashboard(null));
+    }, [user]);
+
     const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        // 지도 검색 페이지가 생기면 navigate(`/map?keyword=${keyword}`)로 바꾼다.
+
+        // 입력한 지역명을 지도 검색의 지역 필터로 넘긴다
+        if (keyword.trim()) {
+            navigate(`/map?keyword=${encodeURIComponent(keyword.trim())}`);
+            return;
+        }
+
         navigateOrNotice(MAP_ITEM, navigate);
     };
 
@@ -143,6 +171,48 @@ function App() {
                     </button>
                 </div>
             </section>
+
+            {/* ── 중개인 대시보드 (화면정의서 2-2) ──────────────────
+                중개인에게는 매물을 "찾는" 화면보다 자기 매물 현황이 먼저 필요하다.
+                그래서 히어로 바로 아래, 바로가기보다 위에 둔다. */}
+            {dashboard && (
+                <section className="home-sec" style={{ paddingTop: 48, paddingBottom: 0 }}>
+                    <div className="rv-wrap">
+                        <div className="home-shead">
+                            <div>
+                                <h2>{user?.name} 공인중개사님, 오늘 매물 현황입니다</h2>
+                                <p>등록한 매물의 상태를 한눈에 확인하세요.</p>
+                            </div>
+                            <button className="outline-btn" onClick={() => navigate('/broker/mypage')}>
+                                매물 관리로 이동 →
+                            </button>
+                        </div>
+
+                        <div className="metric-grid">
+                            <div className="metric">
+                                <span className="label">등록 매물 수</span>
+                                <strong>{dashboard.totalCount}</strong>
+                                <span className="delta">지금까지 올린 전체</span>
+                            </div>
+                            <div className="metric">
+                                <span className="label">승인 대기</span>
+                                <strong>{dashboard.pendingCount}</strong>
+                                <span className="delta">관리자 확인 후 노출</span>
+                            </div>
+                            <div className="metric">
+                                <span className="label">노출 중인 매물</span>
+                                <strong>{dashboard.activeCount}</strong>
+                                <span className="delta">지도·검색에 보이는 중</span>
+                            </div>
+                            <div className="metric">
+                                <span className="label">거래 완료</span>
+                                <strong>{dashboard.completedCount}</strong>
+                                <span className="delta">거래 진행 중 {dashboard.inProgressCount}건</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* ── 01 바로가기 ────────────────────────────────── */}
             <section className="home-sec">

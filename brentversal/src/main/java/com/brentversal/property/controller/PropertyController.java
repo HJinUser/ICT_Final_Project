@@ -3,6 +3,8 @@ package com.brentversal.property.controller;
 import com.brentversal.favorite.service.FavoriteService;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.dto.PropertyResponseDto;
+import com.brentversal.property.dto.PropertySearchCondition;
+import com.brentversal.property.dto.PropertySearchDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.service.PropertyService;
 import jakarta.validation.Valid;
@@ -73,6 +75,20 @@ public class PropertyController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "해당 매물을 찾을 수 없습니다."));
         }
+    }
+
+    // 지도 검색 (왼쪽 필터 + 가운데 지도 + 오른쪽 목록이 함께 쓰는 조회)
+    // GET /property/search?region=서초구&dealType=JEONSE&minPrice=0&maxPrice=50000&sort=PRICE_ASC
+    //
+    // 비회원도 쓸 수 있는 화면이라 로그인을 요구하지 않는다(GET /property/** 는 permitAll).
+    // 다만 중개인이 "내 매물"만 볼 때는 누구인지 알아야 해서, 로그인했으면 이메일을 함께 넘긴다.
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> search(PropertySearchCondition condition, Principal principal) {
+        String email = (principal == null) ? null : principal.getName();
+
+        List<PropertySearchDto> found = propertyService.search(condition, email);
+
+        return ResponseEntity.ok(Map.of("content", found, "totalCount", found.size()));
     }
 
     // 매물 비교 (쉼표로 구분된 id들을 받아서 여러 건 조회)

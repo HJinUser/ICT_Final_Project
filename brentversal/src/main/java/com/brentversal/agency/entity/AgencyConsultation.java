@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 // 사용자가 중개사무소에 보낸 상담 요청 1건을 의미하는 엔터티 클래스
 @Getter @Setter @ToString @Entity
-@Table(name = "agency_consultation")
+@Table(name = "agency_consultations")
 public class AgencyConsultation {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

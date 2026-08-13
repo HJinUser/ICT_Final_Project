@@ -1,0 +1,104 @@
+/*
+  지도 검색 화면에서만 필요한 손질.
+
+  레이아웃(.map-shell / .filter-panel / .map-canvas / .list-panel)과 표식(.marker)은
+  프로토타입 기준인 assets/common.css 에 이미 있으므로 여기서 다시 정의하지 않는다.
+  공용 파일은 팀원들이 함께 쓰기 때문에, 이 화면에만 해당하는 것만 여기 둔다.
+*/
+
+/* 프로토타입의 .marker 는 가짜 지도 위에 좌표(left/top)로 직접 놓는 전제라
+   position:absolute + translate(-50%,-50%) 가 걸려 있다.
+   카카오맵에서는 CustomOverlay 가 위치를 잡아 주므로 그 두 가지를 해제한다.
+   (해제하지 않으면 표식이 실제 위치에서 반 칸씩 밀린다) */
+.map-canvas .marker {
+    position: static;
+    transform: none;
+}
+
+.map-canvas .marker:hover,
+.map-canvas .marker.on {
+    transform: translateY(-2px);
+}
+
+/* 기획서 : 저평가된(시세보다 싸게 나온) 매물은 다른 색으로 강조한다.
+   채운 배경으로 두어 목록의 "시세보다 N 낮음" 배지와 짝이 되게 했다. */
+.map-canvas .marker.deal {
+    background: var(--v);
+    color: #fff;
+    border-color: var(--v);
+}
+
+/* 화면정의서 3-3 : 중개인이 등록한 매물 핀은 다른 핀과 시각적으로 구분한다.
+   내 매물 표시가 저평가 표시보다 우선한다(아래에 두어 색을 덮어쓴다). */
+.map-canvas .marker.mine {
+    background: #fff;
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.map-canvas .marker.mine:hover,
+.map-canvas .marker.mine.on {
+    background: var(--green);
+    color: #fff;
+}
+
+/* 지도를 축소했을 때 나오는 묶음 표식 (지역 이름 + 매물 개수).
+   개별 매물 표식보다 조금 크고, 개수를 원 안에 넣어 구분한다. */
+.map-canvas .marker.cluster {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 8px 7px 12px;
+    background: #fff;
+    border-color: var(--v);
+}
+
+.map-canvas .marker.cluster .cluster-name {
+    font: 600 12px/1 'Pretendard Variable', sans-serif;
+    color: var(--ink-1);
+}
+
+.map-canvas .marker.cluster .cluster-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 100px;
+    background: var(--v);
+    color: #fff;
+    font: 600 11px/1 'IBM Plex Mono', monospace;
+}
+
+.map-canvas .marker.cluster:hover {
+    background: var(--v-pale);
+}
+
+/* 지도 위에 겹쳐 보여 주는 안내 문구 */
+.map-hint {
+    position: absolute;
+    left: 14px;
+    top: 12px;
+    margin: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 4px 14px rgba(17, 17, 20, .12);
+    font-size: 12px;
+    color: var(--ink-2);
+}
+
+.map-hint.bottom {
+    top: auto;
+    bottom: 12px;
+}
+
+/* 목록이 길어지면 오른쪽 패널 안에서만 스크롤되게 한다.
+   화면 전체가 스크롤되면 지도와 필터가 같이 밀려 올라간다. */
+.list-panel {
+    overflow-y: auto;
+}
+
+.filter-panel {
+    overflow-y: auto;
+}

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter @Setter @ToString @Entity
-@Table(name = "property")
+@Table(name = "properties")
 public class Property {
 
     @Id
@@ -145,7 +145,7 @@ public class Property {
 
     @ManyToMany
     @JoinTable(
-            name = "property_tag",
+            name = "property_tags",
             joinColumns = @JoinColumn(name = "property_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
