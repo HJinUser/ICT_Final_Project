@@ -65,6 +65,7 @@ export interface AgencyProperty {
 // 목록용 AgencyResponse 에 등록번호·이미지·담당 매물·후기 수가 더해진 형태다.
 export interface AgencyDetail {
     id: number;
+    memberId: number;
     name: string;
     brokerName: string;
     address: string;
