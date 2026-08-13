@@ -50,16 +50,16 @@ public class MyPropertyCardDto {
             dto.setTypeLabel(toTypeLabel(bean.getType().name()));
         }
 
-        if(bean.getStatus() != null){
-            dto.setStatus(bean.getStatus().name());
-            dto.setStatusLabel(toStatusLabel(bean.getStatus().name()));
-        }
+        // 상태 라벨도 같은 규칙이라 AgencyPropertyDto 가 변환해 둔 값을 그대로 쓴다
+        dto.setStatus(price.getStatus());
+        dto.setStatusLabel(price.getStatusLabel());
 
         return dto;
     }
 
-    // 매물 유형·상태의 한글 이름.
-    // 열거형(PropertyType, PropertyStatus)은 다른 팀원이 만든 파일이라 건드리지 않고 여기서 바꾼다.
+    // 매물 유형의 한글 이름.
+    // 열거형(PropertyType)은 다른 팀원이 만든 파일이라 건드리지 않고 여기서 바꾼다.
+    // (거래 상태 라벨은 AgencyPropertyDto.toStatusLabel 하나만 쓴다)
     private static String toTypeLabel(String type){
         return switch (type) {
             case "ONE_TWO_ROOM" -> "원/투룸";
@@ -70,14 +70,4 @@ public class MyPropertyCardDto {
         };
     }
 
-    private static String toStatusLabel(String status){
-        return switch (status) {
-            case "PENDING" -> "승인 대기";
-            case "ACTIVE" -> "게시중";
-            case "IN_PROGRESS" -> "거래 진행중";
-            case "COMPLETED" -> "거래 완료";
-            case "CANCELLED" -> "등록 취소";
-            default -> status;
-        };
-    }
 }

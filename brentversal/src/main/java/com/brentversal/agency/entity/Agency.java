@@ -17,7 +17,7 @@ import java.util.List;
 
 // 중개사무소 1곳을 의미하는 엔터티 클래스
 @Getter @Setter @ToString @Entity
-@Table(name = "agency")
+@Table(name = "agencies")
 public class Agency {
     @Id // 프라이머리 키
     @GeneratedValue(strategy = GenerationType.AUTO) // 숫자 생성할때 AUTO로 생성하겠다.
@@ -54,9 +54,9 @@ public class Agency {
 
     // 사무소 외관·내부 대표 이미지 목록 (상세 페이지 갤러리용).
     // 이미지 몇 장을 순서대로 갖는 단순한 값 목록이라 별도 엔터티 대신 @ElementCollection 을 썼다.
-    // agency_image 테이블이 자동으로 만들어지고, sort_order 컬럼으로 순서가 유지된다.
+    // agency_images 테이블이 자동으로 만들어지고, sort_order 컬럼으로 순서가 유지된다.
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "agency_image", joinColumns = @JoinColumn(name = "agency_id"))
+    @CollectionTable(name = "agency_images", joinColumns = @JoinColumn(name = "agency_id"))
     @OrderColumn(name = "sort_order")
     @Column(name = "image_url", length = 500)
     @ToString.Exclude

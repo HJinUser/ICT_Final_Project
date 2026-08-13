@@ -78,9 +78,21 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
 
         List<Agency> agencyList = agencyRepository.search(searchKeyword, searchRegion);
 
-        // 엔터티 목록을 DTO 목록으로 변환해서 반환한다
+        // 엔터티 목록을 DTO 목록으로 변환해서 반환한다.
+        //
+        // 담당 매물 건수는 agency 테이블의 listing_count 컬럼이 아니라 property 테이블을 실제로 센다.
+        // 컬럼 값은 예시 데이터에 박혀 있을 뿐 실제 매물 수와 맞지 않아서,
+        // 목록에서 "24건"을 보고 들어갔는데 상세는 "2건"으로 나오는 일이 있었다.
+        // 상세(findDetailById)와 같은 조건(게시중 + 공개)으로 세어 두 화면의 숫자를 맞춘다.
         return agencyList.stream()
-                .map(AgencyResponseDto::of)
+                .map(agency -> {
+                    AgencyResponseDto dto = AgencyResponseDto.of(agency);
+
+                    dto.setListingCount((int) propertyRepository
+                            .countByAgencyIdAndStatusAndVisibleTrue(agency.getId(), PropertyStatus.ACTIVE));
+
+                    return dto;
+                })
                 .toList();
     }
 
@@ -108,14 +120,16 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
             dto.setTodayNewCount(propertyRepository
                     .countByAgencyIdAndStatusAndVisibleTrueAndCreatedAtAfter(id, PropertyStatus.ACTIVE, todayStart));
 
-            // 가장 최근에 올라온 매물 2건만 카드로 보여 준다
-            List<AgencyPropertyDto> recent = propertyRepository
+            // 담당 매물 전체. 상담 요청 폼에서 문의할 매물을 고를 때 쓴다.
+            List<AgencyPropertyDto> properties = propertyRepository
                     .findByAgencyIdAndStatusAndVisibleTrueOrderByCreatedAtDesc(id, PropertyStatus.ACTIVE)
                     .stream()
-                    .limit(RECENT_PROPERTY_LIMIT)
                     .map(AgencyPropertyDto::of)
                     .toList();
-            dto.setRecentProperties(recent);
+            dto.setProperties(properties);
+
+            // 그중 가장 최근 것 몇 건만 카드로 보여 준다
+            dto.setRecentProperties(properties.stream().limit(RECENT_PROPERTY_LIMIT).toList());
 
             dto.setReviewCount(agencyReviewRepository.countByAgencyId(id));
 

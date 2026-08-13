@@ -4,7 +4,10 @@ import com.brentversal.agency.service.MyAgencyService;
 import com.brentversal.property.constant.DealType;
 import com.brentversal.property.constant.PriceChangeStatus;
 import com.brentversal.property.constant.PropertyStatus;
+import com.brentversal.property.constant.PropertyType;
 import com.brentversal.property.dto.PropertyResponseDto;
+import com.brentversal.property.dto.PropertySearchCondition;
+import com.brentversal.property.dto.PropertySearchDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
 import com.brentversal.agency.entity.Agency;
@@ -13,11 +16,13 @@ import com.brentversal.property_image.service.PropertyImageService;
 import com.brentversal.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +41,18 @@ public class PropertyService {
     // 로그인한 사람의 중개사무소를 찾을 때 쓴다.
     // 매물의 주인을 정하거나, 내 매물이 맞는지 확인하는 데 필요하다.
     private final MyAgencyService myAgencyService;
+
+    // 방 개수 "3개 이상" 조건을 펼칠 때 쓰는 상한.
+    // Property.roomCount 의 @Max(6) 과 같은 값이라, 그쪽이 바뀌면 여기도 함께 바꾼다.
+    private static final int MAX_ROOM_COUNT = 6;
+
+    // 매물 주소 -> 좌표(지오코딩)는 다른 팀원이 맡기로 해서 여기서는 하지 않는다.
+    //
+    // 좌표(property.latitude/longitude)가 비어 있으면 지도 검색에 핀이 찍히지 않는다.
+    // 지금은 data.sql 의 예시 매물에만 좌표가 들어 있고, 새로 등록한 매물은 목록에만 보인다.
+    // 등록·수정 시 좌표를 채우는 처리가 붙으면 지도에도 함께 나온다.
+    // (common/geocoding/KakaoGeocodingService 를 그대로 쓰면 되고,
+    //  중개사무소 쪽 예시는 MyAgencyService.updateCoordinates 를 참고하면 된다)
 
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
@@ -229,5 +246,123 @@ public class PropertyService {
                 .stream()
                 .map(PropertyResponseDto::of)
                 .toList();
+    }
+
+    // 지도 검색. 왼쪽 필터 조건으로 매물을 찾아 지도 핀과 오른쪽 목록에 함께 쓴다.
+    //
+    // 사용자에게 노출되는 매물만 보여 준다(게시중 + 공개). 승인 대기나 비공개 매물은 나오지 않는다.
+    // email 은 "내 매물만 보기"를 눌렀을 때만 쓰이고, 비회원 검색에서는 null 이다.
+    @Transactional(readOnly = true)
+    public List<PropertySearchDto> search(PropertySearchCondition condition, String email) {
+        Long agencyId = null;
+
+        // 중개인이 "내 매물"을 골랐으면 그 사람의 사무소로 범위를 좁힌다.
+        // 사무소가 없으면 보여 줄 내 매물도 없으므로 빈 목록을 돌려준다.
+        if (condition.isMine()) {
+            if (email == null) return List.of();
+
+            try {
+                agencyId = myAgencyService.findMyAgency(email).getId();
+            } catch (IllegalArgumentException e) {
+                return List.of();
+            }
+        }
+
+        // 태그를 고르지 않았으면 조건에서 빼야 하는데, JPQL 의 in 절에는 빈 목록을 넣을 수 없다.
+        // 그래서 개수(tagCount)가 0이면 조건 자체를 건너뛰도록 하고, 목록에는 값 하나를 넣어 둔다.
+        List<Long> tagIds = (condition.getTagIds() == null || condition.getTagIds().isEmpty())
+                ? List.of(0L)
+                : condition.getTagIds();
+        long tagCount = (condition.getTagIds() == null) ? 0 : condition.getTagIds().size();
+
+        List<Property> found = propertyRepository.search(
+                PropertyStatus.ACTIVE,
+                blankToNull(condition.getRegion()),
+                blankToNull(condition.getDong()),
+                toType(condition.getType()),
+                toDealType(condition.getDealType()),
+                agencyId,
+                condition.getMinPrice(),
+                condition.getMaxPrice(),
+                condition.getMinArea(),
+                condition.getMaxArea(),
+                expandRoomCounts(condition.getRoomCounts()),
+                tagIds,
+                tagCount);
+
+        return found.stream()
+                .map(PropertySearchDto::of)
+                .sorted(comparatorOf(condition.getSort()))
+                .toList();
+    }
+
+    // 정렬은 DB 대신 여기서 한다.
+    // 대표 금액이 거래 유형마다 다른 칸에 들어 있어(매매/전세/월세) DTO 로 바꾼 뒤 비교하는 편이 단순하다.
+    // 값이 비어 있는 매물이 섞여도 오류가 나지 않게 null 은 항상 뒤로 보낸다.
+    private Comparator<PropertySearchDto> comparatorOf(String sort) {
+        String key = (sort == null || sort.isBlank()) ? "LATEST" : sort.toUpperCase();
+
+        return switch (key) {
+            case "PRICE_ASC" -> Comparator.comparing(PropertySearchDto::getPrice,
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+            case "PRICE_DESC" -> Comparator.comparing(PropertySearchDto::getPrice,
+                    Comparator.nullsLast(Comparator.reverseOrder()));
+            case "AREA_DESC" -> Comparator.comparing(PropertySearchDto::getArea,
+                    Comparator.nullsLast(Comparator.reverseOrder()));
+            case "AREA_ASC" -> Comparator.comparing(PropertySearchDto::getArea,
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+            // 최신 등록순. 리포지토리가 이미 그 순서로 가져오므로 순서를 그대로 둔다.
+            default -> Comparator.comparing(PropertySearchDto::getId, Comparator.reverseOrder());
+        };
+    }
+
+    // 빈 문자열로 들어온 조건은 "고르지 않음"으로 본다
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
+    }
+
+    // 방 개수 조건을 실제로 비교할 값 목록으로 펼친다.
+    //
+    // 화면의 버튼은 [1개(원룸)] [2개] [3개 이상] 세 가지이고 복수 선택이 된다.
+    // "3개 이상"은 3 으로 넘어오므로, 여기서 매물이 가질 수 있는 최대치까지 늘려 준다.
+    // (Property.roomCount 는 최대 6까지 허용된다)
+    private List<Integer> expandRoomCounts(List<Integer> roomCounts) {
+        if (roomCounts == null || roomCounts.isEmpty()) return null; // 조건 없음
+
+        List<Integer> expanded = new ArrayList<>();
+
+        for (Integer count : roomCounts) {
+            if (count == null) continue;
+
+            if (count >= 3) {
+                for (int i = count; i <= MAX_ROOM_COUNT; i++) expanded.add(i);
+            } else {
+                expanded.add(count);
+            }
+        }
+
+        return expanded.isEmpty() ? null : expanded;
+    }
+
+    // 매물 유형 문자열을 열거형으로 바꾼다. 안 골랐거나 잘못된 값이면 조건에서 제외한다.
+    private PropertyType toType(String type) {
+        if (type == null || type.isBlank() || "ALL".equalsIgnoreCase(type)) return null;
+
+        try {
+            return PropertyType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // 거래 유형 문자열을 열거형으로 바꾼다. 안 골랐거나 잘못된 값이면 조건에서 제외한다.
+    private DealType toDealType(String dealType) {
+        if (dealType == null || dealType.isBlank() || "ALL".equalsIgnoreCase(dealType)) return null;
+
+        try {
+            return DealType.valueOf(dealType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

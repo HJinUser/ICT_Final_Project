@@ -33,7 +33,12 @@ public class AgencyDetailDto {
     // 담당 매물
     private long listingCount ;   // 전체 건수
     private long todayNewCount ;  // 오늘 새로 올라온 건수
-    private List<AgencyPropertyDto> recentProperties = new ArrayList<>(); // 최근 등록 매물
+    private List<AgencyPropertyDto> recentProperties = new ArrayList<>(); // 카드로 보여 줄 최근 등록 매물 (2건)
+
+    // 이 사무소가 맡은 매물 전체.
+    // 상담 요청 폼의 "문의할 매물" 선택 목록에 쓴다.
+    // 카드용(recentProperties)만 있으면 최근 2건 외에는 문의 자체를 할 수 없어서 따로 담는다.
+    private List<AgencyPropertyDto> properties = new ArrayList<>();
 
     // 이용자 평가
     private long reviewCount ;

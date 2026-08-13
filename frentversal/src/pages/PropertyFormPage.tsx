@@ -124,28 +124,19 @@ function PropertyFormPage() {
         estimatedPrice: number;
         diffPercent: number;
     }
-    const [aiEstimate, setAiEstimate] = useState<AiEstimate | null>(null);
-    const [aiLoading, setAiLoading] = useState(false);
+    // 서버 조회가 되살아나면 다시 setState 로 채운다. 지금은 항상 비어 있어 안내 문구가 보인다.
+    const [aiEstimate] = useState<AiEstimate | null>(null);
+    const [aiLoading] = useState(false);
 
-    // step이 4(AI 시세 확인)가 되면 한 번만 서버에 조회 요청
-    useEffect(() => {
-        if (step !== 4 || aiEstimate) return;
-        const fetchEstimate = async () => {
-            setAiLoading(true);
-            try {
-                const response = await customAxios.get<AiEstimate>(`/ai/estimate`, {
-                    params: { address: property.address, area: property.area, dealType: property.dealType },
-                    timeout: 15000,
-                });
-                setAiEstimate(response.data);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setAiLoading(false);
-            }
-        };
-        fetchEstimate();
-    }, [step]);
+    // AI 시세 조회(/ai/estimate)는 아직 서버에 없다.
+    // 없는 주소로 요청하면 콘솔에 오류만 쌓이고 사용자에게는 아무 설명이 없으므로,
+    // 엔드포인트가 생기기 전까지는 요청을 보내지 않고 화면에 안내만 띄운다.
+    //
+    // 서버가 준비되면 이 자리에서 아래 요청을 되살리면 된다.
+    //   const response = await customAxios.get<AiEstimate>('/ai/estimate', {
+    //       params: { address: property.address, area: property.area, dealType: property.dealType },
+    //   });
+    //   setAiEstimate(response.data);
 
     // input, textarea, select 공통 변경 핸들러 (숫자 필드는 Number로 변환)
     const ControlChange = (
@@ -256,9 +247,11 @@ function PropertyFormPage() {
     };
 
     const handleDraftSave = async () => {
-        // TODO: /property/draft 임시저장 엔드포인트는 아직 백엔드에 없음. 나중에 필요해지면 추가.
-        await customAxios.post(`/property/draft`, property);
-        alert("임시 저장했습니다.");
+        // 임시 저장(/property/draft)은 아직 서버에 없다.
+        // 없는 주소로 보내면 오류만 나고 저장된 것처럼 알림이 뜨므로, 준비 중임을 알린다.
+        // 엔드포인트가 생기면 아래 한 줄을 되살리면 된다.
+        //   await customAxios.post('/property/draft', property);
+        alert("임시 저장은 준비 중입니다.");
     };
 
     return (
@@ -517,6 +510,11 @@ function PropertyFormPage() {
                         <Card className="p-3 mb-3 ai-band">
                             <h2>5. AI 시세 확인</h2>
                             {aiLoading && <Spinner animation="border" size="sm" />}
+                            {!aiEstimate && !aiLoading && (
+                                <p className="text-muted mb-0">
+                                    AI 시세 예측은 준비 중입니다. 이 단계는 건너뛰고 등록을 진행하셔도 됩니다.
+                                </p>
+                            )}
                             {aiEstimate && (
                                 <div>
                                     <strong>AI 예상 시세 {aiEstimate.estimatedPrice.toLocaleString()}만 원</strong>

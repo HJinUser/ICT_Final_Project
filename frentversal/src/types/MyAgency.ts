@@ -3,6 +3,7 @@
 
 // ── 대시보드 (MyAgencyDashboardDto) ──────────────────────────
 export interface MyAgencyDashboard {
+    totalCount: number;       // 등록 매물 수 (상태와 상관없이 전체)
     activeCount: number;      // 게시 중 매물
     inProgressCount: number;  // 거래 진행 중
     completedCount: number;   // 거래 완료
