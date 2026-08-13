@@ -108,6 +108,19 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
                 .compact();
     }
 
+    public static final String TYPE_BROKER_SIGNUP = "broker_signup";
+    private static final long BROKER_SIGNUP_EXPIRATION = 10 * 60 * 1000L;
+
+    public String createBrokerSignupToken(Member member){
+        return Jwts.builder()
+                .subject(member.getEmail())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + BROKER_SIGNUP_EXPIRATION))
+                .claim(TOKEN_TYPE_CLAIM, TYPE_BROKER_SIGNUP)
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
+
     // MemberController 클래스에서 인증 성공한 사용자를 위하여 로그인 증명서(토큰)를 발급하는 데 사용될 예정입니다.
     public String createToken(Member member){ // 매개 변수 : 토큰 안에 사용자 식별값 저장
         return Jwts.builder()

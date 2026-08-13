@@ -8,9 +8,10 @@ import type { User } from "../types/User";
 import type { PropertyDetail } from "../types/PropertyDetail";
 import { PROPERTY_STATUS_LABELS } from "../types/PropertyDetail";
 import type { PropertyResponse, PropertyStatusCode } from "../types/Property";
-import type { AgencyResponse } from "../types/Agency";
+import type { AgencyDetail } from "../types/Agency";
 import type { Review } from "../types/Review";
 import "../components/PropertyPage.css";
+import {DEAL_TYPE_LABELS} from "../utils/propertyPrice.ts";
 
 interface PropertyPageProps {
     user: User | null;
@@ -61,18 +62,18 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
             setLoading(true);
             try {
                 const propertyResponse = await customAxios.get<PropertyResponse>(`/property/${id}`);
-                const agencyResponse = await customAxios.get<AgencyResponse>(
+                const agencyResponse = await customAxios.get<AgencyDetail>(
                     `/agency/${propertyResponse.data.agencyId}`
                 );
-
+                console.log("agency 응답:", agencyResponse.data);
                 setProperty({
                     ...propertyResponse.data,
                     // 아래는 아직 백엔드가 안 챙겨주는 화면 전용 필드 (TODO: 도메인 완성되면 실제 값으로 교체)
-                    ownerId: 0, // TODO: agency 담당 팀원이 memberId 노출해주면 그 값으로 교체
+                    ownerId: agencyResponse.data.memberId, // Agency 응답의 memberId = 이 사무소를 운영하는 회원 id
                     agencyDetail: {
                         id: agencyResponse.data.id,
                         name: agencyResponse.data.name,
-                        registrationNo: "", // AgencyResponse엔 아직 없는 컬럼
+                        registrationNo: agencyResponse.data.registrationNo ?? "", // AgencyResponse엔 아직 없는 컬럼
                         address: agencyResponse.data.address,
                         phone: agencyResponse.data.phone ?? "",
                         agentName: agencyResponse.data.brokerName,
@@ -174,7 +175,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
     const role = user?.role; // undefined(비회원) | "USER" | "BROKER" | "ADMIN"
     const isOwner = user?.role === "BROKER" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
-
+    console.log("디버그:", { userId: user?.id, ownerId: property.ownerId, role: user?.role, isOwner });
     const aiPrice = getPrimaryAiPrice(property);
     const priceDiff = (aiPrice ?? 0) - getPrimaryPrice(property);
 
@@ -338,7 +339,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 <Col md={4}>
                     <Card className="p-3 mb-3">
                         <Badge bg="light" text="dark" className="mb-2 align-self-start">{PROPERTY_STATUS_LABELS[property.status]}</Badge>
-                        <div className="fs-4 fw-bold">{property.dealType} {formatPrice(property)}</div>
+                        <div className="fs-4 fw-bold">{DEAL_TYPE_LABELS[property.dealType]} {formatPrice(property)}</div>
                         <p className="text-muted">{property.address} · 관리비 {property.maintenanceFee}만 원</p>
                         <hr />
 
@@ -419,7 +420,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         </Link>
                     </Card>
 
-                    {(role === "USER" || role === "BROKER") && (
+                    {(role === "USER" || role === "BROKER") && !isOwner &&(
                         <Link
                             to={`/report/form?propertyId=${property.id}&returnTo=${encodeURIComponent(`/property/${property.id}`)}`}
                             className="btn btn-outline-danger w-100"

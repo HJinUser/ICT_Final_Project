@@ -57,7 +57,14 @@ public class SecurityConfig {
                 // 원래 상태 코드 대신 403 빈 응답으로 바뀌어 프론트에서 원인을 알 수 없게 된다.
                 "/error",
                 // S3용 파일경로
-                "/files/**"
+                "/files/**",
+                "/passwordless/status",
+                "/passwordless/login/start",
+                "/passwordless/login/result",
+                "/passwordless/login/cancel",
+                "/passwordless/register",
+                "/passwordless/register/confirm",
+                "/passwordless/withdrawal"
         };
 
         http

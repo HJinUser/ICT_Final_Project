@@ -62,11 +62,20 @@ function App() {
         try {
             // 두 가입 유형의 필드를 한 번에 보낸다. 서버(MemberService.insert)가 signupType을 보고
             // 필요한 값만 사용하므로, 안 쓰는 값(예: 일반 가입의 licenseNumber)은 그냥 무시된다.
-            await signup({
+            const result = await signup({
                 signupType, name, phone, email,
                 password, address,
                 licenseNumber, agencyName, agencyAddress, officePhone,
             });
+
+            if (signupType === 'BROKER' && result.passwordlessSignupToken) {
+                // 중개인은 비밀번호 없이 가입해서 패스워드리스 등록이 로그인의 유일한 방법이다.
+                // 가입 직후 바로 등록 화면으로 보내고, 본인 확인용 토큰과 이메일을 함께 넘긴다.
+                navigate('/member/passwordless', {
+                    state: { email, signupToken: result.passwordlessSignupToken },
+                });
+                return;
+            }
 
             alert('회원 가입이 완료되었습니다.');
             navigate('/member/login');

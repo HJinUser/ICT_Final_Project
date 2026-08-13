@@ -4,6 +4,7 @@ import SignupPage from './../pages/SignupPage';
 import LoginPage from './../pages/LoginPage';
 import HomePage from './../pages/HomePage';
 import PropertyFormPage from './../pages/PropertyFormPage';
+import PasswordlessRegisterPage from '../pages/PasswordlessRegisterPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
 import PropertyPreviewPage from "../pages/PropertyPreviewPage";
@@ -48,6 +49,7 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/" element={<HomePage user={user} />} />
 
       <Route path='/member/signup' element={<SignupPage />} />
+      <Route path='/member/passwordless' element={<PasswordlessRegisterPage />} />
       <Route path='/member/login' element={<LoginPage onLogin={handleLoginSuccess} />} />
       {/* 카카오 로그인 성공 후 백엔드가 돌려보내는 도착 지점 (기존 회원) */}
       <Route path='/oauth/callback' element={<OAuthCallbackPage onLogin={handleLoginSuccess} />} />

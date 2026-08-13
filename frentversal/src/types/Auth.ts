@@ -59,3 +59,31 @@ export const SOCIAL_BUTTONS: SocialButton[] = [
     { provider: 'naver', label: '네이버로 계속하기', className: 'naver' },
     { provider: 'google', label: 'Google로 계속하기', className: '' },
 ];
+
+// ── 패스워드리스 ──────────────────────────────────────────────
+
+// 등록(QR) 요청 응답
+export type PasswordlessRegisterInfo = {
+    qrDataUrl: string;
+    serverUrl: string;
+    registerKey: string;
+};
+
+// 로그인 1단계(인증 시작) 응답
+export type PasswordlessAuthStart = {
+    sessionId: string;
+    servicePassword: string;
+    term: number;
+};
+
+// 로그인 2단계(폴링) 응답
+export type PasswordlessLoginResult = {
+    status: "W" | "Y" | "N";
+    accessToken?: string;
+    refreshToken?: string;
+    id?: number;
+    name?: string;
+    email?: string;
+    role?: "USER" | "BROKER" | "ADMIN";
+    preferenceCompleted?: boolean;
+};
