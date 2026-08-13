@@ -52,8 +52,8 @@ function App({ user, handleLogout }: MenuItemsProps) {
    const userMenuItems = visibleFor(USER_MENU, viewerRole);
 
    useEffect(() => {
-      // 비로그인 상태에서는 알림을 조회하지 않는다 (서버도 로그인한 사람만 통과시킨다)
-      if (!user) {
+      // 비로그인 또는 중개인이 아닌 사용자는 알림을 조회하지 않는다.
+      if (!user || user.role !== "BROKER") {
          setNotifications([]);
          return;
       }
@@ -85,6 +85,7 @@ function App({ user, handleLogout }: MenuItemsProps) {
       if (!keyword.trim()) {
          return;
       }
+
       // 지도 검색이 keyword 를 지역 필터로 받는다
       navigate(`/map?keyword=${encodeURIComponent(keyword.trim())}`);
    };

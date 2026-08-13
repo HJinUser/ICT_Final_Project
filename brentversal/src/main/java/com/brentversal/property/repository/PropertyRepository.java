@@ -97,4 +97,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                           @Param("tagIds") List<Long> tagIds,
                           @Param("tagCount") long tagCount);
 
+    // 동네 탐색 카드에 표시할 공개·게시중 매물 건수
+    long countByNeighborhoodIdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
+
 }

@@ -33,6 +33,10 @@
 .report-card header time, .report-answer time { color: var(--ink-3); font-size: 11.5px; }
 .report-target { margin-top: 12px; color: var(--ink-3); font: 500 12px 'IBM Plex Mono', monospace; }
 .report-body { margin-top: 13px; color: var(--ink-2); line-height: 1.75; white-space: pre-wrap; }
+.report-public-note { margin-top: 14px; color: var(--ink-2); line-height: 1.7; }
+.report-selected-target { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding: 15px 17px; border-radius: var(--r-m); background: var(--bg-2); }
+.report-selected-target span { color: var(--ink-3); font-size: 12px; }
+.report-selected-target strong { color: var(--ink); }
 .report-answer { margin-top: 20px; padding: 17px 18px; border-radius: var(--r-m); background: var(--bg-2); }
 .report-answer.answered { background: #f2f7f4; }
 .report-answer strong { font-size: 12px; color: var(--ink-3); }

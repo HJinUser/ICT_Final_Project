@@ -38,11 +38,11 @@ export function visibleFor(items: NavItem[], role: ViewerRole): NavItem[] {
 }
 
 // ── 헤더 좌측 메뉴 ────────────────────────────────────────────
-// 지도 검색·동네 탐색·매물 확인·맞춤 추천은 아직 페이지가 없어서 ready: false다.
+// 매물 확인·맞춤 추천은 아직 페이지가 없어서 ready: false다.
 // 페이지가 만들어지면 ready만 true로 바꾸고 라우트를 등록하면 된다.
 export const HEADER_NAV: NavItem[] = [
     { label: '지도 검색', path: '/map', ready: true },
-    { label: '동네 탐색', path: '/neighborhood', ready: false },
+    { label: '동네 탐색', path: '/neighborhood', ready: true },
     { label: '매물 확인', path: '/listings', ready: false },
     { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
     // 중개사무소 목록·상세는 서버도 비회원까지 열어 둔 공개 화면이라 역할을 가리지 않고 보여 준다.

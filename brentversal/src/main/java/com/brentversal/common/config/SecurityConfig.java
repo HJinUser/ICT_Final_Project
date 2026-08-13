@@ -85,11 +85,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
+                        // 동네 탐색·상세는 공개하고, 숨김 전환은 관리자만 허용한다.
+                        .requestMatchers(HttpMethod.GET, "/neighborhoods", "/neighborhoods/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/neighborhoods/**").hasRole("ADMIN")
+                        // 실거래가 조회는 공개하고, 외부 API 수집 실행은 관리자만 허용한다.
+                        .requestMatchers(HttpMethod.GET, "/real-estate-transactions").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/real-estate-transactions/collect").hasRole("ADMIN")
                         // 공지 목록과 상세는 비회원도 조회할 수 있다.
                         .requestMatchers(HttpMethod.GET, "/notices", "/notices/**").permitAll()
                         // 공지 등록·수정·삭제는 관리자만 가능하다.
                         .requestMatchers("/notices", "/notices/**").hasRole("ADMIN")
                         // 일반 사용자와 중개인은 신고를 접수하고 자신의 신고 내역을 조회한다.
+                        .requestMatchers(HttpMethod.GET, "/reports/public").permitAll()
                         .requestMatchers(HttpMethod.POST, "/reports").hasAnyRole("USER", "BROKER")
                         .requestMatchers(HttpMethod.GET, "/reports/me").hasAnyRole("USER", "BROKER")
                         // 신고 목록·상세 조회와 처리 권한은 관리자에게만 있다.

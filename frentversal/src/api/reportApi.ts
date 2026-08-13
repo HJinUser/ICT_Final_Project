@@ -1,11 +1,17 @@
 import axiosInstance from './axiosInstance';
 import type {
     Report,
+    PublicReport,
     ReportCreatePayload,
     ReportProcessPayload,
     ReportStatus,
     ReportTargetType,
 } from '../types/Report';
+
+export async function getPublicReports(): Promise<PublicReport[]> {
+    const response = await axiosInstance.get<PublicReport[]>('/reports/public');
+    return response.data;
+}
 
 export async function createReport(payload: ReportCreatePayload): Promise<Report> {
     const response = await axiosInstance.post<Report>('/reports', payload);

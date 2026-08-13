@@ -34,6 +34,8 @@ import AdminBrokerPage from './../pages/AdminBrokerPage';
 import MyConsultationPage from './../pages/MyConsultationPage';
 import MyPage from './../pages/MyPage';
 import MapSearchPage from './../pages/MapSearchPage';
+import NeighborhoodPage from '../pages/NeighborhoodPage';
+import NeighborhoodDetailPage from '../pages/NeighborhoodDetailPage';
 import TermsPage from './../pages/TermsPage';
 
 
@@ -71,6 +73,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
 
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
+      <Route path="/neighborhood" element={<NeighborhoodPage user={user} />} />
+      <Route path="/neighborhood/:id" element={<NeighborhoodDetailPage />} />
 
       {/* 공지사항. 목록·상세는 누구나 볼 수 있고, 작성·수정은 화면에서 관리자만 열린다. */}
       <Route path="/notice" element={<NoticeListPage user={user} />} />
@@ -109,6 +113,10 @@ function App({ user, handleLoginSuccess }: AppProps) {
         이 라우트는 사용자가 주소를 직접 잘못 입력한 경우를 위한 것이다.
       */}
       <Route path="*" element={<NotFoundPage />} />
+      <Route path="/report/history" element={<MyReportPage />} />
+      <Route path="/report/me" element={<MyReportPage />} />
+      <Route path="/admin/reports" element={<ReportAdminListPage user={user} />} />
+      <Route path="/admin/reports/:id" element={<ReportAdminDetailPage user={user} />} />
     </Routes>
   );
 }
