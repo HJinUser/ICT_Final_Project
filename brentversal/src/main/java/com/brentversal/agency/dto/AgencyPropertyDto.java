@@ -22,6 +22,8 @@ public class AgencyPropertyDto {
     private String status ;      // 거래 상태 코드 (ACTIVE 등)
     private String statusLabel ; // 화면에 그대로 쓸 한글 상태
 
+    private String thumbnailUrl ; // 대표 사진. 없으면 null (화면은 빈 자리를 보여 준다)
+
     public static AgencyPropertyDto of(Property bean){
         AgencyPropertyDto dto = new AgencyPropertyDto();
 
@@ -30,6 +32,14 @@ public class AgencyPropertyDto {
         dto.setDealType(bean.getDealType() == null ? null : bean.getDealType().name());
         dto.setPriceLabel(toPriceLabel(bean));
         dto.setDong(toDong(bean.getAddress()));
+
+        // 대표 사진(isMain)이 있으면 그것을, 없으면 첫 장을 쓴다.
+        // 지도 검색 카드(PropertySearchDto), 내 중개사무소 카드(MyPropertyCardDto)와 같은 규칙이다.
+        bean.getImages().stream()
+                .filter(image -> Boolean.TRUE.equals(image.getIsMain()))
+                .findFirst()
+                .or(() -> bean.getImages().stream().findFirst())
+                .ifPresent(image -> dto.setThumbnailUrl(image.getUrl()));
 
         if(bean.getStatus() != null){
             dto.setStatus(bean.getStatus().name());
