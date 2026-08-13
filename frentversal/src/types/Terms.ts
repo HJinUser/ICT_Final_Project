@@ -16,6 +16,12 @@
 
 import type { SignupType } from './Auth';
 
+// 약관 묶음 전체의 버전. 약관 내용을 고칠 때 이 값을 올린다.
+// 가입할 때 이 값을 서버로 보내 members.terms_version 에 남기므로,
+// 나중에 약관이 바뀌면 "예전 버전에 동의한 회원"을 골라내 재동의를 받을 수 있다.
+export const TERMS_VERSION = 'v1.0';
+export const TERMS_EFFECTIVE_DATE = '2026-08-13';
+
 // 동의 항목을 구분하는 코드. 나중에 DB에 저장하게 되면 이 값이 그대로 키가 된다.
 export type AgreementCode =
     | 'service'      // 서비스 이용약관
@@ -58,8 +64,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'service',
         title: '서비스 이용약관',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['USER', 'BROKER'],
         requiredFor: ['USER', 'BROKER'],
         summary: '전세역전 서비스를 이용하기 위한 기본 약속입니다.',
@@ -164,8 +170,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'privacy',
         title: '개인정보 수집·이용 동의',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['USER', 'BROKER'],
         requiredFor: ['USER', 'BROKER'],
         summary: '가입에 필요한 최소한의 정보만 수집합니다.',
@@ -228,8 +234,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'age',
         title: '만 14세 이상입니다',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['USER', 'BROKER'],
         requiredFor: ['USER', 'BROKER'],
         summary: '만 14세 미만은 법정대리인 동의 없이 가입할 수 없습니다.',
@@ -247,8 +253,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'location',
         title: '위치기반서비스 이용약관',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['USER', 'BROKER'],
         requiredFor: ['USER', 'BROKER'],
         summary: '지도 검색과 "내 주변 매물" 기능에 필요합니다.',
@@ -303,8 +309,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'thirdParty',
         title: '개인정보 제3자 제공 동의',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['USER'],
         // 선택 항목이다. 상담을 신청하지 않는 회원까지 연락처 제공에 동의시킬 이유가 없다.
         requiredFor: [],
@@ -339,8 +345,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'agencyPublic',
         title: '중개사무소 정보 공개 동의',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['BROKER'],
         // 사무소 정보가 공개되지 않으면 중개인 회원으로서 서비스가 성립하지 않으므로 필수다.
         requiredFor: ['BROKER'],
@@ -385,8 +391,8 @@ export const TERMS_DOCS: TermsDoc[] = [
     {
         code: 'marketing',
         title: '마케팅 정보 수신 동의',
-        version: 'v1.0',
-        effectiveDate: '2026-08-13',
+        version: TERMS_VERSION,
+        effectiveDate: TERMS_EFFECTIVE_DATE,
         showFor: ['USER', 'BROKER'],
         requiredFor: [],
         summary: '동의하지 않으셔도 가입할 수 있습니다.',

@@ -78,6 +78,11 @@ public class MemberController {
                     "id", member.getId(),
                     "name", member.getName(), "email", member.getEmail(),
                     "role", member.getRole().toString(),
+                    // 회원가입 때 적은 주소와 거기서 뽑아 둔 구.
+                    // 지도 검색을 열 때 이 지역 매물을 먼저 보여 주고, 지도 화면도 이 주소로 옮긴다.
+                    // 주소를 입력하지 않은 회원은 값이 없으므로 빈 문자열로 내보낸다(Map.of 는 null 을 못 담는다).
+                    "address", member.getAddress() == null ? "" : member.getAddress(),
+                    "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
                     // 프론트가 일반 사용자(USER) + 미완료일 때만 취향 초기 설정 화면으로 보내는 데 쓴다.
                     "preferenceCompleted", member.isPreferenceCompleted())) ;
         }

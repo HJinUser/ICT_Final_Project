@@ -13,6 +13,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 // 회원 1명을 의미하는 엔터티 클래스
 @Getter
@@ -100,6 +101,28 @@ public class Member {
     // 중개인/관리자는 애초에 이 화면으로 보내지 않으므로 항상 의미 없는 기본값(false)으로 둔다.
     @Column(name = "preference_completed", nullable = false)
     private boolean preferenceCompleted = false ;
+
+    // 약관 동의 기록.
+    //
+    // 필수 항목(이용약관·개인정보 수집·이용·만 14세·위치기반 등)은 동의하지 않으면
+    // 애초에 가입이 되지 않으므로 항목마다 컬럼을 두지 않는다.
+    // "언제 어느 버전에 동의했는가"만 남겨 두면, 나중에 약관이 바뀌었을 때
+    // 예전 버전에 동의한 회원을 골라내 재동의를 받을 수 있다.
+    // 사람마다 값이 갈리는 선택 항목만 따로 컬럼으로 갖는다.
+    @Column(name = "terms_version", length = 10)
+    private String termsVersion ;
+
+    @Column(name = "agreed_at")
+    private LocalDateTime agreedAt ;
+
+    // [선택] 마케팅 정보 수신 동의. 광고성 메일·문자를 보낼 대상을 고를 때 쓴다.
+    @Column(name = "agreed_marketing", nullable = false)
+    private boolean agreedMarketing = false ;
+
+    // [선택] 개인정보 제3자 제공 동의. 상담을 신청할 때 중개인에게 연락처를 넘겨도 되는지다.
+    // 중개인 가입에는 해당 항목이 없으므로 항상 기본값(false)으로 둔다.
+    @Column(name = "agreed_third_party", nullable = false)
+    private boolean agreedThirdParty = false ;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(nullable = false)

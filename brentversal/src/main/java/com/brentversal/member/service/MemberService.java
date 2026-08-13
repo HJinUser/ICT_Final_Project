@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -58,6 +59,7 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         member.setSigungu(dto.getSigungu());
         member.setDong(dto.getDong());
         member.setRegdate(LocalDate.now());
+        applyAgreements(member, dto);
 
         // 클라이언트가 role을 직접 정하게 하면 "ADMIN"을 보내는 식의 권한 상승이 가능해진다.
         // 그래서 role 자체는 안 받고, signupType이라는 제한된 값만 보고 서버가 role을 정한다.
@@ -120,6 +122,25 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         if (isBroker) {
             saveBrokerProfile(member, dto);
         }
+    }
+
+    // 약관 동의 내용을 member에 채운다.
+    //
+    // 필수 항목을 실제로 하나하나 확인하지는 않는다. 어떤 항목이 필수인지는 가입 유형마다
+    // 다르고 그 목록을 화면(types/Terms.ts)이 갖고 있어서, 서버가 같은 목록을 또 들고 있으면
+    // 약관이 바뀔 때마다 양쪽을 맞춰야 하기 때문이다.
+    // 대신 termsVersion이 비어 있으면 "약관 화면을 거치지 않은 요청"으로 보고 막는다.
+    // (동의 화면을 건너뛴 요청이 그대로 회원으로 저장되는 것만은 막자는 최소한의 방어다)
+    private void applyAgreements(Member member, SignupDto dto){
+        String termsVersion = dto.getTermsVersion();
+        if (termsVersion == null || termsVersion.isBlank()) {
+            throw new IllegalArgumentException("약관에 동의해야 회원가입을 진행할 수 있습니다.");
+        }
+
+        member.setTermsVersion(termsVersion);
+        member.setAgreedAt(LocalDateTime.now());
+        member.setAgreedMarketing(dto.isAgreedMarketing());
+        member.setAgreedThirdParty(dto.isAgreedThirdParty());
     }
 
     // 소셜 가입 토큰(OAuth2LoginSuccessHandler가 발급)을 검증하고,

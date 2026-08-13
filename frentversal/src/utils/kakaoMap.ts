@@ -43,7 +43,9 @@ export function loadKakaoSdk(): Promise<void> {
 
         // autoload=false : 스크립트를 받자마자 지도를 만들지 않고,
         //                  화면에서 kakao.maps.load() 로 직접 만들기 위한 설정이다.
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false`;
+        // libraries=services : 주소를 좌표로 바꾸는 기능(Geocoder)을 함께 받는다.
+        //                      지도 검색을 열 때 회원이 사는 지역으로 화면을 맞추는 데 쓴다.
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false&libraries=services`;
         script.async = true;
 
         script.onload = () => resolve();
@@ -57,4 +59,64 @@ export function loadKakaoSdk(): Promise<void> {
     });
 
     return sdkLoadingPromise;
+}
+
+// 서울 25개 구의 경계선 좌표. 지도에서 "이 구가 여기다" 하고 강조 표시할 때 쓴다.
+//
+// 출처 : southkorea/seoul-maps (2015년 시군구 경계, 공개 데이터를 내려받아 이름·좌표만 추려 두었다).
+// 카카오 지도 SDK 는 행정구역 경계를 기본으로 주지 않아서 별도 데이터가 필요했다.
+// 좌표는 소수 5자리(약 1m 정밀도)로 반올림해 용량을 줄였다 — 경계 강조용이라 이 정도면 충분하다.
+import districtBoundaries from '../assets/seoulDistricts.json';
+
+interface DistrictBoundary {
+    name: string;
+    coordinates: number[][][]; // Polygon 좌표 (바깥 테두리 + 구멍이 있으면 안쪽 테두리)
+}
+
+// 이름으로 구 경계를 찾는다. "서초구"처럼 구까지만 와도, "서울시 서초구"처럼 앞에 시가 붙어도 찾는다.
+export function findDistrictBoundary(name: string): DistrictBoundary | null {
+    if (!name) return null;
+
+    const found = (districtBoundaries as DistrictBoundary[])
+        .find((district) => name.includes(district.name));
+
+    return found ?? null;
+}
+
+// 주소 문자열을 지도 좌표로 바꾼다.
+//
+// 회원이 가입할 때 적은 주소로 지도 시작 위치를 맞추는 데 쓴다.
+// 주소로 못 찾으면 장소 이름으로 한 번 더 찾아본다("신촌"처럼 주소가 아닌 값이 들어 있을 수 있다).
+// 둘 다 실패하면 null 을 돌려주고, 화면은 기본 위치를 그대로 쓴다.
+export function findCenter(address: string): Promise<{ latitude: number; longitude: number } | null> {
+    return new Promise((resolve) => {
+        const kakao = window.kakao;
+
+        if (!address?.trim() || !kakao?.maps?.services) {
+            resolve(null);
+            return;
+        }
+
+        const toResult = (item: { x: string; y: string }) => ({
+            latitude: Number(item.y),
+            longitude: Number(item.x),
+        });
+
+        new kakao.maps.services.Geocoder().addressSearch(address, (result: any[], status: string) => {
+            if (status === kakao.maps.services.Status.OK && result.length > 0) {
+                resolve(toResult(result[0]));
+                return;
+            }
+
+            // 주소로 못 찾으면 장소 검색으로 한 번 더
+            new kakao.maps.services.Places().keywordSearch(address, (places: any[], placeStatus: string) => {
+                if (placeStatus === kakao.maps.services.Status.OK && places.length > 0) {
+                    resolve(toResult(places[0]));
+                    return;
+                }
+
+                resolve(null);
+            });
+        });
+    });
 }
