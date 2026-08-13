@@ -32,6 +32,7 @@ import AdminPropertyPage from './../pages/AdminPropertyPage';
 import AdminBrokerPage from './../pages/AdminBrokerPage';
 import MyConsultationPage from './../pages/MyConsultationPage';
 import MyPage from './../pages/MyPage';
+import MapSearchPage from './../pages/MapSearchPage';
 
 
 interface AppProps {
@@ -42,7 +43,7 @@ interface AppProps {
 function App({ user, handleLoginSuccess }: AppProps) {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<HomePage user={user} />} />
 
       <Route path='/member/signup' element={<SignupPage />} />
       <Route path='/member/login' element={<LoginPage onLogin={handleLoginSuccess} />} />
@@ -58,6 +59,9 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/property/:id" element={<PropertyPage user={user} />} />
       <Route path="/property/compare" element={<ComparePage />} />
       <Route path="/favorites" element={<FavoritesPage />} />
+      {/* 지도 검색. 비회원도 볼 수 있고, 중개인에게는 "내 매물" 탭이 더 보인다. */}
+      <Route path="/map" element={<MapSearchPage user={user} />} />
+
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
 

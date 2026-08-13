@@ -39,7 +39,10 @@ public class AgencyResponseDto {
         dto.setLongitude(bean.getLongitude());
         dto.setVerified(bean.isVerified());
         dto.setRatingAvg(bean.getRatingAvg());
-        dto.setListingCount(bean.getListingCount());
+        // 담당 매물 건수는 여기서 채우지 않는다.
+        // agency 테이블의 listing_count 컬럼은 실제 매물 수와 맞지 않아서,
+        // AgencyService.search 가 property 테이블을 세어 덮어쓴다.
+        dto.setListingCount(0);
 
         // status 가 null 인 옛 데이터가 있을 수 있으므로 방어적으로 확인한다
         if(bean.getStatus() != null){

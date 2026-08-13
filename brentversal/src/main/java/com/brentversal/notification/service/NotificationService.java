@@ -70,6 +70,10 @@ public class NotificationService {
     // 종류별로 너무 많이 쌓이면 드롭다운이 길어지므로 개수를 끊는다
     private static final int ITEM_LIMIT = 5 ;
 
+    // 화면정의서 1-2 : 헤더 알림은 최근 5개까지만 보여 준다.
+    // 종류별로 자른 뒤에도 여러 종류가 합쳐지면 5개를 넘을 수 있어, 마지막에 한 번 더 끊는다.
+    private static final int TOTAL_LIMIT = 5 ;
+
     @Transactional(readOnly = true)
     public List<NotificationDto> getNotifications(String email){
         List<NotificationDto> notifications = new ArrayList<>();
@@ -94,7 +98,8 @@ public class NotificationService {
         notifications.sort(Comparator.comparing(NotificationDto::getCreatedAt,
                 Comparator.nullsLast(Comparator.reverseOrder())));
 
-        return notifications;
+        // 최신 5개만 남긴다
+        return notifications.stream().limit(TOTAL_LIMIT).toList();
     }
 
     // 내가 보낸 상담에 답변이 도착했지만 아직 확인하지 않은 것.
