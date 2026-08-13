@@ -17,6 +17,8 @@ public class AgencyDetailDto {
     private String name ;
     private String brokerName ;
     private String address ;
+    private String sigungu ; // 주소에서 뽑아 둔 구 (지역 검색·지도 묶기에 쓴다)
+    private String dong ;    // 주소에서 뽑아 둔 동
     private String phone ;
     private String hours ;
     private String registrationNo ; // 등록번호
@@ -52,6 +54,8 @@ public class AgencyDetailDto {
         dto.setName(bean.getName());
         dto.setBrokerName(bean.getBrokerName());
         dto.setAddress(bean.getAddress());
+        dto.setSigungu(bean.getSigungu());
+        dto.setDong(bean.getDong());
         dto.setPhone(bean.getPhone());
         dto.setHours(bean.getHours());
         dto.setRegistrationNo(bean.getRegistrationNo());

@@ -64,8 +64,14 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     // 매물이 가진 태그 중 고른 태그와 겹치는 개수를 세어, 고른 개수와 같은지 확인한다.
     @Query("select p from Property p " +
            " where p.status = :status and p.visible = true " +
-           "   and (:region is null or p.address like concat('%', :region, '%')) " +
-           "   and (:dong is null or p.address like concat('%', :dong, '%')) " +
+           // 구·동은 주소 검색이 채워 준 컬럼으로 정확히 맞춘다.
+           // 컬럼이 비어 있는 예전 자료는 주소 문자열에서 찾아 보는 방식으로 함께 걸러 준다.
+           "   and (:region is null " +
+           "        or p.sigungu = :region " +
+           "        or (p.sigungu is null and p.address like concat('%', :region, '%'))) " +
+           "   and (:dong is null " +
+           "        or p.dong = :dong " +
+           "        or (p.dong is null and p.address like concat('%', :dong, '%'))) " +
            "   and (:type is null or p.type = :type) " +
            "   and (:dealType is null or p.dealType = :dealType) " +
            "   and (:agencyId is null or p.agency.id = :agencyId) " +

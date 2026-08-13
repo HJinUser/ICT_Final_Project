@@ -228,6 +228,11 @@ public class MyAgencyService {
         if(dto.getBrokerName() != null && !dto.getBrokerName().isBlank()) agency.setBrokerName(dto.getBrokerName().trim());
         if(dto.getAddress() != null && !dto.getAddress().isBlank()) agency.setAddress(dto.getAddress().trim());
 
+        // 주소를 검색해서 다시 고른 경우에만 지역 조각이 함께 온다.
+        // 전화번호만 고치고 저장한 경우에는 값이 비어 오므로 기존 값을 지우지 않는다.
+        if(dto.getSigungu() != null && !dto.getSigungu().isBlank()) agency.setSigungu(dto.getSigungu());
+        if(dto.getDong() != null && !dto.getDong().isBlank()) agency.setDong(dto.getDong());
+
         agency.setPhone(dto.getPhone());
         agency.setHours(dto.getHours());
         agency.setRegistrationNo(dto.getRegistrationNo());

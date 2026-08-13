@@ -22,7 +22,12 @@ export interface Property {
     name: string;                   // 매물명
     type: PropertyTypeCode;         // 원/투룸, 아파트, 주택/빌라, 오피스텔
     dealType: DealTypeCode;         // 매매, 전세, 월세
-    address: string;                // 주소
+    address: string;                // 주소 (도로명, 주소 검색으로만 입력된다)
+
+    // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 따로 보낸다.
+    // 지도에서 동네끼리 묶을 때 서버가 이 값을 쓴다.
+    sigungu?: string;
+    dong?: string;
 
     area: number;                   // 전용면적(㎡)
     floor: number;                  // 층수

@@ -33,6 +33,7 @@ import AdminBrokerPage from './../pages/AdminBrokerPage';
 import MyConsultationPage from './../pages/MyConsultationPage';
 import MyPage from './../pages/MyPage';
 import MapSearchPage from './../pages/MapSearchPage';
+import TermsPage from './../pages/TermsPage';
 
 
 interface AppProps {
@@ -61,6 +62,10 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/favorites" element={<FavoritesPage />} />
       {/* 지도 검색. 비회원도 볼 수 있고, 중개인에게는 "내 매물" 탭이 더 보인다. */}
       <Route path="/map" element={<MapSearchPage user={user} />} />
+
+      {/* 약관 전문. 코드 없이 들어오면 서비스 이용약관을 보여준다. */}
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/terms/:code" element={<TermsPage />} />
 
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />

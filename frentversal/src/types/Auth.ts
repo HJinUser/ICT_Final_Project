@@ -27,11 +27,16 @@ export type SignupRequest = {
     // 일반 사용자 전용 (중개인은 비밀번호 없이 가입하고 이후 패스워드리스/소셜로 로그인한다)
     password?: string;
     address?: string;
+    // 주소 검색이 함께 준 지역 조각 (도로명 주소에는 동이 없어 따로 보낸다)
+    sigungu?: string;
+    dong?: string;
 
     // 중개인 전용
     licenseNumber?: string;
     agencyName?: string;
     agencyAddress?: string;
+    agencySigungu?: string;
+    agencyDong?: string;
     officePhone?: string;
 
     // 소셜 회원가입 전용. OAuth2LoginSuccessHandler가 발급한 단기 토큰이며,

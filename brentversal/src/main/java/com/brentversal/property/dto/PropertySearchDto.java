@@ -82,10 +82,15 @@ public class PropertySearchDto {
         AgencyPropertyDto card = AgencyPropertyDto.of(bean);
         dto.setDealType(card.getDealType());
         dto.setPriceLabel(card.getPriceLabel());
-        // 동네·구는 지도에서 묶는 기준이라 여기서 직접 뽑는다.
-        // (중개사무소 카드 쪽 toDong 은 못 찾으면 주소 전체를 돌려주는데, 묶는 데는 쓸 수 없다)
-        dto.setGu(toGu(bean.getAddress()));
-        dto.setDong(toDong(bean.getAddress()));
+        // 동네·구는 지도에서 묶는 기준이다.
+        //
+        // 주소를 검색해서 고른 매물은 구·동이 컬럼에 저장되어 있으므로 그 값을 그대로 쓴다.
+        // 도로명 주소("서울시 영등포구 당산로 222")에는 동이 없어서, 컬럼이 없으면 알 방법이 없다.
+        //
+        // 컬럼이 비어 있는 것은 주소 검색을 붙이기 전에 등록된 자료다.
+        // 그런 자료는 대개 지번 주소라서 주소 문자열에서 뽑을 수 있어, 예전 방식으로 한 번 더 시도한다.
+        dto.setGu(bean.getSigungu() != null ? bean.getSigungu() : toGu(bean.getAddress()));
+        dto.setDong(bean.getDong() != null ? bean.getDong() : toDong(bean.getAddress()));
         dto.setAreaLabel(card.getArea());
         dto.setStatus(card.getStatus());
         dto.setStatusLabel(card.getStatusLabel());
