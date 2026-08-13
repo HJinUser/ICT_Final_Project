@@ -41,7 +41,7 @@ export function visibleFor(items: NavItem[], role: ViewerRole): NavItem[] {
 // 지도 검색·동네 탐색·매물 확인·맞춤 추천은 아직 페이지가 없어서 ready: false다.
 // 페이지가 만들어지면 ready만 true로 바꾸고 라우트를 등록하면 된다.
 export const HEADER_NAV: NavItem[] = [
-    { label: '지도 검색', path: '/map', ready: false },
+    { label: '지도 검색', path: '/map', ready: true },
     { label: '동네 탐색', path: '/neighborhood', ready: false },
     { label: '매물 확인', path: '/listings', ready: false },
     { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
