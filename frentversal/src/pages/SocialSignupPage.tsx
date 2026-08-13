@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import TermsAgreement from "../components/TermsAgreement";
 import type { AgreementState } from "../types/Terms";
-import { missingRequired } from "../types/Terms";
+import { TERMS_VERSION, missingRequired } from "../types/Terms";
 
 // 카카오 로그인은 성공했지만 아직 우리 DB에 없는 사람이 오는 페이지.
 // OAuth2LoginSuccessHandler가 리다이렉트하면서 URL에 실어 보낸 token(소셜 가입 인증용),
@@ -64,6 +64,10 @@ function App() {
                 signupType, name, phone, email, address,
                 licenseNumber, agencyName, agencyAddress, officePhone,
                 socialToken,
+                // 약관: 동의한 버전과 선택 항목만 보낸다(필수 항목은 위에서 이미 막았다)
+                termsVersion: TERMS_VERSION,
+                agreedMarketing: !!agreements.marketing,
+                agreedThirdParty: !!agreements.thirdParty,
             };
             const config = { withCredentials: true };
             const response = await customAxios.post(url, parameters, config);

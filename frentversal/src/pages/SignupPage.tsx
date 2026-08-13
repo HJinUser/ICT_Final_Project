@@ -9,7 +9,7 @@ import { API_BASE_URL } from "../config/config";
 import { SOCIAL_BUTTONS } from "../types/Auth";
 import type { FieldErrors, SignupType } from "../types/Auth";
 import type { AgreementState } from "../types/Terms";
-import { missingRequired } from "../types/Terms";
+import { TERMS_VERSION, missingRequired } from "../types/Terms";
 import "../styles/AuthForm.css";
 
 // 왼쪽 사진 영역 배경. 서버에서 받아올 값이 아니라 화면 장식이라 상수로 둔다.
@@ -83,6 +83,10 @@ function App() {
                 agencySigungu, agencyDong,
                 // 상세주소는 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 보낸다
                 agencyAddress: [agencyAddress, agencyAddressDetail].filter(Boolean).join(' '),
+                // 약관: 동의한 버전과 선택 항목만 보낸다(필수 항목은 위에서 이미 막았다)
+                termsVersion: TERMS_VERSION,
+                agreedMarketing: !!agreements.marketing,
+                agreedThirdParty: !!agreements.thirdParty,
             });
 
             if (signupType === 'BROKER' && result.passwordlessSignupToken) {

@@ -1,13 +1,15 @@
 import type { Notice, NoticePayload } from '../types/Notice';
 
-const NOTICE_STORAGE_KEY = 'rentversal.mock.notices';
+// 저장 키를 바꾸면 브라우저에 남아 있던 옛 공지(서비스 이름이 '렌트버설'이던 시절)를 버리고
+// 아래 INITIAL_NOTICES 로 다시 만든다. 이름을 고쳐도 이미 저장된 값은 안 바뀌기 때문이다.
+const NOTICE_STORAGE_KEY = 'jeonse.mock.notices';
 
 // 백엔드 API를 연결하기 전 화면 구현과 시연에 사용하는 초기 공지사항 데이터입니다.
 const INITIAL_NOTICES: Notice[] = [
     {
         id: 5,
-        title: '렌트버설 서비스 이용 안내',
-        content: `안녕하세요. 렌트버설입니다.\n\n렌트버설에서는 매물 검색, 중개사무소 상담, 후기 및 신고 기능을 이용할 수 있습니다.\n서비스 이용 중 궁금한 사항은 고객지원 메뉴를 통해 문의해 주세요.`,
+        title: '전세역전 서비스 이용 안내',
+        content: `안녕하세요. 전세역전입니다.\n\n전세역전에서는 매물 검색, 중개사무소 상담, 후기 및 신고 기능을 이용할 수 있습니다.\n서비스 이용 중 궁금한 사항은 고객지원 메뉴를 통해 문의해 주세요.`,
         viewCount: 128,
         createdAt: '2026-08-12T09:00:00',
         updatedAt: '2026-08-12T09:00:00',
@@ -38,8 +40,8 @@ const INITIAL_NOTICES: Notice[] = [
     },
     {
         id: 1,
-        title: '렌트버설에 오신 것을 환영합니다',
-        content: `렌트버설 공지사항 게시판이 개설되었습니다.\n새로운 기능, 서비스 점검 및 중요한 정책 변경 내용을 이곳에서 안내하겠습니다.`,
+        title: '전세역전에 오신 것을 환영합니다',
+        content: `전세역전 공지사항 게시판이 개설되었습니다.\n새로운 기능, 서비스 점검 및 중요한 정책 변경 내용을 이곳에서 안내하겠습니다.`,
         viewCount: 152,
         createdAt: '2026-08-01T10:00:00',
         updatedAt: '2026-08-01T10:00:00',

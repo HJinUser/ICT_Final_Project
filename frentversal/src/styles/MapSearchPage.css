@@ -6,6 +6,33 @@
   공용 파일은 팀원들이 함께 쓰기 때문에, 이 화면에만 해당하는 것만 여기 둔다.
 */
 
+/* 왼쪽 필터 칸 넓히기.
+   기획서대로 매물 유형·거래 유형·지역·가격·방·면적·특수 조건까지 넣다 보니
+   프로토타입 기준 폭(280px)에서는 내용이 넘쳐 좌우 스크롤이 생겼다.
+   공용 파일(common.css)은 다른 화면도 쓰므로 이 화면에서만 덮어쓴다. */
+.map-shell {
+    grid-template-columns: 330px minmax(420px, 1fr) 390px;
+}
+
+@media (max-width: 1200px) {
+    .map-shell {
+        grid-template-columns: 300px minmax(380px, 1fr) 340px;
+    }
+}
+
+/* 넘침의 실제 원인.
+   .fields-2 는 두 칸을 1fr 로 나누는데, 격자 칸의 기본 최소 너비가 "내용 크기"라서
+   안에 든 셀렉트·입력칸이 자기 내용보다 작아지지 못하고 칸을 밀어낸다.
+   minmax(0, 1fr) 로 바꾸면 남는 만큼만 차지하도록 줄어든다. */
+.filter-panel .fields-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.filter-panel .fields-2 > * {
+    min-width: 0;
+    width: 100%;
+}
+
 /* 프로토타입의 .marker 는 가짜 지도 위에 좌표(left/top)로 직접 놓는 전제라
    position:absolute + translate(-50%,-50%) 가 걸려 있다.
    카카오맵에서는 CustomOverlay 가 위치를 잡아 주므로 그 두 가지를 해제한다.
