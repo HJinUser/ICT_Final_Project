@@ -29,7 +29,6 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
    useEffect(() => {
       // 중개인이 아니면 알림을 조회하지 않는다 (서버도 중개인만 통과시킨다)
       if (user?.role !== "BROKER") {
-         setNotifications([]);
          return;
       }
 
@@ -47,13 +46,11 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
    // user 프롭스를 사용하여 상단에 보이는 메뉴를 분기 처리합니다.
    const renderMenu = () => {
       if (user) {
-         // 로그인 상태 : 역할에 맞는 신고 메뉴와 로그아웃 노출
+         // 로그인 상태 : 관리자는 관리 메뉴가 추가되고, 공통으로 로그아웃을 노출한다.
          return (
             <>
-               {user.role === 'ADMIN' ? (
+               {user.role === 'ADMIN' && (
                   <Nav.Link onClick={() => navigate('/admin/reports')}>신고 관리</Nav.Link>
-               ) : (
-                  <Nav.Link onClick={() => navigate('/report/me')}>내 신고</Nav.Link>
                )}
                <Nav.Link onClick={handleLogout}>로그 아웃</Nav.Link>
             </>
@@ -75,6 +72,8 @@ function App({ appName, user, handleLogout }: MenuItemsProps) {
             <Nav className="me-auto">
                {/* 로그인 여부와 상관없이 항상 보이는 메뉴 */}
                <Nav.Link onClick={() => navigate(`/agency`)}>중개사무소 안내</Nav.Link>
+               <Nav.Link onClick={() => navigate('/neighborhood')}>동네 탐색</Nav.Link>
+               <Nav.Link onClick={() => navigate('/report/history')}>신고 처리 내역</Nav.Link>
 
                {/* 중개인에게만 보이는 메뉴 */}
                {user?.role === "BROKER" && (

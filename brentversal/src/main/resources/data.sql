@@ -49,6 +49,32 @@ VALUES
 UPDATE tag_seq SET next_val = 101 WHERE next_val <= 100;
 
 -- ────────────────────────────────────────────────────────────────
+-- 동네 탐색 예시 데이터
+-- 프런트에 임의 객체를 넣지 않고 실제 DB 컬럼 → DTO → API 응답 흐름을 확인하기 위한 데이터다.
+-- ML 추천 결과는 포함하지 않으며, popularity_score 는 인기순 정렬용 운영 지표다.
+-- ────────────────────────────────────────────────────────────────
+INSERT IGNORE INTO neighborhood
+    (neighborhood_id, city, district, dong, description, image_url,
+     satisfaction_avg, average_jeonse_price, popularity_score, visible)
+VALUES
+    (1, '서울특별시', '서초구', '반포동', '한강과 대형 상권을 함께 이용하기 좋은 주거 지역입니다.', NULL, 4.8, 51000, 98, b'1'),
+    (2, '서울특별시', '서초구', '잠원동', '한강 접근성과 교통 편의가 균형을 이루는 지역입니다.', NULL, 4.6, 52000, 91, b'1'),
+    (3, '서울특별시', '서초구', '서초동', '업무지구와 생활 편의시설 접근성이 좋은 지역입니다.', NULL, 4.5, 38000, 87, b'1'),
+    (4, '서울특별시', '강남구', '역삼동', '지하철과 업무시설이 밀집한 직주근접 지역입니다.', NULL, 4.4, 45000, 94, b'1'),
+    (5, '서울특별시', '송파구', '잠실동', '대형 공원과 쇼핑시설을 함께 이용할 수 있는 지역입니다.', NULL, 4.7, 47000, 96, b'1'),
+    (6, '서울특별시', '마포구', '연남동', '골목 상권과 공원이 가까운 활기찬 주거 지역입니다.', NULL, 4.3, 32000, 89, b'1');
+
+UPDATE neighborhood_seq SET next_val = 101 WHERE next_val <= 100;
+
+INSERT IGNORE INTO neighborhood_tag (neighborhood_id, tag_id) VALUES
+    (1, 5), (1, 6), (1, 7),
+    (2, 6), (2, 7), (2, 8),
+    (3, 1), (3, 8), (3, 9),
+    (4, 4), (4, 8), (4, 9),
+    (5, 2), (5, 7), (5, 9),
+    (6, 3), (6, 7), (6, 10);
+
+-- ────────────────────────────────────────────────────────────────
 -- 중개사무소 대표 이미지 (상세 페이지 갤러리용)
 -- agency_image 테이블은 Agency 엔터티의 @ElementCollection 이 자동으로 만든다.
 -- 이 테이블에는 기본키가 없어서 INSERT IGNORE 로는 중복을 막을 수 없다.
@@ -90,6 +116,12 @@ VALUES
 
 -- visible 컬럼이 나중에 추가되면서 기존 예시 매물은 0(비공개)으로 채워졌으므로 공개로 되돌린다.
 UPDATE property SET visible = b'1' WHERE property_id <= 4 AND visible = b'0';
+
+-- 예시 매물을 동네 카드의 매물 건수와 연결한다.
+UPDATE property SET neighborhood_id = 1 WHERE property_id = 1;
+UPDATE property SET neighborhood_id = 2 WHERE property_id = 2;
+UPDATE property SET neighborhood_id = 3 WHERE property_id = 3;
+UPDATE property SET neighborhood_id = 4 WHERE property_id = 4;
 
 -- agency_seq 와 같은 이유로 property_seq 도 예시 데이터보다 큰 값으로 올려 둔다.
 UPDATE property_seq SET next_val = 101 WHERE next_val <= 100;

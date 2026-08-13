@@ -31,4 +31,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     // 대시보드의 "게시 중 / 거래 진행 중 / 거래 완료" 건수 (공개 여부와 상관없이 센다)
     long countByAgencyIdAndStatus(Long agencyId, PropertyStatus status);
 
+    // 동네 탐색 카드에 표시할 공개·게시중 매물 건수
+    long countByNeighborhoodIdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
+
 }

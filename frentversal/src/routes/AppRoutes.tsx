@@ -22,6 +22,8 @@ import BrokerMyPage from './../pages/BrokerMyPage';
 import MyAgencyPage from './../pages/MyAgencyPage';
 import ConsultationReplyPage from './../pages/ConsultationReplyPage';
 import BrokerVerificationPage from './../pages/BrokerVerificationPage';
+import NeighborhoodPage from '../pages/NeighborhoodPage';
+import NeighborhoodDetailPage from '../pages/NeighborhoodDetailPage';
 
 
 interface AppProps {
@@ -45,6 +47,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/property/preview" element={<PropertyPreviewPage />} />
       <Route path="/agency" element={<AgencyPage />} />
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
+      <Route path="/neighborhood" element={<NeighborhoodPage user={user} />} />
+      <Route path="/neighborhood/:id" element={<NeighborhoodDetailPage />} />
 
       {/* 중개인 전용 화면. 서버에서도 /my-agency/** 를 중개인만 통과시킨다. */}
       <Route path="/broker/mypage" element={<BrokerMyPage user={user} />} />
@@ -56,7 +60,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path="/notice/:id" element={<NoticeDetailPage user={user} />} />
       <Route path="/notice/:id/edit" element={<NoticeFormPage user={user} />} />
       <Route path="/report/form" element={<ReportFormPage user={user} />} />
-      <Route path="/report/me" element={<MyReportPage user={user} />} />
+      <Route path="/report/history" element={<MyReportPage />} />
+      <Route path="/report/me" element={<MyReportPage />} />
       <Route path="/admin/reports" element={<ReportAdminListPage user={user} />} />
       <Route path="/admin/reports/:id" element={<ReportAdminDetailPage user={user} />} />
     </Routes>

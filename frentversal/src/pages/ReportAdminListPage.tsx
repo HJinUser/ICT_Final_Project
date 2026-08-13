@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getReports } from '../api/reportApi';
-import type { Report, ReportStatus, ReportTargetType } from '../types/Report';
+import {
+    REPORT_STATUS_LABELS,
+    REPORT_TARGET_LABELS,
+    type Report,
+    type ReportStatus,
+    type ReportTargetType,
+} from '../types/Report';
 import type { User } from '../types/User';
 import '../assets/common.css';
 import '../assets/responsive.css';
@@ -11,8 +17,6 @@ import '../components/Report.css';
 interface ReportAdminListPageProps {
     user: User | null;
 }
-
-const STATUS_LABELS: Record<ReportStatus, string> = { PENDING: '처리 대기', RESOLVED: '처리 완료', REJECTED: '반려' };
 
 function formatDate(value: string) {
     return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
@@ -52,18 +56,19 @@ function ReportAdminListPage({ user }: ReportAdminListPageProps) {
         <main className="report-page-bg">
             <section className="page-hero report-hero"><div className="wrap">
                 <div><div className="eyebrow">Admin</div><h1>신고 관리</h1><p>접수된 신고를 확인하고 처리 결과와 답변을 등록합니다.</p></div>
-                <div className="hero-stat"><span className="mono dim">현재 조회 결과</span><strong>{reports.length}건</strong><span className="xs dim">{STATUS_LABELS[status]}</span></div>
+                <div className="hero-stat"><span className="mono dim">현재 조회 결과</span><strong>{reports.length}건</strong><span className="xs dim">{REPORT_STATUS_LABELS[status]}</span></div>
             </div></section>
             <section className="section"><div className="wrap report-admin-wrap">
                 <div className="report-admin-toolbar">
                     <div className="tabs report-tabs">
                         {(['PENDING', 'RESOLVED', 'REJECTED'] as const).map((item) => (
-                            <button className={`tab-btn${status === item ? ' on' : ''}`} type="button" onClick={() => setStatus(item)} key={item}>{STATUS_LABELS[item]}</button>
+                            <button className={`tab-btn${status === item ? ' on' : ''}`} type="button" onClick={() => setStatus(item)} key={item}>{REPORT_STATUS_LABELS[item]}</button>
                         ))}
                     </div>
                     <select className="search-box" value={targetType} onChange={(event) => setTargetType(event.target.value as ReportTargetType | '')}>
                         <option value="">대상 전체</option>
                         <option value="PROPERTY">매물 신고</option>
+                        <option value="AGENCY">중개사무소 신고</option>
                         <option value="REVIEW">리뷰 신고</option>
                     </select>
                 </div>
@@ -76,11 +81,11 @@ function ReportAdminListPage({ user }: ReportAdminListPageProps) {
                     </tr></thead><tbody>
                         {reports.map((report) => <tr key={report.id}>
                             <td>{report.id}</td>
-                            <td>{report.targetType === 'PROPERTY' ? '매물' : '리뷰'} #{report.targetId}</td>
+                            <td>{REPORT_TARGET_LABELS[report.targetType]} #{report.targetId}</td>
                             <td><Link className="report-table-link" to={`/admin/reports/${report.id}`}>{report.title}</Link></td>
                             <td>{report.reporterName}</td>
                             <td>{formatDate(report.createdAt)}</td>
-                            <td><span className={`status ${report.status === 'RESOLVED' ? 'green' : report.status === 'REJECTED' ? 'red' : 'orange'}`}>{STATUS_LABELS[report.status]}</span></td>
+                            <td><span className={`status ${report.status === 'RESOLVED' ? 'green' : report.status === 'REJECTED' ? 'red' : 'orange'}`}>{REPORT_STATUS_LABELS[report.status]}</span></td>
                         </tr>)}
                     </tbody></table></div>
                 )}

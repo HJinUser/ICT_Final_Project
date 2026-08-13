@@ -4,7 +4,12 @@ import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { getReport, processReport } from '../api/reportApi';
-import type { Report, ReportProcessPayload } from '../types/Report';
+import {
+    REPORT_STATUS_LABELS,
+    REPORT_TARGET_LABELS,
+    type Report,
+    type ReportProcessPayload,
+} from '../types/Report';
 import type { User } from '../types/User';
 import '../assets/common.css';
 import '../assets/responsive.css';
@@ -82,19 +87,19 @@ function ReportAdminDetailPage({ user }: ReportAdminDetailPageProps) {
             {!loading && !report && <div className="report-state report-error">{error || '신고 내용을 찾을 수 없습니다.'}</div>}
             {report && <div className="report-detail-grid">
                 <article className="report-detail-card">
-                    <header><span className={`status ${report.status === 'RESOLVED' ? 'green' : report.status === 'REJECTED' ? 'red' : 'orange'}`}>{report.status === 'PENDING' ? '처리 대기' : report.status === 'RESOLVED' ? '처리 완료' : '반려'}</span><h1>{report.title}</h1>
-                        <div className="report-detail-meta"><span>신고자 {report.reporterName}</span><span>접수 {formatDate(report.createdAt)}</span><span>{report.targetType === 'PROPERTY' ? '매물' : '리뷰'} #{report.targetId}</span></div>
+                    <header><span className={`status ${report.status === 'RESOLVED' ? 'green' : report.status === 'REJECTED' ? 'red' : 'orange'}`}>{REPORT_STATUS_LABELS[report.status]}</span><h1>{report.title}</h1>
+                        <div className="report-detail-meta"><span>신고자 {report.reporterName}</span><span>접수 {formatDate(report.createdAt)}</span><span>{REPORT_TARGET_LABELS[report.targetType]} #{report.targetId}</span></div>
                     </header>
                     <div className="report-detail-content">{report.content}</div>
                 </article>
                 <aside className="report-process-panel">
                     <h2>처리 결과</h2>
                     {report.status === 'PENDING' ? <form onSubmit={handleProcess}>
-                        <div className="field"><label htmlFor="process-status">처리 상태</label><select id="process-status" value={status} onChange={(event) => setStatus(event.target.value as ReportProcessPayload['status'])}><option value="RESOLVED">처리 완료</option><option value="REJECTED">반려</option></select></div>
+                        <div className="field"><label htmlFor="process-status">처리 상태</label><select id="process-status" value={status} onChange={(event) => setStatus(event.target.value as ReportProcessPayload['status'])}><option value="RESOLVED">서비스에 적용</option><option value="REJECTED">취소 처리</option></select></div>
                         <div className="field"><label htmlFor="answer-content">답변</label><textarea id="answer-content" value={answerContent} onChange={(event) => setAnswerContent(event.target.value)} placeholder="신고자에게 전달할 처리 결과를 입력해 주세요" required /></div>
                         {error && <div className="report-inline-error">{error}</div>}
-                        <button className="solid-btn report-process-submit" type="submit" disabled={submitting}>{submitting ? '처리 중' : '답변 등록'}</button>
-                    </form> : <div className="report-processed-answer"><span className={`status ${report.status === 'RESOLVED' ? 'green' : 'red'}`}>{report.status === 'RESOLVED' ? '처리 완료' : '반려'}</span><p>{report.answerContent}</p><time>{formatDate(report.processedAt)}</time></div>}
+                        <button className="solid-btn report-process-submit" type="submit" disabled={submitting}>{submitting ? '처리 중' : '처리 결과 저장'}</button>
+                    </form> : <div className="report-processed-answer"><span className={`status ${report.status === 'RESOLVED' ? 'green' : 'red'}`}>{REPORT_STATUS_LABELS[report.status]}</span><p>{report.answerContent}</p><time>{formatDate(report.processedAt)}</time></div>}
                 </aside>
             </div>}
             <div className="report-actions"><Link className="ghost-btn" to="/admin/reports">목록으로</Link></div>
