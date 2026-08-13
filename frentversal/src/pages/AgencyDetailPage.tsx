@@ -359,8 +359,12 @@ function AgencyDetailPage({ user }: Props) {
                                         <div className="grid-2" style={{ marginTop: 18 }}>
                                             {agency.recentProperties.map((property) => (
                                                 <Link className="property-row" to={`/property/${property.id}`} key={property.id}>
-                                                    {/* 매물 사진은 property 테이블에 이미지 컬럼이 생기면 여기에 연결한다 */}
-                                                    <div className="thumb" />
+                                                    <div
+                                                        className="thumb"
+                                                        style={property.thumbnailUrl
+                                                            ? { backgroundImage: `url('${property.thumbnailUrl}')` }
+                                                            : undefined}
+                                                    />
                                                     <div>
                                                         {/* 지금은 게시중 매물만 조회하지만, 조건이 바뀌어도
                                                             실제 상태가 그대로 보이도록 서버 값을 쓴다 */}

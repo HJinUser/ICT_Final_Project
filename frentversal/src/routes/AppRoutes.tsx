@@ -84,6 +84,7 @@ function App({ user, handleLoginSuccess }: AppProps) {
 
       {/* 신고. 접수와 내 신고 내역은 사용자·중개인, 신고 관리는 관리자 화면이다. */}
       <Route path="/report/form" element={<ReportFormPage user={user} />} />
+      {/* MyReportPage 는 로그인 정보를 스스로 읽으므로 user 를 넘기지 않는다 */}
       <Route path="/report/me" element={<MyReportPage />} />
 
       {/* 사용자 마이페이지. 내 활동 > 알림내역에서 상담 답변 화면으로 간다. */}

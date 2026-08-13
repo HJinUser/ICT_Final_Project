@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { PropertySearchItem } from '../types/PropertySearch';
-import { loadKakaoSdk } from '../utils/kakaoMap';
+import { findCenter, findDistrictBoundary, loadKakaoSdk } from '../utils/kakaoMap';
 
 // 지도 검색 가운데 영역.
 //
@@ -19,6 +19,10 @@ import { loadKakaoSdk } from '../utils/kakaoMap';
 const DEFAULT_CENTER = { latitude: 37.4979, longitude: 127.0276 };
 const DEFAULT_LEVEL = 6;
 
+// 회원이 사는 곳으로 화면을 옮길 때의 확대 정도.
+// 동네가 한눈에 들어오면서 주변 매물도 같이 보이는 수준으로 잡았다.
+const MEMBER_AREA_LEVEL = 6;
+
 // 어느 레벨부터 묶어서 보여 줄지.
 // 이 값보다 크면(= 더 넓게 보면) 묶는다.
 const DONG_GROUP_LEVEL = 6; // 6 이상이면 동끼리 묶는다
@@ -30,6 +34,15 @@ interface Props {
     selectedId?: number | null;      // 목록에서 고른 매물 (지도에서 강조)
     onSelect?: (id: number) => void; // 매물 표식을 눌렀을 때
     onSelectGroup?: (names: string[]) => void; // 묶음 표식을 눌렀을 때 (그 지역 이름)
+
+    // 지도를 처음 열 때 보여 줄 곳 (회원이 가입할 때 적은 주소).
+    // 매물이 있으면 그 매물들에 맞추고, 없을 때 이 주소로 화면을 옮긴다.
+    initialCenterAddress?: string | null;
+
+    // 지도 위에 테두리로 강조해서 보여 줄 구 이름 ("서초구").
+    // 지도 검색에 처음 들어왔을 때는 회원이 사는 구, 필터에서 구를 고르면 그 구가 여기로 들어온다.
+    // null 이면 강조 표시를 지운다.
+    highlightRegion?: string | null;
 }
 
 // 표식에 적을 짧은 가격 문구. "전세 4억 9,000" -> "4.9억"
@@ -74,7 +87,15 @@ function groupByArea(properties: PropertySearchItem[], key: 'gu' | 'dong') {
     }));
 }
 
-function PropertyMap({ properties, myAgencyId, selectedId, onSelect, onSelectGroup }: Props) {
+function PropertyMap({
+    properties,
+    myAgencyId,
+    selectedId,
+    onSelect,
+    onSelectGroup,
+    initialCenterAddress,
+    highlightRegion,
+}: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
 
     // 지도는 한 번만 만들고 계속 쓴다.
@@ -83,6 +104,13 @@ function PropertyMap({ properties, myAgencyId, selectedId, onSelect, onSelectGro
 
     // 지금 지도에 올려 둔 표식들. 다시 그리기 전에 이 목록을 지운다.
     const overlaysRef = useRef<any[]>([]);
+
+    // 지금 그려 둔 구 경계선. 새로 그리기 전에 지운다.
+    const boundaryRef = useRef<any>(null);
+
+    // 경계선을 그리면서 지도 범위를 한 번 맞췄는지 기억해 둔다.
+    // highlightRegion 문자열이 바뀔 때만 다시 맞추고, 다른 이유로 다시 그려질 때는 시야를 건드리지 않는다.
+    const lastFittedRegionRef = useRef<string | null>(null);
 
     // 지도 범위를 한 번 맞췄는지 기억해 둔다.
     // 매번 맞추면 사용자가 지도를 옮기거나 확대할 때마다 원위치로 돌아가 버린다.
@@ -118,6 +146,23 @@ function PropertyMap({ properties, myAgencyId, selectedId, onSelect, onSelectGro
 
                     mapRef.current = map;
                     setSdkLoaded(true);
+
+                    // 회원이 사는 곳으로 화면을 옮겨 둔다.
+                    // 매물이 있으면 아래 표식 그리기에서 그 매물들에 맞춰 다시 옮겨지므로,
+                    // 이 위치는 "보여 줄 매물이 없을 때" 남는 시작 위치가 된다.
+                    //
+                    // highlightRegion 에 경계 데이터가 있으면(서울 25개 구) 그 구 경계 효과가
+                    // 화면을 맞춰 주므로 여기서는 건드리지 않는다. 두 효과가 동시에 화면을
+                    // 움직이면 지도가 두 번 튀어 보인다. 경계 데이터가 없는 지역일 때만
+                    // (서울 밖이거나 아직 구를 모를 때) 주소 좌표로 대신 맞춘다.
+                    if (initialCenterAddress && !findDistrictBoundary(highlightRegion ?? '')) {
+                        findCenter(initialCenterAddress).then((center) => {
+                            if (cancelled || !center) return;
+
+                            map.setCenter(new kakao.maps.LatLng(center.latitude, center.longitude));
+                            map.setLevel(MEMBER_AREA_LEVEL);
+                        });
+                    }
                 });
             })
             .catch((error: Error) => {
@@ -213,6 +258,51 @@ function PropertyMap({ properties, myAgencyId, selectedId, onSelect, onSelectGro
     useEffect(() => {
         fittedRef.current = false;
     }, [properties]);
+
+    // ── 구 경계선 강조 표시 ────────────────────────────────
+    // 지도 검색에 처음 들어왔을 때(회원이 사는 구)와, 필터에서 구를 고를 때 이 효과가 돈다.
+    useEffect(() => {
+        const kakao = window.kakao;
+        const map = mapRef.current;
+
+        if (!kakao?.maps || !map) return;
+
+        // 이전 경계선을 지운다
+        boundaryRef.current?.setMap(null);
+        boundaryRef.current = null;
+
+        if (!highlightRegion) return;
+
+        const district = findDistrictBoundary(highlightRegion);
+        if (!district) return; // 서울 25개 구 밖의 지역이면 경계 데이터가 없다
+
+        const bounds = new kakao.maps.LatLngBounds();
+
+        // Polygon 좌표는 [ [바깥 테두리], [구멍1], ... ] 형태다.
+        // 서울 구는 섬(밖에 딸린 작은 땅) 없이 테두리 하나뿐이라 첫 번째 고리만 쓴다.
+        const path = district.coordinates[0].map(([longitude, latitude]) => {
+            const position = new kakao.maps.LatLng(latitude, longitude);
+            bounds.extend(position);
+            return position;
+        });
+
+        boundaryRef.current = new kakao.maps.Polygon({
+            map,
+            path,
+            strokeWeight: 3,
+            strokeColor: '#4B0082',
+            strokeOpacity: 0.85,
+            fillColor: '#4B0082',
+            fillOpacity: 0.06,
+        });
+
+        // 같은 구를 다시 그릴 때(예: 표식이 다시 그려지며 이 효과가 재실행될 때)는
+        // 사용자가 이미 옮겨 둔 시야를 건드리지 않는다. 구가 실제로 바뀌었을 때만 맞춘다.
+        if (lastFittedRegionRef.current !== highlightRegion) {
+            map.setBounds(bounds);
+            lastFittedRegionRef.current = highlightRegion;
+        }
+    }, [highlightRegion, sdkLoaded]);
 
     const pinnableCount = properties.filter((property) => property.latitude != null).length;
     const grouping = level >= GU_GROUP_LEVEL ? '구' : level >= DONG_GROUP_LEVEL ? '동' : null;

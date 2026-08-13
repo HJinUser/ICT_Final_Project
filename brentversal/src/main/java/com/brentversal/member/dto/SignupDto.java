@@ -50,4 +50,13 @@ public class SignupDto {
     // socialType/socialUserId를 클라이언트가 직접 적어 보내지 못하게(계정 가로채기 방지)
     // 이 토큰 하나로만 소셜 정보를 받는다. 값이 있으면 소셜 가입으로 처리한다.
     private String socialToken ;
+
+    // 약관 동의 결과.
+    // 어떤 항목이 필수인지는 화면(types/Terms.ts)이 알고 있고 거기서 먼저 막으므로,
+    // 서버는 "동의를 거친 요청인가"(termsVersion 유무)와 선택 항목의 값만 받는다.
+    @Size(max = 10, message = "약관 버전이 올바르지 않습니다.")
+    private String termsVersion ;
+
+    private boolean agreedMarketing ;
+    private boolean agreedThirdParty ;
 }

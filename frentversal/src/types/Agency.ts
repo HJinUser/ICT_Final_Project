@@ -59,6 +59,7 @@ export interface AgencyProperty {
     area: string | null;// "84㎡"
     status: string;     // 거래 상태 코드 (ACTIVE 등)
     statusLabel: string;// 게시중 / 거래 진행중 ...
+    thumbnailUrl: string | null; // 대표 사진. 없으면 null
 }
 
 // 상세 화면 전체 응답 (백엔드 AgencyDetailDto)

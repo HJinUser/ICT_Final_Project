@@ -32,6 +32,7 @@ export interface MyPropertyCard {
     status: string;
     statusLabel: string;  // 게시중 / 거래 진행중 ...
     visible: boolean;
+    thumbnailUrl: string | null; // 대표 사진. 없으면 null
     createdAt: string;    // "2026-08-10"
 }
 
