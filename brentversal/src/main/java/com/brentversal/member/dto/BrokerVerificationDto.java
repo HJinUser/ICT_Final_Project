@@ -17,6 +17,10 @@ public class BrokerVerificationDto {
     private String licenseNumber ;  // 등록번호 (xxxxx-xxxx-xxxxx)
     private String businessName ;   // 상호
     private String officeAddress ;  // 소재지
+
+    // 주소 검색이 함께 돌려주는 지역 조각. 승인 시 중개사무소에 그대로 옮겨 담는다.
+    private String officeSigungu ;
+    private String officeDong ;
     private String ownerName ;      // 대표자
 
     // 프론트의 <input type="date"> 값("2024-05-20")을 그대로 주고받기 위한 형식 지정

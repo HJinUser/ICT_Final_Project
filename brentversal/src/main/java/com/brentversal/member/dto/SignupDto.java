@@ -29,6 +29,11 @@ public class SignupDto {
     @Size(max = 100, message = "주소는 100자리 이하로 입력해 주세요.")
     private String address ; // 선택 입력
 
+    // 주소 검색(다음 우편번호)이 함께 돌려주는 지역 조각.
+    // 도로명 주소에는 동이 없어서 주소만으로는 알 수 없으므로 따로 받는다.
+    private String sigungu ;
+    private String dong ;
+
     // 일반 사용자 전용. 중개인은 비밀번호 없이 가입한다.
     @Size(max = 255, message = "비밀 번호는 255자리 이하로 입력해 주세요.")
     private String password ;
@@ -37,6 +42,8 @@ public class SignupDto {
     private String licenseNumber ;
     private String agencyName ;
     private String agencyAddress ;
+    private String agencySigungu ;
+    private String agencyDong ;
     private String officePhone ;
 
     // 소셜 회원가입 전용. OAuth2LoginSuccessHandler가 발급한 단기 토큰이며,

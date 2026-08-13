@@ -4,6 +4,7 @@ import { Container, Row, Col, Form, Button, Alert, ListGroup, Card, Spinner } fr
 // customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/insert" 처럼 그 뒤만 적는다.
 // 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/insert" 가 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
+import AddressInput from "../components/AddressInput";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Property, PropertyResponse, PropertyImageResponse } from "../types/Property";
 import type { TagResponse } from "../types/Tag";
@@ -70,6 +71,10 @@ function PropertyFormPage() {
 
     // 필드별 오류 메시지 (백엔드 응답의 필드별 오류를 그대로 매칭)
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // 상세주소(동·호수). 지금은 주소를 한 덩어리로 저장하므로 제출할 때 주소 뒤에 합쳐 보낸다.
+    // 나중에 주소를 시·구·동으로 쪼개 저장하게 되면 별도 칸으로 보내면 된다.
+    const [addressDetail, setAddressDetail] = useState('');
 
     // 수정 화면에서 서버가 이미 갖고 있는 사진들. 삭제 버튼을 누르면 이 목록에서만 빠지고,
     // 실제 삭제(저장소 파일 제거)는 제출 시 keepImageIds에 없는 사진들을 서버가 처리한다.
@@ -205,9 +210,12 @@ function PropertyFormPage() {
         try {
             // 수정 화면에서는 "지금까지 남아 있는 기존 사진 id 목록"을 같이 보내야
             // 백엔드가 그 목록에 없는 기존 사진을 지운다 (PropertyService.update 참고)
+            // 상세주소는 아직 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 한 덩어리로 보낸다.
+            const address = [property.address, addressDetail].filter(Boolean).join(' ');
+
             const payload: Property = isEditMode
-                ? { ...property, keepImageIds: existingImages.map((image) => image.id) }
-                : property;
+                ? { ...property, address, keepImageIds: existingImages.map((image) => image.id) }
+                : { ...property, address };
 
             const formData = new FormData();
             formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
@@ -329,11 +337,19 @@ function PropertyFormPage() {
                             <Form.Group as={Row} className="mb-3" controlId="formAddress">
                                 <Form.Label column sm={2}>주소</Form.Label>
                                 <Col sm={10}>
-                                    <Form.Control
-                                        name="address"
-                                        placeholder="도로명 주소 검색"
+                                    {/* 주소는 검색해서 고르게 한다. 직접 타이핑하면 표기가 제각각이 되어
+                                        지역 검색·지도 표시가 어긋난다. */}
+                                    <AddressInput
+                                        label=""
                                         value={property.address}
-                                        onChange={ControlChange}
+                                        detail={addressDetail}
+                                        onChange={({ address, detail, selected }) => {
+                                            // 주소를 새로 고르면 구·동도 함께 담는다 (지도에서 동네끼리 묶는 기준)
+                                            setProperty((prev) => selected
+                                                ? { ...prev, address, sigungu: selected.sigungu, dong: selected.dong }
+                                                : { ...prev, address });
+                                            setAddressDetail(detail);
+                                        }}
                                     />
                                 </Col>
                             </Form.Group>

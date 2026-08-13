@@ -4,6 +4,10 @@ import { useState } from "react";
 import { Card, Container, Row, Form, Col, Button, Alert, Tabs, Tab } from "react-bootstrap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import TermsAgreement from "../components/TermsAgreement";
+import type { AgreementState } from "../types/Terms";
+import { missingRequired } from "../types/Terms";
+
 // 카카오 로그인은 성공했지만 아직 우리 DB에 없는 사람이 오는 페이지.
 // OAuth2LoginSuccessHandler가 리다이렉트하면서 URL에 실어 보낸 token(소셜 가입 인증용),
 // nickname/email(있으면 미리 채워주는 용도)을 읽어서 폼을 채운다.
@@ -31,7 +35,8 @@ function App() {
     const [agencyAddress, setAgencyAddress] = useState('');
     const [officePhone, setOfficePhone] = useState('');
 
-    const [agreedTerms, setAgreedTerms] = useState(false);
+    // 일반 회원가입과 같은 약관 항목을 받는다(가입 경로만 다를 뿐 동의해야 할 내용은 같다).
+    const [agreements, setAgreements] = useState<AgreementState>({});
 
     const [errors, setErrors] = useState({
         name: '', phone: '', email: '', address: '',
@@ -42,10 +47,11 @@ function App() {
     const socialSignupAction = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        if (!agreedTerms) {
+        const missing = missingRequired(signupType, agreements);
+        if (missing.length > 0) {
             setErrors((prev) => ({
                 ...prev,
-                agreedTerms: '약관에 동의해야 회원가입을 진행할 수 있습니다.',
+                agreedTerms: `필수 항목에 동의해 주세요: ${missing.map((doc) => doc.title).join(', ')}`,
             }));
             return;
         }
@@ -262,17 +268,14 @@ function App() {
                                     </>
                                 )}
 
-                                <Form.Group className="mb-3">
-                                    <Form.Check
-                                        type="checkbox"
-                                        label="이용약관에 동의합니다. (약관 내용 준비 중)"
-                                        checked={agreedTerms}
-                                        onChange={(e) => setAgreedTerms(e.target.checked)}
-                                        isInvalid={!!errors.agreedTerms}
-                                        feedback={errors.agreedTerms}
-                                        feedbackType="invalid"
+                                <div className="mb-3">
+                                    <TermsAgreement
+                                        signupType={signupType}
+                                        value={agreements}
+                                        onChange={setAgreements}
+                                        error={errors.agreedTerms}
                                     />
-                                </Form.Group>
+                                </div>
 
                                 <Button variant="primary" type="submit" className="w-100">
                                     회원 가입 완료
