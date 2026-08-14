@@ -129,3 +129,18 @@ export const SORT_OPTIONS: { value: PropertySort; label: string }[] = [
     { value: 'AREA_DESC', label: '면적 넓은순' },
     { value: 'AREA_ASC', label: '면적 좁은순' },
 ];
+
+export interface PropertyListingsParams {
+    type?: string;     // 매물 유형 (하나만, 'ALL'이면 안 보낸다)
+    dealType?: string; // 거래 유형 (하나만, 'ALL'이면 안 보낸다)
+    sort?: PropertySort;
+    page?: number; // 0부터 시작
+    size?: number;
+}
+
+export interface PropertyListingsResponse {
+    content: PropertySearchItem[];
+    totalCount: number;
+    totalPages: number;
+    page: number;
+}

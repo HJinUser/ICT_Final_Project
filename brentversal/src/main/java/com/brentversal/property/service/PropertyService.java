@@ -16,6 +16,9 @@ import com.brentversal.property_image.entity.PropertyImage;
 import com.brentversal.property_image.service.PropertyImageService;
 import com.brentversal.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -339,10 +342,56 @@ public class PropertyService {
                 tagIds,
                 tagCount);
 
+        boolean dealTypeChosen = condition.getDealType() != null && !condition.getDealType().isBlank();
+        String sort = condition.getSort();
+        boolean isPriceSort = "PRICE_ASC".equalsIgnoreCase(sort) || "PRICE_DESC".equalsIgnoreCase(sort);
+        String effectiveSort = (!dealTypeChosen && isPriceSort) ? "LATEST" : sort;
+
         return found.stream()
                 .map(PropertySearchDto::of)
-                .sorted(comparatorOf(condition.getSort()))
+                .sorted(comparatorOf(effectiveSort))
                 .toList();
+    }
+
+    // 매물 확인 화면 - 매물유형 탭을 고르면 그 유형에 실제 있는 거래유형만 버튼으로 보여준다.
+    @Transactional(readOnly = true)
+    public List<String> findAvailableDealTypes(String type) {
+        return propertyRepository.findDistinctDealTypes(PropertyStatus.ACTIVE, toType(type))
+                .stream()
+                .map(Enum::name)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> browseListings(String type, String dealType, String sort, int page, int size) {
+        PropertyType typeEnum = toType(type);
+        DealType dealTypeEnum = toDealType(dealType);
+
+        boolean dealTypeChosen = dealTypeEnum != null;
+        boolean isPriceSort = "PRICE_ASC".equalsIgnoreCase(sort) || "PRICE_DESC".equalsIgnoreCase(sort);
+        String effectiveSort = (!dealTypeChosen && isPriceSort) ? "LATEST" : sort;
+
+        Pageable pageable = PageRequest.of(page, size, toSort(effectiveSort));
+        Page<Property> result = propertyRepository.findForListings(PropertyStatus.ACTIVE, typeEnum, dealTypeEnum, pageable);
+
+        return Map.of(
+                "content", result.getContent().stream().map(PropertySearchDto::of).toList(),
+                "totalCount", result.getTotalElements(),
+                "totalPages", result.getTotalPages(),
+                "page", page
+        );
+    }
+
+    private Sort toSort(String sort) {
+        String key = (sort == null || sort.isBlank()) ? "LATEST" : sort.toUpperCase();
+
+        return switch (key) {
+            case "PRICE_ASC" -> Sort.by("comparablePrice").ascending();
+            case "PRICE_DESC" -> Sort.by("comparablePrice").descending();
+            case "AREA_ASC" -> Sort.by("area").ascending();
+            case "AREA_DESC" -> Sort.by("area").descending();
+            default -> Sort.by("createdAt").descending();
+        };
     }
 
     // 정렬은 DB 대신 여기서 한다.
@@ -352,9 +401,9 @@ public class PropertyService {
         String key = (sort == null || sort.isBlank()) ? "LATEST" : sort.toUpperCase();
 
         return switch (key) {
-            case "PRICE_ASC" -> Comparator.comparing(PropertySearchDto::getPrice,
+            case "PRICE_ASC" -> Comparator.comparing(PropertySearchDto::getComparablePrice,
                     Comparator.nullsLast(Comparator.naturalOrder()));
-            case "PRICE_DESC" -> Comparator.comparing(PropertySearchDto::getPrice,
+            case "PRICE_DESC" -> Comparator.comparing(PropertySearchDto::getComparablePrice,
                     Comparator.nullsLast(Comparator.reverseOrder()));
             case "AREA_DESC" -> Comparator.comparing(PropertySearchDto::getArea,
                     Comparator.nullsLast(Comparator.reverseOrder()));

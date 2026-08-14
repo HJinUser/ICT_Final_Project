@@ -2,6 +2,7 @@ package com.brentversal.property.dto;
 
 import com.brentversal.agency.dto.AgencyPropertyDto;
 import com.brentversal.property.entity.Property;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,6 +25,8 @@ public class PropertySearchDto {
     private String dealType ;   // SALE / JEONSE / MONTHLY
     private String priceLabel ; // "전세 4억 9,000"
     private Long price ;        // 정렬·핀 문구에 쓰는 대표 금액 (만원)
+    @JsonIgnore
+    private Long comparablePrice;
     private String address ;
     private String gu ;         // 주소에서 뽑은 구·시·군 (지도를 많이 축소했을 때 묶는 기준)
     private String dong ;       // 주소에서 뽑은 동네 이름 (조금 축소했을 때 묶는 기준)
@@ -96,6 +99,7 @@ public class PropertySearchDto {
         dto.setStatusLabel(card.getStatusLabel());
 
         dto.setPrice(primaryPrice(bean));
+        dto.setComparablePrice(comparablePrice(bean));
 
         if(bean.getType() != null){
             dto.setType(bean.getType().name());
@@ -193,6 +197,21 @@ public class PropertySearchDto {
             case SALE -> bean.getPrice();
             case JEONSE -> bean.getDeposit();
             case MONTHLY -> bean.getMonthlyDeposit();
+        };
+    }
+
+    private static Long comparablePrice(Property bean){
+        if (bean.getDealType() == null) return null;
+
+        return switch (bean.getDealType()){
+            case SALE -> bean.getPrice();
+            case JEONSE -> bean.getDeposit();
+            case MONTHLY -> {
+                if (bean.getMonthlyDeposit() == null && bean.getMonthlyRent() == null) yield null;
+                long deposit = bean.getMonthlyDeposit() == null ? 0L : bean.getMonthlyDeposit();
+                long rent = bean.getMonthlyRent() == null ? 0L : bean.getMonthlyRent();
+                yield deposit + (rent * 100);
+            }
         };
     }
 }
