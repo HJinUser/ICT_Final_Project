@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -112,6 +113,9 @@ public class Property {
 
     @Column(name = "monthly_rent")
     private Long monthlyRent;    // 월세 금액(만원)
+
+    @Formula("coalesce(price, deposit, coalesce(monthly_deposit,0) + coalesce(monthly_rent,0)*100)")
+    private Long comparablePrice;
 
     @Column(name = "maintenance_fee")
     private Integer maintenanceFee; // 관리비(만 원)

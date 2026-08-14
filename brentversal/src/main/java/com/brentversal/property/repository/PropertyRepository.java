@@ -106,6 +106,24 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                           @Param("tagIds") List<Long> tagIds,
                           @Param("tagCount") long tagCount);
 
+    // 매물 확인 화면 - 매물유형별로 실제 존재하는 거래유형만 뽑는다 (type이 null이면 전체 대상).
+    @Query("select distinct p.dealType from Property p " +
+            " where p.status = :status and p.visible = true " +
+            "   and (:type is null or p.type = :type)")
+    List<DealType> findDistinctDealTypes(@Param("status") PropertyStatus status,
+                                         @Param("type") PropertyType type);
+
+    // 매물 확인 화면
+    // 정렬은 Pageable의 Sort에 맡긴다 (Service의 toSort() 참고).
+    @Query("select p from Property p " +
+            " where p.status = :status and p.visible = true " +
+            "   and (:type is null or p.type = :type) " +
+            "   and (:dealType is null or p.dealType = :dealType)")
+    Page<Property> findForListings(@Param("status") PropertyStatus status,
+                                   @Param("type") PropertyType type,
+                                   @Param("dealType") DealType dealType,
+                                   Pageable pageable);
+
     // 동네 탐색 카드에 표시할 공개·게시중 매물 건수
     long countByNeighborhoodIdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
 

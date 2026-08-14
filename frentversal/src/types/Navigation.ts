@@ -43,7 +43,7 @@ export function visibleFor(items: NavItem[], role: ViewerRole): NavItem[] {
 export const HEADER_NAV: NavItem[] = [
     { label: '지도 검색', path: '/map', ready: true },
     { label: '동네 탐색', path: '/neighborhood', ready: true },
-    { label: '매물 확인', path: '/listings', ready: false },
+    { label: '매물 확인', path: '/listings', ready: true },
     { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
     // 중개사무소 목록·상세는 서버도 비회원까지 열어 둔 공개 화면이라 역할을 가리지 않고 보여 준다.
     // (기획서 매트릭스에는 사용자 전용으로 되어 있으니, 되돌리려면 roles: ['GUEST', 'USER'] 를 다시 붙이면 된다)
@@ -77,7 +77,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
         items: [
             { label: '지도 검색', path: '/map', ready: true },
             { label: '동네 탐색', path: '/neighborhood', ready: true },
-            { label: '매물 확인', path: '/listings', ready: false },
+            { label: '매물 확인', path: '/listings', ready: true },
             { label: '맞춤 추천', path: '/recommend', ready: false },
             { label: '관심 목록', path: '/favorites', ready: true },
         ],
