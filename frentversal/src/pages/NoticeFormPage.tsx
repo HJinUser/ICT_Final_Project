@@ -4,6 +4,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { createNotice, getNotice, updateNotice } from '../api/noticeApi';
+import NoticeEditor from '../components/NoticeEditor';
 import type { User } from '../types/User';
 import '../assets/common.css';
 import '../assets/responsive.css';
@@ -19,6 +20,11 @@ function getRequestErrorMessage(error: unknown) {
         return data?.message || data?.error;
     }
     return undefined;
+}
+
+function getTextFromHtml(html: string) {
+    const document = new DOMParser().parseFromString(html, 'text/html');
+    return document.body.textContent?.replace(/\u00a0/g, ' ').trim() ?? '';
 }
 
 function NoticeFormPage({ user }: NoticeFormPageProps) {
@@ -78,8 +84,9 @@ function NoticeFormPage({ user }: NoticeFormPageProps) {
         event.preventDefault();
         const normalizedTitle = title.trim();
         const normalizedContent = content.trim();
+        const contentText = getTextFromHtml(normalizedContent);
 
-        if (!normalizedTitle || !normalizedContent) {
+        if (!normalizedTitle || !contentText) {
             setError('제목과 내용을 모두 입력해 주세요.');
             return;
         }
@@ -131,13 +138,11 @@ function NoticeFormPage({ user }: NoticeFormPageProps) {
                                 <span className="notice-count">{title.length} / 200</span>
                             </div>
                             <div className="field">
-                                <label htmlFor="notice-content">내용</label>
-                                <textarea
-                                    id="notice-content"
+                                <label>내용</label>
+                                <NoticeEditor
                                     value={content}
-                                    onChange={(event) => setContent(event.target.value)}
-                                    required
-                                    placeholder="공지사항 내용을 입력해 주세요"
+                                    onChange={setContent}
+                                    disabled={submitting}
                                 />
                             </div>
                             {error && <div className="notice-inline-error">{error}</div>}

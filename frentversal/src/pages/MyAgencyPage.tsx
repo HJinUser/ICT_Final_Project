@@ -232,8 +232,16 @@ function MyAgencyPage() {
                                 <div className="grid-3">
                                     {properties.map((property) => (
                                         <Link className="card" to={`/property/${property.id}`} key={property.id}>
-                                            {/* 매물 사진은 property 테이블에 이미지 컬럼이 생기면 연결한다 */}
-                                            <div className="thumb" style={{ height: 120, marginBottom: 12 }} />
+                                            <div
+                                                className="thumb"
+                                                style={{
+                                                    height: 120,
+                                                    marginBottom: 12,
+                                                    ...(property.thumbnailUrl
+                                                        ? { backgroundImage: `url('${property.thumbnailUrl}')` }
+                                                        : {}),
+                                                }}
+                                            />
 
                                             <div className="row between">
                                                 <span className={`status ${property.status === 'ACTIVE' ? 'green'

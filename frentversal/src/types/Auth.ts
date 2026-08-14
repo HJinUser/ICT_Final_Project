@@ -42,6 +42,12 @@ export type SignupRequest = {
     // 소셜 회원가입 전용. OAuth2LoginSuccessHandler가 발급한 단기 토큰이며,
     // 값이 있으면 서버가 소셜 가입으로 처리한다.
     socialToken?: string;
+
+    // 약관 동의 결과. 필수 항목은 동의해야만 가입이 진행되므로 따로 보내지 않고,
+    // "어느 버전에 동의했는지"와 사람마다 값이 갈리는 선택 항목만 보낸다.
+    termsVersion?: string;
+    agreedMarketing?: boolean;
+    agreedThirdParty?: boolean;
 };
 
 // 서버가 입력값 오류를 돌려줄 때의 형태.
@@ -90,5 +96,8 @@ export type PasswordlessLoginResult = {
     name?: string;
     email?: string;
     role?: "USER" | "BROKER" | "ADMIN";
+    // 지도 검색이 시작 위치와 기본 지역을 정할 때 쓴다 (비밀번호 로그인 응답과 같은 값)
+    address?: string;
+    sigungu?: string;
     preferenceCompleted?: boolean;
 };

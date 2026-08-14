@@ -76,6 +76,10 @@ public class PasswordlessController {
                 "name", member.getName(),
                 "email", member.getEmail(),
                 "role", member.getRole().toString(),
+                // 비밀번호 로그인(MemberController)과 같은 값을 담는다.
+                // 지도 검색이 이 주소로 시작 위치와 기본 지역을 정하므로, 로그인 방식에 따라 달라지면 안 된다.
+                "address", member.getAddress() == null ? "" : member.getAddress(),
+                "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
                 "preferenceCompleted", member.isPreferenceCompleted()
         ));
     }

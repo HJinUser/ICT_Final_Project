@@ -184,19 +184,28 @@
     flex: none;
 }
 
-/* ── 알림 (중개인 전용) ──────────────────────────────── */
+/* ── 알림 (로그인한 사용자 전체) ─────────────────────── */
+/* 종 아이콘(17px)보다 버튼을 크게 잡아 둔다.
+   버튼이 아이콘 크기 그대로면 모서리에 붙는 개수 배지가 종을 덮어 버린다. */
 .site-header .bell {
     position: relative;
-    display: flex;
-    align-items: center;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 100px;
     color: var(--ink-2);
 }
 
-/* 읽지 않은 알림이 있을 때 종 위에 찍히는 점 */
+.site-header .bell:hover {
+    background: var(--bg-2);
+}
+
+/* 읽지 않은 알림 개수. 종의 오른쪽 위 모서리에 걸치되 아이콘을 가리지 않는 자리다. */
 .site-header .bell .dot {
     position: absolute;
-    top: -1px;
-    right: -1px;
+    top: 1px;
+    right: 1px;
     min-width: 15px;
     height: 15px;
     padding: 0 4px;
@@ -206,6 +215,8 @@
     font-size: 10px;
     line-height: 15px;
     text-align: center;
+    /* 배지가 아이콘과 붙어 보이지 않도록 흰 테두리로 살짝 띄운다 */
+    box-shadow: 0 0 0 2px #fff;
 }
 
 /* ── 드롭다운 (사용자 메뉴 / 알림 목록 공용) ─────────── */

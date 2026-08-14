@@ -139,6 +139,9 @@ function App({ onLogin }: Props) {
                             name: result.name ?? '',
                             email: result.email ?? email,
                             role: result.role ?? 'USER',
+                            // 지도 검색이 시작 위치와 기본 지역을 정할 때 쓴다
+                            address: result.address ?? '',
+                            sigungu: result.sigungu ?? '',
                             preferenceCompleted: result.preferenceCompleted ?? false,
                         },
                         result.accessToken,

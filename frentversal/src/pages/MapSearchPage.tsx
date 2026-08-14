@@ -72,10 +72,19 @@ function MapSearchPage({ user }: Props) {
     // 지역명일 수도 있고 매물 이름일 수도 있어서, 구(region) 필터에 억지로 넣지 않고
     // 서버가 이름·주소·구·동을 함께 훑는 자유 검색어로 따로 넘긴다.
     const [searchParams] = useSearchParams();
-    const initialKeyword = searchParams.get('keyword') ?? '';
 
-    // 지금 적용 중인 검색어. 위쪽에 표시하고, 지우면 전체 목록으로 돌아간다.
-    const [keyword, setKeyword] = useState(initialKeyword);
+    // 처음 열 때 어느 지역을 보여 줄지 정한다.
+    //   1) 검색해서 들어온 경우  : 그 지역 (가장 분명한 의도)
+    //   2) 로그인한 회원         : 가입할 때 적은 주소의 구
+    //   3) 그 외                 : 전체
+    // 회원이 사는 곳을 기본으로 두되, "전체 보기"로 언제든 벗어날 수 있게 한다.
+    // 집을 구할 때는 지금 사는 곳이 아니라 이사 갈 지역을 보는 경우도 많기 때문이다.
+    const keywordRegion = searchParams.get('keyword') ?? '';
+    const memberRegion = user?.sigungu ?? '';
+    const initialRegion = keywordRegion || memberRegion;
+
+    // 회원 지역이 기본으로 걸린 것인지 (안내 문구를 보여 줄지 판단한다)
+    const [usingMemberRegion, setUsingMemberRegion] = useState(!keywordRegion && Boolean(memberRegion));
 
     // ── 필터 입력값 ("조건 적용"을 누르기 전 상태) ─────────────
     const [type, setType] = useState('ALL');
@@ -176,6 +185,7 @@ function MapSearchPage({ user }: Props) {
     // "선택 조건 적용" — 입력값을 조회 조건으로 옮긴다.
     // 검색어는 필터가 아니라 위에서 따로 잡은 조건이므로 그대로 유지한다.
     const applyFilters = () => {
+        setUsingMemberRegion(false); // 직접 조건을 골랐으면 안내를 거둔다
         setApplied({
             keyword,
             region,
@@ -194,6 +204,7 @@ function MapSearchPage({ user }: Props) {
 
     // "초기화" — 적용된 조건까지 모두 처음 상태로 (검색어는 유지한다)
     const resetFilters = () => {
+        setUsingMemberRegion(false);
         setType('ALL');
         setDealType('ALL');
         setRegion('');
@@ -438,6 +449,13 @@ function MapSearchPage({ user }: Props) {
                     selectedId={pinnedId ?? hoveredId}
                     onSelect={(id) => { setPinnedId(id); setPinnedArea(null); setPage(0); }}
                     onSelectGroup={(names) => { setPinnedArea(names[0]); setPinnedId(null); setPage(0); }}
+                    // 회원이 가입할 때 적은 주소로 지도를 시작한다.
+                    // 주소가 없으면(예전에 로그인해 둔 정보라 주소가 안 담긴 경우) 구 이름만으로도 찾는다.
+                    // 검색해서 들어온 경우에는 그 의도가 우선이라 넘기지 않는다.
+                    initialCenterAddress={keywordRegion ? null : (user?.address || user?.sigungu)}
+                    // 지도에 처음 들어왔을 때는 회원이 사는 구가, 필터에서 구를 고르면 그 구가
+                    // 테두리로 강조된다. "선택 조건 적용"을 누르기 전에도 바로 반영된다.
+                    highlightRegion={region || null}
                 />
 
                 {/* ── 오른쪽 : 매물 목록 ────────────────────────── */}
@@ -464,6 +482,27 @@ function MapSearchPage({ user }: Props) {
                         <div className="tabs" style={{ marginTop: 14 }}>
                             <button className={`tab-btn${mine ? '' : ' on'}`} onClick={() => setMine(false)}>전체</button>
                             <button className={`tab-btn${mine ? ' on' : ''}`} onClick={() => setMine(true)}>내 매물</button>
+                        </div>
+                    )}
+
+                    {/* 회원 지역이 기본으로 걸렸을 때, 왜 이 지역인지 알려 주고 벗어날 길을 준다 */}
+                    {usingMemberRegion && (
+                        <div className="row between" style={{ marginTop: 12 }}>
+                            <span className="xs dim">
+                                회원님 지역(<b>{memberRegion}</b>) 매물을 먼저 보고 있습니다.
+                            </span>
+                            <button
+                                className="xs"
+                                style={{ color: 'var(--v)' }}
+                                onClick={() => {
+                                    setUsingMemberRegion(false);
+                                    setRegion('');
+                                    setDong('');
+                                    setApplied((prev) => ({ ...prev, region: '', dong: '' }));
+                                }}
+                            >
+                                전체 지역 보기
+                            </button>
                         </div>
                     )}
 

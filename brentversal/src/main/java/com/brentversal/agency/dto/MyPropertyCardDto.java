@@ -25,6 +25,7 @@ public class MyPropertyCardDto {
     private String status ;      // 거래 상태 코드
     private String statusLabel ; // 거래 상태 한글
     private boolean visible ;    // 공개 여부
+    private String thumbnailUrl ; // 대표 사진. 없으면 null (화면은 빈 자리를 보여 준다)
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime createdAt ; // 등록일
@@ -53,6 +54,14 @@ public class MyPropertyCardDto {
         // 상태 라벨도 같은 규칙이라 AgencyPropertyDto 가 변환해 둔 값을 그대로 쓴다
         dto.setStatus(price.getStatus());
         dto.setStatusLabel(price.getStatusLabel());
+
+        // 대표 사진(isMain)이 있으면 그것을, 없으면 첫 장을 쓴다.
+        // 지도 검색 카드(PropertySearchDto)와 같은 규칙이다.
+        bean.getImages().stream()
+                .filter(image -> Boolean.TRUE.equals(image.getIsMain()))
+                .findFirst()
+                .or(() -> bean.getImages().stream().findFirst())
+                .ifPresent(image -> dto.setThumbnailUrl(image.getUrl()));
 
         return dto;
     }

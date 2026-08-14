@@ -175,9 +175,60 @@
     margin-top: 0;
 }
 
-.notice-form .field textarea {
+.notice-editor .ck-editor__editable_inline {
     min-height: 360px;
+    padding: 18px 22px;
     line-height: 1.7;
+}
+
+.notice-editor .ck.ck-editor {
+    width: 100%;
+}
+
+.notice-editor .ck.ck-toolbar {
+    border-color: var(--line);
+    border-radius: var(--r-s) var(--r-s) 0 0;
+}
+
+.notice-editor .ck.ck-editor__main > .ck-editor__editable {
+    border-color: var(--line);
+    border-radius: 0 0 var(--r-s) var(--r-s);
+}
+
+.notice-editor .ck.ck-editor__main > .ck-editor__editable.ck-focused {
+    border-color: var(--v);
+    box-shadow: 0 0 0 1px var(--v);
+}
+
+.notice-content.ck-content h2,
+.notice-content.ck-content h3,
+.notice-content.ck-content h4 {
+    margin: 1.25em 0 0.55em;
+    color: var(--ink);
+    line-height: 1.4;
+}
+
+.notice-content.ck-content p,
+.notice-content.ck-content ul,
+.notice-content.ck-content ol,
+.notice-content.ck-content blockquote {
+    margin: 0 0 1em;
+}
+
+.notice-content.ck-content ul,
+.notice-content.ck-content ol {
+    padding-left: 1.5em;
+}
+
+.notice-content.ck-content a {
+    color: var(--v);
+    text-decoration: underline;
+}
+
+.notice-content.ck-content blockquote {
+    padding: 10px 18px;
+    border-left: 4px solid var(--v);
+    background: var(--bg-2);
 }
 
 .notice-count {
