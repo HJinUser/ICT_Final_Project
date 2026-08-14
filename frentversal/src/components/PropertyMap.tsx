@@ -43,6 +43,11 @@ interface Props {
     // 지도 검색에 처음 들어왔을 때는 회원이 사는 구, 필터에서 구를 고르면 그 구가 여기로 들어온다.
     // null 이면 강조 표시를 지운다.
     highlightRegion?: string | null;
+
+    // "이 구가 화면에 들어오게 시야를 다시 맞춰라"는 신호. 값이 바뀔 때만 반응한다.
+    // 화면에서 "선택 조건 적용"을 누를 때마다 올려 주므로, 같은 구를 그대로 두고 지도만
+    // 옮겨 둔 뒤 다시 적용해도 그 구로 돌아온다.
+    focusNonce?: number;
 }
 
 // 표식에 적을 짧은 가격 문구. "전세 4억 9,000" -> "4.9억"
@@ -95,6 +100,7 @@ function PropertyMap({
     onSelectGroup,
     initialCenterAddress,
     highlightRegion,
+    focusNonce,
 }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -111,6 +117,9 @@ function PropertyMap({
     // 경계선을 그리면서 지도 범위를 한 번 맞췄는지 기억해 둔다.
     // highlightRegion 문자열이 바뀔 때만 다시 맞추고, 다른 이유로 다시 그려질 때는 시야를 건드리지 않는다.
     const lastFittedRegionRef = useRef<string | null>(null);
+
+    // 마지막으로 반응한 "다시 맞춰라" 신호. 이 값이 달라졌을 때만 시야를 다시 잡는다.
+    const lastFocusNonceRef = useRef<number | undefined>(focusNonce);
 
     // 지도 범위를 한 번 맞췄는지 기억해 둔다.
     // 매번 맞추면 사용자가 지도를 옮기거나 확대할 때마다 원위치로 돌아가 버린다.
@@ -247,12 +256,17 @@ function PropertyMap({
             });
         }
 
+        // 구를 고른 상태면 아래 경계 강조 쪽이 그 구에 맞춰 시야를 잡으므로 여기서는 건드리지 않는다.
+        // 매물 위치에 맞추면 그 구에 매물이 한두 건일 때 지나치게 확대되어
+        // 방금 고른 지역이 어디인지 알 수 없게 된다.
+        const framedByRegion = Boolean(highlightRegion && findDistrictBoundary(highlightRegion));
+
         // 검색 결과가 바뀐 직후에만 범위를 맞춘다
-        if (!bounds.isEmpty() && !fittedRef.current) {
+        if (!bounds.isEmpty() && !fittedRef.current && !framedByRegion) {
             map.setBounds(bounds);
             fittedRef.current = true;
         }
-    }, [properties, level, myAgencyId, selectedId, onSelect, onSelectGroup, sdkLoaded]);
+    }, [properties, level, myAgencyId, selectedId, onSelect, onSelectGroup, sdkLoaded, highlightRegion]);
 
     // 검색 조건이 바뀌어 목록이 통째로 달라지면 범위를 다시 맞춘다
     useEffect(() => {
@@ -297,12 +311,14 @@ function PropertyMap({
         });
 
         // 같은 구를 다시 그릴 때(예: 표식이 다시 그려지며 이 효과가 재실행될 때)는
-        // 사용자가 이미 옮겨 둔 시야를 건드리지 않는다. 구가 실제로 바뀌었을 때만 맞춘다.
-        if (lastFittedRegionRef.current !== highlightRegion) {
+        // 사용자가 이미 옮겨 둔 시야를 건드리지 않는다.
+        // 구가 실제로 바뀌었을 때와, 화면에서 "선택 조건 적용"으로 신호를 보냈을 때만 맞춘다.
+        if (lastFittedRegionRef.current !== highlightRegion || lastFocusNonceRef.current !== focusNonce) {
             map.setBounds(bounds);
             lastFittedRegionRef.current = highlightRegion;
+            lastFocusNonceRef.current = focusNonce;
         }
-    }, [highlightRegion, sdkLoaded]);
+    }, [highlightRegion, focusNonce, sdkLoaded]);
 
     const pinnableCount = properties.filter((property) => property.latitude != null).length;
     const grouping = level >= GU_GROUP_LEVEL ? '구' : level >= DONG_GROUP_LEVEL ? '동' : null;

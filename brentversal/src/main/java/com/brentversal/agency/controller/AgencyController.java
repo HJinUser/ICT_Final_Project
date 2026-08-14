@@ -27,8 +27,8 @@ public class AgencyController {
     private final AgencyReviewService agencyReviewService ;
 
     // 중개사무소 목록 조회
-    // GET /agency                            : 전체 목록
-    // GET /agency?keyword=반포&region=서초구  : 검색어 + 지역 필터
+    // GET /agency                                       : 전체 목록
+    // GET /agency?keyword=반포&region=서초구&dong=반포동 : 검색어 + 지역(구·동) 필터
     // @RequestParam(required = false) : 파라미터를 안 보내도 400 이 나지 않게 한다(값은 null 이 된다).
     //
     // 응답을 배열이 아니라 객체로 감싸는 이유:
@@ -37,9 +37,10 @@ public class AgencyController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String region){
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) String dong){
 
-        List<AgencyResponseDto> agencies = agencyService.search(keyword, region);
+        List<AgencyResponseDto> agencies = agencyService.search(keyword, region, dong);
 
         return ResponseEntity.ok(Map.of(
                 "content", agencies,                          // 중개사무소 목록

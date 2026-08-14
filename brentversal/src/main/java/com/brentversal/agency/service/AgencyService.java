@@ -69,16 +69,17 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
         return agencyRepository.save(agency);
     }
 
-    // 중개사무소 목록 조회 (검색어 + 지역 필터)
+    // 중개사무소 목록 조회 (검색어 + 지역(구·동) 필터)
     // readOnly = true : 조회 전용 트랜잭션이라 변경 감지(dirty checking)를 하지 않아 조금 더 가볍다.
     @Transactional(readOnly = true)
-    public List<AgencyResponseDto> search(String keyword, String region){
+    public List<AgencyResponseDto> search(String keyword, String region, String dong){
         // 프론트에서 값을 안 보내면 null 로 들어오므로 빈 문자열로 바꿔 준다.
         // 리포지토리의 like '%%' 조건이 "조건 없음"으로 동작하게 하기 위함이다.
         String searchKeyword = (keyword == null) ? "" : keyword.trim();
         String searchRegion  = (region  == null) ? "" : region.trim();
+        String searchDong    = (dong    == null) ? "" : dong.trim();
 
-        List<Agency> agencyList = agencyRepository.search(searchKeyword, searchRegion);
+        List<Agency> agencyList = agencyRepository.search(searchKeyword, searchRegion, searchDong);
 
         // 엔터티 목록을 DTO 목록으로 변환해서 반환한다.
         //

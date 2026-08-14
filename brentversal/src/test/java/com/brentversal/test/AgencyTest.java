@@ -50,7 +50,7 @@ public class AgencyTest {
     @DisplayName("중개사무소 전체 목록 조회")
     void searchAll(){
         // 검색어와 지역을 안 넘기면(null) 전체 목록이 나와야 한다
-        List<AgencyResponseDto> list = agencyService.search(null, null);
+        List<AgencyResponseDto> list = agencyService.search(null, null, null);
 
         System.out.println("전체 중개사무소 수 : " + list.size());
         for(AgencyResponseDto dto : list){
@@ -66,7 +66,7 @@ public class AgencyTest {
     @DisplayName("검색어와 지역으로 중개사무소 조회")
     void searchByKeywordAndRegion(){
         // 사무소명에 '반포'가 들어가고 주소에 '서초구'가 들어가는 사무소
-        List<AgencyResponseDto> list = agencyService.search("반포", "서초구");
+        List<AgencyResponseDto> list = agencyService.search("반포", "서초구", null);
 
         System.out.println("검색 결과 수 : " + list.size());
         list.forEach(dto -> System.out.println(dto.getName() + " / " + dto.getAddress()));
