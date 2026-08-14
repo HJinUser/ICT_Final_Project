@@ -12,11 +12,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -66,21 +62,11 @@ public class Neighborhood {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @NotNull(message = "평균 만족도는 필수입니다.")
-    @DecimalMin(value = "0.0", message = "평균 만족도는 0 이상이어야 합니다.")
-    @DecimalMax(value = "5.0", message = "평균 만족도는 5 이하여야 합니다.")
-    @Column(name = "satisfaction_avg", nullable = false)
-    private Double satisfactionAvg = 0.0;
-
-    @NotNull(message = "평균 전세가는 필수입니다.")
-    @PositiveOrZero(message = "평균 전세가는 0 이상이어야 합니다.")
-    @Column(name = "average_jeonse_price", nullable = false)
-    private Long averageJeonsePrice = 0L;
-
-    @NotNull(message = "인기도 점수는 필수입니다.")
-    @PositiveOrZero(message = "인기도 점수는 0 이상이어야 합니다.")
-    @Column(name = "popularity_score", nullable = false)
-    private Integer popularityScore = 0;
+    // 평균 전세가·인기도는 저장하지 않는다. 동네에 매물이 새로 등록/거래되거나 찜이 바뀔 때마다
+    // 값을 다시 계산해 넣어 줘야 하는데, 그 갱신을 깜빡하면 "카드에는 5.1억인데 실제 매물은 다르다"는
+    // 식으로 어긋난다(과거 Agency.listingCount가 그래서 죽은 컬럼이 됐다).
+    // 그래서 propertyCount와 똑같이 조회 시점에 매물·찜 테이블을 직접 집계해서 채운다
+    // (NeighborhoodService.toResponse 참고).
 
     @Column(nullable = false)
     private boolean visible = true;

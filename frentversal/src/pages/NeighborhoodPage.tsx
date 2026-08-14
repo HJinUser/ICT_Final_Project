@@ -39,6 +39,9 @@ const CATEGORY_LABELS: Record<TagCategoryCode, string> = {
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as TagCategoryCode[];
 const PAGE_SIZE = 6;
 
+// 이 서비스는 서울만 다룬다. 시/도를 고를 필요가 없어서 항상 이 값으로 고정한다.
+const FIXED_CITY = '서울시';
+
 function formatJeonsePrice(price: number) {
     if (price <= 0) return '정보 없음';
     const eok = Math.floor(price / 10_000);
@@ -53,9 +56,8 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
     const [tags, setTags] = useState<TagResponse[]>([]);
     const [activeCategory, setActiveCategory] = useState<TagCategoryCode>('ATMOSPHERE');
     const [search, setSearch] = useState<Required<Pick<NeighborhoodSearchParams, 'tagIds' | 'sort' | 'includeHidden'>> & NeighborhoodSearchParams>({
-        city: '', district: '', dong: '', tagIds: [], sort: 'POPULAR', includeHidden: false,
+        city: FIXED_CITY, district: '', dong: '', tagIds: [], sort: 'POPULAR', includeHidden: false,
     });
-    const [draftCity, setDraftCity] = useState('');
     const [draftDistrict, setDraftDistrict] = useState('');
     const [draftDong, setDraftDong] = useState('');
     const [loading, setLoading] = useState(true);
@@ -107,11 +109,9 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
         () => tags.filter((tag) => search.tagIds.includes(tag.id)),
         [tags, search.tagIds],
     );
-    const districts = draftCity
-        ? result.districtsByCity[draftCity] ?? []
-        : Array.from(new Set(Object.values(result.districtsByCity).flat())).sort();
-    const districtKey = `${draftCity}|${draftDistrict}`;
-    const dongs = draftCity && draftDistrict ? result.dongsByDistrict[districtKey] ?? [] : [];
+    const districts = result.districtsByCity[FIXED_CITY] ?? [];
+    const districtKey = `${FIXED_CITY}|${draftDistrict}`;
+    const dongs = draftDistrict ? result.dongsByDistrict[districtKey] ?? [] : [];
     const pageCount = Math.max(1, Math.ceil(result.content.length / PAGE_SIZE));
     const pagedNeighborhoods = result.content.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -127,7 +127,7 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
     const applyLocation = () => {
         setSearch((previous) => ({
             ...previous,
-            city: draftCity,
+            city: FIXED_CITY,
             district: draftDistrict,
             dong: draftDong,
         }));
@@ -161,10 +161,7 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
             <section className="section"><div className="wrap neighborhood-wrap">
                 <section className="neighborhood-filter-card">
                     <div className="neighborhood-location-fields">
-                        <label>시·도<select value={draftCity} onChange={(event) => { setDraftCity(event.target.value); setDraftDistrict(''); setDraftDong(''); }}>
-                            <option value="">전체</option>
-                            {result.cities.map((city) => <option key={city} value={city}>{city}</option>)}
-                        </select></label>
+                        <label>시·도<input type="text" value={FIXED_CITY} disabled /></label>
                         <label>시·군·구<select value={draftDistrict} onChange={(event) => { setDraftDistrict(event.target.value); setDraftDong(''); }}>
                             <option value="">전체</option>
                             {districts.map((district) => <option key={district} value={district}>{district}</option>)}
@@ -229,7 +226,6 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
                                 <div className="neighborhood-card-body">
                                     <div className="row between">
                                         <div><span className="xs dim">{neighborhood.city} {neighborhood.district}</span><h2>{neighborhood.dong}</h2></div>
-                                        <strong className="neighborhood-score">★ {neighborhood.satisfactionAvg.toFixed(1)}</strong>
                                     </div>
                                     <p>{neighborhood.description || '등록된 동네 소개가 없습니다.'}</p>
                                     <div className="neighborhood-card-tags">

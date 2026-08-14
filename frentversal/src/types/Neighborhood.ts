@@ -9,7 +9,6 @@ export interface NeighborhoodResponse {
     dong: string;
     description: string | null;
     imageUrl: string | null;
-    satisfactionAvg: number;
     averageJeonsePrice: number;
     propertyCount: number;
     popularityScore: number;
@@ -32,4 +31,14 @@ export interface NeighborhoodSearchParams {
     tagIds?: number[];
     sort?: NeighborhoodSortCode;
     includeHidden?: boolean;
+}
+
+// 관리자 "동네 등록" 폼이 보내는 값. 시세·인기도는 서버가 매물/찜을 집계해서 채우므로 여기 없다.
+export interface NeighborhoodCreatePayload {
+    city: string;
+    district: string;
+    dong: string;
+    description: string;
+    imageUrl: string;
+    tagIds: number[];
 }

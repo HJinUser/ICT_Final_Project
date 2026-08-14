@@ -31,6 +31,7 @@ import AdminConsolePage from './../pages/AdminConsolePage';
 import AdminHomePanel from './../pages/AdminHomePanel';
 import AdminPropertyPage from './../pages/AdminPropertyPage';
 import AdminBrokerPage from './../pages/AdminBrokerPage';
+import AdminNeighborhoodPage from './../pages/AdminNeighborhoodPage';
 import MyConsultationPage from './../pages/MyConsultationPage';
 import MyPage from './../pages/MyPage';
 import MapSearchPage from './../pages/MapSearchPage';
@@ -103,6 +104,7 @@ function App({ user, handleLoginSuccess }: AppProps) {
         <Route index element={<AdminHomePanel />} />
         <Route path="properties" element={<AdminPropertyPage user={user} />} />
         <Route path="brokers" element={<AdminBrokerPage user={user} />} />
+        <Route path="neighborhoods" element={<AdminNeighborhoodPage />} />
         <Route path="reports" element={<ReportAdminListPage user={user} />} />
         <Route path="reports/:id" element={<ReportAdminDetailPage user={user} />} />
       </Route>

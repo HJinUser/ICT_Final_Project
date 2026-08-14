@@ -48,7 +48,7 @@ const SHORTCUTS: (NavItem & { desc: string; image: string })[] = [
         image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=70',
     },
     {
-        label: '동네 탐색', path: '/neighborhood', ready: false,
+        label: '동네 탐색', path: '/neighborhood', ready: true,
         desc: '조용한 곳, 역 가까운 곳, 새 건물 많은 곳',
         image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=800&q=70',
     },
@@ -81,7 +81,7 @@ const LEVEL_CLASS: Record<PriceLevel, string> = {
 };
 
 const MAP_ITEM: NavItem = { label: '지도 검색', path: '/map', ready: true };
-const NEIGHBORHOOD_ITEM: NavItem = { label: '동네 탐색', path: '/neighborhood', ready: false };
+const NEIGHBORHOOD_ITEM: NavItem = { label: '동네 탐색', path: '/neighborhood', ready: true };
 
 // 섹션 목차(스크롤스파이) 대상. 역할과 상관없이 모두에게 보이는 공통 구역만 담는다.
 // 중개인·관리자 전용 블록(요약·상세)은 각자 "전체 보기"·"콘솔 열기" 링크가 있어 목차에 넣지 않는다.

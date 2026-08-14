@@ -1,6 +1,7 @@
 import axiosInstance from './axiosInstance';
 import type { TagResponse } from '../types/Tag';
 import type {
+    NeighborhoodCreatePayload,
     NeighborhoodListResponse,
     NeighborhoodResponse,
     NeighborhoodSearchParams,
@@ -33,5 +34,11 @@ export async function toggleNeighborhoodVisibility(id: number): Promise<Neighbor
 
 export async function getNeighborhoodTags(): Promise<TagResponse[]> {
     const response = await axiosInstance.get<TagResponse[]>('/tag');
+    return response.data;
+}
+
+// 관리자 "동네 등록". 시세·인기도는 서버가 매물/찜을 집계해서 채우므로 여기서 보내지 않는다.
+export async function createNeighborhood(payload: NeighborhoodCreatePayload): Promise<NeighborhoodResponse> {
+    const response = await axiosInstance.post<NeighborhoodResponse>('/neighborhoods', payload);
     return response.data;
 }
