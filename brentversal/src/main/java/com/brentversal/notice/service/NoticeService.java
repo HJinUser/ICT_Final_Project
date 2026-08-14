@@ -8,6 +8,9 @@ import com.brentversal.notice.dto.NoticeUpdateRequest;
 import com.brentversal.notice.entity.Notice;
 import com.brentversal.notice.exception.NoticeNotFoundException;
 import com.brentversal.notice.repository.NoticeRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +19,8 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 public class NoticeService {
+
+    private static final int PAGE_SIZE = 10;
 
     private final NoticeRepository noticeRepository;
     private final MemberRepository memberRepository;
@@ -33,6 +38,18 @@ public class NoticeService {
                 .stream()
                 .map(NoticeResponse::from)
                 .toList();
+    }
+
+    public Page<NoticeResponse> findAll(int page, String keyword) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), PAGE_SIZE);
+
+        if (keyword == null || keyword.isBlank()) {
+            return noticeRepository.findAllByOrderByCreatedAtDesc(pageable)
+                    .map(NoticeResponse::from);
+        }
+
+        return noticeRepository.searchByKeyword(keyword.trim(), pageable)
+                .map(NoticeResponse::from);
     }
 
     @Transactional

@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { deleteNotice, getNotice } from '../api/noticeApi';
@@ -31,6 +31,7 @@ function NoticeDetailPage({ user }: NoticeDetailPageProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [deleting, setDeleting] = useState(false);
+    const noticeRequestRef = useRef<{ id: number; request: Promise<Notice> } | null>(null);
 
     useEffect(() => {
         let active = true;
@@ -43,9 +44,20 @@ function NoticeDetailPage({ user }: NoticeDetailPageProps) {
             }
 
             try {
-                const data = await getNotice(noticeId);
+                // StrictMode에서 화면 효과가 두 번 실행되어도 상세 조회 API는 한 번만 호출합니다.
+                if (!noticeRequestRef.current || noticeRequestRef.current.id !== noticeId) {
+                    noticeRequestRef.current = {
+                        id: noticeId,
+                        request: getNotice(noticeId),
+                    };
+                }
+
+                const data = await noticeRequestRef.current.request;
                 if (active) setNotice(data);
             } catch (requestError) {
+                if (noticeRequestRef.current?.id === noticeId) {
+                    noticeRequestRef.current = null;
+                }
                 console.error('공지사항 상세 조회 실패', requestError);
                 if (active) setError('공지사항을 찾을 수 없거나 불러오지 못했습니다.');
             } finally {
