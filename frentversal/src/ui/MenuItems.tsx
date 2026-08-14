@@ -141,7 +141,9 @@ function App({ user, handleLogout }: MenuItemsProps) {
    return (
       <header className="site-header">
          <button className="brand" onClick={() => navigate('/')} aria-label="전세역전 홈으로">
-            <span className="flip">전</span><span className="flip">세</span><span>역전</span>
+            <span className="flip"><span className="face">전</span><span className="face face-back">전</span></span>
+            <span className="flip"><span className="face">세</span><span className="face face-back">세</span></span>
+            <span>역전</span>
          </button>
 
          <nav className="nav">

@@ -86,8 +86,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
-                        // 동네 탐색·상세는 공개하고, 숨김 전환은 관리자만 허용한다.
+                        // 동네 탐색·상세는 공개하고, 등록·숨김 전환은 관리자만 허용한다.
                         .requestMatchers(HttpMethod.GET, "/neighborhoods", "/neighborhoods/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/neighborhoods").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/neighborhoods/**").hasRole("ADMIN")
                         // 실거래가 조회는 공개하고, 외부 API 수집 실행은 관리자만 허용한다.
                         .requestMatchers(HttpMethod.GET, "/real-estate-transactions").permitAll()

@@ -1,6 +1,7 @@
 package com.brentversal.property.service;
 
 import com.brentversal.agency.service.MyAgencyService;
+import com.brentversal.neighborhood.repository.NeighborhoodRepository;
 import com.brentversal.property.constant.DealType;
 import com.brentversal.property.constant.PriceChangeStatus;
 import com.brentversal.property.constant.PropertyStatus;
@@ -41,6 +42,18 @@ public class PropertyService {
     // 로그인한 사람의 중개사무소를 찾을 때 쓴다.
     // 매물의 주인을 정하거나, 내 매물이 맞는지 확인하는 데 필요하다.
     private final MyAgencyService myAgencyService;
+
+    // 매물의 sigungu·dong으로 어느 동네(Neighborhood)에 속하는지 찾아 neighborhoodId를 채우는 데 쓴다.
+    private final NeighborhoodRepository neighborhoodRepository;
+
+    // 관리자가 아직 등록하지 않은 동네면 못 찾을 수 있다 — 그럴 땐 null로 두고, 나중에
+    // 그 동네가 등록되면 다음 등록/수정 때 다시 연결되게 한다(과거 데이터를 소급 연결하진 않음).
+    private Long resolveNeighborhoodId(String district, String dong) {
+        if (district == null || dong == null) return null;
+        return neighborhoodRepository.findByDistrictAndDong(district, dong)
+                .map(neighborhood -> neighborhood.getId())
+                .orElse(null);
+    }
 
     // 방 개수 "3개 이상" 조건을 펼칠 때 쓰는 상한.
     // Property.roomCount 의 @Max(6) 과 같은 값이라, 그쪽이 바뀌면 여기도 함께 바꾼다.
@@ -135,6 +148,9 @@ public class PropertyService {
         property.setType(changes.getType());
         property.setDealType(changes.getDealType());
         property.setAddress(changes.getAddress());
+        property.setSigungu(changes.getSigungu());
+        property.setDong(changes.getDong());
+        property.setNeighborhoodId(resolveNeighborhoodId(changes.getSigungu(), changes.getDong()));
         property.setArea(changes.getArea());
         property.setFloor(changes.getFloor());
         property.setRoomCount(changes.getRoomCount());
@@ -227,6 +243,7 @@ public class PropertyService {
         // 요청 본문의 agency 값은 신뢰하지 않고 덮어쓴다 — 그대로 두면 남의 사무소 번호를
         // 넣어 그 사무소 명의로 매물을 등록할 수 있기 때문이다.
         bean.setAgency(myAgencyService.findMyAgency(email));
+        bean.setNeighborhoodId(resolveNeighborhoodId(bean.getSigungu(), bean.getDong()));
 
         bean.setStatus(PropertyStatus.PENDING);
         bean.setVisible(true);

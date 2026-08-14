@@ -14,4 +14,10 @@ public interface NeighborhoodRepository extends JpaRepository<Neighborhood, Long
 
     @EntityGraph(attributePaths = "tags")
     Optional<Neighborhood> findWithTagsById(Long id);
+
+    // 매물을 등록/수정할 때 sigungu(구)·dong(동)으로 어느 동네에 속하는지 찾는다.
+    // 아직 관리자가 등록하지 않은 동네면 못 찾을 수 있으므로 Optional.
+    Optional<Neighborhood> findByDistrictAndDong(String district, String dong);
+
+    boolean existsByCityAndDistrictAndDong(String city, String district, String dong);
 }

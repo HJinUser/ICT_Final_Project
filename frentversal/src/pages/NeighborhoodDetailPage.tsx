@@ -8,6 +8,7 @@ import '../assets/responsive.css';
 import '../components/Neighborhood.css';
 
 function formatJeonsePrice(price: number) {
+    if (price <= 0) return '정보 없음';
     const eok = Math.floor(price / 10_000);
     const remainder = price % 10_000;
     if (eok === 0) return `${remainder.toLocaleString()}만 원`;
@@ -61,7 +62,6 @@ function NeighborhoodDetailPage() {
                         {neighborhood.tags.map((tag) => <span key={tag.id}>#{tag.name}</span>)}
                     </div>
                     <div className="neighborhood-detail-stats">
-                        <div><span>평균 만족도</span><strong>★ {neighborhood.satisfactionAvg.toFixed(1)}</strong></div>
                         <div><span>평균 전세가</span><strong>{formatJeonsePrice(neighborhood.averageJeonsePrice)}</strong></div>
                         <div><span>공개 매물</span><strong>{neighborhood.propertyCount}건</strong></div>
                     </div>

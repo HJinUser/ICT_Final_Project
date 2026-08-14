@@ -26,6 +26,7 @@ const ADMIN_MENU: NavItem[] = [
     { label: '회원 관리', path: '/admin/members', ready: false },
     { label: '중개인 인증 심사', path: '/admin/brokers', ready: true },
     { label: '매물 관리', path: '/admin/properties', ready: true },
+    { label: '동네 관리', path: '/admin/neighborhoods', ready: true },
     { label: '신고/한줄평 관리', path: '/admin/reports', ready: true },
     { label: '데이터 수집·배치 모니터링', path: '/admin/batch', ready: false },
     { label: '모델 관리', path: '/admin/models', ready: false },
