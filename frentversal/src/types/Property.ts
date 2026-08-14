@@ -97,6 +97,7 @@ export interface PropertyResponse {
     aiDeposit: number | null;
     aiMonthlyDeposit: number | null;
     aiMonthlyRent: number | null;
+    aiRecommendScore: number | null;
     priceStatus: PriceChangeStatusCode | null;
 
     // Python이 지오코딩/유클리드 거리로 계산해서 채워주는 값. 연동 전이라 지금은 대부분 null로 옴.
