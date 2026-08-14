@@ -6,8 +6,6 @@ import { getMyVerification } from '../api/brokerApi';
 import type { Consultation, MyAgencyDashboard, BrokerVerification } from '../types/MyAgency';
 import type { User } from '../types/User';
 import { CONSULTATION_FILTERS, CONSULTATION_STATUS_COLORS } from '../utils/consultationStatus';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 중개인으로 로그인했을 때 보이는 마이페이지
 //

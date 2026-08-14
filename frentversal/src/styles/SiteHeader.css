@@ -3,14 +3,17 @@
 .site-header {
     position: sticky;
     top: 0;
-    z-index: 60;
+    /* z-index 와 배경 투명도는 common.css 에 있던 값을 그대로 가져온 것이다.
+       common.css 가 이 파일보다 뒤에 로드되어 왔기 때문에, 화면에 실제로 적용되던 값은
+       여기 적혀 있던 60 / .9 가 아니라 아래 80 / .93 이었다. 지금 화면을 그대로 유지한다. */
+    z-index: 80;
     height: var(--hd);
     display: flex;
     align-items: center;
     gap: 22px;
     padding: 0 30px;
     /* 반투명 + 블러라서 스크롤할 때 아래 내용이 살짝 비쳐 보인다 */
-    background: rgba(255, 255, 255, .9);
+    background: rgba(255, 255, 255, .93);
     backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--line-2);
     /* 주의: 여기에 overflow를 걸면 안 된다.
@@ -27,7 +30,10 @@
 }
 
 @media (max-width: 860px) {
-    .site-header { gap: 14px; padding: 0 18px; }
+    /* 원래 여기 .site-header { gap: 14px; padding: 0 18px; } 가 있었지만,
+       common.css 의 .site-header 기본값(gap 22px / padding 0 30px)이 뒤에 로드되며
+       미디어쿼리 규칙과 명시도가 같아 항상 덮어써 왔다. 즉 좁은 화면에서도 한 번도 적용된 적이 없다.
+       지금 화면을 그대로 두기 위해 되살리지 않는다. 좁은 폭 여백을 줄이려면 이 두 줄만 되돌리면 된다. */
 
     .site-header .brand { flex-shrink: 0; }
     .site-header .auth { flex-shrink: 0; }

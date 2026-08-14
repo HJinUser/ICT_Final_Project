@@ -1,3 +1,9 @@
+/*
+  NeighborhoodPage.css
+
+  Neighborhood.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
 .neighborhood-page { min-height: calc(100vh - 180px); background: #fbfafc; }
 .neighborhood-hero { background: linear-gradient(135deg, #f7f2fa 0%, #eef5f1 100%); }
 .neighborhood-wrap { max-width: 1180px; }
@@ -27,7 +33,6 @@
 .neighborhood-visual .status { position: absolute; top: 14px; right: 14px; }
 .neighborhood-card-body { padding: 21px; }
 .neighborhood-card-body h2 { margin-top: 3px; font-size: 24px; }
-.neighborhood-score { color: #7f55a3; font-size: 15px; }
 .neighborhood-card-body > p { min-height: 46px; margin-top: 13px; color: var(--ink-2); line-height: 1.65; }
 .neighborhood-card-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
 .neighborhood-card-tags span { padding: 5px 9px; border-radius: 100px; background: var(--v-pale); color: var(--v); font-size: 11.5px; }
@@ -44,26 +49,12 @@
 .neighborhood-pagination button { min-width: 36px; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 100px; background: #fff; color: var(--ink-2); }
 .neighborhood-pagination button.active { border-color: var(--v); background: var(--v); color: #fff; }
 .neighborhood-pagination button:disabled { opacity: .4; cursor: not-allowed; }
-.neighborhood-detail-hero { padding: 58px 0; background: linear-gradient(135deg, #f7f2fa, #eef5f1); }
-.neighborhood-detail-hero .breadcrumb { margin-bottom: 28px; }
-.neighborhood-detail-hero h1 { margin-top: 8px; }
-.neighborhood-detail-hero p { max-width: 680px; margin-top: 14px; color: var(--ink-2); }
-.neighborhood-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 22px; align-items: start; }
-.neighborhood-detail-main, .neighborhood-detail-side { padding: 28px; }
-.neighborhood-detail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
-.neighborhood-detail-stats div { padding: 18px; border-radius: var(--r-m); background: var(--bg-2); }
-.neighborhood-detail-stats span, .neighborhood-detail-stats strong { display: block; }
-.neighborhood-detail-stats span { color: var(--ink-3); font-size: 12px; }
-.neighborhood-detail-stats strong { margin-top: 7px; font-size: 18px; }
-.neighborhood-detail-side { position: sticky; top: 82px; }
-.neighborhood-detail-side p { margin: 11px 0 20px; }
 @media (max-width: 900px) {
     .neighborhood-location-fields { grid-template-columns: repeat(2, 1fr); }
     .neighborhood-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .neighborhood-detail-grid { grid-template-columns: 1fr; }
-    .neighborhood-detail-side { position: static; }
 }
 @media (max-width: 620px) {
-    .neighborhood-location-fields, .neighborhood-grid, .neighborhood-detail-stats { grid-template-columns: 1fr; }
+    .neighborhood-location-fields,
+.neighborhood-grid{ grid-template-columns: 1fr; }
     .neighborhood-toolbar { align-items: stretch; flex-direction: column; }
 }

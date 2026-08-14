@@ -4,11 +4,9 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { createNotice, getNotice, updateNotice } from '../api/noticeApi';
-import NoticeEditor from '../components/NoticeEditor';
+import NoticeEditor from './components/NoticeEditor';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Notice.css';
+import '../styles/NoticeFormPage.css';
 
 interface NoticeFormPageProps {
     user: User | null;

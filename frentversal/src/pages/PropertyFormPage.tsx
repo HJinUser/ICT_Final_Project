@@ -4,11 +4,11 @@ import { Container, Row, Col, Form, Button, Alert, ListGroup, Card, Spinner } fr
 // customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/insert" 처럼 그 뒤만 적는다.
 // 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/insert" 가 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
-import AddressInput from "../components/AddressInput";
+import AddressInput from "./components/AddressInput";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Property, PropertyResponse, PropertyImageResponse } from "../types/Property";
 import type { TagResponse } from "../types/Tag";
-import "../components/PropertyFormPage.css"; // 부트스트랩이 못 커버하는 부분만 남긴 커스텀 css
+import "../styles/PropertyFormPage.css"; // 부트스트랩이 못 커버하는 부분만 남긴 커스텀 css
 
 const STEPS = ["기본 정보", "가격·계약", "사진", "태그 선택", "AI 시세 확인", "관리자 승인 요청"];
 const NUMBER_FIELDS = ["price", "deposit", "monthlyDeposit", "monthlyRent", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee"];

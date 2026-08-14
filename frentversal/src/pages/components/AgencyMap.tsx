@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { loadKakaoSdk } from '../utils/kakaoMap';
+import { loadKakaoSdk } from '../../utils/kakaoMap';
 
 // 목록 화면(AgencyResponse)과 상세 화면(AgencyDetail) 모두에서 쓸 수 있도록,
 // 지도를 그리는 데 꼭 필요한 값만 요구한다.

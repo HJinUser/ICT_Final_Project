@@ -11,9 +11,7 @@ import {
     type ReportProcessPayload,
 } from '../types/Report';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Report.css';
+import '../styles/ReportAdminDetailPage.css';
 
 interface ReportAdminDetailPageProps { user: User | null; }
 

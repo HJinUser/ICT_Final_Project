@@ -1,0 +1,122 @@
+/*
+  NoticeFormPage.css
+
+  Notice.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
+.notice-wrap {
+    max-width: 1080px;
+}
+
+.notice-state {
+    padding: 64px 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    background: #fff;
+    color: var(--ink-3);
+    text-align: center;
+}
+
+.notice-error,
+.notice-inline-error {
+    color: var(--red);
+}
+
+.notice-detail-main {
+    min-height: calc(100vh - 180px);
+    background: var(--bg-2);
+}
+
+.notice-form {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    background: #fff;
+}
+
+.notice-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notice-actions {
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.notice-inline-error {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: var(--r-s);
+    background: #fbefef;
+    font-size: 13px;
+}
+
+.notice-form-wrap {
+    max-width: 900px;
+}
+
+.notice-form-head {
+    margin-bottom: 24px;
+}
+
+.notice-form-head p {
+    margin-top: 9px;
+    color: var(--ink-2);
+}
+
+.notice-form {
+    padding: 30px 34px;
+}
+
+.notice-form .field:first-child {
+    margin-top: 0;
+}
+
+.notice-editor .ck-editor__editable_inline {
+    min-height: 360px;
+    padding: 18px 22px;
+    line-height: 1.7;
+}
+
+.notice-editor .ck.ck-editor {
+    width: 100%;
+}
+
+.notice-editor .ck.ck-toolbar {
+    border-color: var(--line);
+    border-radius: var(--r-s) var(--r-s) 0 0;
+}
+
+.notice-editor .ck.ck-editor__main > .ck-editor__editable {
+    border-color: var(--line);
+    border-radius: 0 0 var(--r-s) var(--r-s);
+}
+
+.notice-editor .ck.ck-editor__main > .ck-editor__editable.ck-focused {
+    border-color: var(--v);
+    box-shadow: 0 0 0 1px var(--v);
+}
+
+.notice-count {
+    justify-self: end;
+    color: var(--ink-3);
+    font-size: 11.5px;
+}
+
+@media (max-width: 620px) {
+
+    .notice-form{
+        padding: 24px 20px;
+    }
+
+    .notice-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .notice-actions > *{
+        flex: 1;
+    }
+}

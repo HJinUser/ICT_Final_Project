@@ -9,13 +9,11 @@ import {
     requestConsultation,
     writeReview,
 } from '../api/agencyApi';
-import AgencyMap from '../components/AgencyMap';
+import AgencyMap from './components/AgencyMap';
 import type { AgencyDetail, AgencyReview, AgencyStatus } from '../types/Agency';
 import type { NavItem } from '../types/Navigation';
 import type { User } from '../types/User';
 import { navigateOrNotice } from '../utils/navigateOrNotice';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 중개사무소 상세 페이지 (프로토타입 agency-detail.html 기준)
 // 중개사무소 안내 목록에서 카드를 누르면 /agency/:id 로 들어온다.

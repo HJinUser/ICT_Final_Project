@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom';
 import { approveBroker, getAdminBrokers, rejectBroker } from '../api/adminApi';
 import type { AdminBroker } from '../types/Admin';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 관리자 중개인 인증 심사 화면
 //

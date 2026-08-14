@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Container, Table, Badge, Form, Alert, Row, Col } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
 import type { PropertyResponse, PropertyStatusCode } from "../types/Property";
-import "../components/MyPropertiesPage.css";
+import "../styles/MyPropertiesPage.css";
 import { formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 // 매물 상태 -> 뱃지 라벨/색상 (목업 agent-dashboard.html의 상태 배지 색을 따름)

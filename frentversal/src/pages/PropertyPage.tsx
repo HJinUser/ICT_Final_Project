@@ -10,7 +10,7 @@ import { PROPERTY_STATUS_LABELS } from "../types/PropertyDetail";
 import type { PropertyResponse, PropertyStatusCode } from "../types/Property";
 import type { AgencyDetail } from "../types/Agency";
 import type { Review } from "../types/Review";
-import "../components/PropertyPage.css";
+import "../styles/PropertyPage.css";
 import { DEAL_TYPE_LABELS } from "../utils/propertyPrice.ts";
 
 interface PropertyPageProps {

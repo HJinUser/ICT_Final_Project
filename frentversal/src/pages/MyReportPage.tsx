@@ -7,9 +7,7 @@ import {
     type PublicReport,
     type ReportStatus,
 } from '../types/Report';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Report.css';
+import '../styles/MyReportPage.css';
 
 function formatDate(value: string | null) {
     if (!value) return '-';

@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 import { getHomeData } from "../api/homeApi";
 import { getNotices } from "../api/noticeApi";
-import HomeAdminDetail from "../components/HomeAdminDetail";
-import HomeAdminSummary from "../components/HomeAdminSummary";
-import HomeBrokerDetail from "../components/HomeBrokerDetail";
-import HomeBrokerSummary from "../components/HomeBrokerSummary";
-import HomeRecommend from "../components/HomeRecommend";
-import HomeSectionNav, { type SectionNavItem } from "../components/HomeSectionNav";
+import HomeAdminDetail from "./components/HomeAdminDetail";
+import HomeAdminSummary from "./components/HomeAdminSummary";
+import HomeBrokerDetail from "./components/HomeBrokerDetail";
+import HomeBrokerSummary from "./components/HomeBrokerSummary";
+import HomeRecommend from "./components/HomeRecommend";
+import HomeSectionNav, { type SectionNavItem } from "./components/HomeSectionNav";
 import { buildCompareRows } from "../types/HomeCompareMapper";
 import type { HomeData, PriceLevel } from "../types/Home";
 import type { Notice } from "../types/Notice";
@@ -24,10 +24,10 @@ import "../styles/HomePage.css";
   공통 블록(히어로 - 목차 - 바로가기 - 공지 - 맞춤 추천 - 이번 주 매물 - 매물 비교 - 동네 - 한줄평 - 이용 방법)을
   모든 역할에게 그대로 보여 주고, 중개인·관리자에게만 아래 두 자리에 블록을 더 얹는다.
 
-  목차(HomeSectionNav)는 히어로 바로 아래, 공통 블록이 시작되기 전에 붙인다.
+  목차(HomeSectionNav)는 히어로(검색창) 바로 아래에 붙인다. 역할별 블록보다도 위다.
   스크롤하면서 화면 가운데에 걸린 구역의 이름이 목차에서 강조된다(스크롤스파이).
 
-    요약 스트립  : 히어로 바로 아래. 숫자만 본다. (몇 건 남았는지)
+    요약 스트립  : 목차 바로 아래. 숫자만 본다. (몇 건 남았는지)
     상세 블록    : 이용 방법 뒤, CTA 앞. 목록을 본다. (무엇을 처리해야 하는지)
 
   이렇게 나눈 이유는, 역할 정보를 첫 화면에서 바로 보여 주면서도
@@ -212,6 +212,15 @@ function App({ user }: Props) {
     // 비교표에서 글자로 표시되는 행들. 행마다 어느 쪽이 나은지도 여기서 함께 계산된다.
     const compareRows = buildCompareRows(data.compareExample);
 
+    // 관리자로 로그인했을 때는 "오늘 처리할 일" 요약도 목차에 넣는다.
+    // 목차는 화면에 나오는 순서와 같아야 한다. 이 구역은 목차 바 바로 다음에 렌더되는
+    // 첫 구역이라 목록 맨 앞에 둔다.
+    // 뒤에 넣으면 목록에는 맨 끝에 있는데 실제로는 맨 위에서 강조되는 자기모순이 생긴다.
+    // (공통 SECTION_NAV_ITEMS 자체는 배경색 교대(toneOf) 계산에도 쓰이므로 손대지 않는다)
+    const sectionNavItems = user?.role === 'ADMIN'
+        ? [{ id: 's-admin-summary', label: '오늘 처리할 일' }, ...SECTION_NAV_ITEMS]
+        : SECTION_NAV_ITEMS;
+
     return (
         <>
             {/* ── 히어로 ─────────────────────────────────────── */}
@@ -270,13 +279,15 @@ function App({ user }: Props) {
                 </div>
             </section>
 
+            {/* ── 섹션 목차 (스크롤스파이) ─────────────────────
+                히어로(검색창) 바로 아래 자리. 역할별 요약 스트립보다 위에 둬서
+                어떤 역할로 들어와도 화면 이동 안내가 같은 위치에 있게 한다. */}
+            <HomeSectionNav items={sectionNavItems} />
+
             {/* ── 역할별 요약 스트립 ─────────────────────────────
                 숫자만 보여 주는 자리. 목록 형태는 아래 상세 블록에서 다룬다. */}
             {user?.role === 'BROKER' && <HomeBrokerSummary user={user} />}
-            {user?.role === 'ADMIN' && <HomeAdminSummary />}
-
-            {/* ── 섹션 목차 (스크롤스파이) ───────────────────── */}
-            <HomeSectionNav items={SECTION_NAV_ITEMS} />
+            {user?.role === 'ADMIN' && <HomeAdminSummary id="s-admin-summary" />}
 
             {/* ── 공지사항 ───────────────────────────────────
                 상단 메뉴에 있던 공지를 메인으로 내렸다.

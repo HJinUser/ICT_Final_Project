@@ -2,7 +2,9 @@
 
 .site-footer {
     border-top: 1px solid var(--line);
-    padding: 52px 0 42px;
+    /* common.css 가 뒤에 로드되며 덮어써 왔기 때문에, 실제 적용되던 값은 52px 0 42px 가 아니라
+       아래 값이다. 지금 화면을 그대로 유지하기 위해 적용되던 값을 적는다. */
+    padding: 42px 0 34px;
     background: var(--bg-2);
     /* 본문이 짧은 화면에서 푸터가 본문에 붙어 보이지 않게 띄운다 */
     margin-top: 70px;

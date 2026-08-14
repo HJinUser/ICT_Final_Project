@@ -1,3 +1,9 @@
+/*
+  NoticeListPage.css
+
+  Notice.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
 .notice-wrap {
     max-width: 1080px;
 }
@@ -171,154 +177,8 @@
     text-align: center;
 }
 
-.notice-error,
-.notice-inline-error {
+.notice-error {
     color: var(--red);
-}
-
-.notice-detail-main {
-    min-height: calc(100vh - 180px);
-    background: var(--bg-2);
-}
-
-.notice-detail-card,
-.notice-form {
-    overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: var(--r-l);
-    background: #fff;
-}
-
-.notice-detail-head {
-    padding: 34px 38px 28px;
-    border-bottom: 1px solid var(--line-2);
-}
-
-.notice-detail-head h1 {
-    margin-top: 12px;
-    font-size: 28px;
-    line-height: 1.4;
-}
-
-.notice-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 18px;
-    margin-top: 14px;
-    color: var(--ink-3);
-    font-size: 12.5px;
-}
-
-.notice-content {
-    min-height: 320px;
-    padding: 38px;
-    color: var(--ink-2);
-    line-height: 1.9;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-}
-
-.notice-actions,
-.notice-admin-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.notice-actions {
-    justify-content: space-between;
-    margin-top: 20px;
-}
-
-.notice-inline-error {
-    margin-top: 16px;
-    padding: 12px 14px;
-    border-radius: var(--r-s);
-    background: #fbefef;
-    font-size: 13px;
-}
-
-.notice-form-wrap {
-    max-width: 900px;
-}
-
-.notice-form-head {
-    margin-bottom: 24px;
-}
-
-.notice-form-head p {
-    margin-top: 9px;
-    color: var(--ink-2);
-}
-
-.notice-form {
-    padding: 30px 34px;
-}
-
-.notice-form .field:first-child {
-    margin-top: 0;
-}
-
-.notice-editor .ck-editor__editable_inline {
-    min-height: 360px;
-    padding: 18px 22px;
-    line-height: 1.7;
-}
-
-.notice-editor .ck.ck-editor {
-    width: 100%;
-}
-
-.notice-editor .ck.ck-toolbar {
-    border-color: var(--line);
-    border-radius: var(--r-s) var(--r-s) 0 0;
-}
-
-.notice-editor .ck.ck-editor__main > .ck-editor__editable {
-    border-color: var(--line);
-    border-radius: 0 0 var(--r-s) var(--r-s);
-}
-
-.notice-editor .ck.ck-editor__main > .ck-editor__editable.ck-focused {
-    border-color: var(--v);
-    box-shadow: 0 0 0 1px var(--v);
-}
-
-.notice-content.ck-content h2,
-.notice-content.ck-content h3,
-.notice-content.ck-content h4 {
-    margin: 1.25em 0 0.55em;
-    color: var(--ink);
-    line-height: 1.4;
-}
-
-.notice-content.ck-content p,
-.notice-content.ck-content ul,
-.notice-content.ck-content ol,
-.notice-content.ck-content blockquote {
-    margin: 0 0 1em;
-}
-
-.notice-content.ck-content ul,
-.notice-content.ck-content ol {
-    padding-left: 1.5em;
-}
-
-.notice-content.ck-content a {
-    color: var(--v);
-    text-decoration: underline;
-}
-
-.notice-content.ck-content blockquote {
-    padding: 10px 18px;
-    border-left: 4px solid var(--v);
-    background: var(--bg-2);
-}
-
-.notice-count {
-    justify-self: end;
-    color: var(--ink-3);
-    font-size: 11.5px;
 }
 
 @media (max-width: 620px) {
@@ -342,33 +202,5 @@
     .notice-table th:nth-child(3),
     .notice-table td:nth-child(3) {
         width: 105px;
-    }
-
-    .notice-detail-head,
-    .notice-content,
-    .notice-form {
-        padding: 24px 20px;
-    }
-
-    .notice-detail-head h1 {
-        font-size: 22px;
-    }
-
-    .notice-content {
-        min-height: 240px;
-    }
-
-    .notice-actions {
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .notice-admin-actions {
-        width: 100%;
-    }
-
-    .notice-actions > *,
-    .notice-admin-actions > * {
-        flex: 1;
     }
 }

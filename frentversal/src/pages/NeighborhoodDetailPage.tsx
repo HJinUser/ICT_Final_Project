@@ -3,9 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import { getNeighborhood } from '../api/neighborhoodApi';
 import type { NeighborhoodResponse } from '../types/Neighborhood';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Neighborhood.css';
+import '../styles/NeighborhoodDetailPage.css';
 
 function formatJeonsePrice(price: number) {
     if (price <= 0) return '정보 없음';

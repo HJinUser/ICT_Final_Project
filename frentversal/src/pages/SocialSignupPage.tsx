@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, Container, Row, Form, Col, Button, Alert, Tabs, Tab } from "react-bootstrap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import TermsAgreement from "../components/TermsAgreement";
+import TermsAgreement from "./components/TermsAgreement";
 import type { AgreementState } from "../types/Terms";
 import { TERMS_VERSION, missingRequired } from "../types/Terms";
 
