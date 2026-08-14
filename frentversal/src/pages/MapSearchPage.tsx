@@ -73,23 +73,28 @@ function MapSearchPage({ user }: Props) {
     // 서버가 이름·주소·구·동을 함께 훑는 자유 검색어로 따로 넘긴다.
     const [searchParams] = useSearchParams();
 
-    // 처음 열 때 어느 지역을 보여 줄지 정한다.
-    //   1) 검색해서 들어온 경우  : 그 지역 (가장 분명한 의도)
-    //   2) 로그인한 회원         : 가입할 때 적은 주소의 구
-    //   3) 그 외                 : 전체
-    // 회원이 사는 곳을 기본으로 두되, "전체 보기"로 언제든 벗어날 수 있게 한다.
-    // 집을 구할 때는 지금 사는 곳이 아니라 이사 갈 지역을 보는 경우도 많기 때문이다.
-    const keywordRegion = searchParams.get('keyword') ?? '';
+    // 헤더 검색창·메인 검색창에서 ?keyword=... 로 들어온 자유 검색어.
+    // 지역명일 수도, 매물 이름일 수도 있어서 구(region) 필터에 넣지 않고
+    // 서버가 이름·주소·구·동을 함께 훑는 별도 조건(keyword)으로 넘긴다.
+    const initialKeyword = searchParams.get('keyword') ?? '';
     const memberRegion = user?.sigungu ?? '';
-    const initialRegion = keywordRegion || memberRegion;
 
-    // 회원 지역이 기본으로 걸린 것인지 (안내 문구를 보여 줄지 판단한다)
-    const [usingMemberRegion, setUsingMemberRegion] = useState(!keywordRegion && Boolean(memberRegion));
+    // 처음 열 때 지역 필터를 회원이 사는 구로 미리 맞춰 둘지 정한다.
+    //   1) 검색어로 들어온 경우 : 그 검색이 가장 분명한 의도이므로 지역을 강제하지 않는다
+    //   2) 로그인한 회원        : 가입할 때 적은 주소의 구를 기본으로
+    //   3) 그 외                : 전체
+    // "전체 지역 보기"로 언제든 벗어날 수 있게 한다.
+    // 집을 구할 때는 지금 사는 곳이 아니라 이사 갈 지역을 보는 경우도 많기 때문이다.
+    const [usingMemberRegion, setUsingMemberRegion] = useState(!initialKeyword && Boolean(memberRegion));
+    const initialRegion = usingMemberRegion ? memberRegion : '';
+
+    // 검색창에 지금 들어 있는 검색어. 지역 필터와 별개로 즉시 반영된다.
+    const [keyword, setKeyword] = useState(initialKeyword);
 
     // ── 필터 입력값 ("조건 적용"을 누르기 전 상태) ─────────────
     const [type, setType] = useState('ALL');
     const [dealType, setDealType] = useState('ALL');
-    const [region, setRegion] = useState('');
+    const [region, setRegion] = useState(initialRegion);
     const [dong, setDong] = useState('');
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
@@ -100,7 +105,10 @@ function MapSearchPage({ user }: Props) {
 
     // 실제로 조회에 쓰인 조건. "조건 적용"을 눌러야 여기로 옮겨진다.
     // (검색어는 필터와 별개라 "조건 적용" 없이도 바로 반영된다)
-    const [applied, setApplied] = useState<PropertySearchParams>({ keyword: initialKeyword });
+    const [applied, setApplied] = useState<PropertySearchParams>({
+        keyword: initialKeyword,
+        region: initialRegion || undefined,
+    });
 
     const [sort, setSort] = useState<PropertySort>('LATEST');
     const [page, setPage] = useState(0);
@@ -452,7 +460,7 @@ function MapSearchPage({ user }: Props) {
                     // 회원이 가입할 때 적은 주소로 지도를 시작한다.
                     // 주소가 없으면(예전에 로그인해 둔 정보라 주소가 안 담긴 경우) 구 이름만으로도 찾는다.
                     // 검색해서 들어온 경우에는 그 의도가 우선이라 넘기지 않는다.
-                    initialCenterAddress={keywordRegion ? null : (user?.address || user?.sigungu)}
+                    initialCenterAddress={initialKeyword ? null : (user?.address || user?.sigungu)}
                     // 지도에 처음 들어왔을 때는 회원이 사는 구가, 필터에서 구를 고르면 그 구가
                     // 테두리로 강조된다. "선택 조건 적용"을 누르기 전에도 바로 반영된다.
                     highlightRegion={region || null}
