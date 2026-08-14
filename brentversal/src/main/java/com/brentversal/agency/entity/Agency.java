@@ -94,11 +94,6 @@ public class Agency {
     @Column(nullable = false)
     private AgencyStatus status = AgencyStatus.AVAILABLE ; // 상담 가능 여부 배지
 
-    // 등록 매물 건수.
-    // 나중에 property(매물) 테이블이 생기면 count 쿼리로 계산하는 값이므로 이 컬럼은 그때 제거한다.
-    @Column(name = "listing_count", nullable = false)
-    private Integer listingCount = 0 ;
-
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate regdate ; // 등록 일자
 }

@@ -8,12 +8,12 @@
 -- verified 컬럼은 bit(1) 타입이라 b'1'(참) / b'0'(거짓) 으로 넣는다.
 -- member_id 는 아직 연결할 중개인 계정이 없어서 NULL 로 둔다.
 INSERT IGNORE INTO agencies
-    (agency_id, name, broker_name, address, phone, hours, registration_no, latitude, longitude, verified, rating_avg, status, listing_count, regdate, member_id)
+    (agency_id, name, broker_name, address, phone, hours, registration_no, latitude, longitude, verified, rating_avg, status, regdate, member_id)
 VALUES
-    (1, '반포역전 공인중개사', '박지훈', '서울 서초구 신반포로 194', '02-533-1200', '09:00-19:00', '11650-2024-00123', 37.5085, 127.0117, b'1', 4.8, 'AVAILABLE', 24, CURRENT_DATE, NULL),
-    (2, '서초센트럴 부동산',   '김서연', '서울 서초구 서초대로 396', '02-587-2300', '09:00-18:30', '11650-2024-00087', 37.4923, 127.0078, b'1', 4.6, 'AVAILABLE', 18, CURRENT_DATE, NULL),
-    (3, '방배파크 공인중개사', '이민호', '서울 서초구 방배로 100',   '02-591-7788', '10:00-19:00', '11650-2023-00451', 37.4815, 126.9975, b'0', 4.3, 'RESERVED',  31, CURRENT_DATE, NULL),
-    (4, '강남프라임 부동산',   '최유진', '서울 강남구 강남대로 396', '02-556-9900', '09:00-20:00', '11680-2024-00219', 37.4979, 127.0276, b'1', 4.9, 'AVAILABLE', 42, CURRENT_DATE, NULL);
+    (1, '반포역전 공인중개사', '박지훈', '서울 서초구 신반포로 194', '02-533-1200', '09:00-19:00', '11650-2024-00123', 37.5085, 127.0117, b'1', 4.8, 'AVAILABLE', CURRENT_DATE, NULL),
+    (2, '서초센트럴 부동산',   '김서연', '서울 서초구 서초대로 396', '02-587-2300', '09:00-18:30', '11650-2024-00087', 37.4923, 127.0078, b'1', 4.6, 'AVAILABLE', CURRENT_DATE, NULL),
+    (3, '방배파크 공인중개사', '이민호', '서울 서초구 방배로 100',   '02-591-7788', '10:00-19:00', '11650-2023-00451', 37.4815, 126.9975, b'0', 4.3, 'RESERVED',  CURRENT_DATE, NULL),
+    (4, '강남프라임 부동산',   '최유진', '서울 강남구 강남대로 396', '02-556-9900', '09:00-20:00', '11680-2024-00219', 37.4979, 127.0276, b'1', 4.9, 'AVAILABLE', CURRENT_DATE, NULL);
 
 -- 등록번호 컬럼은 나중에 추가한 것이라, 이미 데이터가 들어 있는 DB 에서는 위 INSERT 가 건너뛰어진다.
 -- 그래서 비어 있는 행만 따로 채워 준다.

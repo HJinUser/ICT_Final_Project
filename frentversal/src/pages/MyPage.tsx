@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import customAxios from '../api/axiosInstance';
 import { getMyConsultations } from '../api/myConsultationApi';
 import type { MyConsultation } from '../types/Consultation';
+import type { PropertyResponse } from '../types/Property';
 import type { User } from '../types/User';
 import '../assets/common.css';
 import '../assets/responsive.css';
@@ -11,8 +13,9 @@ import '../assets/responsive.css';
 //
 // 프로토타입(mypage.html)의 사용자 화면을 옮긴 것이다.
 // "내 활동" 목록에서 알림내역을 누르면 상담 답변 화면(/my-consultations)으로 간다.
+// 관심매물은 FavoritesPage(/favorites)가 이미 구현되어 있어 그쪽으로 연결한다.
 //
-// 관심매물·비교 기록·평가내역은 아직 서버 기능이 없다.
+// 비교 기록·평가내역은 아직 서버 기능이 없다.
 // 숫자를 지어내면 실제로 되는 것과 구분이 안 되므로, 준비 중이라고 표시해 둔다.
 
 interface Props {
@@ -25,6 +28,7 @@ const RECENT_VIEWED_KEY = 'recentlyViewedProperties';
 function MyPage({ user }: Props) {
     const [consultations, setConsultations] = useState<MyConsultation[]>([]);
     const [recentViewedCount, setRecentViewedCount] = useState(0);
+    const [favoritesCount, setFavoritesCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -37,6 +41,10 @@ function MyPage({ user }: Props) {
             .then((data) => setConsultations(data.content))
             .catch(() => setConsultations([]))
             .finally(() => setLoading(false));
+
+        customAxios.get<PropertyResponse[]>('/property/favorites')
+            .then((response) => setFavoritesCount(response.data.length))
+            .catch(() => setFavoritesCount(0));
 
         // 최근 본 매물은 서버가 아니라 브라우저에 저장된다
         try {
@@ -114,8 +122,8 @@ function MyPage({ user }: Props) {
                         </div>
                         <div className="metric">
                             <span className="label">관심매물</span>
-                            <strong className="dim">–</strong>
-                            <span className="delta">준비 중</span>
+                            <strong>{favoritesCount}</strong>
+                            <span className="delta">담아 둔 매물</span>
                         </div>
                     </div>
 
@@ -137,10 +145,11 @@ function MyPage({ user }: Props) {
                                     중개사무소 안내 <span>›</span>
                                 </Link>
 
-                                {/* 아래 두 가지는 아직 서버 기능이 없다 */}
-                                <a className="dim" onClick={(event) => event.preventDefault()} href="#">
-                                    관심매물 <span>준비 중</span>
-                                </a>
+                                <Link to="/favorites">
+                                    관심매물 <span>{favoritesCount}</span>
+                                </Link>
+
+                                {/* 비교 기록은 아직 서버 기능이 없다 */}
                                 <a className="dim" onClick={(event) => event.preventDefault()} href="#">
                                     비교 기록 <span>준비 중</span>
                                 </a>

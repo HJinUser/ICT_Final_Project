@@ -416,6 +416,13 @@ function AgencyDetailPage({ user }: Props) {
                                                 </div>
                                             </div>
                                             <p style={{ marginTop: 7 }}>{review.content}</p>
+
+                                            {review.reply && (
+                                                <div className="soft" style={{ marginTop: 10 }}>
+                                                    <span className="xs dim">중개사무소 답변 · {review.repliedAt}</span>
+                                                    <p style={{ marginTop: 5 }}>{review.reply}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
 
