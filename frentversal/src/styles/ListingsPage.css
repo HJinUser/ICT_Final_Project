@@ -1,0 +1,52 @@
+.listings-filter-block {
+    border: 0;
+    padding: 0 0 12px;
+}
+
+.listings-hint {
+    margin-top: 8px;
+}
+
+.listings-sort-select {
+    max-width: 170px;
+}
+
+.listings-message {
+    color: var(--red);
+}
+
+.listings-empty {
+    text-align: center;
+    margin-top: 22px;
+}
+
+.listings-empty button {
+    margin-left: 8px;
+}
+
+.listings-grid {
+    margin-top: 6px;
+}
+
+.listings-card-title {
+    margin-top: 11px;
+    font-size: 17px;
+}
+
+.listings-price {
+    font-size: 18px;
+    margin-top: 4px;
+    color: var(--v);
+}
+
+.listings-pagination {
+    display: flex;
+    gap: 6px;
+    margin-top: 22px;
+    justify-content: center;
+}
+
+.listings-footer-count {
+    text-align: center;
+    margin-top: 24px;
+}
