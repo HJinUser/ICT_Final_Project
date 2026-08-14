@@ -74,12 +74,13 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/property/favorites").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/property/favorites").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/property/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
                         // 매물 등록·수정·상태변경은 중개인만 할 수 있다.
                         // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
                         // "내 사무소의 매물이 맞는지"는 PropertyService 에서 한 번 더 확인한다.
+                        .requestMatchers(HttpMethod.POST, "/property/*/favorite").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.PUT, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
