@@ -66,7 +66,10 @@ public class NeighborhoodService {
                 .filter(item -> item.isVisible() || (admin && request.isIncludeHidden()))
                 .filter(item -> city == null || item.getCity().equals(city))
                 .filter(item -> district == null || item.getDistrict().equals(district))
-                .filter(item -> dong == null || item.getDong().equals(dong))
+                // 화면에서 "당산동 전체"를 고르면 dong 으로 "당산동"이 온다.
+                // 당산동1가~6가처럼 뒤에 N가가 붙은 동네까지 함께 나와야 "전체"라는 말과 맞으므로
+                // 정확히 같은 이름이 아니라 앞부분이 같은 것을 모두 고른다.
+                .filter(item -> dong == null || item.getDong().startsWith(dong))
                 .filter(item -> selectedTagIds.isEmpty() || item.getTags().stream()
                         .map(tag -> tag.getId())
                         .collect(Collectors.toSet())
