@@ -91,6 +91,23 @@ public class PropertyController {
         return ResponseEntity.ok(Map.of("content", found, "totalCount", found.size()));
     }
 
+    // 매물 확인 화면 - 매물유형을 고르면 그 유형에 실제 존재하는 거래유형만 돌려준다 (버튼 목록 갱신용)
+    @GetMapping("/deal-types")
+    public ResponseEntity<List<String>> dealTypes(@RequestParam(required = false) String type) {
+        return ResponseEntity.ok(propertyService.findAvailableDealTypes(type));
+    }
+
+    // 매물 확인 화면 전용 조회. 페이징 사용
+    @GetMapping("/listings")
+    public ResponseEntity<Map<String, Object>> listings(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String dealType,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size) {
+        return ResponseEntity.ok(propertyService.browseListings(type, dealType, sort, page, size));
+    }
+
     // 매물 비교 (쉼표로 구분된 id들을 받아서 여러 건 조회)
     @GetMapping("/compare")
     public ResponseEntity<?> compare(@RequestParam String ids) {
