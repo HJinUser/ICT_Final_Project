@@ -1,9 +1,17 @@
 import axiosInstance from './axiosInstance';
-import type { Notice, NoticePayload } from '../types/Notice';
+import type { Notice, NoticePageResponse, NoticePayload } from '../types/Notice';
 
 // 공지사항 전체 목록 조회
 export async function getNotices(): Promise<Notice[]> {
-    const response = await axiosInstance.get<Notice[]>('/notices');
+    const pageData = await getNoticePage();
+    return pageData.content;
+}
+
+// 공지사항 목록을 한 페이지에 10개씩 조회
+export async function getNoticePage(page = 0, keyword = ''): Promise<NoticePageResponse> {
+    const response = await axiosInstance.get<NoticePageResponse>('/notices', {
+        params: { page, keyword },
+    });
     return response.data;
 }
 

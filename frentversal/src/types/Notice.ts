@@ -11,3 +11,11 @@ export interface NoticePayload {
     title: string;
     content: string;
 }
+
+export interface NoticePageResponse {
+    content: Notice[];
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+}
