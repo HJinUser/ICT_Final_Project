@@ -5,9 +5,13 @@ import axios from "axios";
 import { login } from "../api/authApi";
 import { startPasswordlessLogin, checkPasswordlessLogin, cancelPasswordlessLogin } from "../api/passwordlessApi";
 import { API_BASE_URL } from "../config/config";
+import PasswordField from "../components/PasswordField";
 import { SOCIAL_BUTTONS } from "../types/Auth";
 import type { PasswordlessLoginResult } from "../types/Auth";
+import { RECENT_LOGIN_LABELS } from "../types/RecentLogin";
+import type { RecentLogin, RecentLoginMethod } from "../types/RecentLogin";
 import type { User } from "../types/User";
+import { clearRecentLogin, loadRecentLogin, markPendingSocial, saveRecentLogin } from "../utils/recentLogin";
 import "../styles/AuthForm.css";
 
 interface Props {
@@ -43,12 +47,27 @@ function App({ onLogin }: Props) {
     const [pwlessSessionId, setPwlessSessionId] = useState('');
     const [servicePassword, setServicePassword] = useState(''); // 화면에 보여줄 자동패스워드 숫자
 
+    // 지난번에 어떤 방법으로 로그인했는지. 없으면 안내를 보여 주지 않는다.
+    const [recent, setRecent] = useState<RecentLogin | null>(null);
+
+    useEffect(() => {
+        setRecent(loadRecentLogin());
+    }, []);
+
     // 로그인 성공 처리(일반 로그인과 동일하게 토큰 저장 + 리다이렉트).
     // 패스워드리스 로그인 성공 응답도 일반 로그인과 같은 모양으로 오기 때문에 그대로 재사용한다.
-    const handleLoginSuccess = (userData: User, accessToken: string, refreshToken: string) => {
+    const handleLoginSuccess = (
+        userData: User,
+        accessToken: string,
+        refreshToken: string,
+        method: RecentLoginMethod,
+    ) => {
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("user", JSON.stringify(userData));
+
+        // 다음에 로그인 화면에 들어왔을 때 "지난번엔 이 방법"이라고 알려 주기 위해 남긴다.
+        saveRecentLogin(method, userData.email);
 
         onLogin(userData);
 
@@ -70,7 +89,7 @@ function App({ onLogin }: Props) {
             // 서버의 응답을 전개 연산자로 처리합니다.
             // accessToken는 JWT, userData는 User.ts로 구성된 객체
             const { accessToken, refreshToken, ...userData } = data;
-            handleLoginSuccess(userData, accessToken, refreshToken);
+            handleLoginSuccess(userData, accessToken, refreshToken, 'NORMAL');
 
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.data) {
@@ -126,7 +145,8 @@ function App({ onLogin }: Props) {
                             preferenceCompleted: result.preferenceCompleted ?? false,
                         },
                         result.accessToken,
-                        result.refreshToken
+                        result.refreshToken,
+                        'PASSWORDLESS'
                     );
                 } else if (result.status === 'N') {
                     window.clearInterval(timer);
@@ -194,6 +214,46 @@ function App({ onLogin }: Props) {
                     </button>
                 </div>
 
+                {/* 지난번 로그인 방법 안내.
+                    여러 방법(일반/소셜/패스워드리스)을 섞어 쓰는 서비스라 어느 걸로 가입했는지
+                    헷갈리기 쉬워서, 마지막에 성공한 방법을 그대로 다시 보여 준다. */}
+                {recent && (
+                    <div className="auth-recent">
+                        <div className="body">
+                            <span className="cap">최근 로그인</span>
+                            <strong>{RECENT_LOGIN_LABELS[recent.method] ?? '알 수 없음'}</strong>
+                            <span className="mail">{recent.email}</span>
+                            {recent.savedAt && (
+                                <span className="when">{recent.savedAt.slice(0, 10)}</span>
+                            )}
+                        </div>
+
+                        <div className="acts">
+                            {/* 소셜은 이 화면에서 이어서 진행할 수 없으므로 아래 소셜 버튼을 쓰게 두고,
+                                일반/패스워드리스만 곧바로 그 탭으로 옮겨 준다. */}
+                            {(recent.method === 'NORMAL' || recent.method === 'PASSWORDLESS') && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setMode(recent.method === 'PASSWORDLESS' ? 'passwordless' : 'normal');
+                                        setEmail(recent.email);
+                                        setErrors('');
+                                    }}
+                                >
+                                    이 방법으로 로그인
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className="del"
+                                onClick={() => { clearRecentLogin(); setRecent(null); }}
+                            >
+                                지우기
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {errors && <div className="auth-alert">{errors}</div>}
 
                 {mode === 'normal' ? (
@@ -211,17 +271,17 @@ function App({ onLogin }: Props) {
                                 />
                             </div>
 
-                            <div className="auth-field">
-                                <label htmlFor="login-password">비밀번호</label>
-                                <input
-                                    id="login-password"
-                                    type="password"
-                                    placeholder="비밀번호 입력"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
+                            {/* 로그인 비밀번호 칸은 Caps Lock 안내를 띄운다.
+                                (로그인 실패 원인 중 흔한 것이라 미리 알려 주는 편이 낫다) */}
+                            <PasswordField
+                                id="login-password"
+                                label="비밀번호"
+                                placeholder="비밀번호 입력"
+                                value={password}
+                                onChange={setPassword}
+                                autoComplete="current-password"
+                                required
+                            />
 
                             <button type="submit" className="auth-solid-btn" style={{ marginTop: 20 }}>
                                 로그인
@@ -242,6 +302,9 @@ function App({ onLogin }: Props) {
                                     key={social.provider}
                                     href={`${API_BASE_URL}/oauth2/authorization/${social.provider}`}
                                     className={`auth-social-btn ${social.className}`}
+                                    // 소셜 로그인은 화면을 완전히 떠났다가 돌아오기 때문에,
+                                    // 어떤 제공자를 눌렀는지 지금 적어 두고 돌아온 화면에서 꺼내 쓴다.
+                                    onClick={() => markPendingSocial(social.provider)}
                                 >
                                     {social.label}
                                 </a>

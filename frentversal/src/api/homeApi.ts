@@ -64,6 +64,68 @@ const MOCK_HOME_DATA: HomeData = {
         },
     ],
 
+    // 맞춤 추천 미리보기.
+    // 추천 모델이 붙기 전이라 취향 태그를 만족한 매물을 손으로 골라 둔 예시다.
+    recommendations: [
+        {
+            id: 11,
+            imageUrl: PHOTO('1493809842364-78817add7ffb'),
+            priceLabel: '전세 3억 6,000',
+            summary: '서초구 방배동 · 59㎡ · 4층',
+            reason: '역 도보 5분 · 신축 5년 이내 · 주차 가능',
+            fitScore: 94,
+        },
+        {
+            id: 12,
+            imageUrl: PHOTO('1554995207-c18c203602cb'),
+            priceLabel: '전세 4억 1,000',
+            summary: '서초구 서초동 · 66㎡ · 9층',
+            reason: '조용한 동네 · 남향 채광 · 공원 인접',
+            fitScore: 88,
+        },
+        {
+            id: 13,
+            imageUrl: PHOTO('1486406146926-c627a92ad1ab'),
+            priceLabel: '월세 2,000 / 85',
+            summary: '서초구 반포동 · 42㎡ · 7층',
+            reason: '반려동물 가능 · 마트 도보 6분 · 낮은 관리비',
+            fitScore: 81,
+        },
+    ],
+
+    // 매물 비교해보기 예시. 이번 주 매물 중 가격 편차가 가장 큰 두 건을 그대로 가져다 썼다.
+    // 금액·AI 시세·관리비는 만원 단위 정수다. 승자 강조는 화면에서 이 숫자로 직접 계산한다.
+    compareExample: [
+        {
+            id: 1,
+            name: '반포 리버뷰',
+            imageUrl: PHOTO('1502672260266-1c1ef2d93688', 600),
+            dealTypeLabel: '전세',
+            price: 49_000,
+            aiPrice: 54_000,
+            maintenanceCost: 12,
+            area: 84,
+            stationMinutes: 4,
+            tags: ['한강 도보권', '역세권', '남향 채광', '주차 여유', '대형마트 6분'],
+            aiScore: 92,
+            neighborhood: '반포동',
+        },
+        {
+            id: 2,
+            name: '서초 센트럴',
+            imageUrl: PHOTO('1484154218962-a197022b5858', 600),
+            dealTypeLabel: '전세',
+            price: 44_000,
+            aiPrice: 46_900,
+            maintenanceCost: 9,
+            area: 66,
+            stationMinutes: 5,
+            tags: ['학원가', '공원 인접', '조용함', '편의점 다수'],
+            aiScore: 86,
+            neighborhood: '서초동',
+        },
+    ],
+
     neighborhoods: [
         {
             id: 1,

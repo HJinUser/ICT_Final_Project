@@ -44,7 +44,8 @@ const DUMMY_PROPERTY: PropertyDetail = {
     ],
     status: "ACTIVE",
     visible: true,
-    // AI 예상 시세는 거래유형마다 쓰는 칸이 다르다. 이 더미는 전세라 aiDeposit 만 값이 있다.
+    // AI 예상가는 거래유형별로 필드가 나뉜다. 이 매물은 전세(JEONSE)라서 aiDeposit 이 실제로 쓰이는 값이고,
+    // 나머지(매매가·월세)는 해당 없음이라 null 이다.
     aiPrice: null,
     aiDeposit: 54200,
     aiMonthlyDeposit: null,

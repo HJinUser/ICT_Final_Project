@@ -277,6 +277,7 @@ public class PropertyService {
 
         List<Property> found = propertyRepository.search(
                 PropertyStatus.ACTIVE,
+                blankToNull(condition.getKeyword()),
                 blankToNull(condition.getRegion()),
                 blankToNull(condition.getDong()),
                 toType(condition.getType()),

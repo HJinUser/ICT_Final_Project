@@ -53,6 +53,49 @@ export type HomeVoice = {
     createdAt: string;
 };
 
+// 메인의 "회원님 취향에 맞춘 집" 카드 1건.
+// 맞춤 추천 페이지(/recommend)의 카드에서 최소 항목만 뽑아 온 형태다.
+export type HomeRecommendation = {
+    id: number;
+    imageUrl: string;
+    priceLabel: string;
+    // "서초구 방배동 · 59㎡ · 4층"
+    summary: string;
+    // 이 매물이 사용자의 취향 중 무엇을 만족했는지. "역 도보 5분 · 신축 · 반려동물 가능"
+    reason: string;
+    // AI 적합도(0~100). 화면에서 막대와 숫자로 함께 보여 준다.
+    fitScore: number;
+};
+
+// 메인의 "두 집, 나란히 비교해보세요" 표에 들어가는 매물 1건.
+// 실제 비교 페이지(/property/compare)처럼 사용자가 고른 매물이 아니라,
+// 같은 동네에서 가격 차이가 큰 두 매물을 예시로 보여 주는 용도라 항상 2건 고정이다.
+//
+// 표시용 문자열이 아니라 "숫자 원본"을 그대로 받는다.
+// 미리보기라도 어느 쪽이 더 나은지를 실제로 계산해서 표시해야 하기 때문이다.
+// (문자열로 받으면 비교가 불가능해 승자를 손으로 지정할 수밖에 없다)
+export type HomeCompareItem = {
+    id: number;
+    // 매물 이름. 표 헤더에 쓰고, 칸을 누르면 이 id로 상세 페이지에 간다.
+    name: string;
+    imageUrl: string;
+    // "전세" / "월세" / "매매"
+    dealTypeLabel: string;
+    // 금액·AI 시세·관리비는 모두 만원 단위 정수다 (예: 49000 = 4억 9,000만 원)
+    price: number;
+    aiPrice: number;
+    maintenanceCost: number;
+    // 전용 면적(㎡)
+    area: number;
+    // 역까지 도보 분
+    stationMinutes: number;
+    // 주변 환경 태그. 화면에는 최대 5개까지만 보여 준다.
+    tags: string[];
+    // AI 추천 점수(0~100)
+    aiScore: number;
+    neighborhood: string;
+};
+
 // 워드클라우드 단어 1개. weight가 클수록 크게 그린다(1~5).
 export type CloudWord = {
     text: string;
@@ -64,6 +107,10 @@ export type HomeData = {
     // 히어로 영역에 띄우는 "이번 주 저평가 매물 수"
     weeklyLowCount: number;
     weeklyProperties: WeeklyProperty[];
+    // 맞춤 추천 미리보기. 비회원에게도 내려오지만 화면에서는 잠금 처리해 보여 준다.
+    recommendations: HomeRecommendation[];
+    // "매물 비교해보기" 예시 두 건. 항상 길이 2로 내려온다.
+    compareExample: [HomeCompareItem, HomeCompareItem];
     neighborhoods: HomeNeighborhood[];
     voices: HomeVoice[];
     // 워드클라우드 대상 동네 이름과 단어들
