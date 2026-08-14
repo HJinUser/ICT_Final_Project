@@ -127,3 +127,26 @@ export const SEOUL_DISTRICTS: string[] = Object.keys(SEOUL_DISTRICT_DONGS);
 export function dongsOf(district: string): string[] {
     return SEOUL_DISTRICT_DONGS[district] ?? [];
 }
+
+// 동 드롭다운에 그대로 넣을 수 있는 형태.
+// value 는 서버로 보내는 실제 법정동 이름이고, label 은 화면에 보여 줄 문구다.
+export interface DongOption {
+    value: string; // "당산동"
+    label: string; // "당산동 전체"
+}
+
+// 뒤에 N가가 붙지 않은 동은 모두 "○○동 전체"로 보여 준다.
+//
+// "당산동"과 "당산동1가~6가"가 한 목록에 같이 있을 때 둘을 구분해 주려는 것이고,
+// 하위 동이 없는 "여의도동" 같은 곳도 같은 말투로 맞춰 목록이 들쭉날쭉해 보이지 않게 한다.
+// "당산동4가"처럼 이미 하위 동인 항목에는 붙이지 않는다 — 더 나눌 것이 없기 때문이다.
+//
+// 이름만 바꾸고 value 는 건드리지 않는다. 서버로는 "당산동"이 그대로 나가야 하고,
+// 서버는 그 값으로 시작하는 동을 모두 찾아 준다(PropertyRepository.search 참고).
+// 그래서 "당산동 전체"를 고르면 당산동1가~6가 매물까지 함께 나온다.
+export function dongOptionsOf(district: string): DongOption[] {
+    return dongsOf(district).map((dong) => ({
+        value: dong,
+        label: /\d+가$/.test(dong) ? dong : `${dong} 전체`,
+    }));
+}

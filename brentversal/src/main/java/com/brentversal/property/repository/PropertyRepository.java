@@ -72,13 +72,18 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
            "        or lower(p.address) like lower(concat('%', :keyword, '%')) " +
            "        or lower(p.sigungu) like lower(concat('%', :keyword, '%')) " +
            "        or lower(p.dong) like lower(concat('%', :keyword, '%'))) " +
-           // 구·동은 주소 검색이 채워 준 컬럼으로 정확히 맞춘다.
-           // 컬럼이 비어 있는 예전 자료는 주소 문자열에서 찾아 보는 방식으로 함께 걸러 준다.
+           // 구는 주소 검색이 채워 준 컬럼으로 정확히 맞춘다.
+           // 컬럼이 비어 있는 예전 자료는 주소 문자열에서 찾아 보는 방식으로 함께 걸러 준다(동도 같다).
            "   and (:region is null " +
            "        or p.sigungu = :region " +
            "        or (p.sigungu is null and p.address like concat('%', :region, '%'))) " +
+           // 동은 앞부분이 같은 것까지 함께 찾는다.
+           // 화면에서 "당산동 전체"를 고르면 dong 으로 "당산동"이 오는데,
+           // 정확히 일치만 보면 당산동1가~6가 매물이 빠져 "전체"라는 말과 맞지 않는다.
+           // "당산동4가"처럼 하위 동을 직접 고른 경우에는 그 이름으로 시작하는 것이 자기 자신뿐이라
+           // 결과가 달라지지 않는다.
            "   and (:dong is null " +
-           "        or p.dong = :dong " +
+           "        or p.dong like concat(:dong, '%') " +
            "        or (p.dong is null and p.address like concat('%', :dong, '%'))) " +
            "   and (:type is null or p.type = :type) " +
            "   and (:dealType is null or p.dealType = :dealType) " +

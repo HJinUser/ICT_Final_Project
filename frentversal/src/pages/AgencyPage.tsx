@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { getAgencies } from '../api/agencyApi';
 import AgencyMap from '../components/AgencyMap';
 import type { AgencyResponse, AgencyStatus } from '../types/Agency';
-import { SEOUL_DISTRICTS, dongsOf } from '../utils/seoulDistricts';
+import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
 import '../assets/common.css';
 import '../assets/responsive.css'; // 화면 크기별 보정 (common.css 보다 나중에 import 해야 적용됩니다)
 
@@ -166,8 +166,8 @@ function AgencyPage() {
                                 disabled={!region}
                             >
                                 <option value="">동 전체</option>
-                                {dongsOf(region).map((item) => (
-                                    <option value={item} key={item}>{item}</option>
+                                {dongOptionsOf(region).map((item) => (
+                                    <option value={item.value} key={item.value}>{item.label}</option>
                                 ))}
                             </select>
                             <button className="solid-btn" onClick={handleSearch} disabled={loading}>

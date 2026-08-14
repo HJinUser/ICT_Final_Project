@@ -16,7 +16,7 @@ import {
 } from '../types/PropertySearch';
 import type { TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
-import { SEOUL_DISTRICTS, dongsOf } from '../utils/seoulDistricts';
+import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
 import '../assets/common.css';
 import '../assets/responsive.css';
 import '../styles/MapSearchPage.css';
@@ -270,7 +270,7 @@ function MapSearchPage({ user }: Props) {
     const totalPages = Math.ceil(visibleProperties.length / PAGE_SIZE);
     const pageItems = visibleProperties.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
-    const dongOptions = dongsOf(region);
+    const dongOptions = dongOptionsOf(region);
     const pricePresets = PRICE_PRESETS[dealType] ?? PRICE_PRESETS.ALL;
 
     return (
@@ -340,7 +340,7 @@ function MapSearchPage({ user }: Props) {
                             >
                                 <option value="">동 전체</option>
                                 {dongOptions.map((item) => (
-                                    <option value={item} key={item}>{item}</option>
+                                    <option value={item.value} key={item.value}>{item.label}</option>
                                 ))}
                             </select>
                         </div>

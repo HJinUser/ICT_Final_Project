@@ -13,7 +13,7 @@ import type {
 } from '../types/Neighborhood';
 import type { TagCategoryCode, TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
-import { SEOUL_DISTRICTS, dongsOf } from '../utils/seoulDistricts';
+import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
 import '../assets/common.css';
 import '../assets/responsive.css';
 import '../components/Neighborhood.css';
@@ -114,7 +114,7 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
     // 등록된 동네만 고를 수 있으면 "아직 등록 안 된 동네"를 찾아볼 방법이 없고,
     // 화면마다 고를 수 있는 지역이 달라 보이기 때문이다(utils/seoulDistricts 를 함께 쓴다).
     const districts = SEOUL_DISTRICTS;
-    const dongs = dongsOf(draftDistrict);
+    const dongs = dongOptionsOf(draftDistrict);
     const pageCount = Math.max(1, Math.ceil(result.content.length / PAGE_SIZE));
     const pagedNeighborhoods = result.content.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -171,7 +171,7 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
                         </select></label>
                         <label>읍·면·동<select value={draftDong} onChange={(event) => setDraftDong(event.target.value)} disabled={!draftDistrict}>
                             <option value="">전체</option>
-                            {dongs.map((dong) => <option key={dong} value={dong}>{dong}</option>)}
+                            {dongs.map((dong) => <option key={dong.value} value={dong.value}>{dong.label}</option>)}
                         </select></label>
                         <button className="solid-btn" type="button" onClick={applyLocation}>필터 적용</button>
                     </div>
