@@ -1,13 +1,33 @@
+.compare-table {
+    min-width: 760px;
+}
+
 .compare-table th,
 .compare-table td {
     vertical-align: middle;
     text-align: center;
 }
 
+.compare-table thead th {
+    min-width: 240px;
+}
+
+.compare-table .compare-label-column {
+    width: 150px;
+    min-width: 150px;
+}
+
+.compare-row-label {
+    width: 150px;
+    min-width: 150px;
+    font-weight: 600;
+    background: #fafafa;
+}
+
 .compare-thumb {
     width: 100%;
-    max-width: 160px;
-    height: 100px;
+    max-width: 220px;
+    height: 140px;
     object-fit: cover;
     border-radius: 8px;
 }
@@ -16,14 +36,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
     background: #f4f3ec;
     color: #9c9c9c;
     font-size: 12px;
 }
 
-/* 승자로 뽑힌 칸 강조 (목업 compare.html의 .winner 스타일과 같은 취지) */
 .compare-winner {
-    background: #f3ecfa;
+    background: #f3ecfa !important;
     font-weight: 600;
+    color: #4B0082;
+}
+
+.winner-check {
+    font-weight: 700;
     color: #4B0082;
 }
