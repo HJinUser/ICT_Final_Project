@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom';
 import { approveProperty, getAdminProperties, rejectProperty } from '../api/adminApi';
 import type { AdminProperty } from '../types/Admin';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 관리자 매물 관리 화면
 //

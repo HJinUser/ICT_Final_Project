@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {Container, Row, Col, Card, Badge, Button, Alert, Form,} from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
 import type { PropertyResponse } from "../types/Property";
-import "../components/FavoritesPage.css";
+import "../styles/FavoritesPage.css";
 import { formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 function FavoritesPage() {

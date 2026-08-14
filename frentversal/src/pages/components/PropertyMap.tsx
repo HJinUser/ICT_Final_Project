@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { PropertySearchItem } from '../types/PropertySearch';
-import { findCenter, findDistrictBoundary, loadKakaoSdk } from '../utils/kakaoMap';
+import type { PropertySearchItem } from '../../types/PropertySearch';
+import { findCenter, findDistrictBoundary, loadKakaoSdk } from '../../utils/kakaoMap';
 
 // 지도 검색 가운데 영역.
 //

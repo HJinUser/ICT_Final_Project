@@ -4,8 +4,6 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import type { NavItem } from '../types/Navigation';
 import type { User } from '../types/User';
 import { navigateOrNotice } from '../utils/navigateOrNotice';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 관리자 콘솔의 껍데기(레이아웃).
 //

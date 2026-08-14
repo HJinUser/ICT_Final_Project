@@ -11,10 +11,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getAdminProperties } from '../api/adminApi';
-import { getReports } from '../api/reportApi';
-import type { AdminProperty } from '../types/Admin';
-import { REPORT_TARGET_LABELS, type Report } from '../types/Report';
+import { getAdminProperties } from '../../api/adminApi';
+import { getReports } from '../../api/reportApi';
+import type { AdminProperty } from '../../types/Admin';
+import { REPORT_TARGET_LABELS, type Report } from '../../types/Report';
 
 const PROPERTY_COUNT = 3;
 const REPORT_COUNT = 5;

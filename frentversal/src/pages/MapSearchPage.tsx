@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import customAxios from '../api/axiosInstance';
 import { getMyAgency } from '../api/myAgencyApi';
 import { searchProperties } from '../api/propertySearchApi';
-import PropertyMap from '../components/PropertyMap';
+import PropertyMap from './components/PropertyMap';
 import type { PropertySearchItem, PropertySearchParams, PropertySort } from '../types/PropertySearch';
 import {
     AREA_OPTIONS,
@@ -17,8 +17,6 @@ import {
 import type { TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
 import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
-import '../assets/common.css';
-import '../assets/responsive.css';
 import '../styles/MapSearchPage.css';
 
 // 지도 검색 (기획서 "지도 검색 페이지")

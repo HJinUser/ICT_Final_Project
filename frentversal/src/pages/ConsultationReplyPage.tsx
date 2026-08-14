@@ -4,8 +4,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getConsultation, replyToConsultation, updateConsultationStatus } from '../api/myAgencyApi';
 import type { Consultation, ConsultationStatus } from '../types/MyAgency';
 import { CONSULTATION_STATUS_COLORS } from '../utils/consultationStatus';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 상담 요청에 답변하는 화면 (중개인 전용)
 //

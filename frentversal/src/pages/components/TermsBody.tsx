@@ -1,4 +1,4 @@
-import type { TermsSection } from "../types/Terms";
+import type { TermsSection } from "../../types/Terms";
 
 /*
   약관 본문(TermsDoc.sections)을 그리는 부분.

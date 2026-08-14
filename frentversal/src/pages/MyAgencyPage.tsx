@@ -12,10 +12,8 @@ import {
 } from '../api/myAgencyApi';
 import type { AgencyDetail, AgencyReview } from '../types/Agency';
 import type { Consultation, MyAgencyDashboard, MyPropertyCard } from '../types/MyAgency';
-import AddressInput from '../components/AddressInput';
+import AddressInput from './components/AddressInput';
 import { CONSULTATION_STATUS_COLORS } from '../utils/consultationStatus';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 내 중개사무소 페이지 (중개인 전용)
 //

@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
 
-import TermsBody from "../components/TermsBody";
+import TermsBody from "./components/TermsBody";
 import { TERMS_DOCS, findTerms } from "../types/Terms";
-import "../styles/Terms.css";
+import '../styles/TermsPage.css';
 
 /*
   약관 전문 화면. 두 가지 주소로 들어온다.

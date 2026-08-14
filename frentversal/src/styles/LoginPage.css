@@ -1,4 +1,10 @@
 /*
+  LoginPage.css
+
+  AuthForm.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
+/*
   로그인·회원가입 화면 공통 스타일.
   프로토타입 common.css의 .form-shell / .form-visual / .form-area 규칙을 옮겨 온 것이다.
 
@@ -254,13 +260,6 @@
     color: var(--ink-2);
 }
 
-/* 한 줄에 두 칸 (비밀번호 / 비밀번호 확인 등) */
-.auth-fields-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
 /* ── 탭 (일반 로그인 / 패스워드리스, 사용자 / 중개인) ── */
 .auth-segmented {
     display: flex;
@@ -288,42 +287,8 @@
     box-shadow: 0 2px 8px rgba(17, 17, 20, .07);
 }
 
-/* ── 역할 선택 카드 (회원가입) ──────────────────────── */
-.auth-role-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 20px 0;
-}
-
-.auth-role-card {
-    padding: 18px;
-    border: 1px solid var(--line);
-    border-radius: var(--r-m);
-    background: #fff;
-    text-align: left;
-    cursor: pointer;
-    transition: .2s;
-}
-
-.auth-role-card:hover,
-.auth-role-card.on {
-    border-color: var(--v);
-    background: var(--v-pale);
-}
-
-.auth-role-card strong { display: block; }
-
-.auth-role-card span {
-    display: block;
-    font-size: var(--fs-mono);
-    color: var(--ink-3);
-    margin-top: 5px;
-}
-
 /* ── 버튼 ───────────────────────────────────────────── */
-.auth-solid-btn,
-.auth-outline-btn {
+.auth-solid-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -350,14 +315,6 @@
     color: var(--ink-3);
     cursor: not-allowed;
 }
-
-.auth-outline-btn {
-    border: 1px solid var(--v);
-    color: var(--v);
-    background: #fff;
-}
-
-.auth-outline-btn:hover { background: var(--v-pale); }
 
 /* ── 구분선 ("또는 소셜 로그인") ────────────────────── */
 .auth-or {
@@ -410,27 +367,6 @@
     background: #03C75A;
     border-color: #03C75A;
     color: #fff;
-}
-
-/* ── 약관 체크박스 ──────────────────────────────────── */
-.auth-checks {
-    display: grid;
-    gap: 9px;
-    margin-top: 18px;
-}
-
-.auth-check {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    font-size: var(--fs-mono);
-    color: var(--ink-2);
-    cursor: pointer;
-}
-
-.auth-check input {
-    accent-color: var(--v);
-    margin-top: 3px;
 }
 
 /* ── 전체 오류 안내 ─────────────────────────────────── */

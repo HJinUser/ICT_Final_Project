@@ -10,9 +10,7 @@ import {
     type ReportTargetType,
 } from '../types/Report';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Report.css';
+import '../styles/ReportAdminListPage.css';
 
 interface ReportAdminListPageProps {
     user: User | null;

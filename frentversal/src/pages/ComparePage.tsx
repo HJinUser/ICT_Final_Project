@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Container, Table, Badge, Alert } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
 import type { PropertyResponse } from "../types/Property";
-import "../components/ComparePage.css";
+import "../styles/ComparePage.css";
 import { DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 function pickWinnerIndex(

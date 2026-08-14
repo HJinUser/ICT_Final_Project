@@ -2,7 +2,7 @@
   지도 검색 화면에서만 필요한 손질.
 
   레이아웃(.map-shell / .filter-panel / .map-canvas / .list-panel)과 표식(.marker)은
-  프로토타입 기준인 assets/common.css 에 이미 있으므로 여기서 다시 정의하지 않는다.
+  프로토타입 기준인 styles/common.css 에 이미 있으므로 여기서 다시 정의하지 않는다.
   공용 파일은 팀원들이 함께 쓰기 때문에, 이 화면에만 해당하는 것만 여기 둔다.
 */
 

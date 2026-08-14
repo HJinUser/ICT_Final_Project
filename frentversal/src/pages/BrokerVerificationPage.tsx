@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getMyVerification, submitVerification } from '../api/brokerApi';
-import AddressInput from '../components/AddressInput';
+import AddressInput from './components/AddressInput';
 import type { BrokerVerification } from '../types/MyAgency';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 중개인 인증 신청 화면
 //

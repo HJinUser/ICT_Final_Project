@@ -6,9 +6,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { createReport } from '../api/reportApi';
 import { REPORT_TARGET_LABELS, type ReportTargetType } from '../types/Report';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Report.css';
+import '../styles/ReportFormPage.css';
 
 interface ReportFormPageProps {
     user: User | null;
