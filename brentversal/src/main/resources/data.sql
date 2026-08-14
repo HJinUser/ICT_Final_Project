@@ -55,7 +55,7 @@ UPDATE tags_seq SET next_val = 101 WHERE next_val <= 100;
 -- ────────────────────────────────────────────────────────────────
 -- 시세(average_jeonse_price)·인기도(popularity_score)는 더 이상 저장하지 않는다.
 -- 조회할 때마다 매물·찜 테이블을 집계해서 계산한다(NeighborhoodService 참고).
-INSERT IGNORE INTO neighborhood
+INSERT IGNORE INTO neighborhoods
     (neighborhood_id, city, district, dong, description, image_url, visible)
 VALUES
     (1, '서울시', '서초구', '반포동', '한강과 대형 상권을 함께 이용하기 좋은 주거 지역입니다.', NULL, b'1'),
@@ -67,11 +67,11 @@ VALUES
 
 -- 팀 주소 표기 규칙을 "서울특별시"에서 "서울시"로 정리했다(daumPostcode.ts 참고).
 -- INSERT IGNORE는 이미 있는 행을 건드리지 않으므로, 예전 값이 남아 있는 DB는 여기서 맞춰 준다.
-UPDATE neighborhood SET city = '서울시' WHERE city = '서울특별시';
+UPDATE neighborhoods SET city = '서울시' WHERE city = '서울특별시';
 
-UPDATE neighborhood_seq SET next_val = 101 WHERE next_val <= 100;
+UPDATE neighborhoods_seq SET next_val = 101 WHERE next_val <= 100;
 
-INSERT IGNORE INTO neighborhood_tag (neighborhood_id, tag_id) VALUES
+INSERT IGNORE INTO neighborhood_tags (neighborhood_id, tag_id) VALUES
     (1, 5), (1, 6), (1, 7),
     (2, 6), (2, 7), (2, 8),
     (3, 1), (3, 8), (3, 9),

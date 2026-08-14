@@ -26,7 +26,7 @@ import java.util.Set;
 @ToString
 @Entity
 @Table(
-        name = "neighborhood",
+        name = "neighborhoods",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_neighborhood_district_dong",
                 columnNames = {"city", "district", "dong"}
@@ -73,11 +73,11 @@ public class Neighborhood {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "neighborhood_tag",
+            name = "neighborhood_tags",
             joinColumns = @JoinColumn(name = "neighborhood_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"),
             uniqueConstraints = @UniqueConstraint(
-                    name = "uk_neighborhood_tag",
+                    name = "uk_neighborhood_tags",
                     columnNames = {"neighborhood_id", "tag_id"}
             )
     )
