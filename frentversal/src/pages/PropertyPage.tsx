@@ -11,7 +11,7 @@ import type { PropertyResponse, PropertyStatusCode } from "../types/Property";
 import type { AgencyDetail } from "../types/Agency";
 import type { Review } from "../types/Review";
 import "../components/PropertyPage.css";
-import {DEAL_TYPE_LABELS} from "../utils/propertyPrice.ts";
+import { DEAL_TYPE_LABELS } from "../utils/propertyPrice.ts";
 
 interface PropertyPageProps {
     user: User | null;
@@ -66,6 +66,22 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                     `/agency/${propertyResponse.data.agencyId}`
                 );
 
+                let isFavorited = false;
+
+                if (user?.role === "USER") {
+                    try {
+                        const favoritesResponse = await customAxios.get<PropertyResponse[]>(
+                            "/property/favorites"
+                        );
+
+                        isFavorited = favoritesResponse.data.some(
+                            (favorite) => favorite.id === propertyResponse.data.id
+                        );
+                    } catch (error) {
+                        console.error("관심매물 상태 조회 실패:", error);
+                    }
+                }
+
                 setProperty({
                     ...propertyResponse.data,
                     // 아래는 아직 백엔드가 안 챙겨주는 화면 전용 필드 (TODO: 도메인 완성되면 실제 값으로 교체)
@@ -81,7 +97,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                     },
                     priceHistory: [],
                     reviews: [],
-                    isFavorited: false,
+                    isFavorited,
                 });
             } catch (error) {
                 console.error(error);
@@ -90,7 +106,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
             }
         };
         fetchDetail();
-    }, [id, mockData]);
+    }, [id, mockData, user]);
 
     // 로그인한 사용자가 상세 페이지를 열면 "최근 본 매물"에 기록 (최대 10개, 최신순).
     const viewedPropertyId = property?.id;
@@ -111,10 +127,21 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     // 관심매물 저장/취소 토글 (로그인 사용자 전용)
     const toggleFavorite = async () => {
         if (!property) return;
-        const response = await customAxios.post<{ favorited: boolean }>(`/property/${property.id}/favorite`);
-        setProperty({ ...property, isFavorited: response.data.favorited });
-        await customAxios.post(`/property/${property.id}/favorite`);
-        setProperty({ ...property, isFavorited: !property.isFavorited });
+
+        try {
+            const response = await customAxios.post<{ favorited: boolean }>(
+                `/property/${property.id}/favorite`
+            );
+
+            setProperty((prev) =>
+                prev
+                    ? { ...prev, isFavorited: response.data.favorited }
+                    : prev
+            );
+        } catch (error) {
+            console.error("관심매물 저장/취소 실패:", error);
+            alert("관심매물 처리 중 오류가 발생했습니다.");
+        }
     };
 
     const sendFeedback = async (liked: boolean) => {
@@ -420,7 +447,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         </Link>
                     </Card>
 
-                    {(role === "USER" || role === "BROKER") && !isOwner &&(
+                    {(role === "USER" || role === "BROKER") && !isOwner && (
                         <Link
                             to={`/report/form?propertyId=${property.id}&returnTo=${encodeURIComponent(`/property/${property.id}`)}`}
                             className="btn btn-outline-danger w-100"
