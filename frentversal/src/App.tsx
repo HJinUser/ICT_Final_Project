@@ -1,5 +1,3 @@
-import './App.css';
-
 // 외부 컴포넌트 import하기
 // import 컴포넌트이름 from '경로와 파일명';
 import MenuItems from './ui/MenuItems';

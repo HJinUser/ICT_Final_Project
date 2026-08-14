@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom';
 import { fetchAvailableDealTypes, fetchListings } from '../api/propertySearchApi';
 import type { PropertyListingsResponse, PropertySearchItem, PropertySort } from '../types/PropertySearch';
 import { PROPERTY_TYPES, SORT_OPTIONS } from '../types/PropertySearch';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 매물 확인 (기획서 "매물 확인 페이지")
 //

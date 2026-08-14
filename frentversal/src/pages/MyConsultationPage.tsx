@@ -5,8 +5,6 @@ import { checkConsultationReply, getMyConsultations } from '../api/myConsultatio
 import type { MyConsultation } from '../types/Consultation';
 import type { User } from '../types/User';
 import { CONSULTATION_STATUS_COLORS } from '../utils/consultationStatus';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 사용자가 자기가 보낸 상담과 받은 답변을 확인하는 화면
 //

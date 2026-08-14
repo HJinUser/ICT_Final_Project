@@ -1,4 +1,10 @@
 /*
+  TermsAgreement.css
+
+  Terms.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
+/*
   약관 관련 화면의 모양.
 
   두 곳에서 쓴다.
@@ -154,64 +160,6 @@
     color: #c0392b;
 }
 
-/* ── 2. 약관 전문 화면 (/terms) ────────────────────── */
-.terms-page {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 52px 32px 80px;
-}
-
-.terms-page > h1 {
-    font-size: var(--fs-h2);
-    margin-bottom: 6px;
-}
-
-.terms-page > p.lead {
-    color: var(--ink-3);
-    font-size: var(--fs-xs);
-    margin: 0 0 24px;
-}
-
-/* 약관 사이를 오가는 탭 */
-.terms-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    padding-bottom: 22px;
-    border-bottom: 1px solid var(--line);
-}
-
-.terms-tabs button {
-    border: 1px solid var(--line);
-    background: #fff;
-    border-radius: 999px;
-    padding: 7px 14px;
-    font-size: var(--fs-mono);
-    color: var(--ink-2);
-    cursor: pointer;
-    transition: .2s var(--ease);
-}
-
-.terms-tabs button:hover { border-color: var(--v); }
-
-.terms-tabs button.on {
-    background: var(--v);
-    border-color: var(--v);
-    color: #fff;
-}
-
-.terms-doc-head {
-    margin: 28px 0 4px;
-}
-
-.terms-doc-head h2 {
-    font-size: var(--fs-h3);
-}
-
-.terms-doc-head .terms-meta {
-    margin: 6px 0 0;
-}
-
 /* ── 3. 본문 (두 곳 공통) ──────────────────────────── */
 .terms-body h4 {
     margin: 18px 0 6px;
@@ -268,6 +216,5 @@
 .terms-table td { color: var(--ink-2); }
 
 @media (max-width: 640px) {
-    .terms-page { padding: 32px 20px 60px; }
     .terms-detail { margin-left: 16px; }
 }

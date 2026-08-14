@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getAgencies } from '../api/agencyApi';
-import AgencyMap from '../components/AgencyMap';
+import AgencyMap from './components/AgencyMap';
 import type { AgencyResponse, AgencyStatus } from '../types/Agency';
 import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
-import '../assets/common.css';
-import '../assets/responsive.css'; // 화면 크기별 보정 (common.css 보다 나중에 import 해야 적용됩니다)
 
 // 프로토타입 agency.html 을 옮긴 화면입니다.
 // 중개사무소 목록은 백엔드 GET /agency 에서 받아옵니다.

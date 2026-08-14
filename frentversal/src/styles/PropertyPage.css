@@ -4,9 +4,10 @@
     border-radius: 12px;
 }
 
-.bar-chart {
-    height: 140px;
-}
+/* .bar-chart 의 height 는 common.css 가 정한 180px 를 그대로 쓴다.
+   전에는 여기 height:140px 가 있었지만 common.css 가 뒤에 로드되며 덮여서
+   실제로는 한 번도 적용된 적이 없다. 전역 CSS 를 앞으로 옮기면서 이 선언이
+   갑자기 살아나 차트 높이가 바뀌는 것을 막기 위해 제거한다. */
 
 .bar-chart .bar {
     width: 36px;

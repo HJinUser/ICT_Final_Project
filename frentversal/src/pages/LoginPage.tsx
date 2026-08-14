@@ -5,14 +5,14 @@ import axios from "axios";
 import { login } from "../api/authApi";
 import { startPasswordlessLogin, checkPasswordlessLogin, cancelPasswordlessLogin } from "../api/passwordlessApi";
 import { API_BASE_URL } from "../config/config";
-import PasswordField from "../components/PasswordField";
+import PasswordField from "./components/PasswordField";
 import { SOCIAL_BUTTONS } from "../types/Auth";
 import type { PasswordlessLoginResult } from "../types/Auth";
 import { RECENT_LOGIN_LABELS } from "../types/RecentLogin";
 import type { RecentLogin, RecentLoginMethod } from "../types/RecentLogin";
 import type { User } from "../types/User";
 import { clearRecentLogin, loadRecentLogin, markPendingSocial, saveRecentLogin } from "../utils/recentLogin";
-import "../styles/AuthForm.css";
+import '../styles/LoginPage.css';
 
 interface Props {
     // onLogin 프롭스는 User 형식으로 매개 변수를 받고, 반환 타입이 없습니다.

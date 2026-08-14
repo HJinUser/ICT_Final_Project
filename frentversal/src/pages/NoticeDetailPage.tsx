@@ -5,9 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deleteNotice, getNotice } from '../api/noticeApi';
 import type { Notice } from '../types/Notice';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Notice.css';
+import '../styles/NoticeDetailPage.css';
 
 interface NoticeDetailPageProps {
     user: User | null;

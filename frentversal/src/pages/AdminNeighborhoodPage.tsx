@@ -3,8 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { createNeighborhood, getNeighborhoodTags, getNeighborhoods } from '../api/neighborhoodApi';
 import type { NeighborhoodResponse } from '../types/Neighborhood';
 import type { TagResponse } from '../types/Tag';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 관리자 "동네 등록" 화면
 //

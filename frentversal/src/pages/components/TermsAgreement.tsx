@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import TermsBody from "./TermsBody";
-import type { AgreementCode, AgreementState } from "../types/Terms";
-import { isRequired, termsFor } from "../types/Terms";
-import type { SignupType } from "../types/Auth";
-import "../styles/Terms.css";
+import type { AgreementCode, AgreementState } from "../../types/Terms";
+import { isRequired, termsFor } from "../../types/Terms";
+import type { SignupType } from "../../types/Auth";
+import '../../styles/TermsAgreement.css';
 
 /*
   회원가입 화면의 약관 동의 묶음.

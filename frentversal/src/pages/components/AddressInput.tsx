@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { loadDaumPostcode, toSelectedAddress } from '../utils/daumPostcode';
-import type { SelectedAddress } from '../utils/daumPostcode';
+import { loadDaumPostcode, toSelectedAddress } from '../../utils/daumPostcode';
+import type { SelectedAddress } from '../../utils/daumPostcode';
 
 // 주소를 입력받는 공용 컴포넌트.
 //

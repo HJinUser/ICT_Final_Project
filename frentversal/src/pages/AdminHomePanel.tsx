@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getAdminBrokers, getAdminProperties } from '../api/adminApi';
-import '../assets/common.css';
 
 // 관리자 콘솔에 처음 들어왔을 때 보이는 화면 (/admin).
 //

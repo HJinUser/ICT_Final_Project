@@ -1,0 +1,33 @@
+/*
+  ReportAdminDetailPage.css
+
+  Report.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
+
+.report-detail-wrap { max-width: 1120px; }
+.report-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.report-inline-error { margin-top: 15px; padding: 11px 13px; border-radius: var(--r-s); background: #fbefef; color: var(--red); font-size: 12.5px; }
+.report-state { padding: 60px 24px; border: 1px solid var(--line); border-radius: var(--r-l); background: #fff; color: var(--ink-3); text-align: center; }
+.report-error { color: var(--red); }
+.report-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 22px; align-items: start; }
+.report-detail-card, .report-process-panel { border: 1px solid var(--line); border-radius: var(--r-l); background: #fff; }
+.report-detail-card > header { padding: 28px 32px 24px; border-bottom: 1px solid var(--line-2); }
+.report-detail-card h1 { margin-top: 12px; font-size: 25px; }
+.report-detail-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 13px; color: var(--ink-3); font-size: 12px; }
+.report-detail-content { min-height: 310px; padding: 32px; color: var(--ink-2); line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-process-panel { position: sticky; top: 82px; padding: 25px; }
+.report-process-panel h2 { font-size: 19px; }
+.report-process-panel textarea { min-height: 180px; }
+.report-process-submit { width: 100%; margin-top: 18px; }
+.report-processed-answer { margin-top: 18px; }
+.report-processed-answer p { margin-top: 15px; color: var(--ink-2); line-height: 1.75; white-space: pre-wrap; }
+.report-processed-answer time { display: block; margin-top: 12px; color: var(--ink-3); font-size: 11.5px; }
+@media (max-width: 900px) {
+    .report-detail-grid{ grid-template-columns: 1fr; }
+    .report-process-panel { position: static; }
+}
+@media (max-width: 620px) {
+    .report-detail-card > header, .report-detail-content, .report-process-panel { padding: 22px 20px; }
+    .report-actions > * { flex: 1; }
+}

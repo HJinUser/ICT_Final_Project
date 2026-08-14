@@ -14,9 +14,7 @@ import type {
 import type { TagCategoryCode, TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
 import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
-import '../assets/common.css';
-import '../assets/responsive.css';
-import '../components/Neighborhood.css';
+import '../styles/NeighborhoodPage.css';
 
 interface NeighborhoodPageProps {
     user: User | null;

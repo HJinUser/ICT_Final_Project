@@ -10,9 +10,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getDashboard } from '../api/myAgencyApi';
-import type { MyAgencyDashboard } from '../types/MyAgency';
-import type { User } from '../types/User';
+import { getDashboard } from '../../api/myAgencyApi';
+import type { MyAgencyDashboard } from '../../types/MyAgency';
+import type { User } from '../../types/User';
 
 // 도넛 조각. 순서와 색을 한 곳에서 관리해 범례와 그래프가 어긋나지 않게 한다.
 const SEGMENTS: { key: keyof MyAgencyDashboard; label: string; color: string }[] = [

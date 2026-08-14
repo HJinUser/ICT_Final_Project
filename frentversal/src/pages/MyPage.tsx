@@ -6,8 +6,6 @@ import { getMyConsultations } from '../api/myConsultationApi';
 import type { MyConsultation } from '../types/Consultation';
 import type { PropertyResponse } from '../types/Property';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 사용자 마이페이지
 //

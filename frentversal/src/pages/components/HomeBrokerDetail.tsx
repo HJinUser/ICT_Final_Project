@@ -12,8 +12,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getConsultations, getMyProperties } from '../api/myAgencyApi';
-import type { Consultation, MyPropertyCard } from '../types/MyAgency';
+import { getConsultations, getMyProperties } from '../../api/myAgencyApi';
+import type { Consultation, MyPropertyCard } from '../../types/MyAgency';
 
 // 메인에 걸어 둘 개수. 전체는 각 관리 화면에서 본다.
 const PROPERTY_COUNT = 5;

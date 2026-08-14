@@ -3,15 +3,15 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { signup } from "../api/authApi";
-import AddressInput from "../components/AddressInput";
-import PasswordField from "../components/PasswordField";
-import TermsAgreement from "../components/TermsAgreement";
+import AddressInput from "./components/AddressInput";
+import PasswordField from "./components/PasswordField";
+import TermsAgreement from "./components/TermsAgreement";
 import { API_BASE_URL } from "../config/config";
 import { SOCIAL_BUTTONS } from "../types/Auth";
 import type { FieldErrors, SignupType } from "../types/Auth";
 import type { AgreementState } from "../types/Terms";
 import { TERMS_VERSION, missingRequired } from "../types/Terms";
-import "../styles/AuthForm.css";
+import '../styles/SignupPage.css';
 
 // 왼쪽 사진 영역 배경. 서버에서 받아올 값이 아니라 화면 장식이라 상수로 둔다.
 const VISUAL_IMAGE =

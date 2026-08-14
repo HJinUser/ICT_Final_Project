@@ -1,4 +1,4 @@
-import "../components/PasswordlessRegisterPage.css";
+import "../styles/PasswordlessRegisterPage.css";
 import {useLocation, useNavigate} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {confirmPasswordlessRegister, registerPasswordless} from "../api/passwordlessApi.ts";

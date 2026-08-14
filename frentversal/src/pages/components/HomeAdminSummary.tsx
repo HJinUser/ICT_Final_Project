@@ -12,10 +12,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getAdminBrokers, getAdminProperties } from '../api/adminApi';
-import { getReports } from '../api/reportApi';
+import { getAdminBrokers, getAdminProperties } from '../../api/adminApi';
+import { getReports } from '../../api/reportApi';
 
-function HomeAdminSummary() {
+interface Props {
+    // 섹션 목차(HomeSectionNav)가 이 구역으로 스크롤·강조할 수 있도록 붙이는 앵커.
+    id: string;
+}
+
+function HomeAdminSummary({ id }: Props) {
     const navigate = useNavigate();
 
     // 불러오지 못한 항목은 숫자를 지어내지 않고 null로 두어 "–"로 표시한다.
@@ -53,7 +58,7 @@ function HomeAdminSummary() {
     const total = (pendingProperties ?? 0) + (pendingBrokers ?? 0) + (pendingReports ?? 0);
 
     return (
-        <section className="home-sec tight">
+        <section className="home-sec tight" id={id}>
             <div className="rv-wrap">
                 <div className="home-shead">
                     <div>
