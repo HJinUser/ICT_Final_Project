@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -92,7 +93,12 @@ function NoticeDetailPage({ user }: NoticeDetailPageProps) {
                                     <span>조회 {notice.viewCount.toLocaleString('ko-KR')}</span>
                                 </div>
                             </header>
-                            <div className="notice-content">{notice.content}</div>
+                            <div
+                                className="notice-content ck-content"
+                                dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(notice.content),
+                                }}
+                            />
                         </article>
                     )}
 
