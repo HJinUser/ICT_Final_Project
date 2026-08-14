@@ -12,3 +12,48 @@
 .favorite-heart:hover {
     color: #380062;
 }
+
+.favorite-card {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.favorite-card--selected {
+    border: 2px solid #4B0082;
+    box-shadow: 0 0 0 2px rgba(75, 0, 130, 0.08);
+}
+
+.compare-guide-alert {
+    border: 1px solid #e4d9ef;
+}
+
+.compare-select-box {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8f6fb;
+}
+
+.compare-selection-bar {
+    position: sticky;
+    bottom: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 576px) {
+    .compare-selection-bar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .compare-selection-bar .btn {
+        width: 100%;
+    }
+}

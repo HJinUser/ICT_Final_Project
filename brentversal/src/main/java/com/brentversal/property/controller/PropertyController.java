@@ -93,14 +93,24 @@ public class PropertyController {
 
     // 매물 비교 (쉼표로 구분된 id들을 받아서 여러 건 조회)
     @GetMapping("/compare")
-    public ResponseEntity<List<PropertyResponseDto>> compare(@RequestParam String ids) {
-        // "1,2,3" 형태의 문자열을 쉼표 기준으로 잘라서 Long 리스트로 변환
-        List<Long> idList = new ArrayList<>();
-        for (String idStr : ids.split(",")) {
-            idList.add(Long.parseLong(idStr));
-        }
+    public ResponseEntity<?> compare(@RequestParam String ids) {
+        try {
+            List<Long> idList = new ArrayList<>();
 
-        return ResponseEntity.ok(propertyService.findByIds(idList));
+            for (String idStr : ids.split(",")) {
+                idList.add(Long.parseLong(idStr.trim()));
+            }
+
+            return ResponseEntity.ok(propertyService.compareProperties(idList));
+
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "매물 id 형식이 올바르지 않습니다."));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
     // 관심매물 토글 (로그인 필요 — SecurityConfig에서 이 경로는 인증 요구)

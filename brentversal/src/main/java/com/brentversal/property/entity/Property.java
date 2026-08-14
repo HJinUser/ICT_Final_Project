@@ -128,6 +128,9 @@ public class Property {
     @Column(name = "ai_monthly_rent")
     private Long aiMonthlyRent;        // AI 예상 월세 금액(만원)
 
+    @Column(name = "ai_recommend_score")
+    private Double aiRecommendScore;   // AI 추천 점수. 다른 기능이 계산해서 저장하며, 계산 전에는 null
+
     @Lob
     @Column(name = "detail_description")
     private String detailDescription;   // 상세 설명

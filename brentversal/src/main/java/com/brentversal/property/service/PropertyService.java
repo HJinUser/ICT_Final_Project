@@ -131,10 +131,41 @@ public class PropertyService {
                 .map(PropertyResponseDto::of);
     }
 
-    public List<PropertyResponseDto> findByIds(List<Long> ids) {
-        return propertyRepository.findByIdIn(ids).stream()
-                .map(PropertyResponseDto::of)
-                .toList();
+    public List<PropertyResponseDto> compareProperties(List<Long> ids) {
+        if (ids == null || ids.size() != 2) {
+            throw new IllegalArgumentException("비교할 매물은 정확히 2개여야 합니다.");
+        }
+
+        if (ids.get(0).equals(ids.get(1))) {
+            throw new IllegalArgumentException("서로 다른 두 매물을 선택해야 합니다.");
+        }
+
+        List<Property> properties = propertyRepository.findByIdIn(ids);
+
+        if (properties.size() != 2) {
+            throw new IllegalArgumentException("선택한 매물 중 조회할 수 없는 매물이 있습니다.");
+        }
+
+        // findByIdIn()의 반환 순서는 요청한 ids 순서를 보장하지 않을 수 있으므로
+        // 사용자가 선택한 순서대로 다시 찾는다.
+        Property first = properties.stream()
+                .filter(property -> property.getId().equals(ids.get(0)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("첫 번째 매물을 찾을 수 없습니다."));
+
+        Property second = properties.stream()
+                .filter(property -> property.getId().equals(ids.get(1)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("두 번째 매물을 찾을 수 없습니다."));
+
+        if (first.getDealType() != second.getDealType()) {
+            throw new IllegalArgumentException("같은 거래유형의 매물끼리만 비교할 수 있습니다.");
+        }
+
+        return List.of(
+                PropertyResponseDto.of(first),
+                PropertyResponseDto.of(second)
+        );
     }
 
     public PropertyResponseDto update(Long id, Property changes, List<MultipartFile> newFiles, String email) {
