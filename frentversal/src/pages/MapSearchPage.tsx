@@ -16,6 +16,7 @@ import {
 } from '../types/PropertySearch';
 import type { TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
+import { SEOUL_DISTRICTS, dongsOf } from '../utils/seoulDistricts';
 import '../assets/common.css';
 import '../assets/responsive.css';
 import '../styles/MapSearchPage.css';
@@ -34,14 +35,9 @@ interface Props {
     user: User | null;
 }
 
-// 지역(구) → 동 목록.
-// 기획서대로 구를 고른 뒤 동을 더 고를 수 있게 한다.
-// 지금 매물이 있는 지역만 넣어 두었고, 지역이 늘면 여기만 고치면 된다.
-const REGIONS: { value: string; dongs: string[] }[] = [
-    { value: '서초구', dongs: ['반포동', '잠원동', '서초동', '방배동'] },
-    { value: '강남구', dongs: ['역삼동', '삼성동', '대치동', '논현동'] },
-    { value: '영등포구', dongs: ['당산동', '여의도동', '문래동'] },
-];
+// 지역(구·동) 목록은 utils/seoulDistricts 에 모아 두고 여기서는 가져다 쓰기만 한다.
+// 매물이 있는 지역만 넣어 두면 "아직 매물이 없는 동네"를 아예 검색해 볼 수 없기 때문에,
+// 서울시 25개 구와 그 안의 법정동을 모두 고를 수 있게 한다.
 
 // 특수 조건으로 쓸 태그 이름. 서버 태그 중 이 이름과 맞는 것만 버튼으로 보여 준다.
 // (기획서 예시: 역 도보 5분, 신축, 주차 가능, 반려동물, 즉시 입주, 공원 근처, 학원가)
@@ -112,6 +108,12 @@ function MapSearchPage({ user }: Props) {
 
     const [sort, setSort] = useState<PropertySort>('LATEST');
     const [page, setPage] = useState(0);
+
+    // "선택 조건 적용"을 누를 때마다 1씩 올린다.
+    // 지도는 이 값이 바뀌면 고른 구가 화면에 들어오도록 시야를 다시 맞춘다.
+    // 값 자체에는 의미가 없고 "다시 맞춰라"는 신호로만 쓴다 — 같은 구를 그대로 두고
+    // 지도만 옮겨 둔 뒤 다시 적용해도 그 구로 돌아오게 하기 위함이다.
+    const [mapFocusNonce, setMapFocusNonce] = useState(0);
 
     // 중개인 전용 : 전체 / 내 매물
     const [mine, setMine] = useState(false);
@@ -208,6 +210,7 @@ function MapSearchPage({ user }: Props) {
             tagIds,
         });
         setPage(0);
+        setMapFocusNonce((nonce) => nonce + 1); // 지도도 고른 지역으로 옮긴다
     };
 
     // "초기화" — 적용된 조건까지 모두 처음 상태로 (검색어는 유지한다)
@@ -267,7 +270,7 @@ function MapSearchPage({ user }: Props) {
     const totalPages = Math.ceil(visibleProperties.length / PAGE_SIZE);
     const pageItems = visibleProperties.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
-    const dongOptions = REGIONS.find((item) => item.value === region)?.dongs ?? [];
+    const dongOptions = dongsOf(region);
     const pricePresets = PRICE_PRESETS[dealType] ?? PRICE_PRESETS.ALL;
 
     return (
@@ -326,8 +329,8 @@ function MapSearchPage({ user }: Props) {
                                 onChange={(event) => { setRegion(event.target.value); setDong(''); }}
                             >
                                 <option value="">구 전체</option>
-                                {REGIONS.map((item) => (
-                                    <option value={item.value} key={item.value}>{item.value}</option>
+                                {SEOUL_DISTRICTS.map((district) => (
+                                    <option value={district} key={district}>{district}</option>
                                 ))}
                             </select>
                             <select
@@ -464,6 +467,7 @@ function MapSearchPage({ user }: Props) {
                     // 지도에 처음 들어왔을 때는 회원이 사는 구가, 필터에서 구를 고르면 그 구가
                     // 테두리로 강조된다. "선택 조건 적용"을 누르기 전에도 바로 반영된다.
                     highlightRegion={region || null}
+                    focusNonce={mapFocusNonce}
                 />
 
                 {/* ── 오른쪽 : 매물 목록 ────────────────────────── */}

@@ -12,17 +12,19 @@ import type {
 
 export interface AgencySearchParams {
     keyword?: string; // 사무소명 또는 공인중개사명
-    region?: string;  // 지역(주소에 포함된 문자열, 예: "서초구")
+    region?: string;  // 구 (주소에 포함된 문자열, 예: "서초구")
+    dong?: string;    // 동 (주소 검색이 채워 준 dong 컬럼과 맞춘다, 예: "반포동")
 }
 
 // 중개사무소 목록 조회
-// GET /agency?keyword=&region=
+// GET /agency?keyword=&region=&dong=
 // 값이 비어 있는 파라미터는 보내지 않는다(서버에서 null 로 받아 조건 없이 처리됨).
 export async function getAgencies(params: AgencySearchParams = {}): Promise<AgencyListResponse> {
     const response = await customAxios.get<AgencyListResponse>('/agency', {
         params: {
             keyword: params.keyword?.trim() || undefined,
             region: params.region?.trim() || undefined,
+            dong: params.dong?.trim() || undefined,
         },
     });
 

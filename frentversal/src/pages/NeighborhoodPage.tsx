@@ -13,6 +13,7 @@ import type {
 } from '../types/Neighborhood';
 import type { TagCategoryCode, TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
+import { SEOUL_DISTRICTS, dongsOf } from '../utils/seoulDistricts';
 import '../assets/common.css';
 import '../assets/responsive.css';
 import '../components/Neighborhood.css';
@@ -109,9 +110,11 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
         () => tags.filter((tag) => search.tagIds.includes(tag.id)),
         [tags, search.tagIds],
     );
-    const districts = result.districtsByCity[FIXED_CITY] ?? [];
-    const districtKey = `${FIXED_CITY}|${draftDistrict}`;
-    const dongs = draftDistrict ? result.dongsByDistrict[districtKey] ?? [] : [];
+    // 구·동 목록은 서버가 준 값(= 이미 등록된 동네가 있는 지역)이 아니라 서울시 전체를 보여 준다.
+    // 등록된 동네만 고를 수 있으면 "아직 등록 안 된 동네"를 찾아볼 방법이 없고,
+    // 화면마다 고를 수 있는 지역이 달라 보이기 때문이다(utils/seoulDistricts 를 함께 쓴다).
+    const districts = SEOUL_DISTRICTS;
+    const dongs = dongsOf(draftDistrict);
     const pageCount = Math.max(1, Math.ceil(result.content.length / PAGE_SIZE));
     const pagedNeighborhoods = result.content.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 

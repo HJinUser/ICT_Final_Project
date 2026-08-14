@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { getAgencies } from '../api/agencyApi';
 import AgencyMap from '../components/AgencyMap';
 import type { AgencyResponse, AgencyStatus } from '../types/Agency';
+import { SEOUL_DISTRICTS, dongsOf } from '../utils/seoulDistricts';
 import '../assets/common.css';
 import '../assets/responsive.css'; // 화면 크기별 보정 (common.css 보다 나중에 import 해야 적용됩니다)
 
@@ -20,12 +21,8 @@ const STATUS_COLORS: Record<AgencyStatus, string> = {
     CLOSED: 'gray',
 };
 
-// 지역 필터 (option 의 value 가 서버로 넘어가 주소 검색에 쓰입니다)
-const REGIONS = [
-    { value: '', label: '지역 전체' },
-    { value: '서초구', label: '서초구 전체' },
-    { value: '강남구', label: '강남구 전체' },
-];
+// 지역 필터 (option 의 value 가 그대로 서버로 넘어가 주소·동 조회에 쓰입니다)
+// 구 목록과 구별 동 목록은 utils/seoulDistricts 에 모아 두고 화면끼리 함께 씁니다.
 
 const CHAT_QUICK = ['강남역 5억 이하', '조용한 동네 추천', '이 집 시세가 적당해?'];
 
@@ -47,6 +44,7 @@ function AgencyPage() {
     // 검색 조건
     const [keyword, setKeyword] = useState('');
     const [region, setRegion] = useState('');
+    const [dong, setDong] = useState('');
 
     // 토스트
     const [toastMessage, setToastMessage] = useState('');
@@ -63,7 +61,7 @@ function AgencyPage() {
     useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
     // 목록 조회. 검색 버튼과 첫 진입에서 모두 이 함수를 씁니다.
-    const loadAgencies = async (params: { keyword?: string; region?: string } = {}) => {
+    const loadAgencies = async (params: { keyword?: string; region?: string; dong?: string } = {}) => {
         setLoading(true);
         setLoadError('');
 
@@ -87,7 +85,7 @@ function AgencyPage() {
     }, []);
 
     const handleSearch = () => {
-        loadAgencies({ keyword, region });
+        loadAgencies({ keyword, region, dong });
         showToast('검색 조건을 적용했습니다.');
     };
 
@@ -150,9 +148,26 @@ function AgencyPage() {
                                 onChange={(event) => setKeyword(event.target.value)}
                                 onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(); }}
                             />
-                            <select className="search-box" value={region} onChange={(event) => setRegion(event.target.value)}>
-                                {REGIONS.map((item) => (
-                                    <option value={item.value} key={item.value}>{item.label}</option>
+                            {/* 구를 고른 뒤 동을 더 좁힐 수 있습니다. 구를 안 골랐으면 동은 고를 수 없습니다. */}
+                            <select
+                                className="search-box"
+                                value={region}
+                                onChange={(event) => { setRegion(event.target.value); setDong(''); }}
+                            >
+                                <option value="">지역 전체</option>
+                                {SEOUL_DISTRICTS.map((district) => (
+                                    <option value={district} key={district}>{district}</option>
+                                ))}
+                            </select>
+                            <select
+                                className="search-box"
+                                value={dong}
+                                onChange={(event) => setDong(event.target.value)}
+                                disabled={!region}
+                            >
+                                <option value="">동 전체</option>
+                                {dongsOf(region).map((item) => (
+                                    <option value={item} key={item}>{item}</option>
                                 ))}
                             </select>
                             <button className="solid-btn" onClick={handleSearch} disabled={loading}>
