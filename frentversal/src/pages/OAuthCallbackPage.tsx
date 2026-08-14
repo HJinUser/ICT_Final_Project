@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { User } from "../types/User";
+import type { RecentLoginMethod } from "../types/RecentLogin";
+import { saveRecentLogin, takePendingSocial } from "../utils/recentLogin";
 
 interface Props {
     // onLogin 프롭스는 User 형식으로 매개 변수를 받고, 반환 타입이 없습니다.
@@ -40,6 +42,13 @@ function App({ onLogin }: Props) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(userData));
+
+        // 로그인 화면에서 눌렀던 소셜 제공자를 꺼내 "최근 로그인"으로 남긴다.
+        // 제공자를 알 수 없는 경우(주소로 직접 들어온 경우 등)에는 남기지 않는다.
+        const provider = takePendingSocial();
+        if (provider === 'kakao' || provider === 'naver' || provider === 'google') {
+            saveRecentLogin(provider as RecentLoginMethod, userData.email);
+        }
 
         onLogin(userData);
 

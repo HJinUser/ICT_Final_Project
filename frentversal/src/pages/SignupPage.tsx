@@ -4,6 +4,7 @@ import axios from "axios";
 
 import { signup } from "../api/authApi";
 import AddressInput from "../components/AddressInput";
+import PasswordField from "../components/PasswordField";
 import TermsAgreement from "../components/TermsAgreement";
 import { API_BASE_URL } from "../config/config";
 import { SOCIAL_BUTTONS } from "../types/Auth";
@@ -200,33 +201,30 @@ function App() {
                     {signupType === 'USER' && (
                         <>
                             <div className="auth-fields-2">
-                                <div className="auth-field">
-                                    <label htmlFor="signup-password">비밀번호</label>
-                                    <input
-                                        id="signup-password"
-                                        type="password"
-                                        placeholder="대문자+소문자+숫자+특수기호"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className={errors.password ? 'invalid' : ''}
-                                        required
-                                    />
-                                    {errors.password && <span className="msg">{errors.password}</span>}
-                                </div>
+                                <PasswordField
+                                    id="signup-password"
+                                    label="비밀번호"
+                                    placeholder="대문자+소문자+숫자+특수기호"
+                                    value={password}
+                                    onChange={setPassword}
+                                    errorMessage={errors.password}
+                                    autoComplete="new-password"
+                                    required
+                                />
 
-                                <div className="auth-field">
-                                    <label htmlFor="signup-password-confirm">비밀번호 확인</label>
-                                    <input
-                                        id="signup-password-confirm"
-                                        type="password"
-                                        placeholder="다시 입력"
-                                        value={passwordConfirm}
-                                        onChange={(e) => setPasswordConfirm(e.target.value)}
-                                        className={errors.passwordConfirm ? 'invalid' : ''}
-                                        required
-                                    />
-                                    {errors.passwordConfirm && <span className="msg">{errors.passwordConfirm}</span>}
-                                </div>
+                                {/* 확인 칸은 눈으로 보고 맞추는 곳이 아니라 직접 다시 입력해서 확인하는 곳이라,
+                                    브라우저가 붙이는 "내용 표시"(눈 아이콘) 단추를 막는다. */}
+                                <PasswordField
+                                    id="signup-password-confirm"
+                                    label="비밀번호 확인"
+                                    placeholder="다시 입력"
+                                    value={passwordConfirm}
+                                    onChange={setPasswordConfirm}
+                                    errorMessage={errors.passwordConfirm}
+                                    autoComplete="new-password"
+                                    allowReveal={false}
+                                    required
+                                />
                             </div>
 
                             {/* 회원 주소는 "어느 지역에 사는지"만 알면 되므로 상세주소를 받지 않는다.

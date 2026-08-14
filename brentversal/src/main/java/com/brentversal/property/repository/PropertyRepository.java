@@ -64,6 +64,14 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     // 매물이 가진 태그 중 고른 태그와 겹치는 개수를 세어, 고른 개수와 같은지 확인한다.
     @Query("select p from Property p " +
            " where p.status = :status and p.visible = true " +
+           // 상단 검색창의 자유 검색어. 지역만 찾는 게 아니라 매물 이름까지 함께 훑는다.
+           // "반포동"으로도, "반포 리버뷰"로도 찾을 수 있어야 하기 때문이다.
+           // 대소문자를 가리지 않도록 양쪽을 lower 로 맞춘다.
+           "   and (:keyword is null " +
+           "        or lower(p.name) like lower(concat('%', :keyword, '%')) " +
+           "        or lower(p.address) like lower(concat('%', :keyword, '%')) " +
+           "        or lower(p.sigungu) like lower(concat('%', :keyword, '%')) " +
+           "        or lower(p.dong) like lower(concat('%', :keyword, '%'))) " +
            // 구·동은 주소 검색이 채워 준 컬럼으로 정확히 맞춘다.
            // 컬럼이 비어 있는 예전 자료는 주소 문자열에서 찾아 보는 방식으로 함께 걸러 준다.
            "   and (:region is null " +
@@ -84,6 +92,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
            "        (select count(t) from p.tags t where t.id in :tagIds) = :tagCount) " +
            " order by p.createdAt desc")
     List<Property> search(@Param("status") PropertyStatus status,
+                          @Param("keyword") String keyword,
                           @Param("region") String region,
                           @Param("dong") String dong,
                           @Param("type") PropertyType type,

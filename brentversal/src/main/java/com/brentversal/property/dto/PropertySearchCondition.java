@@ -12,6 +12,11 @@ import java.util.List;
 // 스프링이 이 객체에 담아 준다. 고르지 않은 항목은 null 로 들어오고, 그 조건은 건너뛴다.
 @Getter @Setter
 public class PropertySearchCondition {
+    // 상단 검색창(헤더·메인)에서 넘어오는 자유 검색어.
+    // 지역만이 아니라 매물 이름·주소까지 한 번에 훑어서 찾는다.
+    // 예: "서초구", "반포동", "반포 리버뷰" 중 무엇을 넣어도 걸린다.
+    private String keyword ;
+
     private String region ;    // 지역 구 (주소에 포함되는 문자열, 예: "서초구")
     private String dong ;      // 동 (구를 고른 뒤 더 좁힐 때. 예: "반포동")
     private String type ;      // 매물 유형 ONE_TWO_ROOM / APARTMENT / VILLA / OFFICETEL. 하나만 고른다

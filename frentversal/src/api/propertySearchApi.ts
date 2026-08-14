@@ -9,6 +9,7 @@ export async function searchProperties(params: PropertySearchParams = {}): Promi
     const response = await customAxios.get<PropertySearchResponse>('/property/search', {
         // 값이 비어 있는 조건은 아예 보내지 않는다 (서버에서 "고르지 않음"으로 처리된다)
         params: {
+            keyword: params.keyword || undefined,
             region: params.region || undefined,
             dong: params.dong || undefined,
             type: params.type && params.type !== 'ALL' ? params.type : undefined,

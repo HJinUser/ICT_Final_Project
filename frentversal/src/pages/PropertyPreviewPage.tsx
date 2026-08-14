@@ -44,7 +44,12 @@ const DUMMY_PROPERTY: PropertyDetail = {
     ],
     status: "ACTIVE",
     visible: true,
-    aiPrice: 54200,
+    // AI 예상가는 거래유형별로 필드가 나뉜다. 이 매물은 전세(JEONSE)라서 aiDeposit 이 실제로 쓰이는 값이고,
+    // 나머지(매매가·월세)는 해당 없음이라 null 이다.
+    aiPrice: null,
+    aiDeposit: 54200,
+    aiMonthlyDeposit: null,
+    aiMonthlyRent: null,
     priceStatus: "DOWN", // "가격 하락" 배지 확인용. null로 바꾸면 배지가 안 보임
     createdAt: "2026-07-01T00:00:00",
 

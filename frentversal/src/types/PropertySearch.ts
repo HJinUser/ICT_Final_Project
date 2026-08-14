@@ -47,6 +47,9 @@ export interface PropertySearchResponse {
 
 // 왼쪽 필터에서 고른 조건. 고르지 않은 항목은 보내지 않는다.
 export interface PropertySearchParams {
+    // 상단 검색창(헤더·메인 히어로)에서 넘어온 자유 검색어.
+    // 지역명뿐 아니라 매물 이름·주소까지 함께 찾는다. 왼쪽 필터와는 별개로 동작한다.
+    keyword?: string;
     region?: string;      // 구
     dong?: string;        // 동
     type?: string;        // 매물 유형 (하나만)

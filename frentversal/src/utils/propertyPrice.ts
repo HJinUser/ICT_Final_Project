@@ -32,3 +32,17 @@ export const DEAL_TYPE_LABELS: Record<DealTypeCode, string> = {
     JEONSE: "전세",
     MONTHLY: "월세",
 };
+
+// 만원 단위 정수를 "4억 9,000만 원" 형태로 바꾼다.
+// 서버가 금액을 만원 단위로 내려주는데, 화면마다 억/만 변환 규칙을 다시 짜면
+// 자리수 표기가 서로 어긋나기 쉬워서 여기 한곳에 둔다.
+export const formatManwon = (manwon: number): string => {
+    if (manwon <= 0) return "0원";
+
+    const eok = Math.floor(manwon / 10_000);
+    const rest = manwon % 10_000;
+
+    if (eok === 0) return `${rest.toLocaleString()}만 원`;
+    if (rest === 0) return `${eok}억 원`;
+    return `${eok}억 ${rest.toLocaleString()}만 원`;
+};

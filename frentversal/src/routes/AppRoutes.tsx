@@ -84,7 +84,8 @@ function App({ user, handleLoginSuccess }: AppProps) {
 
       {/* 신고. 접수와 내 신고 내역은 사용자·중개인, 신고 관리는 관리자 화면이다. */}
       <Route path="/report/form" element={<ReportFormPage user={user} />} />
-      <Route path="/report/me" element={<MyReportPage user={user} />} />
+      {/* MyReportPage 는 로그인 사용자의 신고만 조회하는 화면이라 user prop 없이 스스로 데이터를 가져온다 */}
+      <Route path="/report/me" element={<MyReportPage />} />
 
       {/* 사용자 마이페이지. 내 활동 > 알림내역에서 상담 답변 화면으로 간다. */}
       <Route path="/mypage" element={<MyPage user={user} />} />
