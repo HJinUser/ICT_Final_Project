@@ -1,0 +1,58 @@
+prentversal/
+├─ app/                                   # FastAPI 서버 실행 및 API 기능 관련 코드
+│  ├─ __init__.py                         # app 폴더를 Python 패키지로 인식시키는 파일
+│  ├─ main.py                             # FastAPI 서버 시작점, router 등록
+│  ├─ config.py                           # 환경변수, 모델/데이터 경로 등 공통 설정
+│  ├─ routers/                            # Spring에서 호출할 FastAPI API 주소 정의
+│  │  ├─ __init__.py                      # routers 패키지 선언
+│  │  ├─ price.py                         # 부동산 적정 시세 예측 API
+│  │  ├─ recommendation.py                # 사용자 맞춤 매물 추천 API
+│  │  ├─ neighborhood.py                  # 동네 군집/분석 관련 API
+│  │  └─ admin_ml.py                      # 모델 상태 등 관리자용 ML API
+│  ├─ schemas/                            # FastAPI 요청/응답 JSON 구조 정의
+│  │  ├─ __init__.py                      # schemas 패키지 선언
+│  │  ├─ price.py                         # 시세 예측 요청/응답 데이터 형식
+│  │  └─ recommendation.py                # 추천 요청/응답 데이터 형식
+│  └─ services/                           # 실제 머신러닝 예측/계산 로직
+│     ├─ __init__.py                      # services 패키지 선언
+│     ├─ artifact_store.py                # 학습된 모델/joblib/참조 데이터 로딩 및 보관
+│     ├─ feature_service.py               # 모델 입력값용 feature 생성/가공
+│     ├─ price_service.py                 # 시세 예측 모델 실행
+│     ├─ recommendation_service.py        # 추천 점수 계산 및 추천 매물 선정
+│     └─ neighborhood_service.py          # 동네 군집 결과/동네 분석 처리
+│
+├─ collectors/                            # 머신러닝에 사용할 원본 데이터 수집 코드
+│  ├─ __init__.py                         # collectors 패키지 선언
+│  ├─ common.py                           # 데이터 수집 시 공통으로 사용하는 함수
+│  ├─ collect_transactions.py             # 부동산 실거래가 데이터 수집
+│  ├─ collect_bus_stops.py                # 버스정류장 데이터 수집
+│  ├─ collect_hospitals.py                # 병원 데이터 수집
+│  ├─ collect_academies.py                # 학원 데이터 수집
+│  └─ normalize_manual_sources.py         # 직접 받은/다운로드한 수동 데이터 형식 통일
+│
+├─ training/                              # 로컬에서 모델 학습 및 학습용 데이터 생성
+│  ├─ __init__.py                         # training 패키지 선언
+│  ├─ build_spatial_features.py           # 역/버스/병원/학원 등 공간 기반 feature 생성
+│  ├─ prepare_price_dataset.py            # 시세 예측 모델 학습용 최종 데이터셋 생성
+│  ├─ train_price_models.py               # 매매/전세/월세 시세 예측 모델 학습 및 저장
+│  ├─ cluster_neighborhoods.py            # K-Means 등을 이용한 동네 유형 군집화
+│  └─ mine_neighborhood_text.py           # 동네 리뷰 텍스트 마이닝/키워드 분석
+│
+├─ data/                                  # 수집한 데이터와 전처리된 데이터 보관
+│  ├─ raw/                                # 가공하지 않은 원본 데이터
+│  │  ├─ api/                             # 공공 API 등으로 수집한 원본 데이터
+│  │  ├─ manual/                          # 직접 다운로드/수동으로 받은 원본 데이터
+│  │  │  └─ admin_dong_boundary/          # 행정동 경계 데이터
+│  │  └─ text/                            # 동네 리뷰 등 텍스트 원본 데이터
+│  ├─ reference/                          # 지하철역 등 반복해서 참조하는 기준 데이터
+│  └─ processed/                          # 전처리 및 feature 생성이 끝난 데이터
+│
+├─ models/                                # 학습 완료된 머신러닝 모델 파일(.joblib 등)
+├─ outputs/                               # 군집 결과, 텍스트 분석 결과 등 생성 결과물
+├─ tests/                                 # FastAPI/ML 기능 테스트 코드
+├─ .env                                   # API Key 등 실제 환경변수 값, Git에 올리지 않음
+├─ .env.example                           # 필요한 환경변수 이름만 적어둔 예시 파일
+├─ requirements.txt                       # FastAPI 서버 실행에 필요한 Python 패키지
+├─ requirements-ml.txt                    # 모델 학습/데이터 분석에 필요한 추가 패키지
+├─ PythonDockerfile                       # FastAPI 서버 Docker 이미지 생성 설정
+└─ .dockerignore                          # Docker 이미지에 포함하지 않을 파일/폴더 설정
