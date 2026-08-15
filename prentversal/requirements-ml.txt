@@ -1,1 +1,12 @@
 # 모델 학습/데이터 분석에 필요한 추가 패키지
+-r requirements.txt
+requests>=2.32,<3
+openpyxl>=3.1,<4
+geopandas==1.1.4
+pyproj>=3.7,<4
+matplotlib>=3.10,<4
+wordcloud==1.9.6
+konlpy==0.6.0
+JPype1>=1.5,<2
+pytest>=8,<9
+httpx>=0.28,<1
