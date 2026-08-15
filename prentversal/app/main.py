@@ -1,3 +1,5 @@
+# FastAPI 서버 시작점, router 등록
+
 import uvicorn
 from fastapi import FastAPI
 

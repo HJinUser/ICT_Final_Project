@@ -1,3 +1,4 @@
+# FastAPI 서버 실행에 필요한 Python 패키지
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
