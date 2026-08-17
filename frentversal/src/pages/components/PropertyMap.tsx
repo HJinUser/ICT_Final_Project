@@ -28,6 +28,11 @@ const MEMBER_AREA_LEVEL = 6;
 const DONG_GROUP_LEVEL = 6; // 6 이상이면 동끼리 묶는다
 const GU_GROUP_LEVEL = 8;   // 8 이상이면 구끼리 묶는다
 
+// 필터에서 동까지 고른 경우의 확대 정도.
+// DONG_GROUP_LEVEL 보다 한 단계 더 확대해서, 동을 고른 순간 매물이 묶이지 않고
+// 하나씩 보이게 한다(동 하나만 보는데 "○○동 3"으로 묶여 있으면 볼 것이 없다).
+const DONG_AREA_LEVEL = 5;
+
 interface Props {
     properties: PropertySearchItem[];
     myAgencyId?: number | null;      // 로그인한 중개인의 사무소 (없으면 구분하지 않는다)
@@ -44,9 +49,14 @@ interface Props {
     // null 이면 강조 표시를 지운다.
     highlightRegion?: string | null;
 
-    // "이 구가 화면에 들어오게 시야를 다시 맞춰라"는 신호. 값이 바뀔 때만 반응한다.
-    // 화면에서 "선택 조건 적용"을 누를 때마다 올려 주므로, 같은 구를 그대로 두고 지도만
-    // 옮겨 둔 뒤 다시 적용해도 그 구로 돌아온다.
+    // 필터에서 고른 동 이름 ("당산동"). 구까지만 고른 상태면 null 이다.
+    // 동을 고르면 구 경계 대신 그 동네로 확대해서 옮긴다. 경계선은 구 그대로 둔다
+    // (동 경계 데이터는 없고, 어느 구 안인지 보이는 편이 길을 잡기 쉽다).
+    highlightDong?: string | null;
+
+    // "고른 지역이 화면에 들어오게 시야를 다시 맞춰라"는 신호. 값이 바뀔 때만 반응한다.
+    // 화면에서 "선택 조건 적용"을 누를 때마다 올려 주므로, 같은 지역을 그대로 두고 지도만
+    // 옮겨 둔 뒤 다시 적용해도 그 지역으로 돌아온다.
     focusNonce?: number;
 }
 
@@ -100,6 +110,7 @@ function PropertyMap({
     onSelectGroup,
     initialCenterAddress,
     highlightRegion,
+    highlightDong,
     focusNonce,
 }: Props) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -114,12 +125,10 @@ function PropertyMap({
     // 지금 그려 둔 구 경계선. 새로 그리기 전에 지운다.
     const boundaryRef = useRef<any>(null);
 
-    // 경계선을 그리면서 지도 범위를 한 번 맞췄는지 기억해 둔다.
-    // highlightRegion 문자열이 바뀔 때만 다시 맞추고, 다른 이유로 다시 그려질 때는 시야를 건드리지 않는다.
-    const lastFittedRegionRef = useRef<string | null>(null);
-
-    // 마지막으로 반응한 "다시 맞춰라" 신호. 이 값이 달라졌을 때만 시야를 다시 잡는다.
-    const lastFocusNonceRef = useRef<number | undefined>(focusNonce);
+    // 마지막으로 시야를 맞춘 대상. "구|동|신호" 를 한 문자열로 합쳐 둔다.
+    // 이 값이 그대로면 아무것도 하지 않는다 — 표식이 다시 그려지는 등 다른 이유로
+    // 이 효과가 재실행될 때마다 시야를 잡으면, 사용자가 옮겨 둔 지도가 자꾸 되돌아간다.
+    const lastFocusKeyRef = useRef<string | null>(null);
 
     // 지도 범위를 한 번 맞췄는지 기억해 둔다.
     // 매번 맞추면 사용자가 지도를 옮기거나 확대할 때마다 원위치로 돌아가 버린다.
@@ -256,17 +265,18 @@ function PropertyMap({
             });
         }
 
-        // 구를 고른 상태면 아래 경계 강조 쪽이 그 구에 맞춰 시야를 잡으므로 여기서는 건드리지 않는다.
-        // 매물 위치에 맞추면 그 구에 매물이 한두 건일 때 지나치게 확대되어
+        // 지역을 고른 상태면 아래 "고른 지역으로 시야 옮기기" 쪽이 화면을 맡으므로 여기서는 건드리지 않는다.
+        // 매물 위치에 맞추면 그 지역에 매물이 한두 건일 때 지나치게 확대되어
         // 방금 고른 지역이 어디인지 알 수 없게 된다.
-        const framedByRegion = Boolean(highlightRegion && findDistrictBoundary(highlightRegion));
+        const framedByArea = Boolean(highlightDong)
+            || Boolean(highlightRegion && findDistrictBoundary(highlightRegion));
 
         // 검색 결과가 바뀐 직후에만 범위를 맞춘다
-        if (!bounds.isEmpty() && !fittedRef.current && !framedByRegion) {
+        if (!bounds.isEmpty() && !fittedRef.current && !framedByArea) {
             map.setBounds(bounds);
             fittedRef.current = true;
         }
-    }, [properties, level, myAgencyId, selectedId, onSelect, onSelectGroup, sdkLoaded, highlightRegion]);
+    }, [properties, level, myAgencyId, selectedId, onSelect, onSelectGroup, sdkLoaded, highlightRegion, highlightDong]);
 
     // 검색 조건이 바뀌어 목록이 통째로 달라지면 범위를 다시 맞춘다
     useEffect(() => {
@@ -290,15 +300,11 @@ function PropertyMap({
         const district = findDistrictBoundary(highlightRegion);
         if (!district) return; // 서울 25개 구 밖의 지역이면 경계 데이터가 없다
 
-        const bounds = new kakao.maps.LatLngBounds();
-
         // Polygon 좌표는 [ [바깥 테두리], [구멍1], ... ] 형태다.
         // 서울 구는 섬(밖에 딸린 작은 땅) 없이 테두리 하나뿐이라 첫 번째 고리만 쓴다.
-        const path = district.coordinates[0].map(([longitude, latitude]) => {
-            const position = new kakao.maps.LatLng(latitude, longitude);
-            bounds.extend(position);
-            return position;
-        });
+        const path = district.coordinates[0].map(
+            ([longitude, latitude]) => new kakao.maps.LatLng(latitude, longitude),
+        );
 
         boundaryRef.current = new kakao.maps.Polygon({
             map,
@@ -309,16 +315,55 @@ function PropertyMap({
             fillColor: '#4B0082',
             fillOpacity: 0.06,
         });
+    }, [highlightRegion, sdkLoaded]);
 
-        // 같은 구를 다시 그릴 때(예: 표식이 다시 그려지며 이 효과가 재실행될 때)는
-        // 사용자가 이미 옮겨 둔 시야를 건드리지 않는다.
-        // 구가 실제로 바뀌었을 때와, 화면에서 "선택 조건 적용"으로 신호를 보냈을 때만 맞춘다.
-        if (lastFittedRegionRef.current !== highlightRegion || lastFocusNonceRef.current !== focusNonce) {
-            map.setBounds(bounds);
-            lastFittedRegionRef.current = highlightRegion;
-            lastFocusNonceRef.current = focusNonce;
+    // ── 고른 지역으로 시야 옮기기 ──────────────────────────
+    // 위 경계선 그리기와 일부러 나눠 두었다. 한 곳에서 둘 다 하면
+    // "동을 골랐는데 구 경계에 맞춰 다시 넓어지는" 식으로 서로 화면을 뺏는다.
+    //
+    // 동까지 골랐으면 그 동네로 확대하고, 구까지만 골랐으면 구 전체가 들어오게 맞춘다.
+    useEffect(() => {
+        const kakao = window.kakao;
+        const map = mapRef.current;
+
+        if (!kakao?.maps || !map) return;
+
+        // 같은 대상에 이미 맞춰 두었으면 사용자가 옮겨 둔 지도를 건드리지 않는다.
+        // "선택 조건 적용"을 누르면 focusNonce 가 바뀌므로 그때는 다시 맞춘다.
+        const focusKey = `${highlightRegion ?? ''}|${highlightDong ?? ''}|${focusNonce ?? 0}`;
+        if (lastFocusKeyRef.current === focusKey) return;
+        lastFocusKeyRef.current = focusKey;
+
+        if (!highlightRegion) return;
+
+        // 동까지 골랐으면 주소를 좌표로 바꿔서 그 동네로 확대한다.
+        // 동 경계 데이터는 없어서 경계 대신 중심 좌표 + 고정 확대율을 쓴다.
+        if (highlightDong) {
+            let cancelled = false;
+
+            findCenter(`서울시 ${highlightRegion} ${highlightDong}`).then((center) => {
+                // 좌표를 받아오는 사이에 사용자가 다른 지역을 골랐으면 늦게 온 결과는 버린다
+                if (cancelled || lastFocusKeyRef.current !== focusKey || !center) return;
+
+                map.setCenter(new kakao.maps.LatLng(center.latitude, center.longitude));
+                map.setLevel(DONG_AREA_LEVEL);
+                setLevel(DONG_AREA_LEVEL); // zoom_changed 가 오지 않는 경우를 대비해 직접 반영
+            });
+
+            return () => { cancelled = true; };
         }
-    }, [highlightRegion, focusNonce, sdkLoaded]);
+
+        // 구까지만 골랐으면 구 전체가 화면에 들어오게 맞춘다
+        const district = findDistrictBoundary(highlightRegion);
+        if (!district) return; // 서울 25개 구 밖이면 경계 데이터가 없다
+
+        const bounds = new kakao.maps.LatLngBounds();
+        district.coordinates[0].forEach(([longitude, latitude]) => {
+            bounds.extend(new kakao.maps.LatLng(latitude, longitude));
+        });
+
+        map.setBounds(bounds);
+    }, [highlightRegion, highlightDong, focusNonce, sdkLoaded]);
 
     const pinnableCount = properties.filter((property) => property.latitude != null).length;
     const grouping = level >= GU_GROUP_LEVEL ? '구' : level >= DONG_GROUP_LEVEL ? '동' : null;
