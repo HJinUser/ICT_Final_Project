@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Container, Table, Badge, Alert } from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
 import type { PropertyResponse } from "../types/Property";
 import "../styles/ComparePage.css";
 import { DEAL_TYPE_LABELS } from "../utils/propertyPrice";
+
+// 거래유형별 배지 색. ListingsPage.tsx 와 동일한 매핑을 쓴다(매매=초록/전세=보라/월세=주황).
+const DEAL_TYPE_BADGE: Record<string, string> = {
+    SALE: "green",
+    JEONSE: "purple",
+    MONTHLY: "orange",
+};
 
 function pickWinnerIndex(
     values: (number | null)[],
@@ -156,6 +162,16 @@ function formatPriceDifference(property: PropertyResponse): string {
     )} / 월세 ${formatSignedMoney(rentDiff)}`;
 }
 
+// 비교 항목별 라벨. AI 비교 요약 문장을 만들 때도 재사용한다.
+const CATEGORY_LABELS: Record<string, string> = {
+    price: "금액",
+    priceDiff: "시세 대비 저렴함",
+    area: "면적",
+    station: "교통 편의",
+    fee: "관리비",
+    aiScore: "AI 추천 점수",
+};
+
 function ComparePage() {
     const [searchParams] = useSearchParams();
     const idsParam = searchParams.get("ids");
@@ -242,30 +258,56 @@ function ComparePage() {
     }, [idsParam]);
 
     if (loading) {
-        return <Container className="mt-5">불러오는 중...</Container>;
+        return (
+            <main>
+                <section className="section">
+                    <div className="wrap">
+                        <p className="muted">불러오는 중...</p>
+                    </div>
+                </section>
+            </main>
+        );
     }
 
     if (error) {
         return (
-            <Container className="mt-5">
-                <Alert variant="warning">{error}</Alert>
-                <Link to="/favorites" className="btn btn-outline-primary">
-                    관심목록으로 돌아가기
-                </Link>
-            </Container>
+            <main>
+                <section className="section">
+                    <div className="wrap">
+                        <div className="soft" style={{ maxWidth: 480 }}>
+                            <p>{error}</p>
+                        </div>
+                        <Link
+                            to="/favorites"
+                            className="outline-btn"
+                            style={{ marginTop: 16, display: "inline-flex" }}
+                        >
+                            관심목록으로 돌아가기
+                        </Link>
+                    </div>
+                </section>
+            </main>
         );
     }
 
     if (properties.length !== 2) {
         return (
-            <Container className="mt-5">
-                <Alert variant="secondary">
-                    관심목록에서 비교할 매물 2개를 선택해 주세요.
-                </Alert>
-                <Link to="/favorites" className="btn btn-outline-primary">
-                    관심목록으로 돌아가기
-                </Link>
-            </Container>
+            <main>
+                <section className="section">
+                    <div className="wrap">
+                        <div className="soft" style={{ maxWidth: 480 }}>
+                            <p>관심목록에서 비교할 매물 2개를 선택해 주세요.</p>
+                        </div>
+                        <Link
+                            to="/favorites"
+                            className="outline-btn"
+                            style={{ marginTop: 16, display: "inline-flex" }}
+                        >
+                            관심목록으로 돌아가기
+                        </Link>
+                    </div>
+                </section>
+            </main>
         );
     }
 
@@ -312,253 +354,263 @@ function ComparePage() {
     const stationWinner = pickWinnerIndex(stationDistances, "lower");
     const aiScoreWinner = pickWinnerIndex(aiRecommendScores, "higher");
 
+    // AI 비교 요약: 이미 계산한 승자 인덱스들을 모아서 "이 매물이 어떤 항목에서 유리한지" 문장으로 묶는다.
+    // 새로운 API 호출 없이 화면에 이미 있는 계산 결과만 재사용한다.
+    const categoryWinners: { key: string; winner: number | null }[] = [
+        { key: "price", winner: priceWinner },
+        { key: "priceDiff", winner: priceDiffWinner },
+        { key: "area", winner: areaWinner },
+        { key: "station", winner: stationWinner },
+        { key: "fee", winner: feeWinner },
+        { key: "aiScore", winner: aiScoreWinner },
+    ];
+
+    const winningLabelsByIndex: string[][] = [[], []];
+    categoryWinners.forEach(({ key, winner }) => {
+        if (winner === 0 || winner === 1) {
+            winningLabelsByIndex[winner].push(CATEGORY_LABELS[key]);
+        }
+    });
+
+    const summarySentences = winningLabelsByIndex
+        .map((labels, index) =>
+            labels.length > 0
+                ? `${labels.join("·")}은(는) ${properties[index].name}이(가) 유리합니다.`
+                : null
+        )
+        .filter((sentence): sentence is string => sentence !== null);
+
     return (
-        <Container className="mt-4 mb-5">
-            <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                <div>
-                    <div className="text-muted small">Compare</div>
-                    <h1>매물 비교</h1>
-                    <p className="text-muted mb-0">
-                        같은 거래유형의 관심매물 2개를 비교합니다.
-                    </p>
+        <main>
+            <section className="page-hero">
+                <div className="wrap">
+                    <div>
+                        <div className="eyebrow">Compare</div>
+                        <h1>매물 비교</h1>
+                        <p>
+                            관심 있는 매물 2개를 나란히 놓고 가격, 면적, 교통, 환경,
+                            AI 시세를 비교합니다.
+                        </p>
+                    </div>
+                    <div className="hero-stat">
+                        <span className="mono dim">현재 비교</span>
+                        <strong>2개</strong>
+                        <span className="xs dim">2개까지 선택</span>
+                    </div>
                 </div>
+            </section>
 
-                <Link
-                    to="/favorites"
-                    className="btn btn-outline-primary"
-                >
-                    ← 관심목록으로 돌아가기
-                </Link>
-            </div>
+            <section className="section">
+                <div className="wrap">
+                    <div className="table-wrap">
+                        <table className="compare-table">
+                            <thead>
+                            <tr>
+                                <th>비교 항목</th>
 
-            <Table bordered responsive className="compare-table mt-4">
-                <thead>
-                    <tr>
-                        <th className="compare-label-column">
-                            비교 항목
-                        </th>
-
-                        {properties.map((property) => (
-                            <th key={property.id}>
-                                <Badge bg="secondary" className="mb-2">
-                                    {DEAL_TYPE_LABELS[property.dealType]}
-                                </Badge>
-                                <div>{property.name}</div>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr>
-                        <td className="compare-row-label">사진</td>
-
-                        {properties.map((property) => (
-                            <td key={property.id}>
-                                {property.images[0] ? (
-                                    <img
-                                        src={property.images[0].url}
-                                        alt={property.name}
-                                        className="compare-thumb"
-                                    />
-                                ) : (
-                                    <div className="compare-thumb compare-thumb--empty">
-                                        사진 없음
-                                    </div>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">금액</td>
-
-                        {properties.map((property, index) => (
-                            <td
-                                key={property.id}
-                                className={
-                                    index === priceWinner
-                                        ? "compare-winner"
-                                        : ""
-                                }
-                            >
-                                {formatActualPrice(property)}
-                                {index === priceWinner && (
-                                    <span className="winner-check"> ✓</span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">
-                            AI 예상 시세
-                        </td>
-
-                        {properties.map((property) => (
-                            <td key={property.id}>
-                                {formatAiPrice(property)}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">
-                            시세 차이
-                        </td>
-
-                        {properties.map((property, index) => (
-                            <td
-                                key={property.id}
-                                className={
-                                    index === priceDiffWinner
-                                        ? "compare-winner"
-                                        : ""
-                                }
-                            >
-                                {formatPriceDifference(property)}
-                                {index === priceDiffWinner && (
-                                    <span className="winner-check"> ✓</span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">면적</td>
-
-                        {properties.map((property, index) => (
-                            <td
-                                key={property.id}
-                                className={
-                                    index === areaWinner
-                                        ? "compare-winner"
-                                        : ""
-                                }
-                            >
-                                {property.area}㎡
-                                {index === areaWinner && (
-                                    <span className="winner-check"> ✓</span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">역 거리</td>
-
-                        {properties.map((property, index) => (
-                            <td
-                                key={property.id}
-                                className={
-                                    index === stationWinner
-                                        ? "compare-winner"
-                                        : ""
-                                }
-                            >
-                                {property.stationDistance !== null
-                                    ? `${Math.round(
-                                        property.stationDistance
-                                    ).toLocaleString()}m`
-                                    : "정보 없음"}
-
-                                {index === stationWinner && (
-                                    <span className="winner-check"> ✓</span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">관리비</td>
-
-                        {properties.map((property, index) => (
-                            <td
-                                key={property.id}
-                                className={
-                                    index === feeWinner
-                                        ? "compare-winner"
-                                        : ""
-                                }
-                            >
-                                {property.maintenanceFee.toLocaleString()}만 원
-                                {index === feeWinner && (
-                                    <span className="winner-check"> ✓</span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
-
-                    <tr>
-                        <td className="compare-row-label">주변 환경</td>
-
-                        {properties.map((property) => (
-                            <td key={property.id}>
-                                {property.tags.length > 0
-                                    ? property.tags
-                                        .slice(0, 5)
-                                        .map((tag) => (
-                                            <Badge
-                                                key={tag.id}
-                                                bg="light"
-                                                text="dark"
-                                                className="me-1 mb-1"
+                                {properties.map((property) => (
+                                    <th key={property.id}>
+                                            <span
+                                                className={`status ${
+                                                    DEAL_TYPE_BADGE[property.dealType] ?? "gray"
+                                                }`}
                                             >
-                                                {tag.name}
-                                            </Badge>
-                                        ))
-                                    : "정보 없음"}
-                            </td>
-                        ))}
-                    </tr>
+                                                {DEAL_TYPE_LABELS[property.dealType]}
+                                            </span>
+                                        <div style={{ marginTop: 6 }}>{property.name}</div>
+                                    </th>
+                                ))}
+                            </tr>
+                            </thead>
 
-                    <tr>
-                        <td className="compare-row-label">
-                            AI 추천 점수
-                        </td>
+                            <tbody>
+                            <tr>
+                                <td>사진</td>
 
-                        {properties.map((property, index) => (
-                            <td
-                                key={property.id}
-                                className={
-                                    index === aiScoreWinner
-                                        ? "compare-winner"
-                                        : ""
-                                }
-                            >
-                                {property.aiRecommendScore !== null
-                                    ? `${property.aiRecommendScore.toLocaleString()}점`
-                                    : "분석 준비 중"}
+                                {properties.map((property) => (
+                                    <td key={property.id}>
+                                        {property.images[0] ? (
+                                            <div
+                                                className="thumb"
+                                                style={{
+                                                    backgroundImage: `url('${property.images[0].url}')`,
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="thumb thumb-empty">사진 없음</div>
+                                        )}
+                                    </td>
+                                ))}
+                            </tr>
 
-                                {index === aiScoreWinner && (
-                                    <span className="winner-check"> ✓</span>
-                                )}
-                            </td>
-                        ))}
-                    </tr>
+                            <tr>
+                                <td>금액</td>
 
-                    <tr>
-                        <td className="compare-row-label">상세 보기</td>
+                                {properties.map((property, index) => (
+                                    <td
+                                        key={property.id}
+                                        className={index === priceWinner ? "winner" : ""}
+                                    >
+                                            <span className="num">
+                                                {formatActualPrice(property)}
+                                            </span>
+                                        {index === priceWinner && " ✓"}
+                                    </td>
+                                ))}
+                            </tr>
 
-                        {properties.map((property) => (
-                            <td key={property.id}>
-                                <Link
-                                    to={`/property/${property.id}`}
-                                    className="btn btn-primary btn-sm w-100"
-                                >
-                                    상세 보기
-                                </Link>
-                            </td>
-                        ))}
-                    </tr>
-                </tbody>
-            </Table>
+                            <tr>
+                                <td>AI 예상 시세</td>
 
-            <Alert variant="light" className="mt-3">
-                AI 예상 시세와 AI 추천 점수는 아직 DB에 분석 결과가 없는 경우
-                <strong> 분석 준비 중</strong>으로 표시됩니다.
-            </Alert>
-        </Container>
+                                {properties.map((property) => (
+                                    <td key={property.id} className="num">
+                                        {formatAiPrice(property)}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td>시세 차이</td>
+
+                                {properties.map((property, index) => (
+                                    <td
+                                        key={property.id}
+                                        className={index === priceDiffWinner ? "winner" : ""}
+                                    >
+                                            <span className="num">
+                                                {formatPriceDifference(property)}
+                                            </span>
+                                        {index === priceDiffWinner && " ✓"}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td>면적</td>
+
+                                {properties.map((property, index) => (
+                                    <td
+                                        key={property.id}
+                                        className={index === areaWinner ? "winner" : ""}
+                                    >
+                                        <span className="num">{property.area}㎡</span>
+                                        {index === areaWinner && " ✓"}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td>역 거리</td>
+
+                                {properties.map((property, index) => (
+                                    <td
+                                        key={property.id}
+                                        className={index === stationWinner ? "winner" : ""}
+                                    >
+                                            <span className="num">
+                                                {property.stationDistance !== null
+                                                    ? `${Math.round(
+                                                        property.stationDistance
+                                                    ).toLocaleString()}m`
+                                                    : "정보 없음"}
+                                            </span>
+                                        {index === stationWinner && " ✓"}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td>관리비</td>
+
+                                {properties.map((property, index) => (
+                                    <td
+                                        key={property.id}
+                                        className={index === feeWinner ? "winner" : ""}
+                                    >
+                                            <span className="num">
+                                                {property.maintenanceFee.toLocaleString()}만 원
+                                            </span>
+                                        {index === feeWinner && " ✓"}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td>주변 환경</td>
+
+                                {properties.map((property) => (
+                                    <td key={property.id}>
+                                        {property.tags.length > 0 ? (
+                                            <div className="tags">
+                                                {property.tags.slice(0, 5).map((tag) => (
+                                                    <span className="tag" key={tag.id}>
+                                                            {tag.name}
+                                                        </span>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            "정보 없음"
+                                        )}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td>AI 추천 점수</td>
+
+                                {properties.map((property, index) => (
+                                    <td
+                                        key={property.id}
+                                        className={
+                                            index === aiScoreWinner ? "winner num" : "num"
+                                        }
+                                    >
+                                        {property.aiRecommendScore !== null
+                                            ? `${property.aiRecommendScore.toLocaleString()}점`
+                                            : "분석 준비 중"}
+                                        {index === aiScoreWinner && " ✓"}
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <td></td>
+
+                                {properties.map((property, index) => (
+                                    <td key={property.id}>
+                                        <Link
+                                            to={`/property/${property.id}`}
+                                            className={
+                                                index === 0 ? "solid-btn" : "outline-btn"
+                                            }
+                                        >
+                                            상세 보기
+                                        </Link>
+                                    </td>
+                                ))}
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {summarySentences.length > 0 && (
+                        <div className="ai-band" style={{ marginTop: 20 }}>
+                            <strong>AI 비교 요약</strong>
+                            <p style={{ marginTop: 5 }}>{summarySentences.join(" ")}</p>
+                        </div>
+                    )}
+
+                    <div className="row" style={{ justifyContent: "center", marginTop: 26 }}>
+                        <Link to="/favorites" className="ghost-btn">
+                            관심목록으로 돌아가기
+                        </Link>
+                        <Link to="/map" className="solid-btn">
+                            다른 매물 추가
+                        </Link>
+                    </div>
+                </div>
+            </section>
+        </main>
     );
 }
 

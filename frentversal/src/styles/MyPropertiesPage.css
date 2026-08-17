@@ -8,3 +8,36 @@
 .my-properties-table td {
     vertical-align: middle;
 }
+
+.toolbar .search-box {
+    max-width: 320px;
+}
+
+.toolbar select.search-box {
+    max-width: 180px;
+}
+
+.my-properties-action-btn {
+    min-height: 30px;
+    padding: 5px 12px;
+    font-size: 12.5px;
+    margin-right: 6px;
+}
+
+/* react-bootstrap의 Alert(variant="danger"/"secondary")를 대신하는 최소 스타일 */
+.my-properties-alert {
+    padding: 14px 16px;
+    border-radius: var(--r-s);
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.my-properties-alert.danger {
+    background: #fbefef;
+    color: var(--red);
+}
+
+.my-properties-alert.guide {
+    background: var(--bg-2);
+    color: var(--ink-2);
+}
