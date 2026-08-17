@@ -9,6 +9,7 @@ import pandas as pd
 
 from collectors.common import BASE_DIR, PUBLIC_DATA_KEY, get_with_retry, require_key
 
+# 입력·출력 파일 위치를 한 곳에서 재사용할 수 있도록 경로를 미리 정의함.
 OUT = BASE_DIR / "data" / "reference" / "hospitals.csv"
 URL = "https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"
 
@@ -18,6 +19,7 @@ def text_of(item: ET.Element, names: list[str]) -> str | None:
     # 대상 데이터를 하나씩 순회하면서 같은 처리 반복함
     for name in names:
         found = item.find(name)
+        # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
         if found is not None and found.text:
             # 계산/조회가 끝난 최종 결과를 호출한 쪽에 반환함
             return found.text.strip()
@@ -31,6 +33,7 @@ def main() -> None:
     page = 1
     rows = []
 
+    # 종료 조건이 만족될 때까지 같은 수집·처리 과정을 반복함.
     while True:
         params = {
             "serviceKey": key,
@@ -48,6 +51,7 @@ def main() -> None:
 
         # 전체 건수가 남아 있는데 빈 페이지가 오면 불완전 수집을 정상 완료로 처리하지 않음
         if not items:
+            # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
             if total > (page - 1) * 1000:
                 raise RuntimeError(
                     f"병원 API가 예상보다 일찍 빈 페이지를 반환함: "
@@ -70,6 +74,7 @@ def main() -> None:
             except ValueError:
                 lon = lat = None
 
+            # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
             if name and lat is not None and lon is not None:
                 rows.append({
                     "name": name,
@@ -82,6 +87,7 @@ def main() -> None:
         if total == 0:
             total = len(rows)
         print(f"hospital page={page}, collected={len(rows):,}/{total:,}")
+        # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
         if page * 1000 >= total:
             break
         page += 1
@@ -93,6 +99,7 @@ def main() -> None:
         & df["longitude"].between(126.7, 127.3)
     ]
 
+    # 저장할 상위 폴더가 없어도 실행될 수 있도록 필요한 디렉터리를 먼저 생성함.
     OUT.parent.mkdir(parents=True, exist_ok=True)
     # 정리된 결과를 다음 단계에서 재사용할 CSV 파일로 저장함
     df.to_csv(OUT, index=False, encoding="utf-8-sig")

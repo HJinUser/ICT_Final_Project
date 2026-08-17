@@ -5,6 +5,7 @@ import geopandas as gpd
 
 from collectors.manual_common import RAW, REF, SEOUL_DISTRICT_CODES, pick_column
 
+# 입력·출력 파일 위치를 한 곳에서 재사용할 수 있도록 경로를 미리 정의함.
 OUTPUT = REF / "admin_dong_boundary.geojson"
 
 
@@ -12,6 +13,7 @@ OUTPUT = REF / "admin_dong_boundary.geojson"
 def main() -> None:
     folder = RAW / "admin_dong_boundary"
     shp_files = list(folder.glob("*.shp"))
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if not shp_files:
         raise FileNotFoundError(f"SHP 파일이 없습니다: {folder}")
 
@@ -29,11 +31,13 @@ def main() -> None:
 
     gdf["admin_code"] = gdf[code_col].astype(str).str.replace(".0", "", regex=False)
     gdf["admin_name"] = gdf[name_col].astype(str).str.strip()
+    # 각 행의 값을 미리 정한 변환 규칙에 따라 새로운 값으로 매핑함.
     gdf["district_name"] = gdf["admin_code"].str[:5].map(SEOUL_DISTRICT_CODES)
 
     out = gdf[["admin_code", "admin_name", "district_name", "area_km2", "geometry"]].copy()
     out = out[out["district_name"].notna()].to_crs("EPSG:4326")
 
+    # 저장할 상위 폴더가 없어도 실행될 수 있도록 필요한 디렉터리를 먼저 생성함.
     REF.mkdir(parents=True, exist_ok=True)
     out.to_file(OUTPUT, driver="GeoJSON", encoding="utf-8")
     print(f"saved: {OUTPUT} / {len(out):,} admin dongs")

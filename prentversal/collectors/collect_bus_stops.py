@@ -8,12 +8,13 @@ from pyproj import Transformer
 
 from collectors.common import BASE_DIR, clean_number, fetch_seoul_rows
 
+# 입력·출력 파일 위치를 한 곳에서 재사용할 수 있도록 경로를 미리 정의함.
 OUT = BASE_DIR / "data" / "reference" / "bus_stops.csv"
 
 
 # 좌표가 투영좌표이면 WGS84 위경도로 변환하고 이미 위경도면 그대로 반환하는 함수임
 def to_wgs84(x: float, y: float) -> tuple[float, float]:
-    # 이미 경도/위도처럼 보이면 그대로 사용한다.
+    # 이미 경도/위도처럼 보이면 그대로 사용함
     if abs(x) <= 180 and abs(y) <= 90:
         # 계산/조회가 끝난 최종 결과를 호출한 쪽에 반환함
         return y, x
@@ -36,6 +37,7 @@ def main() -> None:
     # 모델이나 계산에 필요한 값이 없는 행을 제거함
     df = df.dropna(subset=["x", "y"])
 
+    # 각 행 또는 값에 같은 함수를 적용해 파생값을 계산함.
     coords = df.apply(lambda r: to_wgs84(float(r["x"]), float(r["y"])), axis=1)
     df["latitude"] = coords.map(lambda p: p[0])
     df["longitude"] = coords.map(lambda p: p[1])
@@ -55,6 +57,7 @@ def main() -> None:
         & out["longitude"].between(126.7, 127.3)
     ]
 
+    # 저장할 상위 폴더가 없어도 실행될 수 있도록 필요한 디렉터리를 먼저 생성함.
     OUT.parent.mkdir(parents=True, exist_ok=True)
     # 정리된 결과를 다음 단계에서 재사용할 CSV 파일로 저장함
     out.to_csv(OUT, index=False, encoding="utf-8-sig")

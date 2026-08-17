@@ -10,6 +10,7 @@ import pandas as pd
 
 from collectors.common import BASE_DIR
 
+# 입력·출력 파일 위치를 한 곳에서 재사용할 수 있도록 경로를 미리 정의함.
 RAW = BASE_DIR / "data" / "raw" / "manual"
 REF = BASE_DIR / "data" / "reference"
 
@@ -26,6 +27,7 @@ SEOUL_DISTRICT_CODES = {
 
 # CSV 인코딩이 달라도 읽을 수 있도록 여러 인코딩을 순서대로 시도함
 def read_csv_flexible(path: Path) -> pd.DataFrame:
+    # 대상 데이터를 하나씩 순회하면서 각 항목에 동일한 처리 규칙을 적용함.
     for encoding in ["utf-8-sig", "utf-8", "cp949", "euc-kr"]:
         try:
             return pd.read_csv(path, encoding=encoding, low_memory=False)
@@ -37,6 +39,7 @@ def read_csv_flexible(path: Path) -> pd.DataFrame:
 # 배포 버전에 따라 달라질 수 있는 후보 컬럼명 중 실제 존재하는 컬럼을 찾음
 def pick_column(df: pd.DataFrame, candidates: list[str]) -> str:
     normalized = {str(c).strip().lower(): c for c in df.columns}
+    # 대상 데이터를 하나씩 순회하면서 각 항목에 동일한 처리 규칙을 적용함.
     for candidate in candidates:
         key = candidate.strip().lower()
         if key in normalized:
@@ -49,4 +52,5 @@ def pick_column(df: pd.DataFrame, candidates: list[str]) -> str:
 # 주소 문자열에서 서울 자치구 이름을 추출함
 def extract_district(address: str) -> str | None:
     match = re.search(r"서울(?:특별시)?\s+([가-힣]+구)", str(address))
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
     return match.group(1) if match else None

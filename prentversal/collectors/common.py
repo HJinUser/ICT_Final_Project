@@ -12,20 +12,24 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
+# 입력·출력 파일 위치를 한 곳에서 재사용할 수 있도록 경로를 미리 정의함.
 BASE_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BASE_DIR / ".env")
 
 SEOUL_KEY = os.getenv("SEOUL_OPEN_DATA_KEY", "").strip()
+# 여러 처리에서 공통으로 사용할 설정값을 상수로 미리 정의함.
 PUBLIC_DATA_KEY = os.getenv("PUBLIC_DATA_API_KEY", "").strip()
 
 
 # 저장할 파일의 부모 폴더가 없으면 미리 생성함
 def ensure_dir(path: Path) -> None:
+    # 저장할 상위 폴더가 없어도 실행될 수 있도록 필요한 디렉터리를 먼저 생성함.
     path.parent.mkdir(parents=True, exist_ok=True)
 
 
 # 필수 API Key가 비어 있으면 잘못된 상태로 계속 진행하지 않도록 오류 발생시킴
 def require_key(value: str, name: str) -> str:
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if not value:
         raise RuntimeError(f"{name} 값이 .env에 없습니다.")
     return value
@@ -41,10 +45,12 @@ def get_with_retry(
 ) -> requests.Response:
     last_error: Exception | None = None
 
+    # 대상 데이터를 하나씩 순회하면서 각 항목에 동일한 처리 규칙을 적용함.
     for attempt in range(1, max_attempts + 1):
         try:
             response = requests.get(url, params=params, timeout=timeout)
             response.raise_for_status()
+            # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
             return response
         except requests.RequestException as exc:
             last_error = exc
@@ -84,17 +90,20 @@ def fetch_seoul_page(
     # HTTP 200이어도 응답이 중간에 깨진 경우가 있을 수 있어 JSON 해석도 재시도함
     for attempt in range(1, 6):
         response = get_with_retry(url, timeout=60)
+        # 외부 데이터 처리나 변환 과정에서 발생할 수 있는 예외에 대비해 안전하게 실행함.
         try:
             payload = response.json()
             break
         except ValueError as exc:
             json_error = exc
+            # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
             if attempt >= 5:
                 break
             wait_seconds = 2 ** attempt
             print(f"서울 API JSON 해석 실패 / {wait_seconds}초 후 재시도")
             time.sleep(wait_seconds)
 
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if payload is None:
         raise RuntimeError("서울 API JSON 응답을 해석할 수 없습니다.") from json_error
 
@@ -104,6 +113,7 @@ def fetch_seoul_page(
     block = payload[service]
     result = block.get("RESULT", {})
     code = result.get("CODE")
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if code and code != "INFO-000":
         raise RuntimeError(f"서울 API 오류 {code}: {result.get('MESSAGE')}")
 
@@ -119,6 +129,7 @@ def fetch_seoul_rows(
     start = 1
     rows: list[dict[str, Any]] = []
 
+    # 종료 조건이 만족될 때까지 같은 수집·처리 과정을 반복함.
     while True:
         end = start + page_size - 1
         block = fetch_seoul_page(service, start, end, extra_segments)
@@ -128,6 +139,7 @@ def fetch_seoul_rows(
 
         print(f"[{service}] {len(rows):,} / {total:,}")
 
+        # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
         if not batch:
             # API가 전체 건수보다 일찍 빈 페이지를 반환하면 불완전 수집을 정상 완료로 처리하지 않음
             if len(rows) < total:
@@ -137,19 +149,23 @@ def fetch_seoul_rows(
                 )
             break
 
+        # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
         if len(rows) >= total:
             break
         start = end + 1
 
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
     return rows
 
 
 # .part.csv에서 특정 연도의 이미 저장된 행 수를 메모리를 과하게 쓰지 않고 계산함
 def count_saved_year_rows(part_path: Path, year: str) -> int:
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if not part_path.exists() or part_path.stat().st_size == 0:
         return 0
 
     total = 0
+    # 외부 데이터 처리나 변환 과정에서 발생할 수 있는 예외에 대비해 안전하게 실행함.
     try:
         for chunk in pd.read_csv(
             part_path,
@@ -164,6 +180,7 @@ def count_saved_year_rows(part_path: Path, year: str) -> int:
             f"기존 중간 파일의 형식이 올바르지 않습니다: {part_path}"
         ) from exc
 
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
     return total
 
 
@@ -181,6 +198,7 @@ def collect_seoul_raw_csv(
     if final_path.exists():
         print(f"이미 최종 파일이 존재함: {final_path}")
         print("처음부터 다시 수집하려면 최종 파일과 .part.csv를 직접 삭제한 뒤 실행함.")
+        # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
         return final_path
 
     for year in years:
@@ -197,18 +215,21 @@ def collect_seoul_raw_csv(
                 f"{saved:,} > {total:,}. .part.csv를 확인한 뒤 필요하면 삭제하고 다시 수집함."
             )
 
+        # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
         if saved == total:
             print(f"[{service} / {year}] 이미 완료됨: {saved:,} / {total:,}")
             continue
 
         start = saved + 1
 
+        # 종료 조건이 만족될 때까지 같은 수집·처리 과정을 반복함.
         while True:
             end = start + page_size - 1
             block = fetch_seoul_page(service, start, end, [year])
             batch = block.get("row", [])
             total = int(block.get("list_total_count", total))
 
+            # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
             if not batch:
                 # 전체 건수보다 적게 저장된 상태에서 빈 페이지가 오면 완성 파일로 바꾸지 않음
                 if saved < total:
@@ -219,11 +240,13 @@ def collect_seoul_raw_csv(
                 print(f"[{service} / {year}] 수집 완료: {saved:,} / {total:,}")
                 break
 
+            # 필요한 값만 새 DataFrame 구조로 구성해 이후 처리에서 같은 형태로 사용함.
             batch_df = pd.DataFrame(batch)
             batch_df["_source_year"] = str(year)
 
             # API 한 페이지를 받을 때마다 즉시 디스크에 추가 저장해 중간 실패에 대비함
             write_header = not part_path.exists() or part_path.stat().st_size == 0
+            # 처리가 끝난 결과를 다음 단계에서 다시 사용할 수 있도록 파일로 저장함.
             batch_df.to_csv(
                 part_path,
                 mode="a",
@@ -235,21 +258,25 @@ def collect_seoul_raw_csv(
             saved += len(batch_df)
             print(f"[{service} / {year}] {saved:,} / {total:,}")
 
+            # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
             if saved >= total:
                 break
             start = saved + 1
 
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if not part_path.exists():
         raise RuntimeError(f"수집 결과가 생성되지 않았습니다: {part_path}")
 
     # 모든 연도 수집이 끝난 경우에만 .part.csv를 최종 파일명으로 변경함
     part_path.replace(final_path)
     print(f"수집 완료: {final_path}")
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
     return final_path
 
 
 # 쉼표·공백 등이 섞인 문자열 값을 숫자형으로 안전하게 변환함
 def clean_number(series: pd.Series) -> pd.Series:
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
     return pd.to_numeric(
         series.astype(str)
         .str.replace(",", "", regex=False)
@@ -267,4 +294,5 @@ def normalize_property_type(value: Any) -> str | None:
         "연립다세대": "VILLA",
         "오피스텔": "OFFICETEL",
     }
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
     return mapping.get(str(value).strip())

@@ -6,6 +6,7 @@ import pandas as pd
 from collectors.common import clean_number
 from collectors.manual_common import RAW, REF, extract_district, pick_column, read_csv_flexible
 
+# 입력·출력 파일 위치를 한 곳에서 재사용할 수 있도록 경로를 미리 정의함.
 OUTPUT = REF / "schools.csv"
 
 
@@ -20,6 +21,7 @@ def main() -> None:
     lat_col = pick_column(df, ["위도"])
     lon_col = pick_column(df, ["경도"])
 
+    # 필요한 값만 새 DataFrame 구조로 구성해 이후 처리에서 같은 형태로 사용함.
     out = pd.DataFrame({
         "name": df[name_col].astype(str).str.strip(),
         "school_type": df[type_col].astype(str).str.strip(),
@@ -28,11 +30,13 @@ def main() -> None:
         "latitude": clean_number(df[lat_col]),
         "longitude": clean_number(df[lon_col]),
     })
+    # 각 행의 값을 미리 정한 변환 규칙에 따라 새로운 값으로 매핑함.
     out["district_name"] = out["address"].map(extract_district)
     out = out[out["status"].str.contains("운영", na=False)]
     out = out[out["district_name"].notna()]
     out = out.dropna(subset=["latitude", "longitude"])
 
+    # 저장할 상위 폴더가 없어도 실행될 수 있도록 필요한 디렉터리를 먼저 생성함.
     REF.mkdir(parents=True, exist_ok=True)
     out.to_csv(OUTPUT, index=False, encoding="utf-8-sig")
     print(f"saved: {OUTPUT} / {len(out):,} rows")
