@@ -1,0 +1,38 @@
+# GitHub Actions 화면에 표시될 워크플로우/단계 이름 지정함
+name: Python ML CI - Build and Push
+
+# 워크플로우가 실행될 GitHub 이벤트 조건 정의함
+on:
+  push:
+    # 이 워크플로우가 반응할 Git 브랜치 범위 지정함
+    branches:
+      - main
+    # 변경된 파일 경로가 해당 범위일 때만 워크플로우 실행하도록 제한함
+    paths:
+      - 'prentversal/**'
+      - '.github/workflows/Python_ci.yml'
+
+# 실제로 실행할 작업 묶음 정의함
+jobs:
+  build:
+    # GitHub Actions Runner 운영체제 지정함
+    runs-on: ubuntu-latest
+
+    # Job 안에서 순서대로 실행할 단계 정의함
+    steps:
+      # GitHub Actions 화면에 표시될 워크플로우/단계 이름 지정함
+      - name: Checkout source
+        # GitHub Marketplace Action을 가져와 사용함
+        uses: actions/checkout@v4
+
+      # GitHub Actions 화면에 표시될 워크플로우/단계 이름 지정함
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # GitHub Actions 화면에 표시될 워크플로우/단계 이름 지정함
+      - name: Build Docker Image
+        run: docker build -t "${{ secrets.ML_DOCKER_IMAGE }}" -f ./prentversal/PythonDockerfile ./prentversal
+
+      # GitHub Actions 화면에 표시될 워크플로우/단계 이름 지정함
+      - name: Push Docker Image
+        run: docker push "${{ secrets.ML_DOCKER_IMAGE }}"

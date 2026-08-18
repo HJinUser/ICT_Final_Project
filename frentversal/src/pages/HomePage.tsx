@@ -53,7 +53,7 @@ const SHORTCUTS: (NavItem & { desc: string; image: string })[] = [
         image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=800&q=70',
     },
     {
-        label: '맞춤 추천', path: '/recommend', ready: false,
+        label: '맞춤 추천', path: '/recommend', ready: true,
         desc: '몇 개만 별점 매기면 그 기준으로 골라 드려요',
         image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=70',
     },
