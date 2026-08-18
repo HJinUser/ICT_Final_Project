@@ -11,7 +11,7 @@ import type { PasswordlessLoginResult } from "../types/Auth";
 import { RECENT_LOGIN_LABELS } from "../types/RecentLogin";
 import type { RecentLogin, RecentLoginMethod } from "../types/RecentLogin";
 import type { User } from "../types/User";
-import { clearRecentLogin, loadRecentLogin, markPendingSocial, saveRecentLogin } from "../utils/recentLogin";
+import { loadRecentLogin, markPendingSocial, saveRecentLogin } from "../utils/recentLogin";
 import '../styles/LoginPage.css';
 
 interface Props {
@@ -51,8 +51,45 @@ function App({ onLogin }: Props) {
     const [recent, setRecent] = useState<RecentLogin | null>(null);
 
     useEffect(() => {
-        setRecent(loadRecentLogin());
+        const saved = loadRecentLogin();
+        setRecent(saved);
+
+        // 지난번 이메일을 미리 채워 둔다. 소셜은 이 화면의 이메일 칸을 쓰지 않으므로 제외한다.
+        if (saved && saved.email && (saved.method === 'NORMAL' || saved.method === 'PASSWORDLESS')) {
+            setEmail(saved.email);
+        }
     }, []);
+
+    /*
+      최근에 쓴 로그인 방식 옆에 붙는 작은 표시.
+
+      여러 방법(일반/소셜/패스워드리스)을 섞어 쓰는 서비스라 어느 걸로 들어왔는지 헷갈리기 쉽다.
+      별도 안내 상자를 위에 두면 "어느 버튼이 그것인지" 다시 찾아야 해서,
+      해당 버튼 자체에 표시를 붙인다.
+      이메일과 날짜는 화면을 어지럽히지 않도록 마우스를 올렸을 때(title)만 보여 준다.
+
+      표시는 버튼 안 글자 바로 옆이 아니라 버튼의 가장 오른쪽 끝에 고정한다(절대 위치).
+      그래서 글자가 밀리지 않는다. 대신 표시가 들어갈 버튼에는 오른쪽 여백을
+      미리 비워 둬야 글자와 겹치지 않으므로, 버튼 쪽에서 isRecent(method)로
+      className을 함께 넣어 준다.
+    */
+    const isRecent = (method: RecentLoginMethod) => recent?.method === method;
+
+    const recentMark = (method: RecentLoginMethod) => {
+        if (!isRecent(method) || !recent) {
+            return null;
+        }
+
+        const label = RECENT_LOGIN_LABELS[method] ?? '최근 로그인';
+        const mail = recent.email ? ` · ${recent.email}` : '';
+        const when = recent.savedAt ? ` · ${recent.savedAt.slice(0, 10)}` : '';
+
+        return (
+            <span className="login-recentmark" title={`${label}${mail}${when}`}>
+                최근 로그인
+            </span>
+        );
+    };
 
     // 로그인 성공 처리(일반 로그인과 동일하게 토큰 저장 + 리다이렉트).
     // 패스워드리스 로그인 성공 응답도 일반 로그인과 같은 모양으로 오기 때문에 그대로 재사용한다.
@@ -200,59 +237,21 @@ function App({ onLogin }: Props) {
                 <div className="auth-segmented">
                     <button
                         type="button"
-                        className={mode === 'normal' ? 'on' : ''}
+                        className={[mode === 'normal' ? 'on' : '', isRecent('NORMAL') ? 'login-hasrecent' : ''].join(' ').trim()}
                         onClick={() => { setMode('normal'); setErrors(''); }}
                     >
                         일반 로그인
+                        {recentMark('NORMAL')}
                     </button>
                     <button
                         type="button"
-                        className={mode === 'passwordless' ? 'on' : ''}
+                        className={[mode === 'passwordless' ? 'on' : '', isRecent('PASSWORDLESS') ? 'login-hasrecent' : ''].join(' ').trim()}
                         onClick={() => { setMode('passwordless'); setErrors(''); }}
                     >
                         패스워드리스 로그인
+                        {recentMark('PASSWORDLESS')}
                     </button>
                 </div>
-
-                {/* 지난번 로그인 방법 안내.
-                    여러 방법(일반/소셜/패스워드리스)을 섞어 쓰는 서비스라 어느 걸로 가입했는지
-                    헷갈리기 쉬워서, 마지막에 성공한 방법을 그대로 다시 보여 준다. */}
-                {recent && (
-                    <div className="auth-recent">
-                        <div className="body">
-                            <span className="cap">최근 로그인</span>
-                            <strong>{RECENT_LOGIN_LABELS[recent.method] ?? '알 수 없음'}</strong>
-                            <span className="mail">{recent.email}</span>
-                            {recent.savedAt && (
-                                <span className="when">{recent.savedAt.slice(0, 10)}</span>
-                            )}
-                        </div>
-
-                        <div className="acts">
-                            {/* 소셜은 이 화면에서 이어서 진행할 수 없으므로 아래 소셜 버튼을 쓰게 두고,
-                                일반/패스워드리스만 곧바로 그 탭으로 옮겨 준다. */}
-                            {(recent.method === 'NORMAL' || recent.method === 'PASSWORDLESS') && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setMode(recent.method === 'PASSWORDLESS' ? 'passwordless' : 'normal');
-                                        setEmail(recent.email);
-                                        setErrors('');
-                                    }}
-                                >
-                                    이 방법으로 로그인
-                                </button>
-                            )}
-                            <button
-                                type="button"
-                                className="del"
-                                onClick={() => { clearRecentLogin(); setRecent(null); }}
-                            >
-                                지우기
-                            </button>
-                        </div>
-                    </div>
-                )}
 
                 {errors && <div className="auth-alert">{errors}</div>}
 
@@ -301,12 +300,17 @@ function App({ onLogin }: Props) {
                                 <a
                                     key={social.provider}
                                     href={`${API_BASE_URL}/oauth2/authorization/${social.provider}`}
-                                    className={`auth-social-btn ${social.className}`}
+                                    className={[
+                                        'auth-social-btn',
+                                        social.className,
+                                        isRecent(social.provider) ? 'login-hasrecent' : '',
+                                    ].join(' ').trim()}
                                     // 소셜 로그인은 화면을 완전히 떠났다가 돌아오기 때문에,
                                     // 어떤 제공자를 눌렀는지 지금 적어 두고 돌아온 화면에서 꺼내 쓴다.
                                     onClick={() => markPendingSocial(social.provider)}
                                 >
                                     {social.label}
+                                    {recentMark(social.provider)}
                                 </a>
                             ))}
                         </div>
