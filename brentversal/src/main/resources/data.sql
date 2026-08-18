@@ -186,6 +186,18 @@ VALUES
 -- visible 컬럼이 나중에 추가되면서 기존 예시 매물은 0(비공개)으로 채워졌으므로 공개로 되돌린다.
 UPDATE properties SET visible = b'1' WHERE property_id <= 4 AND visible = b'0';
 
+-- 건축 연도.
+-- 맞춤 추천이 신축 여부를 이 값으로 판단하는데, 예시 매물에 값이 없으면 어떤 매물도 신축으로 잡히지 않아
+-- "신축" 취향을 골라도 점수가 갈리지 않는다. 그래서 신축과 구축이 섞이도록 넣어 둔다.
+--   1번 반포 리버뷰 : 구축
+--   2번 잠원 한강   : 구축
+--   3번 서초 센트럴 : 신축(5년 이내)
+--   4번 역삼 스카이 : 신축(5년 이내)
+UPDATE properties SET build_year = 2005 WHERE property_id = 1 AND build_year IS NULL;
+UPDATE properties SET build_year = 2012 WHERE property_id = 2 AND build_year IS NULL;
+UPDATE properties SET build_year = YEAR(CURDATE()) - 2 WHERE property_id = 3 AND build_year IS NULL;
+UPDATE properties SET build_year = YEAR(CURDATE()) - 4 WHERE property_id = 4 AND build_year IS NULL;
+
 -- 지도 검색의 핀 좌표.
 -- 좌표가 비어 있으면 지도에 핀이 찍히지 않아서, 예시 매물만이라도 값을 채워 둔다.
 -- (주소 -> 좌표 변환은 아직 매물 등록에 붙어 있지 않다. 그 처리가 생기면 이 UPDATE 는 지워도 된다)

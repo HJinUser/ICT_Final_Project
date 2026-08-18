@@ -34,6 +34,10 @@ export interface Property {
     roomCount: number;              // 방 개수
     bathroomCount: number;          // 욕실 개수
 
+    // 건축 연도. 맞춤 추천에서 신축인지 판단하는 데 쓴다.
+    // 이 항목이 생기기 전에 등록한 매물은 값이 없어서 선택 항목으로 둔다.
+    buildYear?: number;
+
     // 거래유형(dealType)에 따라 쓰이는 필드가 다름 — validatePricingFields와 동일한 규칙
     price?: number;                 // 매매가(만원)
     deposit?: number;               // 전세가(만원)
@@ -81,6 +85,9 @@ export interface PropertyResponse {
     floor: number;
     roomCount: number;
     bathroomCount: number;
+
+    // 건축 연도. 예전에 등록한 매물에는 값이 없어서 null 이 올 수 있다.
+    buildYear: number | null;
 
     price: number | null;
     deposit: number | null;

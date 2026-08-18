@@ -135,18 +135,29 @@ export interface DongOption {
     label: string; // "당산동 전체"
 }
 
-// 뒤에 N가가 붙지 않은 동은 모두 "○○동 전체"로 보여 준다.
+// 하위 동(○○동N가)이 실제로 있는 동에만 "전체"를 붙인다.
 //
-// "당산동"과 "당산동1가~6가"가 한 목록에 같이 있을 때 둘을 구분해 주려는 것이고,
-// 하위 동이 없는 "여의도동" 같은 곳도 같은 말투로 맞춰 목록이 들쭉날쭉해 보이지 않게 한다.
-// "당산동4가"처럼 이미 하위 동인 항목에는 붙이지 않는다 — 더 나눌 것이 없기 때문이다.
+// "당산동"과 "당산동1가~6가"가 한 목록에 같이 있으면 맨 위 항목이 무엇을 뜻하는지
+// 알기 어려워서 붙이는 표시다. 하위 동이 없는 "여의도동" 같은 곳에는 붙이지 않는다.
+// 나눌 것이 없는데 "전체"라고 하면 없는 하위 동이 있는 것처럼 읽히기 때문이다.
+// (서울 전체에서 해당되는 동은 성북동·영등포동·당산동·양평동 넷뿐이다)
 //
 // 이름만 바꾸고 value 는 건드리지 않는다. 서버로는 "당산동"이 그대로 나가야 하고,
 // 서버는 그 값으로 시작하는 동을 모두 찾아 준다(PropertyRepository.search 참고).
 // 그래서 "당산동 전체"를 고르면 당산동1가~6가 매물까지 함께 나온다.
 export function dongOptionsOf(district: string): DongOption[] {
-    return dongsOf(district).map((dong) => ({
+    const dongs = dongsOf(district);
+
+    // "당산동4가" -> "당산동" 처럼 N가를 떼어낸 앞부분을 모아 둔다.
+    // ("종로1가", "을지로2가"처럼 앞부분이 동으로 끝나지 않는 이름은 걸리지 않는다)
+    const hasSubdivisions = new Set<string>();
+    for (const dong of dongs) {
+        const base = dong.match(/^(.+동)\d+가$/)?.[1];
+        if (base) hasSubdivisions.add(base);
+    }
+
+    return dongs.map((dong) => ({
         value: dong,
-        label: /\d+가$/.test(dong) ? dong : `${dong} 전체`,
+        label: hasSubdivisions.has(dong) ? `${dong} 전체` : dong,
     }));
 }

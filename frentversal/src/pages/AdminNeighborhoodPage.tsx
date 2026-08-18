@@ -6,10 +6,14 @@ import type { TagResponse } from '../types/Tag';
 
 // 관리자 "동네 등록" 화면
 //
-// 관리자는 위치(시·군·구/읍·면·동)·소개·이미지 주소·태그만 직접 입력한다.
+// 관리자는 위치(시·군·구/읍·면·동)·소개·태그만 직접 입력한다.
 // 평균 전세가·인기도는 저장하지 않고, 서버가 매물·찜 테이블을 집계해서 보여 준다
 // (NeighborhoodService 참고) — 그래서 이 폼에는 그 두 칸이 없다.
 // 태그 자동 생성(머신러닝)은 아직 없어서, 있는 태그 중에서 직접 고른다.
+//
+// 대표 이미지도 입력받지 않는다. 동네 카드가 그 동네 지도를 직접 그려 주기 때문에
+// (NeighborhoodMap 참고) 관리자가 사진 주소를 따로 구해 넣을 이유가 없어졌다.
+// 서버·DB 의 image_url 컬럼은 그대로 두었다 — 이미 넣어 둔 값이 있으면 지도 대신 그 사진이 쓰인다.
 
 const FIXED_CITY = '서울시';
 
@@ -17,7 +21,6 @@ const EMPTY_FORM = {
     district: '',
     dong: '',
     description: '',
-    imageUrl: '',
 };
 
 function formatJeonsePrice(price: number) {
@@ -74,7 +77,6 @@ function AdminNeighborhoodPage() {
                 district: form.district.trim(),
                 dong: form.dong.trim(),
                 description: form.description.trim(),
-                imageUrl: form.imageUrl.trim(),
                 tagIds: selectedTagIds,
             });
             setMessage(`${created.district} ${created.dong} 등록을 완료했습니다.`);
@@ -94,7 +96,7 @@ function AdminNeighborhoodPage() {
             <div className="section-head">
                 <div>
                     <h2>동네 관리</h2>
-                    <p>위치·소개·이미지만 입력하면, 평균 전세가·인기도·매물 수는 등록된 매물과 찜을 기준으로 자동 계산됩니다.</p>
+                    <p>위치와 소개만 입력하면 됩니다. 대표 지도는 자동으로 그려지고, 평균 전세가·인기도·매물 수는 등록된 매물과 찜을 기준으로 자동 계산됩니다.</p>
                 </div>
             </div>
 
@@ -132,16 +134,6 @@ function AdminNeighborhoodPage() {
                         placeholder="이 동네의 특징을 소개해 주세요"
                         value={form.description}
                         onChange={(event) => setForm((previous) => ({ ...previous, description: event.target.value }))}
-                    />
-                </div>
-
-                <div className="field">
-                    <label>이미지 주소</label>
-                    <input
-                        type="text"
-                        placeholder="https://..."
-                        value={form.imageUrl}
-                        onChange={(event) => setForm((previous) => ({ ...previous, imageUrl: event.target.value }))}
                     />
                 </div>
 
