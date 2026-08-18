@@ -1,3 +1,15 @@
+/*
+  PreferenceSetupPage.css
+
+  취향 초기 설정 화면에서 이 화면에만 필요한 규칙만 담는다.
+
+  단계 표시(stepper), 카드(onboarding-card), 키워드 칩(filter-chip), 점수 링(score-ring)은
+  common.css 에 이미 있는 공통 규칙을 그대로 쓴다. 여기서 다시 정의하지 않는다.
+  같은 이름을 두 곳에 두면 CSS 를 읽는 순서에 따라 한쪽이 조용히 무시되기 때문이다.
+
+  아래 규칙은 공통에 없는 것들이며, 이름을 setup- 으로 시작해 다른 화면과 겹치지 않게 했다.
+*/
+
 /* react-bootstrap의 Alert(variant="danger")를 대신하는 최소 스타일 */
 .preference-alert {
     padding: 14px 16px;
@@ -9,4 +21,120 @@
 .preference-alert.danger {
     background: #fbefef;
     color: var(--red);
+}
+
+/* 1단계 아래쪽 줄. 왼쪽에 고른 개수, 오른쪽에 다음 버튼을 둔다. */
+.setup-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+/*
+  2단계 진행 점.
+  남은 장수를 미리 알려 줘야 몇 번을 더 눌러야 끝나는지 알 수 있다.
+*/
+.setup-rateprog {
+    display: flex;
+    gap: 7px;
+    justify-content: center;
+    margin: 18px 0;
+}
+
+.setup-rateprog i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--line);
+    display: inline-block;
+    transition: .2s;
+}
+
+.setup-rateprog i.on {
+    background: var(--v);
+}
+
+/* 2단계 매물 카드 */
+.setup-ratecard {
+    margin-top: 6px;
+}
+
+/* 공통 .thumb 는 높이가 낮아서, 이 화면에서 쓸 크기만 따로 지정한다 */
+.setup-thumb {
+    width: 230px;
+    height: 165px;
+    flex: none;
+}
+
+.setup-price {
+    margin-top: 12px;
+    font-size: 25px;
+    letter-spacing: -.02em;
+}
+
+.setup-votes {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 22px;
+}
+
+.setup-vote {
+    min-width: 140px;
+    min-height: 46px;
+    font-size: 15px;
+}
+
+/* 3단계 분석 화면 */
+.setup-analysis {
+    text-align: center;
+    padding: 44px 0 30px;
+}
+
+/*
+  분석 중임을 알리는 회전 표시.
+  공통 CSS 에는 없어서 이 화면에서 만든다.
+*/
+.setup-spinner {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto;
+    border-radius: 50%;
+    border: 3px solid var(--line-2);
+    border-top-color: var(--v);
+    animation: setup-spin .8s linear infinite;
+}
+
+@keyframes setup-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 완료 표시. 공통 .score-ring 을 쓰되 이 화면에서는 조금 크게 보여 준다. */
+.setup-ring {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto;
+}
+
+.setup-ring b {
+    font-size: 15px;
+}
+
+@media (max-width: 720px) {
+    /* 좁은 화면에서는 사진을 위로 올리고 가로를 다 쓴다 */
+    .setup-ratecard .row.gap24 {
+        flex-direction: column;
+    }
+
+    .setup-thumb {
+        width: 100%;
+    }
+
+    .setup-votes {
+        flex-direction: column;
+    }
 }

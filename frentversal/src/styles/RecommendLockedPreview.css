@@ -1,0 +1,177 @@
+/*
+  RecommendLockedPreview.css
+
+  비회원에게 보여 주는 맞춤 추천 잠금 화면의 모양.
+
+  클래스 이름은 전부 reclock- 으로 시작한다.
+  메인 홈페이지의 잠금 블록이 쓰는 이름(home-lock 등)을 가져다 쓰지 않는 이유는,
+  그쪽 CSS 를 고칠 때 이 화면이 함께 깨지는 것을 막기 위해서다.
+  모양이 비슷해도 각자 자기 규칙을 갖는다.
+*/
+
+.reclock-wrap {
+    position: relative;
+    /* 안내 문구가 가운데 오도록 최소 높이를 준다 */
+    min-height: 520px;
+}
+
+/*
+  흐림 처리.
+  filter 만 걸면 글씨는 흐려져도 버튼은 그대로 눌린다.
+  그래서 pointer-events 로 조작을 막고, 드래그 선택도 함께 막는다.
+*/
+.reclock-skeleton {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+    filter: blur(5px);
+    opacity: .5;
+    pointer-events: none;
+    user-select: none;
+}
+
+.reclock-side {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: #fff;
+}
+
+.reclock-side .block {
+    margin-top: 18px;
+}
+
+.reclock-main {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.reclock-main .card {
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: #fff;
+    overflow: hidden;
+}
+
+.reclock-main .card.wide {
+    grid-column: 1 / -1;
+    display: flex;
+}
+
+.reclock-main .photo {
+    height: 190px;
+    background: var(--bg-2);
+}
+
+.reclock-main .card.wide .photo {
+    width: 320px;
+    height: auto;
+    min-height: 240px;
+    flex: none;
+}
+
+.reclock-main .body {
+    flex: 1;
+    padding: 16px 18px 18px;
+}
+
+/* 글씨 자리를 대신하는 회색 막대 */
+.reclock-wrap .bar {
+    height: 12px;
+    margin-bottom: 10px;
+    border-radius: 100px;
+    background: var(--bg-2);
+}
+
+.reclock-wrap .bar.title {
+    width: 40%;
+    height: 18px;
+    margin-bottom: 18px;
+}
+
+.reclock-wrap .bar.label {
+    width: 32%;
+    height: 10px;
+}
+
+.reclock-wrap .bar.short {
+    width: 55%;
+}
+
+.reclock-wrap .bar.price {
+    width: 38%;
+    height: 20px;
+}
+
+/* 태그 자리를 대신하는 둥근 조각 */
+.reclock-wrap .chips {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.reclock-wrap .chips span {
+    width: 58px;
+    height: 22px;
+    border-radius: 100px;
+    background: var(--bg-2);
+}
+
+/* 흐린 화면 위에 얹는 안내 */
+.reclock-notice {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    padding: 0 20px;
+    color: var(--ink);
+}
+
+.reclock-notice svg {
+    color: var(--v);
+}
+
+.reclock-notice strong {
+    margin-top: 6px;
+    font-size: var(--fs-lg);
+}
+
+.reclock-notice p {
+    max-width: 420px;
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+}
+
+.reclock-notice .btns {
+    display: flex;
+    gap: 9px;
+    margin-top: 12px;
+}
+
+@media (max-width: 1024px) {
+    .reclock-skeleton {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .reclock-main {
+        grid-template-columns: 1fr;
+    }
+
+    .reclock-main .card.wide {
+        display: block;
+    }
+
+    .reclock-main .card.wide .photo {
+        width: 100%;
+        height: 190px;
+        min-height: 0;
+    }
+}

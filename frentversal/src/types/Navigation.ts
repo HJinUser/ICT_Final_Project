@@ -38,13 +38,15 @@ export function visibleFor(items: NavItem[], role: ViewerRole): NavItem[] {
 }
 
 // ── 헤더 좌측 메뉴 ────────────────────────────────────────────
-// 매물 확인·맞춤 추천은 아직 페이지가 없어서 ready: false다.
+// 아직 페이지가 없는 항목만 ready: false다.
 // 페이지가 만들어지면 ready만 true로 바꾸고 라우트를 등록하면 된다.
 export const HEADER_NAV: NavItem[] = [
     { label: '지도 검색', path: '/map', ready: true },
     { label: '동네 탐색', path: '/neighborhood', ready: true },
     { label: '매물 확인', path: '/listings', ready: true },
-    { label: '맞춤 추천', path: '/recommend', ready: false, roles: ['GUEST', 'USER'] },
+    // 맞춤 추천은 로그인한 일반 사용자만 쓸 수 있다.
+    // 비회원에게도 메뉴는 보여 주고, 눌렀을 때 화면에서 로그인으로 안내한다.
+    { label: '맞춤 추천', path: '/recommend', ready: true, roles: ['GUEST', 'USER'] },
     // 중개사무소 목록·상세는 서버도 비회원까지 열어 둔 공개 화면이라 역할을 가리지 않고 보여 준다.
     // (기획서 매트릭스에는 사용자 전용으로 되어 있으니, 되돌리려면 roles: ['GUEST', 'USER'] 를 다시 붙이면 된다)
     { label: '중개사무소 안내', path: '/agency', ready: true },
@@ -78,7 +80,7 @@ export const FOOTER_GROUPS: FooterGroup[] = [
             { label: '지도 검색', path: '/map', ready: true },
             { label: '동네 탐색', path: '/neighborhood', ready: true },
             { label: '매물 확인', path: '/listings', ready: true },
-            { label: '맞춤 추천', path: '/recommend', ready: false },
+            { label: '맞춤 추천', path: '/recommend', ready: true },
             { label: '관심 목록', path: '/favorites', ready: true },
         ],
     },

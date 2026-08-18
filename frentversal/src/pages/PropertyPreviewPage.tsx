@@ -10,6 +10,8 @@ const DUMMY_PROPERTY: PropertyDetail = {
     type: "APARTMENT",
     dealType: "JEONSE",
     address: "서울 서초구 반포동",
+    sigungu: "서초구",
+    dong: "반포동",
     // PropertyResponse 에 나중에 추가된 값들. 디자인 확인용이라 반포동 근처 좌표를 넣어 둔다.
     latitude: 37.5085,
     longitude: 127.0117,

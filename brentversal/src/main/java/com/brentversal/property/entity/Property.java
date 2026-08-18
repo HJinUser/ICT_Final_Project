@@ -101,6 +101,12 @@ public class Property {
     @Column(name = "bathroom_count")
     private Integer bathroomCount; // 욕실 개수
 
+    // 건축 연도. 맞춤 추천에서 신축 여부를 판단하고, 시세 예측에서도 입력 값으로 쓴다.
+    // 예전에 등록한 매물에는 값이 없을 수 있어서 필수로 두지 않는다.
+    @Min(value = 1900, message = "건축 연도를 확인해 주세요.")
+    @Column(name = "build_year")
+    private Integer buildYear; // 건축 연도
+
     // 거래유형(dealType)에 따라 쓰이는 필드가 달라짐:
     // 매매(SALE)    → price 사용 (매매가, 만원)
     // 전세(JEONSE)  → deposit 사용 (전세가, 만원)
@@ -169,11 +175,20 @@ public class Property {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // 같은 매물에 같은 태그가 두 번 붙지 않도록 DB 가 막게 한다.
+    //
+    // 제약이 없으면 같은 (매물, 태그) 짝이 여러 줄 쌓일 수 있고, 그러면 태그를 세는 계산이
+    // 실제보다 몇 배로 커진다. 실제로 예시 데이터를 넣는 SQL 이 서버를 켤 때마다 다시 실행되면서
+    // 같은 행이 반복해서 쌓였고, 맞춤 추천의 "관심 태그 몇 개 일치"가 3개가 아니라 15개로 나왔다.
     @ManyToMany
     @JoinTable(
             name = "property_tags",
             joinColumns = @JoinColumn(name = "property_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
+            inverseJoinColumns = @JoinColumn(name = "tag_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_property_tags",
+                    columnNames = {"property_id", "tag_id"}
+            )
     )
     private List<Tag> tags = new ArrayList<>();
 

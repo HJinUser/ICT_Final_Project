@@ -46,7 +46,71 @@ VALUES
     (9, '버스정류장 인근',   'TRANSPORTATION'),
     (10, '조용한 분위기',   'ATMOSPHERE');
 
+-- 취향 초기 설정(온보딩) 1단계에서 고르는 키워드.
+-- 목업 onboarding.html 의 키워드 목록을 옮긴 것이며, 위 1~10번과 뜻이 겹치는 항목은 새로 만들지 않고 그대로 쓴다.
+--   조용한 동네 -> 10 조용한 분위기 / 역세권 -> 8 지하철역 도보 5분 / 채광 좋음 -> 5 남향
+--   주차 가능 -> 1 / 반려동물 -> 3 반려동물 가능 / 공원 근처 -> 7 공원 인근
+--
+-- 분류(category)는 목업의 동네·매물·특수 3분류가 아니라 tags 테이블이 이미 쓰는 4분류를 따른다.
+-- 동네 탐색 화면의 태그 탭이 이 분류를 기준으로 동작하고 있어서, 여기서만 다른 기준을 쓰면
+-- 같은 태그가 화면마다 다른 묶음에 들어가 버리기 때문이다.
+--
+-- "병원 다수"와 "병원 근처"는 목업에 둘 다 있지만 사용자가 보기에 구분이 되지 않아 하나로 합쳤다.
+INSERT IGNORE INTO tags
+    (id, name, category)
+VALUES
+    (11, '높은 치안',      'ATMOSPHERE'),
+    (12, '교육열 높음',     'ATMOSPHERE'),
+    (13, '젊은층 선호',     'ATMOSPHERE'),
+    (14, '노년층 선호',     'ATMOSPHERE'),
+    (15, '냄새 적음',      'ATMOSPHERE'),
+    (16, '저렴한 가격',     'LIVING_ENVIRONMENT'),
+    (17, '넓은 평수',      'LIVING_ENVIRONMENT'),
+    (18, '낮은 관리비',     'LIVING_ENVIRONMENT'),
+    (19, '금연 구역',      'LIVING_ENVIRONMENT'),
+    (20, '세탁소 근처',     'LIVING_ENVIRONMENT'),
+    (21, '마트 근처',      'LIVING_ENVIRONMENT'),
+    (22, '편의점 근처',     'LIVING_ENVIRONMENT'),
+    (23, '병원 근처',      'LIVING_ENVIRONMENT'),
+    (24, '학원가',         'LIVING_ENVIRONMENT'),
+    (25, '즉시 입주',      'LIVING_ENVIRONMENT');
+
 UPDATE tags_seq SET next_val = 101 WHERE next_val <= 100;
+
+-- 예시 매물에 태그를 붙인다.
+--
+-- 태그를 붙이지 않으면 맞춤 추천에서 취향 태그 점수(12점)와 생활환경 점수가 모든 매물에서 0이 되어,
+-- 무엇을 고르든 추천 순서가 똑같아진다. 매물마다 성격이 갈리도록 서로 다르게 준다.
+--   1번 반포 리버뷰 : 한강 조망에 넓고 조용한 집
+--   2번 잠원 한강   : 역이 가깝고 생활 편의가 좋은 집
+--   3번 서초 센트럴 : 학원가와 병원이 가까운 집
+--   4번 역삼 스카이 : 작지만 싸고 관리비가 낮은 집
+--
+-- INSERT IGNORE 를 쓰지 않고 NOT EXISTS 로 확인한 뒤 넣는다.
+--
+-- 이 파일은 서버를 켤 때마다 다시 실행된다(spring.sql.init.mode=always).
+-- 그런데 property_tags 에는 (매물, 태그) 짝을 막는 제약이 없었어서
+-- INSERT IGNORE 가 무시할 오류 자체가 생기지 않았고, 켤 때마다 같은 행이 그대로 쌓였다.
+-- 그 결과 태그 5개짜리 매물이 25개로 세어져 추천 점수가 몇 배로 부풀었다.
+--
+-- 제약은 Property 엔터티에 추가했지만, 이 파일도 제약에 기대지 않고 스스로 중복을 막게 둔다.
+-- 위 agency_images 예시 데이터도 같은 방식을 쓰고 있다.
+INSERT INTO property_tags (property_id, tag_id)
+SELECT * FROM (
+    SELECT 1 AS property_id, 6 AS tag_id UNION ALL SELECT 1, 7 UNION ALL SELECT 1, 10
+    UNION ALL SELECT 1, 17 UNION ALL SELECT 1, 5
+    UNION ALL SELECT 2, 8 UNION ALL SELECT 2, 1 UNION ALL SELECT 2, 21
+    UNION ALL SELECT 2, 22 UNION ALL SELECT 2, 2
+    UNION ALL SELECT 3, 24 UNION ALL SELECT 3, 23 UNION ALL SELECT 3, 12
+    UNION ALL SELECT 3, 8 UNION ALL SELECT 3, 4
+    UNION ALL SELECT 4, 16 UNION ALL SELECT 4, 18 UNION ALL SELECT 4, 25
+    UNION ALL SELECT 4, 9 UNION ALL SELECT 4, 22
+) AS seed
+WHERE NOT EXISTS (
+    SELECT 1 FROM property_tags existing
+     WHERE existing.property_id = seed.property_id
+       AND existing.tag_id = seed.tag_id
+);
 
 -- ────────────────────────────────────────────────────────────────
 -- 동네 탐색 예시 데이터

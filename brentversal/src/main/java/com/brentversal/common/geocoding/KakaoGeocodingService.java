@@ -38,6 +38,18 @@ public class KakaoGeocodingService {
     public KakaoGeocodingService(@Value("${kakao.rest-api-key:}") String restApiKey) {
         this.restApiKey = restApiKey;
         this.restClient = RestClient.builder().baseUrl(KAKAO_LOCAL_URL).build();
+
+        // 키가 없으면 서버가 뜰 때 바로 알려 준다.
+        //
+        // 예전에는 매물·사무소를 실제로 저장해 봐야 알 수 있었고, 그마저도 SQL 로그 사이에
+        // WARN 한 줄로 묻혔다. 그래서 "등록은 되는데 지도에 핀이 안 찍히는" 상태를
+        // 한참 뒤에야 알아차렸다. 키 설정은 사람마다 다를 수 있으니 시작할 때 짚어 준다.
+        if (restApiKey == null || restApiKey.isBlank()) {
+            log.warn("[지오코딩] 카카오 REST API 키가 비어 있습니다. 주소를 좌표로 바꾸지 못해"
+                    + " 새로 등록하는 매물·중개사무소가 지도에 표시되지 않습니다."
+                    + " brentversal/.env 의 KAKAO_CLIENT_ID 를 확인하고,"
+                    + " 실행 구성의 작업 디렉터리가 brentversal 인지 확인하세요.");
+        }
     }
 
     // 주소 문자열을 좌표로 바꾼다.

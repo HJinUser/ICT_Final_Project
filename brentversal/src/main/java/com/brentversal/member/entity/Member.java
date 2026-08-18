@@ -2,6 +2,7 @@ package com.brentversal.member.entity;
 
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.constant.SocialType;
+import com.brentversal.tag.entity.Tag;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -14,6 +15,8 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 // 회원 1명을 의미하는 엔터티 클래스
 @Getter
@@ -133,6 +136,20 @@ public class Member {
     // refresh token이 470자를 넘어서 넉넉히 1000으로 잡음
     @Column(name = "refresh_token", length = 1000)
     private String refreshToken ;
+
+    // 맞춤 추천에서 쓰는 선호 태그. 사용자가 취향 설정에서 직접 고른 값이다.
+    //
+    // 이 연관을 취향 엔터티(UserPreference)가 아니라 회원이 갖는 이유는,
+    // member_tag 테이블의 회원 컬럼이 members 테이블을 그대로 가리키게 하기 위해서다.
+    // 매물에 붙는 태그(property_tag)와 같은 tags 테이블을 함께 쓰므로 태그 id 를 그대로 비교할 수 있다.
+    @ToString.Exclude
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "member_tag",
+            joinColumns = @JoinColumn(name = "member_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> preferredTags = new HashSet<>();
 
     // 중개인일 때만 존재하는 1:1 프로필. 일반 사용자는 NULL임
     // Broker 쪽이 자기 PK와 member_id FK를 따로 가지므로(Cart.member와 같은 방식) 여기는 mappedBy로 위임함
