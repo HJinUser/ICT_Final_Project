@@ -211,6 +211,28 @@ function MapSearchPage({ user }: Props) {
         setMapFocusNonce((nonce) => nonce + 1); // 지도도 고른 지역으로 옮긴다
     };
 
+    // 지역(구·동)은 "선택 조건 적용"을 기다리지 않고 고르는 즉시 조회에 반영한다.
+    //
+    // 지역을 고르면 지도가 곧바로 그 지역으로 옮겨 가고 경계까지 그려진다.
+    // 그런데 표식과 목록만 예전 조건에 머물러 있으면 "서초구를 보고 있는데
+    // 강남구 매물이 찍혀 있는" 상태가 되어, 지금 무엇을 보고 있는지 알 수 없다.
+    //
+    // 가격·방 개수 같은 나머지 조건은 여러 개를 함께 고르는 것이라 그대로 "적용" 버튼을 쓴다.
+    // 지역은 "어디를 볼지" 정하는 이동에 가까워서 다르게 둔다.
+    const changeRegion = (nextRegion: string) => {
+        setUsingMemberRegion(false);
+        setRegion(nextRegion);
+        setDong(''); // 구가 바뀌면 이전 구의 동은 의미가 없다
+        setApplied((prev) => ({ ...prev, region: nextRegion, dong: '' }));
+        setPage(0);
+    };
+
+    const changeDong = (nextDong: string) => {
+        setDong(nextDong);
+        setApplied((prev) => ({ ...prev, dong: nextDong }));
+        setPage(0);
+    };
+
     // "초기화" — 적용된 조건까지 모두 처음 상태로 (검색어는 유지한다)
     const resetFilters = () => {
         setUsingMemberRegion(false);
@@ -324,7 +346,7 @@ function MapSearchPage({ user }: Props) {
                         <div className="fields-2">
                             <select
                                 value={region}
-                                onChange={(event) => { setRegion(event.target.value); setDong(''); }}
+                                onChange={(event) => changeRegion(event.target.value)}
                             >
                                 <option value="">구 전체</option>
                                 {SEOUL_DISTRICTS.map((district) => (
@@ -333,7 +355,7 @@ function MapSearchPage({ user }: Props) {
                             </select>
                             <select
                                 value={dong}
-                                onChange={(event) => setDong(event.target.value)}
+                                onChange={(event) => changeDong(event.target.value)}
                                 disabled={dongOptions.length === 0}
                             >
                                 <option value="">동 전체</option>

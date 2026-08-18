@@ -10,6 +10,19 @@ import type { TagResponse } from "../types/Tag";
 import "../styles/PropertyFormPage.css"; // 부트스트랩이 못 커버하는 부분만 남긴 커스텀 css
 
 const STEPS = ["기본 정보", "가격·계약", "사진", "태그 선택", "AI 시세 확인", "관리자 승인 요청"];
+
+// 서버는 주소로 좌표를 못 구해도 매물 저장 자체는 성공시키고, latitude/longitude 만 비워서 돌려준다
+// (KakaoGeocodingService 참고 — 좌표를 못 구했다고 등록이 실패하면 안 되기 때문이다).
+// 그런데 좌표가 없으면 지도 검색에 핀이 찍히지 않는다.
+// 아무 말도 안 해 주면 "등록은 됐는데 지도에 왜 안 보이지?" 하고 원인을 찾을 방법이 없어서,
+// 저장 직후에 알려 준다.
+const NO_COORDINATES_NOTICE =
+    "\n\n다만 주소로 위치를 찾지 못해 지도에는 표시되지 않습니다."
+    + "\n주소가 정확한지 확인해 주세요. 주소를 고쳐도 계속 이러면 관리자에게 알려 주세요.";
+
+function hasNoCoordinates(saved: PropertyResponse) {
+    return saved.latitude == null || saved.longitude == null;
+}
 const NUMBER_FIELDS = ["price", "deposit", "monthlyDeposit", "monthlyRent", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee"];
 const MAX_PHOTOS = 3; // 백엔드 PropertyImageService.MAX_IMAGE_COUNT 와 동일하게 맞춤
 
@@ -41,6 +54,10 @@ const mapResponseToProperty = (data: PropertyResponse): Property => ({
     type: data.type,
     dealType: data.dealType,
     address: data.address,
+    // 주소를 다시 검색하지 않고 저장해도 동네 정보가 남아 있도록 그대로 들고 간다.
+    // 이걸 빠뜨리면 저장할 때 서버로 안 올라가고, 지도에서 동별로 묶이지 않는다.
+    sigungu: data.sigungu ?? undefined,
+    dong: data.dong ?? undefined,
     area: data.area,
     floor: data.floor,
     roomCount: data.roomCount,
@@ -221,13 +238,14 @@ function PropertyFormPage() {
             photoFiles.forEach((file) => formData.append("files", file));
 
             if (isEditMode) {
-                await customAxios.put(`/property/${id}`, formData);
-                alert("매물 정보를 수정했습니다.");
+                const response = await customAxios.put<PropertyResponse>(`/property/${id}`, formData);
+                alert("매물 정보를 수정했습니다."
+                    + (hasNoCoordinates(response.data) ? NO_COORDINATES_NOTICE : ""));
                 navigate(`/property/${id}`);
             } else {
-                const response = await customAxios.post(`/property/insert`, formData);
-                console.log("응답 데이터:", response.data);
-                alert("관리자 승인 요청을 보냈습니다.");
+                const response = await customAxios.post<PropertyResponse>(`/property/insert`, formData);
+                alert("관리자 승인 요청을 보냈습니다."
+                    + (hasNoCoordinates(response.data) ? NO_COORDINATES_NOTICE : ""));
                 navigate("/broker/agency"); // 방금 등록한 매물이 "내 중개사무소 > 요약"에 바로 보인다
             }
         } catch (error: unknown) {

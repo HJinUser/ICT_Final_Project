@@ -193,9 +193,16 @@ public class PropertyService {
         property.setType(changes.getType());
         property.setDealType(changes.getDealType());
         property.setAddress(changes.getAddress());
-        property.setSigungu(changes.getSigungu());
-        property.setDong(changes.getDong());
-        property.setNeighborhoodId(resolveNeighborhoodId(changes.getSigungu(), changes.getDong()));
+        // 구·동은 값이 함께 올 때만 바꾼다.
+        //
+        // 도로명 주소에는 동이 들어 있지 않아서("서울시 영등포구 당산로 222"), 이 두 컬럼이 비면
+        // 그 매물이 어느 동네인지 알 방법이 사라진다. 지도에서 동별로 묶을 때도 이 값을 쓴다.
+        // 그런데 수정 화면에서 주소를 다시 검색하지 않으면 요청에 이 값이 실려 오지 않는다.
+        // 그대로 덮어쓰면 멀쩡히 저장돼 있던 동네 정보가 저장 한 번에 날아간다.
+        if (changes.getSigungu() != null) property.setSigungu(changes.getSigungu());
+        if (changes.getDong() != null) property.setDong(changes.getDong());
+
+        property.setNeighborhoodId(resolveNeighborhoodId(property.getSigungu(), property.getDong()));
         updateCoordinates(property, previousAddress);
         property.setArea(changes.getArea());
         property.setFloor(changes.getFloor());

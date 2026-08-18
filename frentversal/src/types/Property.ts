@@ -72,6 +72,11 @@ export interface PropertyResponse {
     dealType: DealTypeCode;
     address: string;
 
+    // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 서버가 따로 보관한다.
+    // 수정 화면이 이 값을 그대로 되돌려 보내야 저장할 때 지워지지 않는다.
+    sigungu: string | null;
+    dong: string | null;
+
     area: number;
     floor: number;
     roomCount: number;
