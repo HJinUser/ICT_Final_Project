@@ -22,6 +22,11 @@ public class PropertyResponseDto {
     private String dealType;  // DealType enum 이름 (예: JEONSE)
     private String address;   // 주소
 
+    // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 따로 보관한다.
+    // 수정 화면이 이 값을 그대로 되돌려 보내야 저장할 때 지워지지 않는다.
+    private String sigungu;   // 영등포구
+    private String dong;      // 당산동5가
+
     private BigDecimal area;      // 전용면적(㎡)
     private Integer floor;        // 층수
     private Integer roomCount;    // 방 개수
@@ -83,6 +88,8 @@ public class PropertyResponseDto {
         }
 
         dto.setAddress(bean.getAddress());
+        dto.setSigungu(bean.getSigungu());
+        dto.setDong(bean.getDong());
         dto.setArea(bean.getArea());
         dto.setFloor(bean.getFloor());
         dto.setRoomCount(bean.getRoomCount());

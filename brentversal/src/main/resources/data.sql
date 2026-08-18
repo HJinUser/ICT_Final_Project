@@ -85,11 +85,32 @@ UPDATE tags_seq SET next_val = 101 WHERE next_val <= 100;
 --   2번 잠원 한강   : 역이 가깝고 생활 편의가 좋은 집
 --   3번 서초 센트럴 : 학원가와 병원이 가까운 집
 --   4번 역삼 스카이 : 작지만 싸고 관리비가 낮은 집
-INSERT IGNORE INTO property_tags (property_id, tag_id) VALUES
-    (1, 6), (1, 7), (1, 10), (1, 17), (1, 5),
-    (2, 8), (2, 1), (2, 21), (2, 22), (2, 2),
-    (3, 24), (3, 23), (3, 12), (3, 8), (3, 4),
-    (4, 16), (4, 18), (4, 25), (4, 9), (4, 22);
+--
+-- INSERT IGNORE 를 쓰지 않고 NOT EXISTS 로 확인한 뒤 넣는다.
+--
+-- 이 파일은 서버를 켤 때마다 다시 실행된다(spring.sql.init.mode=always).
+-- 그런데 property_tags 에는 (매물, 태그) 짝을 막는 제약이 없었어서
+-- INSERT IGNORE 가 무시할 오류 자체가 생기지 않았고, 켤 때마다 같은 행이 그대로 쌓였다.
+-- 그 결과 태그 5개짜리 매물이 25개로 세어져 추천 점수가 몇 배로 부풀었다.
+--
+-- 제약은 Property 엔터티에 추가했지만, 이 파일도 제약에 기대지 않고 스스로 중복을 막게 둔다.
+-- 위 agency_images 예시 데이터도 같은 방식을 쓰고 있다.
+INSERT INTO property_tags (property_id, tag_id)
+SELECT * FROM (
+    SELECT 1 AS property_id, 6 AS tag_id UNION ALL SELECT 1, 7 UNION ALL SELECT 1, 10
+    UNION ALL SELECT 1, 17 UNION ALL SELECT 1, 5
+    UNION ALL SELECT 2, 8 UNION ALL SELECT 2, 1 UNION ALL SELECT 2, 21
+    UNION ALL SELECT 2, 22 UNION ALL SELECT 2, 2
+    UNION ALL SELECT 3, 24 UNION ALL SELECT 3, 23 UNION ALL SELECT 3, 12
+    UNION ALL SELECT 3, 8 UNION ALL SELECT 3, 4
+    UNION ALL SELECT 4, 16 UNION ALL SELECT 4, 18 UNION ALL SELECT 4, 25
+    UNION ALL SELECT 4, 9 UNION ALL SELECT 4, 22
+) AS seed
+WHERE NOT EXISTS (
+    SELECT 1 FROM property_tags existing
+     WHERE existing.property_id = seed.property_id
+       AND existing.tag_id = seed.tag_id
+);
 
 -- ────────────────────────────────────────────────────────────────
 -- 동네 탐색 예시 데이터
