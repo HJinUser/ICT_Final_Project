@@ -101,6 +101,12 @@ public class Property {
     @Column(name = "bathroom_count")
     private Integer bathroomCount; // 욕실 개수
 
+    // 건축 연도. 맞춤 추천에서 신축 여부를 판단하고, 시세 예측에서도 입력 값으로 쓴다.
+    // 예전에 등록한 매물에는 값이 없을 수 있어서 필수로 두지 않는다.
+    @Min(value = 1900, message = "건축 연도를 확인해 주세요.")
+    @Column(name = "build_year")
+    private Integer buildYear; // 건축 연도
+
     // 거래유형(dealType)에 따라 쓰이는 필드가 달라짐:
     // 매매(SALE)    → price 사용 (매매가, 만원)
     // 전세(JEONSE)  → deposit 사용 (전세가, 만원)

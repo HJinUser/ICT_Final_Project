@@ -27,6 +27,10 @@ public class PropertyResponseDto {
     private Integer roomCount;    // 방 개수
     private Integer bathroomCount; // 욕실 개수
 
+    // 건축 연도. 맞춤 추천의 신축 판단과 매물 상세 표시에 쓴다.
+    // 이 값이 생기기 전에 등록한 매물은 비어 있다.
+    private Integer buildYear;
+
     private Double latitude;   // 매물 위도
     private Double longitude;  // 매물 경도
 
@@ -83,6 +87,7 @@ public class PropertyResponseDto {
         dto.setFloor(bean.getFloor());
         dto.setRoomCount(bean.getRoomCount());
         dto.setBathroomCount(bean.getBathroomCount());
+        dto.setBuildYear(bean.getBuildYear());
 
         dto.setLatitude(bean.getLatitude());
         dto.setLongitude(bean.getLongitude());

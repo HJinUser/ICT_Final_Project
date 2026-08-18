@@ -1,6 +1,7 @@
 package com.brentversal.property.service;
 
 import com.brentversal.agency.service.MyAgencyService;
+import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.neighborhood.repository.NeighborhoodRepository;
 import com.brentversal.property.constant.DealType;
 import com.brentversal.property.constant.PriceChangeStatus;
@@ -46,6 +47,9 @@ public class PropertyService {
     // 매물의 주인을 정하거나, 내 매물이 맞는지 확인하는 데 필요하다.
     private final MyAgencyService myAgencyService;
 
+    // 주소 -> 좌표 변환. Agency 도메인과 같은 서비스를 그대로 재사용한다.
+    private final KakaoGeocodingService kakaoGeocodingService;
+
     // 매물의 sigungu·dong으로 어느 동네(Neighborhood)에 속하는지 찾아 neighborhoodId를 채우는 데 쓴다.
     private final NeighborhoodRepository neighborhoodRepository;
 
@@ -62,13 +66,17 @@ public class PropertyService {
     // Property.roomCount 의 @Max(6) 과 같은 값이라, 그쪽이 바뀌면 여기도 함께 바꾼다.
     private static final int MAX_ROOM_COUNT = 6;
 
-    // 매물 주소 -> 좌표(지오코딩)는 다른 팀원이 맡기로 해서 여기서는 하지 않는다.
-    //
-    // 좌표(property.latitude/longitude)가 비어 있으면 지도 검색에 핀이 찍히지 않는다.
-    // 지금은 data.sql 의 예시 매물에만 좌표가 들어 있고, 새로 등록한 매물은 목록에만 보인다.
-    // 등록·수정 시 좌표를 채우는 처리가 붙으면 지도에도 함께 나온다.
-    // (common/geocoding/KakaoGeocodingService 를 그대로 쓰면 되고,
-    //  중개사무소 쪽 예시는 MyAgencyService.updateCoordinates 를 참고하면 된다)
+    private void updateCoordinates(Property property, String previousAddress){
+        String address = property.getAddress();
+        boolean addressChanged = address != null && !address.equals(previousAddress);
+        boolean coordinatesMissing = property.getLatitude() == null || property.getLongitude() == null;
+        if (!addressChanged && !coordinatesMissing) return;
+
+        kakaoGeocodingService.findCoordinates(address).ifPresent(coordinates -> {
+            property.setLatitude(coordinates.latitude());
+            property.setLongitude(coordinates.longitude());
+        });
+    }
 
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
@@ -178,6 +186,9 @@ public class PropertyService {
         DealType oldDealType = property.getDealType();
         Long oldPrimaryPrice = getPrimaryPrice(property);
 
+        // 지오코딩 재조회 여부를 판단하려면 바뀌기 전 주소가 필요하다
+        String previousAddress = property.getAddress();
+
         property.setName(changes.getName());
         property.setType(changes.getType());
         property.setDealType(changes.getDealType());
@@ -185,6 +196,7 @@ public class PropertyService {
         property.setSigungu(changes.getSigungu());
         property.setDong(changes.getDong());
         property.setNeighborhoodId(resolveNeighborhoodId(changes.getSigungu(), changes.getDong()));
+        updateCoordinates(property, previousAddress);
         property.setArea(changes.getArea());
         property.setFloor(changes.getFloor());
         property.setRoomCount(changes.getRoomCount());
@@ -279,6 +291,10 @@ public class PropertyService {
         bean.setAgency(myAgencyService.findMyAgency(email));
         bean.setNeighborhoodId(resolveNeighborhoodId(bean.getSigungu(), bean.getDong()));
 
+        kakaoGeocodingService.findCoordinates(bean.getAddress()).ifPresent(coordinates -> {
+            bean.setLatitude(coordinates.latitude());
+            bean.setLongitude(coordinates.longitude());
+        });
         bean.setStatus(PropertyStatus.PENDING);
         bean.setVisible(true);
         bean.setCreatedAt(LocalDateTime.now());

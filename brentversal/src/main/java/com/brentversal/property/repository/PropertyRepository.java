@@ -18,6 +18,12 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
 
     List<Property> findByIdIn(List<Long> ids);
 
+    // 맞춤 추천의 후보로 쓸 매물을 가져온다.
+    //
+    // 지금 볼 수 있는 매물만 대상이며, 최근에 올라온 것부터 정해진 개수까지만 읽는다.
+    // 전부 읽어서 점수를 매기면 매물이 늘어날수록 추천 한 번에 걸리는 시간이 함께 늘어나기 때문이다.
+    List<Property> findTop200ByStatusAndVisibleTrueOrderByCreatedAtDesc(PropertyStatus status);
+
     // ↓ 중개사무소 상세 페이지(담당 매물 영역)에서 쓰는 조회 메소드들
     // 게시중(ACTIVE)이면서 공개(visible=true)인 매물만 다른 화면에 노출되므로 두 조건을 함께 건다.
     List<Property> findByAgencyIdAndStatusAndVisibleTrueOrderByCreatedAtDesc(Long agencyId, PropertyStatus status);

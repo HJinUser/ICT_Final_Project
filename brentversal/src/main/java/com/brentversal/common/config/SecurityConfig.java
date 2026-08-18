@@ -104,6 +104,9 @@ public class SecurityConfig {
                         // 신고 목록·상세 조회와 처리 권한은 관리자에게만 있다.
                         .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
                         .requestMatchers(permitUrls).permitAll()
+                        // 맞춤 추천과 취향 설정은 일반 사용자 전용 화면이다.
+                        // 중개인과 관리자는 이 기능을 쓰지 않으므로 역할 자체로 막는다.
+                        .requestMatchers("/recommendation/**").hasRole("USER")
                         // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
                         // 상담 요청·후기 작성(POST)은 아래 anyRequest().authenticated() 에 걸려 로그인이 필요하다.
                         .requestMatchers(HttpMethod.GET, "/agency", "/agency/**").permitAll()
