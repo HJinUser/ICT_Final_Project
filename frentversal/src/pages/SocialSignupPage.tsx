@@ -1,18 +1,26 @@
 import axios from "axios";
 import customAxios from "../api/axiosInstance.tsx";
 import { useState } from "react";
-import { Card, Container, Row, Form, Col, Button, Alert, Tabs, Tab } from "react-bootstrap";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import TermsAgreement from "./components/TermsAgreement";
 import type { AgreementState } from "../types/Terms";
 import { TERMS_VERSION, missingRequired } from "../types/Terms";
+// SignupPage와 "왼쪽 사진 + 오른쪽 입력폼" 골격, 역할 선택 카드, 필드/버튼 스타일을 전부 같이 쓴다.
+// 소셜 가입은 일반 가입과 거의 같은 화면이라(비밀번호 칸만 없음) 별도 CSS를 새로 만들지 않고
+// SignupPage.css의 auth-* 클래스를 그대로 재사용한다.
+import '../styles/SignupPage.css';
+
+// 왼쪽 사진 영역 배경. SignupPage.tsx와 같은 이미지를 쓴다(같은 가입 흐름이라는 인상을 유지하기 위함).
+const VISUAL_IMAGE =
+    "linear-gradient(160deg,rgba(49,0,90,.94),rgba(75,0,130,.68))," +
+    "url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1000&q=70')";
 
 // 카카오 로그인은 성공했지만 아직 우리 DB에 없는 사람이 오는 페이지.
 // OAuth2LoginSuccessHandler가 리다이렉트하면서 URL에 실어 보낸 token(소셜 가입 인증용),
 // nickname/email(있으면 미리 채워주는 용도)을 읽어서 폼을 채운다.
 // SignupPage.tsx와 거의 같은 구조지만 비밀번호 입력칸이 없다(소셜 가입은 비밀번호 자체가 없음).
-function App() {
+function SocialSignupPage() {
     const [searchParams] = useSearchParams();
     const socialToken = searchParams.get('token') ?? '';
     const navigate = useNavigate();
@@ -92,205 +100,188 @@ function App() {
     };
 
     return (
-        <Container className="d-flex justify-content-center align-items-center" style={{ height: '70vh' }}>
-            <Row className="w-100 justify-content-center">
-                <Col md={6}>
-                    <Card>
-                        <Card.Body>
-                            <h2 className="text-center mb-4">추가 정보 입력</h2>
-                            <p className="text-muted text-center mb-4">
-                                카카오 로그인이 확인되었습니다. 마지막으로 아래 정보만 입력해 주세요.
-                            </p>
+        <div className="auth-shell">
+            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
+            <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
+                <span className="pill">Almost There</span>
+                <h2>마지막 한 단계만<br />더 진행해 주세요</h2>
+                <p>소셜 로그인 확인이 끝났습니다. 역할에 맞는 정보만 입력하면 가입이 완료됩니다.</p>
 
-                            <Tabs
-                                activeKey={signupType}
-                                onSelect={(key) => {
-                                    if (key === 'USER' || key === 'BROKER') {
-                                        setSignupType(key);
-                                    }
-                                }}
-                                className="mb-4"
-                                justify
-                            >
-                                <Tab eventKey="USER" title="일반 사용자" />
-                                <Tab eventKey="BROKER" title="중개인" />
-                            </Tabs>
+                <div className="points">
+                    <div className="point"><i>✓</i> 소셜 로그인 확인 완료</div>
+                    <div className="point"><i>U</i> 사용자: 취향 기반 매물 추천</div>
+                    <div className="point"><i>B</i> 중개인: 매물 등록과 승인 관리</div>
+                </div>
+            </section>
 
-                            {errors.general && <Alert variant="danger">{errors.general}</Alert>}
+            {/* ── 오른쪽: 입력 폼 ───────────────────────────── */}
+            <section className="auth-area">
+                <div className="eyebrow">Join</div>
+                <h1>추가 정보 입력</h1>
+                <p>카카오 로그인이 확인되었습니다. 마지막으로 아래 정보만 입력해 주세요.</p>
 
-                            <Form onSubmit={socialSignupAction}>
-                                {/* 이름 */}
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={3}>
-                                        *이름
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="이름을 입력해 주세요."
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            isInvalid={!!errors.name}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.name}
-                                        </Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+                {/* 가입 유형: 일반 사용자 / 중개인. SignupPage와 같은 역할 선택 카드를 그대로 쓴다. */}
+                <div className="auth-role-cards">
+                    <button
+                        type="button"
+                        className={`auth-role-card ${signupType === 'USER' ? 'on' : ''}`}
+                        onClick={() => setSignupType('USER')}
+                    >
+                        <strong>사용자</strong>
+                        <span>집을 찾고 추천받습니다.</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`auth-role-card ${signupType === 'BROKER' ? 'on' : ''}`}
+                        onClick={() => setSignupType('BROKER')}
+                    >
+                        <strong>중개인</strong>
+                        <span>중개사무소와 매물을 관리합니다.</span>
+                    </button>
+                </div>
 
-                                {/* 전화번호 */}
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={3}>
-                                        *전화번호
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="010-0000-0000"
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value)}
-                                            isInvalid={!!errors.phone}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.phone}
-                                        </Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+                {errors.general && <div className="auth-alert">{errors.general}</div>}
 
-                                {/* 이메일: 카카오는 안 줘서 직접 입력, 구글 등은 나중에 이 값이 미리 채워짐 */}
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={3}>
-                                        *이메일
-                                    </Form.Label>
-                                    <Col sm={9}>
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="이메일을 입력해 주세요."
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            isInvalid={!!errors.email}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.email}
-                                        </Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+                <form onSubmit={socialSignupAction}>
+                    <div className="auth-fields-2">
+                        {/* 이름 */}
+                        <div className="auth-field">
+                            <label htmlFor="social-signup-name">이름</label>
+                            <input
+                                id="social-signup-name"
+                                type="text"
+                                placeholder="이름을 입력해 주세요."
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={errors.name ? 'invalid' : ''}
+                                required
+                            />
+                            {errors.name && <span className="msg">{errors.name}</span>}
+                        </div>
 
-                                {signupType === 'USER' && (
-                                    <Form.Group as={Row} className="mb-3">
-                                        <Form.Label column sm={3}>
-                                            주소
-                                        </Form.Label>
-                                        <Col sm={9}>
-                                            <Form.Control
-                                                type="text"
-                                                placeholder="주소를 입력해 주세요."
-                                                value={address}
-                                                onChange={(e) => setAddress(e.target.value)}
-                                                isInvalid={!!errors.address}
-                                            />
-                                            <Form.Control.Feedback type="invalid">
-                                                {errors.address}
-                                            </Form.Control.Feedback>
-                                        </Col>
-                                    </Form.Group>
-                                )}
+                        {/* 전화번호 */}
+                        <div className="auth-field">
+                            <label htmlFor="social-signup-phone">전화번호</label>
+                            <input
+                                id="social-signup-phone"
+                                type="text"
+                                placeholder="010-0000-0000"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className={errors.phone ? 'invalid' : ''}
+                                required
+                            />
+                            {errors.phone && <span className="msg">{errors.phone}</span>}
+                        </div>
+                    </div>
 
-                                {signupType === 'BROKER' && (
-                                    <>
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *등록번호
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="공인중개사 등록번호를 입력해 주세요."
-                                                    value={licenseNumber}
-                                                    onChange={(e) => setLicenseNumber(e.target.value)}
-                                                    isInvalid={!!errors.licenseNumber}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.licenseNumber}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
+                    {/* 이메일: 카카오는 안 줘서 직접 입력, 구글 등은 나중에 이 값이 미리 채워짐 */}
+                    <div className="auth-field">
+                        <label htmlFor="social-signup-email">이메일</label>
+                        <input
+                            id="social-signup-email"
+                            type="text"
+                            placeholder="이메일을 입력해 주세요."
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className={errors.email ? 'invalid' : ''}
+                            required
+                        />
+                        {errors.email && <span className="msg">{errors.email}</span>}
+                    </div>
 
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *중개사무소명
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="사무소명 또는 사업자 등록번호를 입력해 주세요."
-                                                    value={agencyName}
-                                                    onChange={(e) => setAgencyName(e.target.value)}
-                                                    isInvalid={!!errors.agencyName}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.agencyName}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
+                    {signupType === 'USER' && (
+                        <div className="auth-field">
+                            <label htmlFor="social-signup-address">주소</label>
+                            <input
+                                id="social-signup-address"
+                                type="text"
+                                placeholder="주소를 입력해 주세요."
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                className={errors.address ? 'invalid' : ''}
+                            />
+                            {errors.address && <span className="msg">{errors.address}</span>}
+                        </div>
+                    )}
 
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *사무소 주소
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="중개사무소 주소를 입력해 주세요."
-                                                    value={agencyAddress}
-                                                    onChange={(e) => setAgencyAddress(e.target.value)}
-                                                    isInvalid={!!errors.agencyAddress}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.agencyAddress}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
+                    {signupType === 'BROKER' && (
+                        <>
+                            <div className="auth-field">
+                                <label htmlFor="social-signup-license">공인중개사 등록번호</label>
+                                <input
+                                    id="social-signup-license"
+                                    type="text"
+                                    placeholder="공인중개사 등록번호를 입력해 주세요."
+                                    value={licenseNumber}
+                                    onChange={(e) => setLicenseNumber(e.target.value)}
+                                    className={errors.licenseNumber ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.licenseNumber && <span className="msg">{errors.licenseNumber}</span>}
+                            </div>
 
-                                        <Form.Group as={Row} className="mb-3">
-                                            <Form.Label column sm={3}>
-                                                *사무실 번호
-                                            </Form.Label>
-                                            <Col sm={9}>
-                                                <Form.Control
-                                                    type="text"
-                                                    placeholder="02-0000-0000"
-                                                    value={officePhone}
-                                                    onChange={(e) => setOfficePhone(e.target.value)}
-                                                    isInvalid={!!errors.officePhone}
-                                                />
-                                                <Form.Control.Feedback type="invalid">
-                                                    {errors.officePhone}
-                                                </Form.Control.Feedback>
-                                            </Col>
-                                        </Form.Group>
-                                    </>
-                                )}
+                            <div className="auth-field">
+                                <label htmlFor="social-signup-agency-name">중개사무소명</label>
+                                <input
+                                    id="social-signup-agency-name"
+                                    type="text"
+                                    placeholder="사무소명 또는 사업자 등록번호를 입력해 주세요."
+                                    value={agencyName}
+                                    onChange={(e) => setAgencyName(e.target.value)}
+                                    className={errors.agencyName ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.agencyName && <span className="msg">{errors.agencyName}</span>}
+                            </div>
 
-                                <div className="mb-3">
-                                    <TermsAgreement
-                                        signupType={signupType}
-                                        value={agreements}
-                                        onChange={setAgreements}
-                                        error={errors.agreedTerms}
-                                    />
-                                </div>
+                            <div className="auth-field">
+                                <label htmlFor="social-signup-agency-address">사무소 주소</label>
+                                <input
+                                    id="social-signup-agency-address"
+                                    type="text"
+                                    placeholder="중개사무소 주소를 입력해 주세요."
+                                    value={agencyAddress}
+                                    onChange={(e) => setAgencyAddress(e.target.value)}
+                                    className={errors.agencyAddress ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.agencyAddress && <span className="msg">{errors.agencyAddress}</span>}
+                            </div>
 
-                                <Button variant="primary" type="submit" className="w-100">
-                                    회원 가입 완료
-                                </Button>
-                            </Form>
-                        </Card.Body>
-                    </Card>
-                </Col>
-            </Row>
-        </Container>
+                            <div className="auth-field">
+                                <label htmlFor="social-signup-office-phone">사무실 번호</label>
+                                <input
+                                    id="social-signup-office-phone"
+                                    type="text"
+                                    placeholder="02-0000-0000"
+                                    value={officePhone}
+                                    onChange={(e) => setOfficePhone(e.target.value)}
+                                    className={errors.officePhone ? 'invalid' : ''}
+                                    required
+                                />
+                                {errors.officePhone && <span className="msg">{errors.officePhone}</span>}
+                            </div>
+                        </>
+                    )}
+
+                    {/* 약관 동의. 항목은 가입 유형에 따라 달라진다(중개인은 사무소 정보 공개가 추가). */}
+                    <div style={{ marginTop: 16 }}>
+                        <TermsAgreement
+                            signupType={signupType}
+                            value={agreements}
+                            onChange={setAgreements}
+                            error={errors.agreedTerms}
+                        />
+                    </div>
+
+                    <button type="submit" className="auth-solid-btn" style={{ marginTop: 20 }}>
+                        회원 가입 완료
+                    </button>
+                </form>
+            </section>
+        </div>
     );
-};
+}
 
-export default App;
+export default SocialSignupPage;

@@ -27,3 +27,26 @@
 .ai-band {
     background: linear-gradient(135deg, #ece6f5, #f8f5fb);
 }
+
+.login-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 17, 20, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.login-modal {
+    width: 340px;
+    background: #fff;
+    border-radius: var(--r-l);
+    box-shadow: var(--shadow);
+    padding: 28px 24px 20px;
+    text-align: center;
+}
+
+.login-modal p {
+    margin: 0 0 20px;
+}

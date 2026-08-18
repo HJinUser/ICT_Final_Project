@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {Container, Row, Col, Card, Badge, Button, Alert, Form,} from "react-bootstrap";
 import customAxios from "../api/axiosInstance";
 import type { PropertyResponse } from "../types/Property";
 import "../styles/FavoritesPage.css";
 import { formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
+
+// 거래유형별 배지 색. ListingsPage/ComparePage와 동일한 매핑을 쓴다.
+const DEAL_TYPE_BADGE: Record<string, string> = {
+    SALE: "green",
+    JEONSE: "purple",
+    MONTHLY: "orange",
+};
 
 function FavoritesPage() {
     const navigate = useNavigate();
@@ -108,167 +114,189 @@ function FavoritesPage() {
     };
 
     if (loading) {
-        return <Container className="mt-5">불러오는 중...</Container>;
+        return (
+            <main>
+                <section className="section">
+                    <div className="wrap">
+                        <p className="muted">불러오는 중...</p>
+                    </div>
+                </section>
+            </main>
+        );
     }
 
     return (
-        <Container className="mt-4 mb-5">
-            <div className="text-muted small">Saved Homes</div>
-            <h1>관심목록</h1>
-            <p className="text-muted">
-                찜한 매물 중 같은 거래유형의 매물 2개를 선택해 비교할 수 있습니다.
-            </p>
+        <main>
+            <section className="page-hero">
+                <div className="wrap">
+                    <div>
+                        <div className="eyebrow">Saved Homes</div>
+                        <h1>관심목록</h1>
+                        <p>
+                            찜한 매물 중 같은 거래유형의 매물 2개를 선택해 비교할 수
+                            있습니다.
+                        </p>
+                    </div>
+                </div>
+            </section>
 
-            {error && <Alert variant="danger">{error}</Alert>}
+            <section className="section">
+                <div className="wrap">
+                    {error && (
+                        <div className="favorites-alert danger">{error}</div>
+                    )}
 
-            {favorites.length > 0 && selectedIds.length === 0 && (
-                <Alert variant="light" className="compare-guide-alert">
-                    비교할 매물 2개를 선택해 주세요.
-                </Alert>
-            )}
+                    {favorites.length > 0 && selectedIds.length === 0 && (
+                        <div className="favorites-alert guide">
+                            비교할 매물 2개를 선택해 주세요.
+                        </div>
+                    )}
 
-            {selectedIds.length === 1 && selectedDealType !== null && (
-                <Alert variant="light" className="compare-guide-alert">
-                    {DEAL_TYPE_LABELS[selectedDealType]} 매물 1개를 더 선택해 주세요.
-                </Alert>
-            )}
+                    {selectedIds.length === 1 && selectedDealType !== null && (
+                        <div className="favorites-alert guide">
+                            {DEAL_TYPE_LABELS[selectedDealType]} 매물 1개를 더 선택해
+                            주세요.
+                        </div>
+                    )}
 
-            {selectedIds.length === 2 && (
-                <Alert variant="success" className="compare-guide-alert">
-                    비교할 매물 2개를 모두 선택했습니다.
-                </Alert>
-            )}
+                    {selectedIds.length === 2 && (
+                        <div className="favorites-alert success">
+                            비교할 매물 2개를 모두 선택했습니다.
+                        </div>
+                    )}
 
-            {favorites.length === 0 ? (
-                <Alert variant="secondary" className="mt-4">
-                    아직 찜한 매물이 없습니다. 매물 상세 페이지에서 관심매물을 저장해 주세요.
-                </Alert>
-            ) : (
-                <Row className="g-3 mt-2">
-                    {favorites.map((property) => {
-                        const isSelected = selectedIds.includes(property.id);
+                    {favorites.length === 0 ? (
+                        <div className="favorites-alert guide" style={{ marginTop: 16 }}>
+                            아직 찜한 매물이 없습니다. 매물 상세 페이지에서 관심매물을
+                            저장해 주세요.
+                        </div>
+                    ) : (
+                        <div className="grid-3" style={{ marginTop: 20 }}>
+                            {favorites.map((property) => {
+                                const isSelected = selectedIds.includes(property.id);
 
-                        // 선택된 카드는 언제든 해제할 수 있어야 한다.
-                        // 선택되지 않은 카드만 조건에 따라 비활성화한다.
-                        const compareDisabled =
-                            !isSelected &&
-                            (
-                                selectedIds.length >= 2 ||
-                                (
-                                    selectedDealType !== null &&
-                                    property.dealType !== selectedDealType
-                                )
-                            );
+                                // 선택된 카드는 언제든 해제할 수 있어야 한다.
+                                // 선택되지 않은 카드만 조건에 따라 비활성화한다.
+                                const compareDisabled =
+                                    !isSelected &&
+                                    (selectedIds.length >= 2 ||
+                                        (selectedDealType !== null &&
+                                            property.dealType !== selectedDealType));
 
-                        return (
-                            <Col key={property.id} md={4}>
-                                <Card
-                                    className={`h-100 favorite-card ${
-                                        isSelected ? "favorite-card--selected" : ""
-                                    }`}
-                                >
-                                    {property.images[0] && (
-                                        <Card.Img
-                                            variant="top"
-                                            src={property.images[0].url}
-                                            className="favorite-thumb"
-                                        />
-                                    )}
-
-                                    <Card.Body className="d-flex flex-column">
-                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                            <Badge bg="secondary">
-                                                {DEAL_TYPE_LABELS[property.dealType]}
-                                            </Badge>
-
-                                            <Button
-                                                variant="link"
-                                                className="p-0 favorite-heart"
-                                                onClick={() => removeFavorite(property.id)}
-                                                aria-label="관심매물 해제"
-                                            >
-                                                ♥
-                                            </Button>
-                                        </div>
-
-                                        <Card.Title>
-                                            {formatPrice(property)}
-                                        </Card.Title>
-
-                                        <Card.Text className="text-muted small mb-2">
-                                            {property.address} · {property.area}㎡
-                                        </Card.Text>
-
-                                        <div className="mb-3">
-                                            {property.tags.slice(0, 3).map((tag) => (
-                                                <Badge
-                                                    key={tag.id}
-                                                    bg="light"
-                                                    text="dark"
-                                                    className="me-1 mb-1"
-                                                >
-                                                    {tag.name}
-                                                </Badge>
-                                            ))}
-                                        </div>
-
-                                        <div className="compare-select-box mb-3">
-                                            <Form.Check
-                                                type="checkbox"
-                                                id={`compare-property-${property.id}`}
-                                                label={
-                                                    isSelected
-                                                        ? "비교 선택됨"
-                                                        : "비교 선택"
-                                                }
-                                                checked={isSelected}
-                                                disabled={compareDisabled}
-                                                onChange={() => toggleCompare(property)}
+                                return (
+                                    <article
+                                        key={property.id}
+                                        className={`media-card favorite-card ${
+                                            isSelected ? "favorite-card--selected" : ""
+                                        }`}
+                                    >
+                                        {property.images[0] && (
+                                            <div
+                                                className="photo"
+                                                style={{
+                                                    backgroundImage: `url('${property.images[0].url}')`,
+                                                }}
                                             />
+                                        )}
 
-                                            {compareDisabled &&
-                                                selectedIds.length < 2 && (
-                                                    <div className="text-muted small mt-1">
+                                        <div className="body">
+                                            <div className="row between">
+                                                <span
+                                                    className={`status ${
+                                                        DEAL_TYPE_BADGE[property.dealType] ??
+                                                        "gray"
+                                                    }`}
+                                                >
+                                                    {DEAL_TYPE_LABELS[property.dealType]}
+                                                </span>
+
+                                                <button
+                                                    type="button"
+                                                    className="icon-btn favorite-heart"
+                                                    onClick={() => removeFavorite(property.id)}
+                                                    aria-label="관심매물 해제"
+                                                >
+                                                    ♥
+                                                </button>
+                                            </div>
+
+                                            <h3 style={{ marginTop: 12 }}>
+                                                {formatPrice(property)}
+                                            </h3>
+
+                                            <p className="dim sm" style={{ marginTop: 4 }}>
+                                                {property.address} · {property.area}㎡
+                                            </p>
+
+                                            {property.tags.length > 0 && (
+                                                <div
+                                                    className="tags"
+                                                    style={{ marginTop: 10 }}
+                                                >
+                                                    {property.tags.slice(0, 3).map((tag) => (
+                                                        <span className="tag" key={tag.id}>
+                                                            {tag.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="compare-select-box">
+                                                <label className="check">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        disabled={compareDisabled}
+                                                        onChange={() => toggleCompare(property)}
+                                                    />
+                                                    {isSelected ? "비교 선택됨" : "비교 선택"}
+                                                </label>
+
+                                                {compareDisabled && selectedIds.length < 2 && (
+                                                    <div
+                                                        className="xs dim"
+                                                        style={{ marginTop: 4 }}
+                                                    >
                                                         같은 거래유형만 비교할 수 있습니다.
                                                     </div>
                                                 )}
+                                            </div>
+
+                                            <Link
+                                                to={`/property/${property.id}`}
+                                                className="solid-btn favorite-detail-btn"
+                                            >
+                                                상세 보기
+                                            </Link>
                                         </div>
-
-                                        <Link
-                                            to={`/property/${property.id}`}
-                                            className="btn btn-primary mt-auto"
-                                        >
-                                            상세 보기
-                                        </Link>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-                        );
-                    })}
-                </Row>
-            )}
-
-            {favorites.length > 0 && (
-                <div className="compare-selection-bar mt-4">
-                    <div>
-                        <strong>
-                            비교할 매물 {selectedIds.length} / 2
-                        </strong>
-                        <div className="text-muted small">
-                            같은 거래유형의 관심매물 2개를 선택하세요.
+                                    </article>
+                                );
+                            })}
                         </div>
-                    </div>
+                    )}
 
-                    <Button
-                        variant="primary"
-                        disabled={selectedIds.length !== 2}
-                        onClick={goToCompare}
-                    >
-                        선택 매물 비교
-                    </Button>
+                    {favorites.length > 0 && (
+                        <div className="compare-selection-bar">
+                            <div>
+                                <strong>비교할 매물 {selectedIds.length} / 2</strong>
+                                <div className="xs dim">
+                                    같은 거래유형의 관심매물 2개를 선택하세요.
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="solid-btn"
+                                disabled={selectedIds.length !== 2}
+                                onClick={goToCompare}
+                            >
+                                선택 매물 비교
+                            </button>
+                        </div>
+                    )}
                 </div>
-            )}
-        </Container>
+            </section>
+        </main>
     );
 }
 

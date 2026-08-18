@@ -465,6 +465,8 @@ function MapSearchPage({ user }: Props) {
                     // 지도에 처음 들어왔을 때는 회원이 사는 구가, 필터에서 구를 고르면 그 구가
                     // 테두리로 강조된다. "선택 조건 적용"을 누르기 전에도 바로 반영된다.
                     highlightRegion={region || null}
+                    // 동까지 고르면 그 동네로 확대해서 옮긴다. 구 경계선은 그대로 남는다.
+                    highlightDong={dong || null}
                     focusNonce={mapFocusNonce}
                 />
 
