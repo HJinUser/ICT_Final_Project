@@ -16,12 +16,30 @@ __pycache__/
 # 로그 파일
 *.log
 
-# 재수집 가능한 원본/중간 원본
-# .part.csv도 이 경로 아래에 생성됨
-data/raw/
+# 원본 데이터
+# API 수집 원본과 수동 다운로드 원본은 대용량이거나
+# 다시 수집/다운로드할 수 있으므로 Git에서 제외함.
+#
+# 단, 4인 분업에서 팀원 D가 텍스트마이닝에 사용하는
+# 익명 설문 원본 survey_reviews.csv는 팀원 간 공유가 필요하므로
+# Git에 포함함.
+#
+# service_reviews.csv는 실제 서비스 DB에서 추출하는 운영 데이터이므로
+# Git에 포함하지 않음.
+data/raw/*
+!data/raw/text/
+data/raw/text/*
+!data/raw/text/survey_reviews.csv
+
+# 가격모델 학습용 대용량 중간 데이터
+# 아래 파일들은 모델 학습 과정에서 생성되는 중간 CSV이며
+# 다른 담당자와 운영 FastAPI가 직접 사용하지 않음.
+# 필요하면 원본 데이터와 Feature로 다시 생성할 수 있음.
+data/processed/*_training.csv
 
 # 로컬 발표 확인용 이미지
 outputs/*.png
 
+# IDE 설정
 .idea/
 *.iml
