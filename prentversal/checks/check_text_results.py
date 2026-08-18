@@ -1,11 +1,13 @@
 # 텍스트마이닝 키워드 분석 결과 검증
 
+# 텍스트마이닝 키워드 분석 결과 검증
+
 # 동네 키워드 JSON을 읽기 위해 json 모듈을 사용함
 import json
 # 텍스트 분석 산출물 경로를 프로젝트 기준으로 계산하기 위해 Path를 사용함
 from pathlib import Path
 
-# 병합된 한줄평 CSV를 읽기 위해 pandas를 사용함
+# 병합된 한줄평 CSV와 K-Means 결과를 읽기 위해 pandas를 사용함
 import pandas as pd
 
 # checks 폴더의 상위인 prentversal을 프로젝트 기준 경로로 사용함
@@ -14,6 +16,8 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 REVIEWS_PATH = BASE_DIR / "data" / "processed" / "neighborhood_reviews.csv"
 # FastAPI와 관리자 화면이 읽는 동네별 대표 키워드 결과임
 KEYWORDS_PATH = BASE_DIR / "outputs" / "neighborhood_keywords.json"
+# 키워드 JSON의 admin_code가 실제 존재하는 행정동인지 대조할 K-Means 결과임
+CLUSTERS_PATH = BASE_DIR / "outputs" / "neighborhood_clusters.csv"
 # 발표 확인용 선택 산출물이므로 존재 여부만 보여주고 필수로 강제하지 않음
 WORDCLOUD_PATH = BASE_DIR / "outputs" / "neighborhood_wordcloud.png"
 
@@ -28,6 +32,8 @@ def main() -> None:
     # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
     if not KEYWORDS_PATH.exists():
         errors.append(f"키워드 결과 파일 없음 - {KEYWORDS_PATH}")
+    if not CLUSTERS_PATH.exists():
+        errors.append(f"K-Means 결과 파일 없음 - {CLUSTERS_PATH}")
 
     # 필수 파일이 없으면 읽기 단계로 넘어가지 않고 즉시 실패함
     if errors:
@@ -36,11 +42,14 @@ def main() -> None:
             print("[FAIL]", error)
         raise SystemExit(1)
 
-    # 병합 corpus와 최종 키워드 JSON을 각각 읽음
-    reviews = pd.read_csv(REVIEWS_PATH)
+    # 병합 corpus와 최종 키워드 JSON, 기준이 되는 행정동 목록을 각각 읽음
+    reviews = pd.read_csv(REVIEWS_PATH, dtype=str)
+    clusters = pd.read_csv(CLUSTERS_PATH, encoding="utf-8-sig", dtype=str)
     # 파일을 안전하게 열고 블록이 끝나면 자동으로 닫히도록 처리함.
     with open(KEYWORDS_PATH, encoding="utf-8") as file:
         keywords = json.load(file)
+
+    valid_admin_codes = set(clusters["admin_code"])
 
     # JSON에 기록된 전체 문서 수·분석 동네 수·동네별 결과를 꺼냄
     document_count = int(keywords.get("document_count", 0))
@@ -51,6 +60,8 @@ def main() -> None:
     print("병합 한줄평 행 수:", len(reviews))
     print("document_count:", document_count)
     print("neighborhood_count:", neighborhood_count)
+    print(f"K-Means 기준 행정동 수: {len(valid_admin_codes)} / 키워드 적용된 행정동 비율: "
+          f"{neighborhood_count / len(valid_admin_codes) * 100:.1f}%")
     print("WordCloud 존재 여부(선택):", WORDCLOUD_PATH.exists())
 
     # 분석에 사용할 문서나 키워드 결과가 비어 있는 비정상 상태를 검사함
@@ -65,11 +76,22 @@ def main() -> None:
     if not neighborhoods:
         errors.append("동네별 keywords 결과가 비어 있습니다.")
 
-    # 전체 JSON을 길게 출력하는 대신 앞쪽 동네 3개의 대표 키워드만 예시로 확인함
+    # 키워드 JSON의 키가 실제 K-Means 행정동코드와 일치하는지 대조함 - 여기서 매핑 오류를 잡음
+    invalid_codes = sorted(set(neighborhoods.keys()) - valid_admin_codes)
+    if invalid_codes:
+        errors.append(f"K-Means에 없는 admin_code가 키워드 결과에 있습니다: {invalid_codes[:10]}")
+
+    # 병합 단계의 조인 방식별 건수를 보여줘 legal_prefix/admin_exact가 비정상적으로 많지 않은지 확인함
+    if "match_type" in reviews.columns:
+        print("\n조인 방식별 건수")
+        print(reviews["match_type"].value_counts().to_string())
+
+    # 전체 JSON을 길게 출력하는 대신 앞쪽 3개의 대표 키워드만 예시로 확인함
     print("\n키워드 결과 예시")
     # 대상 데이터를 하나씩 순회하면서 각 항목에 동일한 처리 규칙을 적용함.
-    for admin_name, result in list(neighborhoods.items())[:3]:
-        print(admin_name, "->", result.get("keywords", [])[:5])
+    for admin_code, result in list(neighborhoods.items())[:3]:
+        label = f"{result.get('districtName', '')} {result.get('adminName', '')} ({admin_code})"
+        print(label, "->", result.get("keywords", [])[:5])
 
     # 필수 텍스트 결과에 문제가 있으면 실패 처리함. WordCloud는 선택이라 실패 조건에 넣지 않음
     if errors:
