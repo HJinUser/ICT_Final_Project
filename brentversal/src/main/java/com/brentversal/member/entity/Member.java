@@ -142,12 +142,19 @@ public class Member {
     // 이 연관을 취향 엔터티(UserPreference)가 아니라 회원이 갖는 이유는,
     // member_tag 테이블의 회원 컬럼이 members 테이블을 그대로 가리키게 하기 위해서다.
     // 매물에 붙는 태그(property_tag)와 같은 tags 테이블을 함께 쓰므로 태그 id 를 그대로 비교할 수 있다.
+    // 같은 회원에게 같은 태그가 두 번 붙지 않도록 DB 가 막게 한다.
+    // 매물 태그(property_tags)에서 제약이 없어 같은 짝이 쌓이고 추천 점수가 부풀었던 적이 있어,
+    // 같은 구조인 이 표에도 같은 제약을 함께 걸어 둔다.
     @ToString.Exclude
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "member_tag",
             joinColumns = @JoinColumn(name = "member_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
+            inverseJoinColumns = @JoinColumn(name = "tag_id"),
+            uniqueConstraints = @UniqueConstraint(
+                    name = "uk_member_tag",
+                    columnNames = {"member_id", "tag_id"}
+            )
     )
     private Set<Tag> preferredTags = new HashSet<>();
 

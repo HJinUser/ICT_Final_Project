@@ -23,7 +23,15 @@ const NO_COORDINATES_NOTICE =
 function hasNoCoordinates(saved: PropertyResponse) {
     return saved.latitude == null || saved.longitude == null;
 }
-const NUMBER_FIELDS = ["price", "deposit", "monthlyDeposit", "monthlyRent", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee"];
+const NUMBER_FIELDS = ["price", "deposit", "monthlyDeposit", "monthlyRent", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee", "buildYear"];
+
+// 비워 둘 수 있는 숫자 칸. 빈 값을 0 으로 바꾸지 않고 값 없음으로 남긴다.
+const OPTIONAL_NUMBER_FIELDS = ["buildYear"];
+
+// 건축 연도로 넣을 수 있는 범위.
+// 위쪽은 아직 다 짓지 않은 건물도 등록할 수 있도록 올해보다 한 해 뒤까지 열어 둔다.
+const MIN_BUILD_YEAR = 1900;
+const MAX_BUILD_YEAR = new Date().getFullYear() + 1;
 const MAX_PHOTOS = 3; // 백엔드 PropertyImageService.MAX_IMAGE_COUNT 와 동일하게 맞춤
 
 // 태그 category(영문 코드) -> 화면에 보여줄 한글 라벨
@@ -62,6 +70,8 @@ const mapResponseToProperty = (data: PropertyResponse): Property => ({
     floor: data.floor,
     roomCount: data.roomCount,
     bathroomCount: data.bathroomCount,
+    // 값이 없는 예전 매물은 입력칸을 비워 둔 상태로 연다
+    buildYear: data.buildYear ?? undefined,
     price: data.price ?? undefined,
     deposit: data.deposit ?? undefined,
     monthlyDeposit: data.monthlyDeposit ?? undefined,
@@ -165,6 +175,19 @@ function PropertyFormPage() {
     ) => {
         const { name, value } = event.target;
         const isNumber = NUMBER_FIELDS.includes(name);
+
+        /*
+          비워 둘 수 있는 숫자 칸은 빈 값을 0 이 아니라 값 없음으로 둔다.
+
+          Number("") 는 0 이라서, 그냥 두면 칸을 비웠을 때 0 이 들어간다.
+          건축 연도에 0 이 들어가면 "모름"이 아니라 "서기 0년"이 되어
+          서버의 연도 범위 검사에 걸리고 저장 자체가 막힌다.
+        */
+        if (isNumber && OPTIONAL_NUMBER_FIELDS.includes(name) && value.trim() === "") {
+            setProperty({ ...property, [name]: undefined });
+            return;
+        }
+
         setProperty({ ...property, [name]: isNumber ? Number(value) : value });
     };
 
@@ -223,6 +246,22 @@ function PropertyFormPage() {
     // "data" 파트엔 JSON, "files" 파트엔 실제 사진 파일들을 담아 FormData로 함께 보낸다.
     // Content-Type 헤더는 직접 지정하지 않는다 — axios가 FormData를 보고 boundary까지 포함해 자동으로 설정해준다.
     const handleSubmit = async () => {
+        /*
+          건축 연도는 비워 둘 수 있지만, 적었다면 있을 수 있는 연도여야 한다.
+          서버도 같은 범위를 확인하지만, 여기서 먼저 막으면 사진까지 올렸다가 되돌아오는 일을 줄일 수 있다.
+        */
+        if (property.buildYear != null) {
+            const year = property.buildYear;
+
+            if (!Number.isInteger(year) || year < MIN_BUILD_YEAR || year > MAX_BUILD_YEAR) {
+                setErrors({
+                    buildYear: `건축 연도는 ${MIN_BUILD_YEAR}년부터 ${MAX_BUILD_YEAR}년 사이로 입력해 주세요.`,
+                    general: `건축 연도는 ${MIN_BUILD_YEAR}년부터 ${MAX_BUILD_YEAR}년 사이로 입력해 주세요.`,
+                });
+                return;
+            }
+        }
+
         try {
             // 수정 화면에서는 "지금까지 남아 있는 기존 사진 id 목록"을 같이 보내야
             // 백엔드가 그 목록에 없는 기존 사진을 지운다 (PropertyService.update 참고)
@@ -396,6 +435,26 @@ function PropertyFormPage() {
                                     <div className="field">
                                         <label>욕실 개수</label>
                                         <input type="number" name="bathroomCount" value={property.bathroomCount} onChange={ControlChange} />
+                                    </div>
+                                </div>
+
+                                {/* 건축 연도. 맞춤 추천이 신축 여부를 판단하는 데 쓰기 때문에 등록할 때 함께 받는다. */}
+                                <div className="fields-2">
+                                    <div className="field">
+                                        <label>건축 연도</label>
+                                        <input
+                                            type="number"
+                                            name="buildYear"
+                                            min={MIN_BUILD_YEAR}
+                                            max={MAX_BUILD_YEAR}
+                                            placeholder={`예: ${MAX_BUILD_YEAR - 3}`}
+                                            value={property.buildYear ?? ""}
+                                            onChange={ControlChange}
+                                        />
+                                        {errors.buildYear && <span className="field-error">{errors.buildYear}</span>}
+                                        <div className="xs dim" style={{ marginTop: 6 }}>
+                                            맞춤 추천에서 신축 여부를 판단할 때 씁니다. 모르면 비워 두세요.
+                                        </div>
                                     </div>
                                 </div>
                             </section>
