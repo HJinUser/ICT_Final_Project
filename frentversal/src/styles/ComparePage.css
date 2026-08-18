@@ -1,0 +1,66 @@
+.compare-table {
+    min-width: 760px;
+}
+
+.compare-table th,
+.compare-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.compare-table thead th {
+    min-width: 240px;
+}
+
+.compare-table .compare-label-column {
+    width: 150px;
+    min-width: 150px;
+}
+
+.compare-row-label {
+    width: 150px;
+    min-width: 150px;
+    font-weight: 600;
+    background: #fafafa;
+}
+
+.compare-thumb {
+    width: 100%;
+    max-width: 220px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.compare-thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background: #f4f3ec;
+    color: #9c9c9c;
+    font-size: 12px;
+}
+
+.compare-winner {
+    background: #f3ecfa !important;
+    font-weight: 600;
+    color: #4B0082;
+}
+
+.winner-check {
+    font-weight: 700;
+    color: #4B0082;
+}
+
+/* 표 레이아웃(.table-wrap/.compare-table)과 승자 강조(.winner), 사진(.thumb)은
+   전부 styles/common.css 목업 클래스를 그대로 쓴다. 여기는 목업에 없는
+   "사진이 없는 매물" 상태 하나만 보충한다. */
+.thumb.thumb-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4f3ec;
+    color: #9c9c9c;
+    font-size: 12px;
+}

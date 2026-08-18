@@ -17,7 +17,7 @@ import java.util.List;
 
 // 중개사무소 1곳을 의미하는 엔터티 클래스
 @Getter @Setter @ToString @Entity
-@Table(name = "agency")
+@Table(name = "agencies")
 public class Agency {
     @Id // 프라이머리 키
     @GeneratedValue(strategy = GenerationType.AUTO) // 숫자 생성할때 AUTO로 생성하겠다.
@@ -47,6 +47,14 @@ public class Agency {
     @Column(nullable = false)
     private String address ; // 사무소 상세 페이지에 표시할 주소
 
+    // 주소에서 뽑아 둔 지역 조각 (주소 검색이 함께 돌려주는 값).
+    // 도로명 주소에는 동이 없어서 주소 문자열만으로는 알 수 없기 때문에 따로 보관한다.
+    @Column(length = 30)
+    private String sigungu ; // 영등포구
+
+    @Column(length = 30)
+    private String dong ;    // 당산동4가
+
     // 공인중개사 등록번호. 상세 페이지 기본 정보에 표시한다.
     // ERD 에는 없지만 화면(중개사무소 상세)에 필요해서 추가했다.
     @Column(name = "registration_no", length = 50)
@@ -54,9 +62,9 @@ public class Agency {
 
     // 사무소 외관·내부 대표 이미지 목록 (상세 페이지 갤러리용).
     // 이미지 몇 장을 순서대로 갖는 단순한 값 목록이라 별도 엔터티 대신 @ElementCollection 을 썼다.
-    // agency_image 테이블이 자동으로 만들어지고, sort_order 컬럼으로 순서가 유지된다.
+    // agency_images 테이블이 자동으로 만들어지고, sort_order 컬럼으로 순서가 유지된다.
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "agency_image", joinColumns = @JoinColumn(name = "agency_id"))
+    @CollectionTable(name = "agency_images", joinColumns = @JoinColumn(name = "agency_id"))
     @OrderColumn(name = "sort_order")
     @Column(name = "image_url", length = 500)
     @ToString.Exclude
@@ -85,11 +93,6 @@ public class Agency {
     @Enumerated(EnumType.STRING) // enum 이름(AVAILABLE 등)을 그대로 문자열로 저장한다
     @Column(nullable = false)
     private AgencyStatus status = AgencyStatus.AVAILABLE ; // 상담 가능 여부 배지
-
-    // 등록 매물 건수.
-    // 나중에 property(매물) 테이블이 생기면 count 쿼리로 계산하는 값이므로 이 컬럼은 그때 제거한다.
-    @Column(name = "listing_count", nullable = false)
-    private Integer listingCount = 0 ;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate regdate ; // 등록 일자

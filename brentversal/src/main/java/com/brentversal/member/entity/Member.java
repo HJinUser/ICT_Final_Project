@@ -2,6 +2,7 @@ package com.brentversal.member.entity;
 
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.constant.SocialType;
+import com.brentversal.tag.entity.Tag;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -13,6 +14,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 // 회원 1명을 의미하는 엔터티 클래스
 @Getter
@@ -54,6 +58,19 @@ public class Member {
     @Size(max = 100, message = "주소는 100자리 이하로 입력해 주세요.")
     private String address ;
 
+    // 주소에서 뽑아 둔 지역 조각. 주소 검색(다음 우편번호)이 함께 돌려주는 값을 그대로 저장한다.
+    //
+    // 주소를 도로명으로 통일했더니 문자열에 동이 들어 있지 않아("서울시 영등포구 당산로 222"),
+    // 주소를 쪼개 봐도 동을 알 수 없다. 그래서 받은 값을 따로 보관한다.
+    // 지도 검색의 기본 지역을 회원이 사는 곳으로 맞출 때 쓴다.
+    @Size(max = 30)
+    @Column(length = 30)
+    private String sigungu ; // 영등포구
+
+    @Size(max = 30)
+    @Column(length = 30)
+    private String dong ;    // 당산동4가
+
     // Enum의 상수를 문자열 형태로 DB에 저장하겠다는 어노테이션
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -83,6 +100,33 @@ public class Member {
     @Column(name = "passwordless_registered", nullable = false)
     private boolean passwordlessRegistered = false ;
 
+    // 취향 초기 설정(온보딩) 완료 여부. 일반 사용자(USER)가 최초 로그인 시 1회만 보게 하려고 둔다.
+    // 중개인/관리자는 애초에 이 화면으로 보내지 않으므로 항상 의미 없는 기본값(false)으로 둔다.
+    @Column(name = "preference_completed", nullable = false)
+    private boolean preferenceCompleted = false ;
+
+    // 약관 동의 기록.
+    //
+    // 필수 항목(이용약관·개인정보 수집·이용·만 14세·위치기반 등)은 동의하지 않으면
+    // 애초에 가입이 되지 않으므로 항목마다 컬럼을 두지 않는다.
+    // "언제 어느 버전에 동의했는가"만 남겨 두면, 나중에 약관이 바뀌었을 때
+    // 예전 버전에 동의한 회원을 골라내 재동의를 받을 수 있다.
+    // 사람마다 값이 갈리는 선택 항목만 따로 컬럼으로 갖는다.
+    @Column(name = "terms_version", length = 10)
+    private String termsVersion ;
+
+    @Column(name = "agreed_at")
+    private LocalDateTime agreedAt ;
+
+    // [선택] 마케팅 정보 수신 동의. 광고성 메일·문자를 보낼 대상을 고를 때 쓴다.
+    @Column(name = "agreed_marketing", nullable = false)
+    private boolean agreedMarketing = false ;
+
+    // [선택] 개인정보 제3자 제공 동의. 상담을 신청할 때 중개인에게 연락처를 넘겨도 되는지다.
+    // 중개인 가입에는 해당 항목이 없으므로 항상 기본값(false)으로 둔다.
+    @Column(name = "agreed_third_party", nullable = false)
+    private boolean agreedThirdParty = false ;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(nullable = false)
     private LocalDate regdate ; // 등록 일자
@@ -92,6 +136,20 @@ public class Member {
     // refresh token이 470자를 넘어서 넉넉히 1000으로 잡음
     @Column(name = "refresh_token", length = 1000)
     private String refreshToken ;
+
+    // 맞춤 추천에서 쓰는 선호 태그. 사용자가 취향 설정에서 직접 고른 값이다.
+    //
+    // 이 연관을 취향 엔터티(UserPreference)가 아니라 회원이 갖는 이유는,
+    // member_tag 테이블의 회원 컬럼이 members 테이블을 그대로 가리키게 하기 위해서다.
+    // 매물에 붙는 태그(property_tag)와 같은 tags 테이블을 함께 쓰므로 태그 id 를 그대로 비교할 수 있다.
+    @ToString.Exclude
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "member_tag",
+            joinColumns = @JoinColumn(name = "member_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> preferredTags = new HashSet<>();
 
     // 중개인일 때만 존재하는 1:1 프로필. 일반 사용자는 NULL임
     // Broker 쪽이 자기 PK와 member_id FK를 따로 가지므로(Cart.member와 같은 방식) 여기는 mappedBy로 위임함

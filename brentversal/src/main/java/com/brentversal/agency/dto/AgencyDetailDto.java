@@ -14,9 +14,12 @@ import java.util.List;
 public class AgencyDetailDto {
     // 기본 정보
     private Long id ;
+    private Long memberId ;       // 이 사무소를 운영하는 회원(중개인)의 id
     private String name ;
     private String brokerName ;
     private String address ;
+    private String sigungu ; // 주소에서 뽑아 둔 구 (지역 검색·지도 묶기에 쓴다)
+    private String dong ;    // 주소에서 뽑아 둔 동
     private String phone ;
     private String hours ;
     private String registrationNo ; // 등록번호
@@ -33,7 +36,12 @@ public class AgencyDetailDto {
     // 담당 매물
     private long listingCount ;   // 전체 건수
     private long todayNewCount ;  // 오늘 새로 올라온 건수
-    private List<AgencyPropertyDto> recentProperties = new ArrayList<>(); // 최근 등록 매물
+    private List<AgencyPropertyDto> recentProperties = new ArrayList<>(); // 카드로 보여 줄 최근 등록 매물 (2건)
+
+    // 이 사무소가 맡은 매물 전체.
+    // 상담 요청 폼의 "문의할 매물" 선택 목록에 쓴다.
+    // 카드용(recentProperties)만 있으면 최근 2건 외에는 문의 자체를 할 수 없어서 따로 담는다.
+    private List<AgencyPropertyDto> properties = new ArrayList<>();
 
     // 이용자 평가
     private long reviewCount ;
@@ -44,9 +52,14 @@ public class AgencyDetailDto {
         AgencyDetailDto dto = new AgencyDetailDto();
 
         dto.setId(bean.getId());
+        if (bean.getMember() != null) {
+            dto.setMemberId(bean.getMember().getId());
+        }
         dto.setName(bean.getName());
         dto.setBrokerName(bean.getBrokerName());
         dto.setAddress(bean.getAddress());
+        dto.setSigungu(bean.getSigungu());
+        dto.setDong(bean.getDong());
         dto.setPhone(bean.getPhone());
         dto.setHours(bean.getHours());
         dto.setRegistrationNo(bean.getRegistrationNo());

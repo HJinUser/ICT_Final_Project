@@ -21,8 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 // 로그인한 중개인이 자기 사무소를 관리하는 화면("내 중개사무소", 중개인 마이페이지)의 서비스
@@ -68,6 +66,7 @@ public class MyAgencyService {
         MyAgencyDashboardDto dto = new MyAgencyDashboardDto();
 
         // 매물 현황
+        dto.setTotalCount(propertyRepository.countByAgencyId(agencyId));
         dto.setActiveCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.ACTIVE));
         dto.setInProgressCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.IN_PROGRESS));
         dto.setCompletedCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.COMPLETED));
@@ -229,6 +228,11 @@ public class MyAgencyService {
         if(dto.getBrokerName() != null && !dto.getBrokerName().isBlank()) agency.setBrokerName(dto.getBrokerName().trim());
         if(dto.getAddress() != null && !dto.getAddress().isBlank()) agency.setAddress(dto.getAddress().trim());
 
+        // 주소를 검색해서 다시 고른 경우에만 지역 조각이 함께 온다.
+        // 전화번호만 고치고 저장한 경우에는 값이 비어 오므로 기존 값을 지우지 않는다.
+        if(dto.getSigungu() != null && !dto.getSigungu().isBlank()) agency.setSigungu(dto.getSigungu());
+        if(dto.getDong() != null && !dto.getDong().isBlank()) agency.setDong(dto.getDong());
+
         agency.setPhone(dto.getPhone());
         agency.setHours(dto.getHours());
         agency.setRegistrationNo(dto.getRegistrationNo());
@@ -245,44 +249,6 @@ public class MyAgencyService {
         }
 
         return AgencyDetailDto.of(agency);
-    }
-
-    // 헤더 종 아이콘에 표시할 알림 목록.
-    // 답변하지 않은 상담 요청과 리뷰를 최신순으로 합쳐서 돌려준다.
-    @Transactional(readOnly = true)
-    public List<NotificationDto> getNotifications(String email){
-        Agency agency = findMyAgency(email);
-
-        List<NotificationDto> notifications = new ArrayList<>();
-
-        // (1) 아직 답변하지 않은 상담 요청
-        agencyConsultationRepository
-                .findByAgencyIdAndStatusOrderByCreatedAtDesc(agency.getId(), ConsultationStatus.REQUESTED)
-                .forEach(bean -> notifications.add(NotificationDto.of(
-                        "CONSULTATION",
-                        bean.getId(),
-                        "새 상담 요청이 도착했습니다.",
-                        summarize(bean.getContent()),
-                        "/broker/consultations/" + bean.getId(), // 답변하기 페이지 주소
-                        bean.getCreatedAt())));
-
-        // (2) 아직 답변하지 않은 리뷰
-        agencyReviewRepository
-                .findByAgencyIdAndReplyIsNullOrderByIdDesc(agency.getId(), PageRequest.of(0, REVIEW_PAGE_SIZE))
-                .forEach(bean -> notifications.add(NotificationDto.of(
-                        "REVIEW",
-                        bean.getId(),
-                        "답변하지 않은 리뷰가 있습니다.",
-                        summarize(bean.getContent()),
-                        "/broker/agency?tab=reviews",
-                        bean.getCreatedAt())));
-
-        // 두 종류를 합쳤으므로 시간 순서가 섞여 있다. 최신 것이 위로 오도록 다시 정렬한다.
-        // createdAt 이 비어 있는 예전 데이터가 섞여도 오류가 나지 않게 null 을 뒤로 보낸다.
-        notifications.sort(Comparator.comparing(NotificationDto::getCreatedAt,
-                Comparator.nullsLast(Comparator.reverseOrder())));
-
-        return notifications;
     }
 
     // 주소를 좌표로 바꿔 사무소에 저장한다.
@@ -304,12 +270,6 @@ public class MyAgencyService {
             agency.setLatitude(coordinates.latitude());
             agency.setLongitude(coordinates.longitude());
         });
-    }
-
-    // 알림 목록에 문의 내용을 통째로 넣으면 너무 길어서 앞부분만 잘라 쓴다.
-    private String summarize(String text){
-        if(text == null) return "";
-        return text.length() <= 40 ? text : text.substring(0, 40) + "…";
     }
 
     // 문자열로 들어온 상태값을 열거형으로 바꾼다. 잘못된 값이면 안내 메시지를 준다.

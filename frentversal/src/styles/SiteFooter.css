@@ -1,0 +1,70 @@
+/* 화면 맨 아래 안내메뉴. 프로토타입 index.html의 footer / .fgrid 규칙을 옮겨 온 것이다. */
+
+.site-footer {
+    border-top: 1px solid var(--line);
+    /* common.css 가 뒤에 로드되며 덮어써 왔기 때문에, 실제 적용되던 값은 52px 0 42px 가 아니라
+       아래 값이다. 지금 화면을 그대로 유지하기 위해 적용되던 값을 적는다. */
+    padding: 42px 0 34px;
+    background: var(--bg-2);
+    /* 본문이 짧은 화면에서 푸터가 본문에 붙어 보이지 않게 띄운다 */
+    margin-top: 70px;
+}
+
+/* 첫 칸(로고+소개)만 넓게, 나머지 안내메뉴 3칸은 같은 너비로 */
+.site-footer .fgrid {
+    display: grid;
+    grid-template-columns: 1.5fr repeat(3, 1fr);
+    gap: 36px;
+}
+
+.site-footer .fgrid h4 {
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.site-footer .fgrid button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 3px 0;
+    cursor: pointer;
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+    transition: color .2s;
+}
+
+.site-footer .fgrid button:hover { color: var(--v); }
+
+/* 로고: 헤더와 같은 모양이되 조금 작게 */
+.site-footer .brand {
+    display: flex;
+    align-items: baseline;
+    font-size: 16px;
+    font-weight: 650;
+    letter-spacing: -.05em;
+}
+
+.site-footer .brand .flip { color: var(--v); }
+
+.site-footer .intro {
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+    margin-top: 10px;
+    max-width: 280px;
+}
+
+/* 맨 아래 한 줄 (안내 문구 + 약관) */
+.site-footer .fbot {
+    margin-top: 40px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
+}

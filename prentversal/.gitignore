@@ -1,0 +1,27 @@
+# Python 가상환경
+.venv/
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 실제 API Key 등 비밀정보
+.env
+
+# pytest 캐시
+.pytest_cache/
+
+# 로그 파일
+*.log
+
+# 재수집 가능한 원본/중간 원본
+# .part.csv도 이 경로 아래에 생성됨
+data/raw/
+
+# 로컬 발표 확인용 이미지
+outputs/*.png
+
+.idea/
+*.iml

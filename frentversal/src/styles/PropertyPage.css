@@ -1,0 +1,52 @@
+.gallery-photo {
+    height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* .bar-chart 의 height 는 common.css 가 정한 180px 를 그대로 쓴다.
+   전에는 여기 height:140px 가 있었지만 common.css 가 뒤에 로드되며 덮여서
+   실제로는 한 번도 적용된 적이 없다. 전역 CSS 를 앞으로 옮기면서 이 선언이
+   갑자기 살아나 차트 높이가 바뀌는 것을 막기 위해 제거한다. */
+
+.bar-chart .bar {
+    width: 36px;
+    background: linear-gradient(180deg, #bda2d2, #4B0082);
+    border-radius: 5px 5px 0 0;
+}
+
+.review-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f3;
+}
+
+.review-item:last-child {
+    border-bottom: none;
+}
+
+.ai-band {
+    background: linear-gradient(135deg, #ece6f5, #f8f5fb);
+}
+
+.login-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 17, 20, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.login-modal {
+    width: 340px;
+    background: #fff;
+    border-radius: var(--r-l);
+    box-shadow: var(--shadow);
+    padding: 28px 24px 20px;
+    text-align: center;
+}
+
+.login-modal p {
+    margin: 0 0 20px;
+}

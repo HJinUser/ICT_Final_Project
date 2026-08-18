@@ -1,0 +1,151 @@
+/*
+  PreferenceSidebar.css
+
+  맞춤 추천 화면 왼쪽 취향 패널의 모양.
+  이 부품이 자기 CSS 를 갖는 이유는, 나중에 취향 초기설정 화면에서 같은 패널을 쓰게 되어도
+  다른 페이지의 CSS 를 가져다 쓰지 않게 하기 위해서다.
+
+  클래스 이름은 전부 pref- 로 시작한다. 공통 클래스와 이름이 겹치지 않게 하려는 것이다.
+*/
+
+.pref-panel {
+    position: sticky;
+    top: 88px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: #fff;
+}
+
+.pref-title {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -.02em;
+}
+
+.pref-desc {
+    margin: 6px 0 16px;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.pref-group {
+    padding-top: 16px;
+    border-top: 1px solid var(--line-2, var(--line));
+}
+
+.pref-group:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.pref-label {
+    margin-bottom: 9px;
+    font-size: var(--fs-mono);
+    font-weight: 550;
+    color: var(--ink-2);
+}
+
+.pref-sublabel {
+    margin: 10px 0 6px;
+    font-size: 11.5px;
+    color: var(--ink-3);
+}
+
+.pref-unit {
+    font-weight: 400;
+    color: var(--ink-3);
+}
+
+.pref-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pref-chip {
+    padding: 6px 11px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    background: #fff;
+    color: var(--ink-2);
+    font-size: 12px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.pref-chip:hover {
+    border-color: #cfc7da;
+}
+
+.pref-chip.on {
+    border-color: var(--v);
+    background: var(--v);
+    color: #fff;
+}
+
+.pref-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pref-range input {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    background: #fff;
+    color: var(--ink);
+    font-size: 13px;
+    transition: .2s;
+}
+
+.pref-range input:focus {
+    outline: none;
+    border-color: var(--v);
+    box-shadow: 0 0 0 3px rgba(75, 0, 130, .06);
+}
+
+.pref-range span {
+    color: var(--ink-3);
+    flex: none;
+}
+
+.pref-more {
+    margin-top: 9px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--v);
+    font-size: var(--fs-mono);
+    cursor: pointer;
+}
+
+.pref-empty {
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.pref-alert {
+    margin-bottom: 14px;
+    padding: 9px 12px;
+    border-radius: var(--r-s);
+    background: #fdf3f2;
+    border: 1px solid #f0d5d1;
+    color: #a63232;
+    font-size: var(--fs-mono);
+}
+
+.pref-save {
+    width: 100%;
+    margin-top: 20px;
+}
+
+@media (max-width: 1024px) {
+    /* 화면이 좁아지면 패널이 위로 올라오므로 따라다니게 두지 않는다. */
+    .pref-panel {
+        position: static;
+    }
+}

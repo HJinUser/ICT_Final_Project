@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getAgencies } from '../api/agencyApi';
-import AgencyMap from '../components/AgencyMap';
+import AgencyMap from './components/AgencyMap';
 import type { AgencyResponse, AgencyStatus } from '../types/Agency';
-import '../assets/common.css';
-import '../assets/responsive.css'; // 화면 크기별 보정 (common.css 보다 나중에 import 해야 적용됩니다)
+import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
+import '../styles/AgencyPage.css';
 
 // 프로토타입 agency.html 을 옮긴 화면입니다.
 // 중개사무소 목록은 백엔드 GET /agency 에서 받아옵니다.
@@ -20,12 +20,12 @@ const STATUS_COLORS: Record<AgencyStatus, string> = {
     CLOSED: 'gray',
 };
 
-// 지역 필터 (option 의 value 가 서버로 넘어가 주소 검색에 쓰입니다)
-const REGIONS = [
-    { value: '', label: '지역 전체' },
-    { value: '서초구', label: '서초구 전체' },
-    { value: '강남구', label: '강남구 전체' },
-];
+// 지역 필터 (option 의 value 가 그대로 서버로 넘어가 주소·동 조회에 쓰입니다)
+// 구 목록과 구별 동 목록은 utils/seoulDistricts 에 모아 두고 화면끼리 함께 씁니다.
+
+// 목록에 한 번에 보여 줄 중개사무소 카드 수. 화살표를 누르면 이만큼씩 옆으로 넘어간다.
+// .grid-4 가 한 줄에 4칸이라 이 값과 맞춰 둔다.
+const CARDS_PER_PAGE = 4;
 
 const CHAT_QUICK = ['강남역 5억 이하', '조용한 동네 추천', '이 집 시세가 적당해?'];
 
@@ -47,6 +47,10 @@ function AgencyPage() {
     // 검색 조건
     const [keyword, setKeyword] = useState('');
     const [region, setRegion] = useState('');
+    const [dong, setDong] = useState('');
+
+    // 지금 몇 번째 묶음(4개씩)을 보고 있는지. 화살표로만 바뀐다.
+    const [cardPage, setCardPage] = useState(0);
 
     // 토스트
     const [toastMessage, setToastMessage] = useState('');
@@ -63,7 +67,7 @@ function AgencyPage() {
     useEffect(() => () => window.clearTimeout(toastTimer.current), []);
 
     // 목록 조회. 검색 버튼과 첫 진입에서 모두 이 함수를 씁니다.
-    const loadAgencies = async (params: { keyword?: string; region?: string } = {}) => {
+    const loadAgencies = async (params: { keyword?: string; region?: string; dong?: string } = {}) => {
         setLoading(true);
         setLoadError('');
 
@@ -72,6 +76,7 @@ function AgencyPage() {
 
             setAgencies(data.content);
             setVerifiedCount(data.verifiedCount);
+            setCardPage(0); // 검색 결과가 바뀌면 항상 첫 묶음부터 보여 준다
         } catch (error) {
             console.error('중개사무소 목록 조회 실패', error);
             setLoadError('중개사무소 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
@@ -87,9 +92,23 @@ function AgencyPage() {
     }, []);
 
     const handleSearch = () => {
-        loadAgencies({ keyword, region });
+        loadAgencies({ keyword, region, dong });
         showToast('검색 조건을 적용했습니다.');
     };
+
+    // 사무소 목록을 4개씩 잘라 "한 화면"에 담을 묶음들로 만든다.
+    const agencyPages = useMemo(() => {
+        const pages: AgencyResponse[][] = [];
+
+        for (let index = 0; index < agencies.length; index += CARDS_PER_PAGE) {
+            pages.push(agencies.slice(index, index + CARDS_PER_PAGE));
+        }
+
+        return pages;
+    }, [agencies]);
+
+    const isFirstPage = cardPage === 0;
+    const isLastPage = cardPage >= agencyPages.length - 1;
 
     // 챗봇
     const [chatOpen, setChatOpen] = useState(false);
@@ -150,8 +169,25 @@ function AgencyPage() {
                                 onChange={(event) => setKeyword(event.target.value)}
                                 onKeyDown={(event) => { if (event.key === 'Enter') handleSearch(); }}
                             />
-                            <select className="search-box" value={region} onChange={(event) => setRegion(event.target.value)}>
-                                {REGIONS.map((item) => (
+                            {/* 구를 고른 뒤 동을 더 좁힐 수 있습니다. 구를 안 골랐으면 동은 고를 수 없습니다. */}
+                            <select
+                                className="search-box"
+                                value={region}
+                                onChange={(event) => { setRegion(event.target.value); setDong(''); }}
+                            >
+                                <option value="">지역 전체</option>
+                                {SEOUL_DISTRICTS.map((district) => (
+                                    <option value={district} key={district}>{district}</option>
+                                ))}
+                            </select>
+                            <select
+                                className="search-box"
+                                value={dong}
+                                onChange={(event) => setDong(event.target.value)}
+                                disabled={!region}
+                            >
+                                <option value="">동 전체</option>
+                                {dongOptionsOf(region).map((item) => (
                                     <option value={item.value} key={item.value}>{item.label}</option>
                                 ))}
                             </select>
@@ -166,30 +202,66 @@ function AgencyPage() {
                             <p className="xs dim">조건에 맞는 중개사무소가 없습니다.</p>
                         )}
 
-                        <div className="grid-4">
-                            {agencies.map((agency) => (
-                                <Link className="card" to={`/agency/${agency.id}`} key={agency.id}>
-                                    <div className="row between">
-                                        <span className={`status ${STATUS_COLORS[agency.status]}`}>{agency.statusLabel}</span>
-                                        <div className="avatar">{agency.brokerName.charAt(0)}</div>
+                        {/* 카드는 4개씩만 보여 주고, 나머지는 양옆 화살표로 넘겨서 본다 */}
+                        {agencyPages.length > 0 && (
+                            <div className="agency-carousel">
+                                <button
+                                    className={`agency-carousel-arrow${agencyPages.length <= 1 ? ' is-hidden' : ''}`}
+                                    type="button"
+                                    aria-label="이전 중개사무소 보기"
+                                    onClick={() => setCardPage((current) => Math.max(0, current - 1))}
+                                    disabled={isFirstPage}
+                                >
+                                    ‹
+                                </button>
+
+                                <div className="agency-carousel-viewport">
+                                    <div
+                                        className="agency-carousel-track"
+                                        style={{ transform: `translateX(-${cardPage * 100}%)` }}
+                                    >
+                                        {agencyPages.map((pageAgencies) => (
+                                            <div className="agency-carousel-page" key={pageAgencies[0].id}>
+                                                <div className="grid-4">
+                                                    {pageAgencies.map((agency) => (
+                                                        <Link className="card" to={`/agency/${agency.id}`} key={agency.id}>
+                                                            <div className="row between">
+                                                                <span className={`status ${STATUS_COLORS[agency.status]}`}>{agency.statusLabel}</span>
+                                                                <div className="avatar">{agency.brokerName.charAt(0)}</div>
+                                                            </div>
+                                                            <h3 style={{ marginTop: 13 }}>
+                                                                {agency.name}
+                                                                {agency.verified && <span className="xs" style={{ marginLeft: 6, color: 'var(--green)' }}>✓ 인증</span>}
+                                                            </h3>
+                                                            <p className="xs dim" style={{ marginTop: 6 }}>
+                                                                {agency.brokerName} 공인중개사<br />
+                                                                {agency.address}
+                                                                {agency.hours && <><br />{agency.hours}</>}
+                                                            </p>
+                                                            <div className="divider" style={{ margin: '15px 0' }}></div>
+                                                            <div className="row between">
+                                                                <span className="xs dim">★ {agency.ratingAvg.toFixed(1)}</span>
+                                                                <strong className="num">{agency.listingCount}건</strong>
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <h3 style={{ marginTop: 13 }}>
-                                        {agency.name}
-                                        {agency.verified && <span className="xs" style={{ marginLeft: 6, color: 'var(--green)' }}>✓ 인증</span>}
-                                    </h3>
-                                    <p className="xs dim" style={{ marginTop: 6 }}>
-                                        {agency.brokerName} 공인중개사<br />
-                                        {agency.address}
-                                        {agency.hours && <><br />{agency.hours}</>}
-                                    </p>
-                                    <div className="divider" style={{ margin: '15px 0' }}></div>
-                                    <div className="row between">
-                                        <span className="xs dim">★ {agency.ratingAvg.toFixed(1)}</span>
-                                        <strong className="num">{agency.listingCount}건</strong>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                                </div>
+
+                                <button
+                                    className={`agency-carousel-arrow${agencyPages.length <= 1 ? ' is-hidden' : ''}`}
+                                    type="button"
+                                    aria-label="다음 중개사무소 보기"
+                                    onClick={() => setCardPage((current) => Math.min(agencyPages.length - 1, current + 1))}
+                                    disabled={isLastPage}
+                                >
+                                    ›
+                                </button>
+                            </div>
+                        )}
 
                         <div className="section-head" style={{ marginTop: 48 }}>
                             <div>
@@ -205,43 +277,7 @@ function AgencyPage() {
                 </section>
             </main>
 
-            <footer className="site-footer">
-                <div className="wrap">
-                    <div className="footer-grid">
-                        <div>
-                            <Link className="brand" to="/"><b>전세</b>역전</Link>
-                            <p className="xs dim" style={{ marginTop: 9, maxWidth: 280 }}>
-                                공공 실거래가와 사용자 취향을 바탕으로 제값에 가까운 전세 매물을 찾습니다.
-                            </p>
-                        </div>
-                        <div>
-                            <h4>둘러보기</h4>
-                            <Link to="/map">지도 검색</Link>
-                            <Link to="/neighborhood">동네 탐색</Link>
-                            <Link to="/recommend">맞춤 추천</Link>
-                            <Link to="/favorites">관심 목록</Link>
-                        </div>
-                        <div>
-                            <h4>이용안내</h4>
-                            <Link to="/notice">공지사항·FAQ</Link>
-                            <Link to="/support">고객센터</Link>
-                            <Link to="/agency">중개사무소 안내</Link>
-                            <Link to="/member/signup">중개인 등록</Link>
-                        </div>
-                        <div>
-                            <h4>AI·데이터</h4>
-                            <Link to="/report">모델 성능 리포트</Link>
-                            <Link to="/recommend/explain">AI 추천 설명</Link>
-                            <a href="#">국토교통부 실거래가</a>
-                            <a href="#">개인정보처리방침</a>
-                        </div>
-                    </div>
-                    <div className="footer-bottom">
-                        <span>디자인·기능 흐름 확인용 프로토타입이며 수치와 매물 정보는 예시입니다.</span>
-                        <span>© 2026 전세역전</span>
-                    </div>
-                </div>
-            </footer>
+
 
             <button className="chat-fab" aria-label="AI 챗봇 열기" onClick={() => setChatOpen((open) => !open)}>✦</button>
 

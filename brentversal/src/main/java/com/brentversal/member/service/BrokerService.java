@@ -1,5 +1,6 @@
 package com.brentversal.member.service;
 
+import com.brentversal.agency.service.AgencyService;
 import com.brentversal.common.s3.service.FileService;
 import com.brentversal.member.constant.VerifyStatus;
 import com.brentversal.member.dto.BrokerVerificationDto;
@@ -25,6 +26,9 @@ public class BrokerService {
     private final BrokerRepository brokerRepository ;
     private final MemberRepository memberRepository ;
     private final FileService fileService ; // 자격증 사진 저장용 (Common/S3)
+
+    // 사무소가 없는 중개인이 인증을 신청하면 신청 정보로 사무소를 만들어 주기 위해 쓴다
+    private final AgencyService agencyService ;
 
     // 로그인한 중개인의 인증 정보 조회.
     // 아직 중개인 정보가 없으면 비어 있는 Optional 을 돌려준다.
@@ -90,6 +94,19 @@ public class BrokerService {
         broker.setReviewedAt(null);
 
         brokerRepository.save(broker);
+
+        // 사무소가 아직 없으면(일반 회원으로 가입한 뒤 중개인 인증을 신청한 경우) 신청 정보로 만들어 준다.
+        // 이 처리가 없으면 인증을 받아도 "내 중개사무소" 화면이 열리지 않는다.
+        // 인증 마크(agency.verified)는 관리자가 승인할 때 붙으므로 여기서는 건드리지 않는다.
+        agencyService.createIfAbsent(
+                member,
+                broker.getBusinessName(),  // 상호 -> 사무소 이름
+                broker.getOwnerName(),     // 대표자 -> 대표 공인중개사
+                broker.getOfficeAddress(), // 소재지 -> 사무소 주소
+                dto.getOfficeSigungu(),    // 주소 검색이 함께 준 구
+                dto.getOfficeDong(),       // 주소 검색이 함께 준 동
+                broker.getLicenseNumber()  // 등록번호
+        );
 
         return BrokerVerificationDto.of(broker);
     }

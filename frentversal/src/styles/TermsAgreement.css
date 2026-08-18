@@ -1,0 +1,220 @@
+/*
+  TermsAgreement.css
+
+  Terms.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
+/*
+  약관 관련 화면의 모양.
+
+  두 곳에서 쓴다.
+   1. 회원가입 화면의 동의 묶음 (TermsAgreement)  — .terms-agree 이하
+   2. 약관 전문 화면 (/terms)                    — .terms-page 이하
+  본문(.terms-body)은 둘이 같은 규칙을 쓰므로 아래쪽에 따로 모아 두었다.
+
+  색·간격 값은 tokens.css의 변수를 그대로 쓴다.
+*/
+
+/* ── 1. 회원가입 동의 묶음 ─────────────────────────── */
+.terms-agree {
+    margin-top: 22px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+}
+
+/* 전체 동의 줄 */
+.terms-all {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--line);
+}
+
+.terms-all input {
+    accent-color: var(--v);
+    width: 17px;
+    height: 17px;
+    margin-top: 2px;
+    flex: none;
+    cursor: pointer;
+}
+
+.terms-all label {
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.terms-all strong {
+    display: block;
+    font-size: var(--fs-md);
+    font-weight: 600;
+}
+
+.terms-all span {
+    display: block;
+    margin-top: 3px;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.terms-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+}
+
+.terms-list > li + li {
+    border-top: 1px solid var(--line-2);
+}
+
+/* 항목 한 줄: 체크박스 + 이름 + 보기 버튼 */
+.terms-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 16px;
+}
+
+.terms-row input {
+    accent-color: var(--v);
+    margin-top: 3px;
+    flex: none;
+    cursor: pointer;
+}
+
+.terms-row label {
+    flex: 1;
+    font-size: var(--fs-xs);
+    color: var(--ink);
+    line-height: 1.45;
+    cursor: pointer;
+}
+
+/* 체크박스 옆 [필수]/[선택] 표시 */
+.terms-tag {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: 1px;
+}
+
+.terms-tag.req {
+    background: var(--v-pale);
+    color: var(--v);
+}
+
+.terms-tag.opt {
+    background: var(--bg-2);
+    color: var(--ink-3);
+}
+
+/* 항목 아래 한 줄 안내 */
+.terms-row label em {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--fs-mono);
+    font-style: normal;
+    color: var(--ink-3);
+}
+
+.terms-open {
+    flex: none;
+    border: 0;
+    background: none;
+    padding: 2px 4px;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.terms-open:hover { color: var(--v); }
+
+/* 펼쳤을 때 나오는 본문 상자. 길어서 안쪽만 스크롤한다. */
+.terms-detail {
+    max-height: 260px;
+    overflow-y: auto;
+    margin: 0 16px 14px 34px;
+    padding: 14px 16px;
+    background: var(--bg-2);
+    border-radius: var(--r-s);
+}
+
+.terms-meta {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+}
+
+.terms-error {
+    margin: 0;
+    padding: 10px 16px 13px;
+    font-size: var(--fs-mono);
+    color: #c0392b;
+}
+
+/* ── 3. 본문 (두 곳 공통) ──────────────────────────── */
+.terms-body h4 {
+    margin: 18px 0 6px;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.terms-body section:first-child h4 { margin-top: 0; }
+
+.terms-body p {
+    margin: 0 0 5px;
+    font-size: var(--fs-mono);
+    line-height: 1.75;
+    color: var(--ink-2);
+}
+
+/* 조항 안의 번호 항목 */
+.terms-body p.indent {
+    padding-left: 13px;
+    color: var(--ink-3);
+}
+
+/* 표는 좁은 화면에서 가로로만 스크롤되게 한다 */
+.terms-table-scroll {
+    overflow-x: auto;
+    margin: 10px 0 6px;
+}
+
+.terms-table {
+    width: 100%;
+    min-width: 440px;
+    border-collapse: collapse;
+    background: #fff;
+    font-size: 11.5px;
+    line-height: 1.6;
+}
+
+.terms-table th,
+.terms-table td {
+    border: 1px solid var(--line);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.terms-table th {
+    background: var(--bg-2);
+    font-weight: 600;
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+
+.terms-table td { color: var(--ink-2); }
+
+@media (max-width: 640px) {
+    .terms-detail { margin-left: 16px; }
+}

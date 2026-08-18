@@ -67,12 +67,22 @@ body {
   margin: 0;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
+/* Vite 기본 템플릿에 있던 h1,h2 규칙을 제거했습니다.
+ *
+ * 이 규칙은 h1,h2 에만 color 와 font-family 를 강제하고 있었고, 그 때문에
+ * 앱 전체에서 h1,h2 만 나머지와 다르게 동작했습니다. (h3~h6 은 상속을 받아 정상)
+ *
+ *  1) color: var(--text-h)  -> 거의 검정(#08060d) 을 요소에 직접 지정하는 것이라,
+ *     부모가 color:#fff 인 어두운 사진/그라데이션 영역 안에서도 제목이 검정으로 찍혔습니다.
+ *     CSS 에서는 "상속"보다 "직접 지정"이 항상 이기기 때문입니다.
+ *     (로그인·회원가입의 왼쪽 안내 패널, 신고하기의 왼쪽 안내 패널이 여기 해당했습니다)
+ *  2) font-family: var(--heading) -> system-ui 라서 h1,h2 만 Pretendard 가 아닌
+ *     다른 글꼴로 렌더링되고 있었습니다.
+ *  3) font-weight: 500 -> tokens.css / common.css 가 뒤에 로드되며 덮어쓰던 값이라 이미 무의미했습니다.
+ *
+ * 제목 색은 body(var(--ink))에서 상속받고, 어두운 배경 위에서는 그 영역이 지정한 흰색을
+ * 그대로 물려받습니다. 글꼴도 :root 의 Pretendard 를 따릅니다.
+ */
 
 h1 {
   font-size: 56px;

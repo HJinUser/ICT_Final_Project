@@ -1,7 +1,7 @@
 package com.brentversal.member.service;
 
 import com.brentversal.agency.entity.Agency;
-import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.service.AgencyService;
 import com.brentversal.common.config.JwtTokenProvider;
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.constant.SocialType;
@@ -11,6 +11,7 @@ import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
 import com.brentversal.member.repository.MemberRepository;
 import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -25,7 +27,10 @@ import java.util.Optional;
 public class MemberService { // MemberService가 MemberRepository를 의존하고 있음
     private final MemberRepository memberRepository; // 의존 + 무의미한 데이터여서 주입(injection)해야 함 + final로 변경
     private final BrokerRepository brokerRepository; // 중개인 가입 시 자격 정보 저장용
-    private final AgencyRepository agencyRepository; // 중개인 가입 시 소속 사무소 생성용
+    // 중개인 가입 시 소속 사무소 생성용.
+    // 사무소를 직접 만들지 않고 이 서비스에 맡기는 이유는, 주소로 좌표(위도·경도)를 채우는 일까지
+    // 함께 처리해 주기 때문이다. 좌표가 없으면 중개사무소 안내 지도에 마커가 찍히지 않는다.
+    private final AgencyService agencyService;
     private final JwtTokenProvider jwtTokenProvider; // 소셜 가입 토큰(socialToken) 검증용
 
     public Member findByEmail(String email){
@@ -50,7 +55,11 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         member.setPhone(dto.getPhone());
         member.setEmail(dto.getEmail());
         member.setAddress(dto.getAddress());
+        // 주소 검색이 함께 준 지역 조각. 지도 검색의 기본 지역을 정할 때 쓴다.
+        member.setSigungu(dto.getSigungu());
+        member.setDong(dto.getDong());
         member.setRegdate(LocalDate.now());
+        applyAgreements(member, dto);
 
         // 클라이언트가 role을 직접 정하게 하면 "ADMIN"을 보내는 식의 권한 상승이 가능해진다.
         // 그래서 role 자체는 안 받고, signupType이라는 제한된 값만 보고 서버가 role을 정한다.
@@ -115,6 +124,25 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         }
     }
 
+    // 약관 동의 내용을 member에 채운다.
+    //
+    // 필수 항목을 실제로 하나하나 확인하지는 않는다. 어떤 항목이 필수인지는 가입 유형마다
+    // 다르고 그 목록을 화면(types/Terms.ts)이 갖고 있어서, 서버가 같은 목록을 또 들고 있으면
+    // 약관이 바뀔 때마다 양쪽을 맞춰야 하기 때문이다.
+    // 대신 termsVersion이 비어 있으면 "약관 화면을 거치지 않은 요청"으로 보고 막는다.
+    // (동의 화면을 건너뛴 요청이 그대로 회원으로 저장되는 것만은 막자는 최소한의 방어다)
+    private void applyAgreements(Member member, SignupDto dto){
+        String termsVersion = dto.getTermsVersion();
+        if (termsVersion == null || termsVersion.isBlank()) {
+            throw new IllegalArgumentException("약관에 동의해야 회원가입을 진행할 수 있습니다.");
+        }
+
+        member.setTermsVersion(termsVersion);
+        member.setAgreedAt(LocalDateTime.now());
+        member.setAgreedMarketing(dto.isAgreedMarketing());
+        member.setAgreedThirdParty(dto.isAgreedThirdParty());
+    }
+
     // 소셜 가입 토큰(OAuth2LoginSuccessHandler가 발급)을 검증하고,
     // 그 안의 값으로 member의 소셜 연동 컬럼을 채운다.
     // dto의 socialType/socialUserId를 따로 받지 않는 이유는
@@ -162,14 +190,20 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
         broker.setLicenseNumber(dto.getLicenseNumber());
         brokerRepository.save(broker);
 
-        Agency agency = new Agency();
-        agency.setMember(member);
-        agency.setName(dto.getAgencyName());
-        agency.setBrokerName(member.getName());
-        agency.setAddress(dto.getAgencyAddress());
+        // 사무소 생성(좌표 조회 포함)은 AgencyService 가 맡는다.
+        // 여기서 new Agency() 로 직접 만들면 좌표가 비어 지도에 표시되지 않는다.
+        Agency agency = agencyService.createIfAbsent(
+                member,
+                dto.getAgencyName(),
+                member.getName(),
+                dto.getAgencyAddress(),
+                dto.getAgencySigungu(),
+                dto.getAgencyDong(),
+                dto.getLicenseNumber());
+
+        // 사무실 번호는 가입 폼에서만 받는 값이라 여기서 채운다.
+        // 같은 트랜잭션 안이라 값만 바꿔도 커밋 시점에 UPDATE 가 실행된다.
         agency.setPhone(dto.getOfficePhone());
-        agency.setRegdate(LocalDate.now());
-        agencyRepository.save(agency);
     }
 
     public Optional<Member> findMemberById(Long memberId){
@@ -197,5 +231,16 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
             return; // 아무 것도 하지 않고 그냥 종료한다
         }
         member.setRefreshToken(null); // refresh token 을 비운다
+    }
+
+    // 취향 초기 설정 화면(PreferenceSetupPage)에서 "메인으로 가기"를 누르면 호출된다.
+    // 아직 실제 취향 설정 UI는 없어서, 이 호출 자체를 "완료"로 취급해 다음 로그인부터는 이 화면을 건너뛴다.
+    @Transactional
+    public void completePreferenceSetup(String email){
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new EntityNotFoundException("회원 정보를 찾을 수 없습니다.");
+        }
+        member.setPreferenceCompleted(true);
     }
 }

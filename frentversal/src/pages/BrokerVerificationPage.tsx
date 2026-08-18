@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getMyVerification, submitVerification } from '../api/brokerApi';
+import AddressInput from './components/AddressInput';
 import type { BrokerVerification } from '../types/MyAgency';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 중개인 인증 신청 화면
 //
@@ -28,6 +27,11 @@ function BrokerVerificationPage() {
     const [licenseNumber, setLicenseNumber] = useState('');
     const [businessName, setBusinessName] = useState('');
     const [officeAddress, setOfficeAddress] = useState('');
+    // 상세주소(층·호수). 주소를 한 덩어리로 저장하므로 제출할 때 뒤에 합쳐 보낸다.
+    const [officeAddressDetail, setOfficeAddressDetail] = useState('');
+    // 주소 검색이 함께 준 지역 조각. 승인 시 중개사무소로 그대로 옮겨진다.
+    const [officeSigungu, setOfficeSigungu] = useState('');
+    const [officeDong, setOfficeDong] = useState('');
     const [ownerName, setOwnerName] = useState('');
     const [registeredDate, setRegisteredDate] = useState('');
     const [licenseImage, setLicenseImage] = useState<File | null>(null);
@@ -57,7 +61,12 @@ function BrokerVerificationPage() {
 
         try {
             const result = await submitVerification(
-                { licenseNumber, businessName, officeAddress, ownerName, registeredDate },
+                {
+                    licenseNumber, businessName, ownerName, registeredDate,
+                    officeSigungu, officeDong,
+                    // 상세주소는 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 보낸다
+                    officeAddress: [officeAddress, officeAddressDetail].filter(Boolean).join(' '),
+                },
                 licenseImage,
             );
 
@@ -146,15 +155,22 @@ function BrokerVerificationPage() {
                                 />
                             </div>
 
-                            <div className="field">
-                                <label>소재지</label>
-                                <input
-                                    placeholder="서울 서초구 신반포로 194"
-                                    value={officeAddress}
-                                    onChange={(event) => setOfficeAddress(event.target.value)}
-                                    required
-                                />
-                            </div>
+                            {/* 관리자가 실제 사무소와 대조하는 값이라 표기가 흔들리면 안 된다.
+                                검색해서 고른 도로명 주소만 들어가게 한다. */}
+                            <AddressInput
+                                label="소재지"
+                                required
+                                value={officeAddress}
+                                detail={officeAddressDetail}
+                                onChange={({ address, detail, selected }) => {
+                                    setOfficeAddress(address);
+                                    setOfficeAddressDetail(detail);
+                                    if (selected) {
+                                        setOfficeSigungu(selected.sigungu);
+                                        setOfficeDong(selected.dong);
+                                    }
+                                }}
+                            />
 
                             <div className="field">
                                 <label>대표자</label>

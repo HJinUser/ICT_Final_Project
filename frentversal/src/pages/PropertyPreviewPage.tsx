@@ -10,6 +10,12 @@ const DUMMY_PROPERTY: PropertyDetail = {
     type: "APARTMENT",
     dealType: "JEONSE",
     address: "서울 서초구 반포동",
+    sigungu: "서초구",
+    dong: "반포동",
+    // PropertyResponse 에 나중에 추가된 값들. 디자인 확인용이라 반포동 근처 좌표를 넣어 둔다.
+    latitude: 37.5085,
+    longitude: 127.0117,
+    stationDistance: 320,
     area: 84,
     floor: 12,
     roomCount: 3,
@@ -40,8 +46,14 @@ const DUMMY_PROPERTY: PropertyDetail = {
     ],
     status: "ACTIVE",
     visible: true,
-    aiPrice: 54200,
+    // AI 예상가는 거래유형별로 필드가 나뉜다. 이 매물은 전세(JEONSE)라서 aiDeposit 이 실제로 쓰이는 값이고,
+    // 나머지(매매가·월세)는 해당 없음이라 null 이다.
+    aiPrice: null,
+    aiDeposit: 54200,
+    aiMonthlyDeposit: null,
+    aiMonthlyRent: null,
     priceStatus: "DOWN", // "가격 하락" 배지 확인용. null로 바꾸면 배지가 안 보임
+    aiRecommendScore: 82,
     createdAt: "2026-07-01T00:00:00",
 
     // ── 여기부터는 PropertyResponse에 없는, 화면 확인용 전용 필드 ──
@@ -71,7 +83,7 @@ const DUMMY_PROPERTY: PropertyDetail = {
 // 역할 바꿔가며 확인하고 싶으면 이 값의 role만 "USER" | "BROKER" | "ADMIN"으로 바꿔서 새로고침
 // role을 "BROKER"로 바꾸면 id가 DUMMY_PROPERTY.ownerId(1)와 같아서 "내 매물" 전용 버튼도 보입니다.
 // undefined로 바꾸면(= 아예 user prop을 안 넘기면) 비회원 화면도 확인 가능합니다.
-const PREVIEW_USER = { id: 1, name: "김서초", email: "test@test.com", role: "ADMIN" as const };
+const PREVIEW_USER = { id: 1, name: "김서초", email: "test@test.com", role: "ADMIN" as const, preferenceCompleted: true };
 
 function PropertyPreviewPage() {
     return <PropertyPage user={PREVIEW_USER} mockData={DUMMY_PROPERTY} />;

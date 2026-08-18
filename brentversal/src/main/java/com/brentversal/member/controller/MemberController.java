@@ -5,6 +5,7 @@ import com.brentversal.member.dto.LoginDto;
 import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.service.MemberService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,7 +77,14 @@ public class MemberController {
                     "refreshToken", refreshToken, //  프론트가 저장할 refresh token
                     "id", member.getId(),
                     "name", member.getName(), "email", member.getEmail(),
-                    "role", member.getRole().toString())) ;
+                    "role", member.getRole().toString(),
+                    // 회원가입 때 적은 주소와 거기서 뽑아 둔 구.
+                    // 지도 검색을 열 때 이 지역 매물을 먼저 보여 주고, 지도 화면도 이 주소로 옮긴다.
+                    // 주소를 입력하지 않은 회원은 값이 없으므로 빈 문자열로 내보낸다(Map.of 는 null 을 못 담는다).
+                    "address", member.getAddress() == null ? "" : member.getAddress(),
+                    "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
+                    // 프론트가 일반 사용자(USER) + 미완료일 때만 취향 초기 설정 화면으로 보내는 데 쓴다.
+                    "preferenceCompleted", member.isPreferenceCompleted())) ;
         }
 
 
@@ -176,7 +185,24 @@ public class MemberController {
             return new ResponseEntity<>(Map.of("general", e.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
+        // 중개인은 비밀번호 없이 가입하므로, 패스워드리스 등록 화면에서 본인 확인용으로 쓸 단기 토큰을 같이 내려준다.
+        if ("BROKER".equals(dto.getSignupType())) {
+            Member newMember = memberService.findByEmail(dto.getEmail());
+            String signupToken = jwtTokenProvider.createBrokerSignupToken(newMember);
+            return ResponseEntity.ok(Map.of(
+                    "message", "회원 가입 성공",
+                    "passwordlessSignupToken", signupToken
+            ));
+        }
 
         return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK) ; // 회원 가입 성공 (OK라는건 200번대라는 뜻)
     }
+
+    // 취향 초기 설정 완료 처리는 여기에 두지 않는다.
+    //
+    // 예전에는 이 자리에 PATCH /member/preference/complete 가 있었는데,
+    // 그것만 직접 부르면 취향을 저장하지도, 샘플 매물을 평가하지도 않고
+    // 완료 상태로 만들 수 있어서 초기설정을 건너뛰는 통로가 됐다.
+    // 지금은 취향 저장과 평가를 모두 마친 뒤에만 부를 수 있도록
+    // POST /recommendation/preference-complete 한 곳에서만 처리한다.
 }

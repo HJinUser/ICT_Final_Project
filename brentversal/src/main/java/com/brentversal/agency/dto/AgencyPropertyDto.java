@@ -16,6 +16,14 @@ public class AgencyPropertyDto {
     private String dong ;       // 동네 (주소에서 '동'으로 끝나는 부분)
     private String area ;       // 전용면적 (예: "84㎡")
 
+    // 거래 상태. 지금 담당 매물 조회는 게시중(ACTIVE)만 가져오지만,
+    // 화면 배지를 "확인 매물"로 고정해 두면 나중에 조회 조건이 넓어졌을 때
+    // 실제 상태와 다른 문구가 조용히 표시된다. 그래서 상태를 함께 내려 준다.
+    private String status ;      // 거래 상태 코드 (ACTIVE 등)
+    private String statusLabel ; // 화면에 그대로 쓸 한글 상태
+
+    private String thumbnailUrl ; // 대표 사진. 없으면 null (화면은 빈 자리를 보여 준다)
+
     public static AgencyPropertyDto of(Property bean){
         AgencyPropertyDto dto = new AgencyPropertyDto();
 
@@ -25,12 +33,38 @@ public class AgencyPropertyDto {
         dto.setPriceLabel(toPriceLabel(bean));
         dto.setDong(toDong(bean.getAddress()));
 
+        // 대표 사진(isMain)이 있으면 그것을, 없으면 첫 장을 쓴다.
+        // 지도 검색 카드(PropertySearchDto), 내 중개사무소 카드(MyPropertyCardDto)와 같은 규칙이다.
+        bean.getImages().stream()
+                .filter(image -> Boolean.TRUE.equals(image.getIsMain()))
+                .findFirst()
+                .or(() -> bean.getImages().stream().findFirst())
+                .ifPresent(image -> dto.setThumbnailUrl(image.getUrl()));
+
+        if(bean.getStatus() != null){
+            dto.setStatus(bean.getStatus().name());
+            dto.setStatusLabel(toStatusLabel(bean.getStatus().name()));
+        }
+
         if(bean.getArea() != null){
             // 84.00 처럼 소수점이 붙지 않도록 정수로 끊어서 표시한다
             dto.setArea(bean.getArea().intValue() + "㎡");
         }
 
         return dto;
+    }
+
+    // 거래 상태의 한글 이름.
+    // 열거형(PropertyStatus)은 다른 팀원이 만든 파일이라 건드리지 않고 여기서 바꾼다.
+    static String toStatusLabel(String status){
+        return switch (status) {
+            case "PENDING" -> "승인 대기";
+            case "ACTIVE" -> "게시중";
+            case "IN_PROGRESS" -> "거래 진행중";
+            case "COMPLETED" -> "거래 완료";
+            case "CANCELLED" -> "등록 취소";
+            default -> status;
+        };
     }
 
     // 거래 유형에 따라 쓰는 금액 필드가 달라서 화면 문구도 여기서 만든다.

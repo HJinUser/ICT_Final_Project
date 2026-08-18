@@ -1,0 +1,81 @@
+/*
+  404 화면.
+
+  전에는 AuthForm.css 를 통째로 @import 해서 버튼 모양만 빌려 썼다.
+  로그인·회원가입 화면의 CSS 를 고치면 이 화면까지 같이 흔들리는 구조라,
+  실제로 쓰는 버튼 규칙만 여기로 가져와 이 파일 하나로 완결되게 바꿨다.
+  (규칙 내용은 AuthForm.css 에 있던 것 그대로다)
+*/
+
+/* ── 버튼 ───────────────────────────────────────────── */
+.auth-solid-btn,
+.auth-outline-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 17px;
+    border-radius: 100px;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    transition: .2s;
+}
+
+.auth-solid-btn {
+    background: var(--v);
+    color: #fff;
+    border: 0;
+}
+
+.auth-solid-btn:hover { background: var(--v-deep); }
+
+.auth-solid-btn:disabled {
+    background: var(--line);
+    color: var(--ink-3);
+    cursor: not-allowed;
+}
+
+.auth-outline-btn {
+    border: 1px solid var(--v);
+    color: var(--v);
+    background: #fff;
+}
+
+.auth-outline-btn:hover { background: var(--v-pale); }
+
+/* ── 404 본문 ───────────────────────────────────────── */
+.notfound {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 120px 32px 140px;
+    text-align: center;
+}
+
+.notfound .code {
+    font-size: 64px;
+    line-height: 1;
+    color: var(--v-pale);
+    margin-bottom: 18px;
+}
+
+.notfound h2 {
+    letter-spacing: -.035em;
+}
+
+.notfound p {
+    margin-top: 10px;
+    color: var(--ink-2);
+}
+
+.notfound .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+/* 위 버튼은 width:100%라서, 나란히 놓기 위해 여기서 폭을 나눈다 */
+.notfound .actions > button {
+    flex: 1;
+}

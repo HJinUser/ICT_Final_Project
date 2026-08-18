@@ -1,19 +1,33 @@
 package com.brentversal.property.service;
 
 import com.brentversal.agency.service.MyAgencyService;
+import com.brentversal.common.geocoding.KakaoGeocodingService;
+import com.brentversal.neighborhood.repository.NeighborhoodRepository;
 import com.brentversal.property.constant.DealType;
 import com.brentversal.property.constant.PriceChangeStatus;
 import com.brentversal.property.constant.PropertyStatus;
+import com.brentversal.property.constant.PropertyType;
 import com.brentversal.property.dto.PropertyResponseDto;
+import com.brentversal.property.dto.PropertySearchCondition;
+import com.brentversal.property.dto.PropertySearchDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.agency.entity.Agency;
+import com.brentversal.property_image.entity.PropertyImage;
 import com.brentversal.property_image.service.PropertyImageService;
 import com.brentversal.tag.service.TagService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +46,37 @@ public class PropertyService {
     // 로그인한 사람의 중개사무소를 찾을 때 쓴다.
     // 매물의 주인을 정하거나, 내 매물이 맞는지 확인하는 데 필요하다.
     private final MyAgencyService myAgencyService;
+
+    // 주소 -> 좌표 변환. Agency 도메인과 같은 서비스를 그대로 재사용한다.
+    private final KakaoGeocodingService kakaoGeocodingService;
+
+    // 매물의 sigungu·dong으로 어느 동네(Neighborhood)에 속하는지 찾아 neighborhoodId를 채우는 데 쓴다.
+    private final NeighborhoodRepository neighborhoodRepository;
+
+    // 관리자가 아직 등록하지 않은 동네면 못 찾을 수 있다 — 그럴 땐 null로 두고, 나중에
+    // 그 동네가 등록되면 다음 등록/수정 때 다시 연결되게 한다(과거 데이터를 소급 연결하진 않음).
+    private Long resolveNeighborhoodId(String district, String dong) {
+        if (district == null || dong == null) return null;
+        return neighborhoodRepository.findByDistrictAndDong(district, dong)
+                .map(neighborhood -> neighborhood.getId())
+                .orElse(null);
+    }
+
+    // 방 개수 "3개 이상" 조건을 펼칠 때 쓰는 상한.
+    // Property.roomCount 의 @Max(6) 과 같은 값이라, 그쪽이 바뀌면 여기도 함께 바꾼다.
+    private static final int MAX_ROOM_COUNT = 6;
+
+    private void updateCoordinates(Property property, String previousAddress){
+        String address = property.getAddress();
+        boolean addressChanged = address != null && !address.equals(previousAddress);
+        boolean coordinatesMissing = property.getLatitude() == null || property.getLongitude() == null;
+        if (!addressChanged && !coordinatesMissing) return;
+
+        kakaoGeocodingService.findCoordinates(address).ifPresent(coordinates -> {
+            property.setLatitude(coordinates.latitude());
+            property.setLongitude(coordinates.longitude());
+        });
+    }
 
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
@@ -97,23 +142,68 @@ public class PropertyService {
                 .map(PropertyResponseDto::of);
     }
 
-    public List<PropertyResponseDto> findByIds(List<Long> ids) {
-        return propertyRepository.findByIdIn(ids).stream()
-                .map(PropertyResponseDto::of)
-                .toList();
+    public List<PropertyResponseDto> compareProperties(List<Long> ids) {
+        if (ids == null || ids.size() != 2) {
+            throw new IllegalArgumentException("비교할 매물은 정확히 2개여야 합니다.");
+        }
+
+        if (ids.get(0).equals(ids.get(1))) {
+            throw new IllegalArgumentException("서로 다른 두 매물을 선택해야 합니다.");
+        }
+
+        List<Property> properties = propertyRepository.findByIdIn(ids);
+
+        if (properties.size() != 2) {
+            throw new IllegalArgumentException("선택한 매물 중 조회할 수 없는 매물이 있습니다.");
+        }
+
+        // findByIdIn()의 반환 순서는 요청한 ids 순서를 보장하지 않을 수 있으므로
+        // 사용자가 선택한 순서대로 다시 찾는다.
+        Property first = properties.stream()
+                .filter(property -> property.getId().equals(ids.get(0)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("첫 번째 매물을 찾을 수 없습니다."));
+
+        Property second = properties.stream()
+                .filter(property -> property.getId().equals(ids.get(1)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("두 번째 매물을 찾을 수 없습니다."));
+
+        if (first.getDealType() != second.getDealType()) {
+            throw new IllegalArgumentException("같은 거래유형의 매물끼리만 비교할 수 있습니다.");
+        }
+
+        return List.of(
+                PropertyResponseDto.of(first),
+                PropertyResponseDto.of(second)
+        );
     }
 
-    public PropertyResponseDto update(Long id, Property changes, String email) {
+    public PropertyResponseDto update(Long id, Property changes, List<MultipartFile> newFiles, String email) {
         Property property = findMyPropertyOrThrow(id, email);
 
         // 가격 변경 전, 거래유형과 대표 가격을 미리 기록해 둔다 (수정 후와 비교하기 위해)
         DealType oldDealType = property.getDealType();
         Long oldPrimaryPrice = getPrimaryPrice(property);
 
+        // 지오코딩 재조회 여부를 판단하려면 바뀌기 전 주소가 필요하다
+        String previousAddress = property.getAddress();
+
         property.setName(changes.getName());
         property.setType(changes.getType());
         property.setDealType(changes.getDealType());
         property.setAddress(changes.getAddress());
+        // 구·동은 값이 함께 올 때만 바꾼다.
+        //
+        // 도로명 주소에는 동이 들어 있지 않아서("서울시 영등포구 당산로 222"), 이 두 컬럼이 비면
+        // 그 매물이 어느 동네인지 알 방법이 사라진다. 지도에서 동별로 묶을 때도 이 값을 쓴다.
+        // 그런데 수정 화면에서 주소를 다시 검색하지 않으면 요청에 이 값이 실려 오지 않는다.
+        // 그대로 덮어쓰면 멀쩡히 저장돼 있던 동네 정보가 저장 한 번에 날아간다.
+        if (changes.getSigungu() != null) property.setSigungu(changes.getSigungu());
+        if (changes.getDong() != null) property.setDong(changes.getDong());
+
+        property.setNeighborhoodId(resolveNeighborhoodId(property.getSigungu(), property.getDong()));
+        updateCoordinates(property, previousAddress);
         property.setArea(changes.getArea());
         property.setFloor(changes.getFloor());
         property.setRoomCount(changes.getRoomCount());
@@ -128,6 +218,7 @@ public class PropertyService {
         property.setMoveInDate(changes.getMoveInDate());
         property.setContractStatus(changes.getContractStatus());
         property.setTags(tagService.findByIds(changes.getTagIds()));
+        property.setStatus(PropertyStatus.PENDING); // 수정하면 다시 관리자 승인을 받아야 한다
 
         // 거래유형이 그대로일 때만 가격 등락을 비교한다 (유형이 바뀌면 가격 성격이 달라서 비교 자체가 의미 없음)
         if (oldDealType == property.getDealType()) {
@@ -136,6 +227,35 @@ public class PropertyService {
                 property.setPriceStatus(newPrimaryPrice > oldPrimaryPrice ? PriceChangeStatus.UP : PriceChangeStatus.DOWN);
             }
         }
+
+        // ── 사진 갱신: keepImageIds에 없는 기존 사진은 저장소에서 지우고, 새로 올라온 파일을 추가한다 ──
+        List<Long> keepIds = changes.getKeepImageIds() != null ? changes.getKeepImageIds() : List.of();
+
+        List<PropertyImage> remaining = new ArrayList<>();
+        for (PropertyImage image : property.getImages()) {
+            if (keepIds.contains(image.getId())) {
+                remaining.add(image);
+            } else {
+                propertyImageService.deleteFile(image.getUrl()); // 저장소 파일만 지움. DB 행 삭제는 아래 orphanRemoval이 처리
+            }
+        }
+
+        int newFileCount = (newFiles == null) ? 0
+                : (int) newFiles.stream().filter(f -> f != null && !f.isEmpty()).count();
+        if (remaining.size() + newFileCount > PropertyImageService.MAX_IMAGE_COUNT) {
+            throw new IllegalArgumentException("사진은 최대 " + PropertyImageService.MAX_IMAGE_COUNT + "장까지 등록할 수 있습니다.");
+        }
+
+        remaining.addAll(propertyImageService.buildImages(property, newFiles));
+
+        // sortOrder를 다시 매기고, 첫 장을 대표 사진으로 지정
+        for (int i = 0; i < remaining.size(); i++) {
+            remaining.get(i).setSortOrder(i);
+            remaining.get(i).setIsMain(i == 0);
+        }
+
+        property.getImages().clear();
+        property.getImages().addAll(remaining);
 
         return PropertyResponseDto.of(propertyRepository.save(property));
     }
@@ -176,7 +296,12 @@ public class PropertyService {
         // 요청 본문의 agency 값은 신뢰하지 않고 덮어쓴다 — 그대로 두면 남의 사무소 번호를
         // 넣어 그 사무소 명의로 매물을 등록할 수 있기 때문이다.
         bean.setAgency(myAgencyService.findMyAgency(email));
+        bean.setNeighborhoodId(resolveNeighborhoodId(bean.getSigungu(), bean.getDong()));
 
+        kakaoGeocodingService.findCoordinates(bean.getAddress()).ifPresent(coordinates -> {
+            bean.setLatitude(coordinates.latitude());
+            bean.setLongitude(coordinates.longitude());
+        });
         bean.setStatus(PropertyStatus.PENDING);
         bean.setVisible(true);
         bean.setCreatedAt(LocalDateTime.now());
@@ -185,5 +310,180 @@ public class PropertyService {
         bean.setTags(tagService.findByIds(bean.getTagIds()));
 
         return PropertyResponseDto.of(propertyRepository.save(bean));
+    }
+
+    // 로그인한 중개인이 등록한 매물 전체 조회 ("내 매물" 화면용)
+    public List<PropertyResponseDto> findMine(String email) {
+        Agency agency = myAgencyService.findMyAgency(email);
+
+        return propertyRepository.findByAgencyIdOrderByCreatedAtDesc(agency.getId(), Pageable.unpaged())
+                .stream()
+                .map(PropertyResponseDto::of)
+                .toList();
+    }
+
+    // 지도 검색. 왼쪽 필터 조건으로 매물을 찾아 지도 핀과 오른쪽 목록에 함께 쓴다.
+    //
+    // 사용자에게 노출되는 매물만 보여 준다(게시중 + 공개). 승인 대기나 비공개 매물은 나오지 않는다.
+    // email 은 "내 매물만 보기"를 눌렀을 때만 쓰이고, 비회원 검색에서는 null 이다.
+    @Transactional(readOnly = true)
+    public List<PropertySearchDto> search(PropertySearchCondition condition, String email) {
+        Long agencyId = null;
+
+        // 중개인이 "내 매물"을 골랐으면 그 사람의 사무소로 범위를 좁힌다.
+        // 사무소가 없으면 보여 줄 내 매물도 없으므로 빈 목록을 돌려준다.
+        if (condition.isMine()) {
+            if (email == null) return List.of();
+
+            try {
+                agencyId = myAgencyService.findMyAgency(email).getId();
+            } catch (IllegalArgumentException e) {
+                return List.of();
+            }
+        }
+
+        // 태그를 고르지 않았으면 조건에서 빼야 하는데, JPQL 의 in 절에는 빈 목록을 넣을 수 없다.
+        // 그래서 개수(tagCount)가 0이면 조건 자체를 건너뛰도록 하고, 목록에는 값 하나를 넣어 둔다.
+        List<Long> tagIds = (condition.getTagIds() == null || condition.getTagIds().isEmpty())
+                ? List.of(0L)
+                : condition.getTagIds();
+        long tagCount = (condition.getTagIds() == null) ? 0 : condition.getTagIds().size();
+
+        List<Property> found = propertyRepository.search(
+                PropertyStatus.ACTIVE,
+                blankToNull(condition.getKeyword()),
+                blankToNull(condition.getRegion()),
+                blankToNull(condition.getDong()),
+                toType(condition.getType()),
+                toDealType(condition.getDealType()),
+                agencyId,
+                condition.getMinPrice(),
+                condition.getMaxPrice(),
+                condition.getMinArea(),
+                condition.getMaxArea(),
+                expandRoomCounts(condition.getRoomCounts()),
+                tagIds,
+                tagCount);
+
+        boolean dealTypeChosen = condition.getDealType() != null && !condition.getDealType().isBlank();
+        String sort = condition.getSort();
+        boolean isPriceSort = "PRICE_ASC".equalsIgnoreCase(sort) || "PRICE_DESC".equalsIgnoreCase(sort);
+        String effectiveSort = (!dealTypeChosen && isPriceSort) ? "LATEST" : sort;
+
+        return found.stream()
+                .map(PropertySearchDto::of)
+                .sorted(comparatorOf(effectiveSort))
+                .toList();
+    }
+
+    // 매물 확인 화면 - 매물유형 탭을 고르면 그 유형에 실제 있는 거래유형만 버튼으로 보여준다.
+    @Transactional(readOnly = true)
+    public List<String> findAvailableDealTypes(String type) {
+        return propertyRepository.findDistinctDealTypes(PropertyStatus.ACTIVE, toType(type))
+                .stream()
+                .map(Enum::name)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> browseListings(String type, String dealType, String sort, int page, int size) {
+        PropertyType typeEnum = toType(type);
+        DealType dealTypeEnum = toDealType(dealType);
+
+        boolean dealTypeChosen = dealTypeEnum != null;
+        boolean isPriceSort = "PRICE_ASC".equalsIgnoreCase(sort) || "PRICE_DESC".equalsIgnoreCase(sort);
+        String effectiveSort = (!dealTypeChosen && isPriceSort) ? "LATEST" : sort;
+
+        Pageable pageable = PageRequest.of(page, size, toSort(effectiveSort));
+        Page<Property> result = propertyRepository.findForListings(PropertyStatus.ACTIVE, typeEnum, dealTypeEnum, pageable);
+
+        return Map.of(
+                "content", result.getContent().stream().map(PropertySearchDto::of).toList(),
+                "totalCount", result.getTotalElements(),
+                "totalPages", result.getTotalPages(),
+                "page", page
+        );
+    }
+
+    private Sort toSort(String sort) {
+        String key = (sort == null || sort.isBlank()) ? "LATEST" : sort.toUpperCase();
+
+        return switch (key) {
+            case "PRICE_ASC" -> Sort.by("comparablePrice").ascending();
+            case "PRICE_DESC" -> Sort.by("comparablePrice").descending();
+            case "AREA_ASC" -> Sort.by("area").ascending();
+            case "AREA_DESC" -> Sort.by("area").descending();
+            default -> Sort.by("createdAt").descending();
+        };
+    }
+
+    // 정렬은 DB 대신 여기서 한다.
+    // 대표 금액이 거래 유형마다 다른 칸에 들어 있어(매매/전세/월세) DTO 로 바꾼 뒤 비교하는 편이 단순하다.
+    // 값이 비어 있는 매물이 섞여도 오류가 나지 않게 null 은 항상 뒤로 보낸다.
+    private Comparator<PropertySearchDto> comparatorOf(String sort) {
+        String key = (sort == null || sort.isBlank()) ? "LATEST" : sort.toUpperCase();
+
+        return switch (key) {
+            case "PRICE_ASC" -> Comparator.comparing(PropertySearchDto::getComparablePrice,
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+            case "PRICE_DESC" -> Comparator.comparing(PropertySearchDto::getComparablePrice,
+                    Comparator.nullsLast(Comparator.reverseOrder()));
+            case "AREA_DESC" -> Comparator.comparing(PropertySearchDto::getArea,
+                    Comparator.nullsLast(Comparator.reverseOrder()));
+            case "AREA_ASC" -> Comparator.comparing(PropertySearchDto::getArea,
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+            // 최신 등록순. 리포지토리가 이미 그 순서로 가져오므로 순서를 그대로 둔다.
+            default -> Comparator.comparing(PropertySearchDto::getId, Comparator.reverseOrder());
+        };
+    }
+
+    // 빈 문자열로 들어온 조건은 "고르지 않음"으로 본다
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
+    }
+
+    // 방 개수 조건을 실제로 비교할 값 목록으로 펼친다.
+    //
+    // 화면의 버튼은 [1개(원룸)] [2개] [3개 이상] 세 가지이고 복수 선택이 된다.
+    // "3개 이상"은 3 으로 넘어오므로, 여기서 매물이 가질 수 있는 최대치까지 늘려 준다.
+    // (Property.roomCount 는 최대 6까지 허용된다)
+    private List<Integer> expandRoomCounts(List<Integer> roomCounts) {
+        if (roomCounts == null || roomCounts.isEmpty()) return null; // 조건 없음
+
+        List<Integer> expanded = new ArrayList<>();
+
+        for (Integer count : roomCounts) {
+            if (count == null) continue;
+
+            if (count >= 3) {
+                for (int i = count; i <= MAX_ROOM_COUNT; i++) expanded.add(i);
+            } else {
+                expanded.add(count);
+            }
+        }
+
+        return expanded.isEmpty() ? null : expanded;
+    }
+
+    // 매물 유형 문자열을 열거형으로 바꾼다. 안 골랐거나 잘못된 값이면 조건에서 제외한다.
+    private PropertyType toType(String type) {
+        if (type == null || type.isBlank() || "ALL".equalsIgnoreCase(type)) return null;
+
+        try {
+            return PropertyType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // 거래 유형 문자열을 열거형으로 바꾼다. 안 골랐거나 잘못된 값이면 조건에서 제외한다.
+    private DealType toDealType(String dealType) {
+        if (dealType == null || dealType.isBlank() || "ALL".equalsIgnoreCase(dealType)) return null;
+
+        try {
+            return DealType.valueOf(dealType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 }

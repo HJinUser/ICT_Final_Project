@@ -1,0 +1,39 @@
+/*
+  ReportFormPage.css
+
+  Report.css 를 페이지별로 나눈 파일이다. 이 페이지에서 실제로 쓰이는 규칙만 남겼고,
+  규칙 내용과 순서는 원본 그대로다(화면은 달라지지 않는다).
+*/
+.report-page-bg { min-height: calc(100vh - 180px); background: var(--bg-2); }
+.report-narrow { max-width: 720px; }
+.report-form-wrap { max-width: 1180px; }
+.report-form-grid { display: grid; grid-template-columns: .75fr 1.25fr; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-xl); background: #fff; box-shadow: var(--shadow); }
+.report-form-guide { padding: 42px; color: #fff; background: linear-gradient(150deg, #2d143d, #5d1d51); }
+.report-form-guide h1 { margin-top: 7px; }
+.report-form-guide p { margin-top: 12px; color: rgba(255,255,255,.76); line-height: 1.7; }
+.report-form-guide ul { display: grid; gap: 13px; margin-top: 34px; padding-left: 18px; color: rgba(255,255,255,.84); font-size: 13px; line-height: 1.6; }
+.report-form-guide .eyebrow { color: #ead6f2; }
+.report-form-guide .eyebrow::before { background: #ead6f2; }
+.report-form-card { padding: 36px 40px; }
+.report-form-card .field:first-child { margin-top: 0; }
+.report-form-card textarea { min-height: 240px; }
+.report-count { justify-self: end; color: var(--ink-3); font-size: 11.5px; }
+.report-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.danger-solid-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 8px 17px; border-radius: 100px; font-size: 13.5px; transition: .2s; }
+.danger-solid-btn { background: var(--red); color: #fff; }
+.danger-solid-btn:hover { background: #8d3030; }
+.danger-solid-btn:disabled { opacity: .55; cursor: not-allowed; }
+.report-inline-error { margin-top: 15px; padding: 11px 13px; border-radius: var(--r-s); background: #fbefef; color: var(--red); font-size: 12.5px; }
+.report-state { padding: 60px 24px; border: 1px solid var(--line); border-radius: var(--r-l); background: #fff; color: var(--ink-3); text-align: center; }
+.report-error { color: var(--red); }
+.report-selected-target { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; padding: 15px 17px; border-radius: var(--r-m); background: var(--bg-2); }
+.report-selected-target span { color: var(--ink-3); font-size: 12px; }
+.report-selected-target strong { color: var(--ink); }
+@media (max-width: 900px) {
+    .report-form-grid{ grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+    .report-form-guide, .report-form-card { padding: 26px 20px; }
+    .report-form-card .fields-2 { grid-template-columns: 1fr; }
+    .report-actions > * { flex: 1; }
+}

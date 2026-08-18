@@ -13,6 +13,7 @@ export type PriceChangeStatusCode = "UP" | "DOWN";
 // 여기 넣지 않는다 — 폼에서 별도의 File[] 상태로 들고 있다가 제출할 때 FormData로 합친다.
 export interface Property {
     id?: number;
+    keepImageIds?: number[];
 
     // 중개사무소 id 는 요청에 넣지 않는다.
     // 서버가 로그인한 중개인의 사무소를 직접 찾아 채우고, 본문으로 온 값은 무시한다.
@@ -21,7 +22,12 @@ export interface Property {
     name: string;                   // 매물명
     type: PropertyTypeCode;         // 원/투룸, 아파트, 주택/빌라, 오피스텔
     dealType: DealTypeCode;         // 매매, 전세, 월세
-    address: string;                // 주소
+    address: string;                // 주소 (도로명, 주소 검색으로만 입력된다)
+
+    // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 따로 보낸다.
+    // 지도에서 동네끼리 묶을 때 서버가 이 값을 쓴다.
+    sigungu?: string;
+    dong?: string;
 
     area: number;                   // 전용면적(㎡)
     floor: number;                  // 층수
@@ -66,6 +72,11 @@ export interface PropertyResponse {
     dealType: DealTypeCode;
     address: string;
 
+    // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 서버가 따로 보관한다.
+    // 수정 화면이 이 값을 그대로 되돌려 보내야 저장할 때 지워지지 않는다.
+    sigungu: string | null;
+    dong: string | null;
+
     area: number;
     floor: number;
     roomCount: number;
@@ -88,7 +99,16 @@ export interface PropertyResponse {
     status: PropertyStatusCode;
     visible: boolean;
     aiPrice: number | null;
+    aiDeposit: number | null;
+    aiMonthlyDeposit: number | null;
+    aiMonthlyRent: number | null;
+    aiRecommendScore: number | null;
     priceStatus: PriceChangeStatusCode | null;
+
+    // Python이 지오코딩/유클리드 거리로 계산해서 채워주는 값. 연동 전이라 지금은 대부분 null로 옴.
+    latitude: number | null;
+    longitude: number | null;
+    stationDistance: number | null; // 최근접 역까지 거리 (단위는 Python 연동 시 확정)
 
     createdAt: string; // LocalDateTime -> JSON에선 문자열로 옴
 }

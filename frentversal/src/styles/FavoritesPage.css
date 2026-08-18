@@ -1,0 +1,97 @@
+/* 카드(.media-card)와 배지(.status)/태그(.tags)는 common.css 목업 클래스를 그대로 쓴다.
+   여기는 그 위에 얹는 관심목록 전용 스타일만 둔다. */
+
+.favorite-heart {
+    color: #4B0082;
+}
+
+.favorite-heart:hover {
+    color: #380062;
+    border-color: #4B0082;
+}
+
+/* media-card 안에서 "상세 보기" 버튼을 카드 맨 아래로 붙이기 위해
+   body를 세로 flex로 바꾼다. common.css의 .media-card .body는 기본적으로 flex가 아니다. */
+.favorite-card .body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.favorite-detail-btn {
+    margin-top: auto;
+    width: 100%;
+}
+
+.favorite-card {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.favorite-card--selected {
+    border: 2px solid #4B0082;
+    box-shadow: 0 0 0 2px rgba(75, 0, 130, 0.08);
+}
+
+/* react-bootstrap의 Alert(variant="light"/"success"/"danger"/"secondary")를 대신하는 최소 스타일 */
+.favorites-alert {
+    padding: 14px 16px;
+    border-radius: var(--r-s);
+    font-size: 13px;
+    margin-top: 14px;
+}
+
+.favorites-alert.guide {
+    background: var(--bg-2);
+    border: 1px solid #e4d9ef;
+    color: var(--ink-2);
+}
+
+.favorites-alert.success {
+    background: #edf6f1;
+    color: var(--green);
+}
+
+.favorites-alert.danger {
+    background: #fbefef;
+    color: var(--red);
+}
+
+.compare-select-box {
+    margin-top: auto;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8f6fb;
+}
+
+.compare-selection-bar {
+    position: sticky;
+    bottom: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 26px;
+    padding: 16px 20px;
+    border: 1px solid #dedede;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.compare-selection-bar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 576px) {
+    .compare-selection-bar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .compare-selection-bar button {
+        width: 100%;
+    }
+}

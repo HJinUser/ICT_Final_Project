@@ -57,7 +57,14 @@ public class SecurityConfig {
                 // 원래 상태 코드 대신 403 빈 응답으로 바뀌어 프론트에서 원인을 알 수 없게 된다.
                 "/error",
                 // S3용 파일경로
-                "/files/**"
+                "/files/**",
+                "/passwordless/status",
+                "/passwordless/login/start",
+                "/passwordless/login/result",
+                "/passwordless/login/cancel",
+                "/passwordless/register",
+                "/passwordless/register/confirm",
+                "/passwordless/withdrawal"
         };
 
         http
@@ -67,16 +74,39 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/property/favorites").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/property/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
                         // 매물 등록·수정·상태변경은 중개인만 할 수 있다.
                         // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
                         // "내 사무소의 매물이 맞는지"는 PropertyService 에서 한 번 더 확인한다.
+                        .requestMatchers(HttpMethod.POST, "/property/*/favorite").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.PUT, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
+                        // 동네 탐색·상세는 공개하고, 등록·숨김 전환은 관리자만 허용한다.
+                        .requestMatchers(HttpMethod.GET, "/neighborhoods", "/neighborhoods/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/neighborhoods").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/neighborhoods/**").hasRole("ADMIN")
+                        // 실거래가 조회는 공개하고, 외부 API 수집 실행은 관리자만 허용한다.
+                        .requestMatchers(HttpMethod.GET, "/real-estate-transactions").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/real-estate-transactions/collect").hasRole("ADMIN")
+                        // 공지 목록과 상세는 비회원도 조회할 수 있다.
+                        .requestMatchers(HttpMethod.GET, "/notices", "/notices/**").permitAll()
+                        // 공지 등록·수정·삭제는 관리자만 가능하다.
+                        .requestMatchers("/notices", "/notices/**").hasRole("ADMIN")
+                        // 일반 사용자와 중개인은 신고를 접수하고 자신의 신고 내역을 조회한다.
+                        .requestMatchers(HttpMethod.GET, "/reports/public").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/reports").hasAnyRole("USER", "BROKER")
+                        .requestMatchers(HttpMethod.GET, "/reports/me").hasAnyRole("USER", "BROKER")
+                        // 신고 목록·상세 조회와 처리 권한은 관리자에게만 있다.
+                        .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
                         .requestMatchers(permitUrls).permitAll()
+                        // 맞춤 추천과 취향 설정은 일반 사용자 전용 화면이다.
+                        // 중개인과 관리자는 이 기능을 쓰지 않으므로 역할 자체로 막는다.
+                        .requestMatchers("/recommendation/**").hasRole("USER")
                         // 중개사무소 안내·상세는 비회원도 볼 수 있는 화면이라 '조회(GET)'만 인증 없이 허용한다.
                         // 상담 요청·후기 작성(POST)은 아래 anyRequest().authenticated() 에 걸려 로그인이 필요하다.
                         .requestMatchers(HttpMethod.GET, "/agency", "/agency/**").permitAll()
@@ -84,6 +114,8 @@ public class SecurityConfig {
                         // JwtAuthenticationFilter 가 권한을 "ROLE_" + role 형태로 넣어 주므로
                         // hasRole("BROKER") 는 ROLE_BROKER 를 가진 사용자만 통과시킨다.
                         .requestMatchers("/my-agency/**").hasRole("BROKER")
+                        // 관리자 전용 화면(매물 승인 등)은 관리자만 쓸 수 있다.
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 // 카카오 로그인 성공 후 처리를 OAuth2LoginSuccessHandler가 대신 맡는다.

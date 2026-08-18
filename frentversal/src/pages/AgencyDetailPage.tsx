@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -8,17 +9,21 @@ import {
     requestConsultation,
     writeReview,
 } from '../api/agencyApi';
-import AgencyMap from '../components/AgencyMap';
+import AgencyMap from './components/AgencyMap';
 import type { AgencyDetail, AgencyReview, AgencyStatus } from '../types/Agency';
+import type { NavItem } from '../types/Navigation';
 import type { User } from '../types/User';
-import '../assets/common.css';
-import '../assets/responsive.css';
+import { navigateOrNotice } from '../utils/navigateOrNotice';
 
 // 중개사무소 상세 페이지 (프로토타입 agency-detail.html 기준)
 // 중개사무소 안내 목록에서 카드를 누르면 /agency/:id 로 들어온다.
 // 상단 네비게이션바와 푸터는 App.tsx 의 공통 컴포넌트가 그리므로 여기에는 없다.
 
 // 상담 상태 코드 -> 배지 색상 (common.css 의 .status.green / .orange / .gray)
+// "전체 N건" 버튼이 가려는 지도 검색 화면.
+// 지도 검색이 keyword 파라미터를 지역 필터로 받으므로, 사무소가 있는 지역으로 넘긴다.
+const MAP_SEARCH_ITEM: NavItem = { label: '지도 검색', path: '/map', ready: true };
+
 const STATUS_COLORS: Record<AgencyStatus, string> = {
     AVAILABLE: 'green',
     RESERVED: 'orange',
@@ -36,10 +41,17 @@ function toStars(rating: number) {
     return '★'.repeat(filled) + '☆'.repeat(Math.max(0, 5 - filled));
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+    if (!axios.isAxiosError(error)) return fallback;
+    const data = error.response?.data as { message?: string; error?: string } | undefined;
+    return data?.message || data?.error || fallback;
+}
+
 function AgencyDetailPage({ user }: Props) {
     // 주소창의 /agency/:id 에서 id 를 꺼낸다
     const { id } = useParams();
     const agencyId = Number(id);
+    const validAgencyId = Number.isInteger(agencyId) && agencyId > 0;
     const navigate = useNavigate();
 
     const [agency, setAgency] = useState<AgencyDetail | null>(null);
@@ -78,11 +90,7 @@ function AgencyDetailPage({ user }: Props) {
 
     // 화면에 들어오거나 id 가 바뀌면 사무소 정보와 후기를 불러온다
     useEffect(() => {
-        if (Number.isNaN(agencyId)) {
-            setLoadError('잘못된 주소입니다.');
-            setLoading(false);
-            return;
-        }
+        if (!validAgencyId) return;
 
         const load = async () => {
             setLoading(true);
@@ -107,17 +115,19 @@ function AgencyDetailPage({ user }: Props) {
         };
 
         load();
-    }, [agencyId]);
+    }, [agencyId, validAgencyId]);
 
     // 로그인한 사용자라면 후기를 쓸 수 있는지 확인한다 (상담 요청 이력이 있어야 함)
     useEffect(() => {
-        if (!user || Number.isNaN(agencyId)) {
-            setCanReview(false);
-            return;
-        }
+        if (!user || !validAgencyId) return;
 
-        canWriteReview(agencyId).then(setCanReview);
-    }, [user, agencyId]);
+        canWriteReview(agencyId)
+            .then(setCanReview)
+            .catch((error: unknown) => {
+                console.error('후기 작성 가능 여부 조회 실패', error);
+                setCanReview(false);
+            });
+    }, [user, agencyId, validAgencyId]);
 
     // 상담 요청 보내기
     const handleConsultation = async () => {
@@ -156,8 +166,9 @@ function AgencyDetailPage({ user }: Props) {
             setPropertyId('');
             setAgreed(false);
             setCanReview(await canWriteReview(agencyId));
-        } catch (error: any) {
-            showToast(error.response?.data?.message ?? '상담 요청에 실패했습니다.');
+        } catch (error: unknown) {
+            console.error('상담 요청 실패', error);
+            showToast(getErrorMessage(error, '상담 요청에 실패했습니다.'));
         } finally {
             setSending(false);
         }
@@ -180,10 +191,20 @@ function AgencyDetailPage({ user }: Props) {
             // 목록과 평점 평균을 새로 받아온다
             setReviews(await getAgencyReviews(agencyId));
             setAgency(await getAgencyDetail(agencyId));
-        } catch (error: any) {
-            showToast(error.response?.data?.message ?? '후기 등록에 실패했습니다.');
+        } catch (error: unknown) {
+            console.error('후기 등록 실패', error);
+            showToast(getErrorMessage(error, '후기 등록에 실패했습니다.'));
         }
     };
+
+    if (!validAgencyId) {
+        return (
+            <main><section className="section"><div className="wrap">
+                <p style={{ color: 'var(--red)' }}>잘못된 주소입니다.</p>
+                <Link className="outline-btn" to="/agency" style={{ marginTop: 14, display: 'inline-block' }}>목록으로 돌아가기</Link>
+            </div></section></main>
+        );
+    }
 
     if (loading) {
         return (
@@ -283,6 +304,17 @@ function AgencyDetailPage({ user }: Props) {
                                         </div>
                                     </div>
 
+                                    {user && user.role !== 'ADMIN' && (
+                                        <div style={{ marginTop: 18 }}>
+                                            <Link
+                                                className="danger-btn"
+                                                to={`/report/form?agencyId=${agency.id}&returnTo=${encodeURIComponent(`/agency/${agency.id}`)}`}
+                                            >
+                                                중개사무소 신고
+                                            </Link>
+                                        </div>
+                                    )}
+
                                     <div className="grid-3" style={{ marginTop: 24 }}>
                                         <div className="soft">
                                             <span className="xs dim">대표 공인중개사</span>
@@ -306,10 +338,17 @@ function AgencyDetailPage({ user }: Props) {
                                             <h2>담당 매물</h2>
                                             <p className="muted" style={{ marginTop: 6 }}>현재 노출 중인 확인 매물입니다.</p>
                                         </div>
-                                        {/* 지도 검색 화면에서 이 중개인 이름으로 검색되도록 넘긴다 */}
-                                        <Link className="outline-btn" to={`/map?keyword=${encodeURIComponent(agency.brokerName)}`}>
+                                        {/* 지도 검색 화면이 생기면 이 중개인 이름으로 검색되도록 넘긴다.
+                                            아직 /map 라우트가 없어서 헤더 메뉴와 같은 "준비 중" 안내를 띄운다. */}
+                                        <button
+                                            className="outline-btn"
+                                            onClick={() => navigateOrNotice(
+                                                { ...MAP_SEARCH_ITEM, path: `/map?keyword=${encodeURIComponent(agency.address.split(' ')[1] ?? '')}` },
+                                                navigate,
+                                            )}
+                                        >
                                             전체 {agency.listingCount}건
-                                        </Link>
+                                        </button>
                                     </div>
 
                                     {agency.recentProperties.length === 0 ? (
@@ -318,10 +357,18 @@ function AgencyDetailPage({ user }: Props) {
                                         <div className="grid-2" style={{ marginTop: 18 }}>
                                             {agency.recentProperties.map((property) => (
                                                 <Link className="property-row" to={`/property/${property.id}`} key={property.id}>
-                                                    {/* 매물 사진은 property 테이블에 이미지 컬럼이 생기면 여기에 연결한다 */}
-                                                    <div className="thumb" />
+                                                    <div
+                                                        className="thumb"
+                                                        style={property.thumbnailUrl
+                                                            ? { backgroundImage: `url('${property.thumbnailUrl}')` }
+                                                            : undefined}
+                                                    />
                                                     <div>
-                                                        <span className="status green">확인 매물</span>
+                                                        {/* 지금은 게시중 매물만 조회하지만, 조건이 바뀌어도
+                                                            실제 상태가 그대로 보이도록 서버 값을 쓴다 */}
+                                                        <span className={`status ${property.status === 'ACTIVE' ? 'green' : 'gray'}`}>
+                                                            {property.status === 'ACTIVE' ? '확인 매물' : property.statusLabel}
+                                                        </span>
                                                         <h3>{property.priceLabel}</h3>
                                                         <p>{property.dong}{property.area ? ` · ${property.area}` : ''}</p>
                                                     </div>
@@ -353,14 +400,32 @@ function AgencyDetailPage({ user }: Props) {
                                         <div className="review" key={review.id}>
                                             <div className="row between">
                                                 <span className="rating">{toStars(review.rating)}</span>
-                                                <span className="xs dim">{review.writerName} · {review.createdAt}</span>
+                                                <div className="row" style={{ gap: 10 }}>
+                                                    <span className="xs dim">{review.writerName} · {review.createdAt}</span>
+                                                    {user && user.role !== 'ADMIN' && (
+                                                        <Link
+                                                            className="danger-btn"
+                                                            style={{ minHeight: 28, padding: '4px 10px', fontSize: 11 }}
+                                                            to={`/report/form?reviewId=${review.id}&returnTo=${encodeURIComponent(`/agency/${agency.id}`)}`}
+                                                        >
+                                                            리뷰 신고
+                                                        </Link>
+                                                    )}
+                                                </div>
                                             </div>
                                             <p style={{ marginTop: 7 }}>{review.content}</p>
+
+                                            {review.reply && (
+                                                <div className="soft" style={{ marginTop: 10 }}>
+                                                    <span className="xs dim">중개사무소 답변 · {review.repliedAt}</span>
+                                                    <p style={{ marginTop: 5 }}>{review.reply}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
 
                                     {/* 상담 요청을 보낸 적이 있는 사용자만 후기를 쓸 수 있다 */}
-                                    {canReview ? (
+                                    {user && canReview ? (
                                         <div style={{ marginTop: 18 }}>
                                             <div className="field">
                                                 <label>별점</label>
@@ -405,7 +470,8 @@ function AgencyDetailPage({ user }: Props) {
                                             onChange={(event) => setPropertyId(event.target.value)}
                                         >
                                             <option value="">매물을 선택하지 않고 문의</option>
-                                            {agency.recentProperties.map((property) => (
+                                            {/* 카드에 보이는 최근 2건이 아니라 담당 매물 전체에서 고를 수 있어야 한다 */}
+                                            {agency.properties.map((property) => (
                                                 <option value={property.id} key={property.id}>
                                                     {property.name} ({property.priceLabel})
                                                 </option>

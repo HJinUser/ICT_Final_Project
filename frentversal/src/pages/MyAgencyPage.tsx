@@ -12,9 +12,8 @@ import {
 } from '../api/myAgencyApi';
 import type { AgencyDetail, AgencyReview } from '../types/Agency';
 import type { Consultation, MyAgencyDashboard, MyPropertyCard } from '../types/MyAgency';
+import AddressInput from './components/AddressInput';
 import { CONSULTATION_STATUS_COLORS } from '../utils/consultationStatus';
-import '../assets/common.css';
-import '../assets/responsive.css';
 
 // 내 중개사무소 페이지 (중개인 전용)
 //
@@ -80,6 +79,9 @@ function MyAgencyPage() {
     const [editMode, setEditMode] = useState(searchParams.get('mode') === 'edit');
     const [form, setForm] = useState<Partial<AgencyDetail>>({});
 
+    // 상세주소(층·호수). 주소를 한 덩어리로 저장하므로 저장할 때 뒤에 합친다.
+    const [addressDetail, setAddressDetail] = useState('');
+
     // 사무소 정보와 대시보드는 처음 한 번만 불러온다
     useEffect(() => {
         const load = async () => {
@@ -127,7 +129,10 @@ function MyAgencyPage() {
     // 사무소 정보 저장
     const handleSave = async () => {
         try {
-            setMessage(await updateMyAgency(form));
+            // 상세주소는 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 보낸다
+            const address = [form.address, addressDetail].filter(Boolean).join(' ');
+
+            setMessage(await updateMyAgency({ ...form, address }));
             setAgency(await getMyAgency());
             setEditMode(false);
         } catch (error: any) {
@@ -225,8 +230,16 @@ function MyAgencyPage() {
                                 <div className="grid-3">
                                     {properties.map((property) => (
                                         <Link className="card" to={`/property/${property.id}`} key={property.id}>
-                                            {/* 매물 사진은 property 테이블에 이미지 컬럼이 생기면 연결한다 */}
-                                            <div className="thumb" style={{ height: 120, marginBottom: 12 }} />
+                                            <div
+                                                className="thumb"
+                                                style={{
+                                                    height: 120,
+                                                    marginBottom: 12,
+                                                    ...(property.thumbnailUrl
+                                                        ? { backgroundImage: `url('${property.thumbnailUrl}')` }
+                                                        : {}),
+                                                }}
+                                            />
 
                                             <div className="row between">
                                                 <span className={`status ${property.status === 'ACTIVE' ? 'green'
@@ -382,13 +395,19 @@ function MyAgencyPage() {
                                             onChange={(event) => setForm({ ...form, registrationNo: event.target.value })}
                                         />
                                     </div>
-                                    <div className="field">
-                                        <label>주소</label>
-                                        <input
-                                            value={form.address ?? ''}
-                                            onChange={(event) => setForm({ ...form, address: event.target.value })}
-                                        />
-                                    </div>
+                                    {/* 주소를 바꾸면 서버가 좌표를 다시 찾아 지도에 반영한다.
+                                        검색해서 고른 도로명 주소만 들어가게 한다. */}
+                                    <AddressInput
+                                        value={form.address ?? ''}
+                                        detail={addressDetail}
+                                        onChange={({ address, detail, selected }) => {
+                                            // 주소를 새로 고르면 구·동도 함께 갱신한다
+                                            setForm(selected
+                                                ? { ...form, address, sigungu: selected.sigungu, dong: selected.dong }
+                                                : { ...form, address });
+                                            setAddressDetail(detail);
+                                        }}
+                                    />
                                     <div className="field">
                                         <label>전화번호</label>
                                         <input

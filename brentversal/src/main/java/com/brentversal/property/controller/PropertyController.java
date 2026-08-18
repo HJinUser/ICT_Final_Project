@@ -1,7 +1,10 @@
 package com.brentversal.property.controller;
 
+import com.brentversal.favorite.service.FavoriteService;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.dto.PropertyResponseDto;
+import com.brentversal.property.dto.PropertySearchCondition;
+import com.brentversal.property.dto.PropertySearchDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.service.PropertyService;
 import jakarta.validation.Valid;
@@ -9,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +31,7 @@ import java.util.Optional;
 public class PropertyController {
 
     private final PropertyService propertyService;
+    private final FavoriteService favoriteService;
 
     // 매물 등록
     //
@@ -72,22 +77,97 @@ public class PropertyController {
         }
     }
 
+    // 지도 검색 (왼쪽 필터 + 가운데 지도 + 오른쪽 목록이 함께 쓰는 조회)
+    // GET /property/search?region=서초구&dealType=JEONSE&minPrice=0&maxPrice=50000&sort=PRICE_ASC
+    //
+    // 비회원도 쓸 수 있는 화면이라 로그인을 요구하지 않는다(GET /property/** 는 permitAll).
+    // 다만 중개인이 "내 매물"만 볼 때는 누구인지 알아야 해서, 로그인했으면 이메일을 함께 넘긴다.
+    @GetMapping("/search")
+    public ResponseEntity<Map<String, Object>> search(PropertySearchCondition condition, Principal principal) {
+        String email = (principal == null) ? null : principal.getName();
+
+        List<PropertySearchDto> found = propertyService.search(condition, email);
+
+        return ResponseEntity.ok(Map.of("content", found, "totalCount", found.size()));
+    }
+
+    // 매물 확인 화면 - 매물유형을 고르면 그 유형에 실제 존재하는 거래유형만 돌려준다 (버튼 목록 갱신용)
+    @GetMapping("/deal-types")
+    public ResponseEntity<List<String>> dealTypes(@RequestParam(required = false) String type) {
+        return ResponseEntity.ok(propertyService.findAvailableDealTypes(type));
+    }
+
+    // 매물 확인 화면 전용 조회. 페이징 사용
+    @GetMapping("/listings")
+    public ResponseEntity<Map<String, Object>> listings(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String dealType,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size) {
+        return ResponseEntity.ok(propertyService.browseListings(type, dealType, sort, page, size));
+    }
+
     // 매물 비교 (쉼표로 구분된 id들을 받아서 여러 건 조회)
     @GetMapping("/compare")
-    public ResponseEntity<List<PropertyResponseDto>> compare(@RequestParam String ids) {
-        // "1,2,3" 형태의 문자열을 쉼표 기준으로 잘라서 Long 리스트로 변환
-        List<Long> idList = new ArrayList<>();
-        for (String idStr : ids.split(",")) {
-            idList.add(Long.parseLong(idStr));
-        }
+    public ResponseEntity<?> compare(@RequestParam String ids) {
+        try {
+            List<Long> idList = new ArrayList<>();
 
-        return ResponseEntity.ok(propertyService.findByIds(idList));
+            for (String idStr : ids.split(",")) {
+                idList.add(Long.parseLong(idStr.trim()));
+            }
+
+            return ResponseEntity.ok(propertyService.compareProperties(idList));
+
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "매물 id 형식이 올바르지 않습니다."));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 관심매물 토글 (로그인 필요 — SecurityConfig에서 이 경로는 인증 요구)
+    @PostMapping("/{id}/favorite")
+    public ResponseEntity<?> toggleFavorite(@PathVariable Long id, Authentication authentication) {
+        try {
+            boolean favorited = favoriteService.toggle(authentication.getName(), id);
+            return ResponseEntity.ok(Map.of("favorited", favorited));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 로그인한 회원의 관심매물 목록 (관심목록 화면용)
+    @GetMapping("/favorites")
+    public ResponseEntity<?> myFavorites(Authentication authentication) {
+        try {
+            return ResponseEntity.ok(favoriteService.findFavoriteProperties(authentication.getName()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 로그인한 중개인이 등록한 매물 전체 조회 ("내 매물" 화면용)
+    @GetMapping("/mine")
+    public ResponseEntity<?> mine(Principal principal) {
+        try {
+            return ResponseEntity.ok(propertyService.findMine(principal.getName()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+        }
     }
 
     // 매물 수정 (내 사무소의 매물만 가능)
-    @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Property bean,
-                                    BindingResult bindingResult, Principal principal) {
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> update(@PathVariable Long id,
+                                    @Valid @RequestPart("data") Property bean,
+                                    BindingResult bindingResult,
+                                    @RequestPart(value = "files", required = false) List<MultipartFile> files,
+                                    Principal principal) {
         if (bindingResult.hasErrors()) {
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -96,7 +176,7 @@ public class PropertyController {
             return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
         }
         try {
-            return ResponseEntity.ok(propertyService.update(id, bean, principal.getName()));
+            return ResponseEntity.ok(propertyService.update(id, bean, files, principal.getName()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }

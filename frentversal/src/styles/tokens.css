@@ -1,0 +1,119 @@
+/*
+  전세역전 디자인 토큰.
+  프로토타입(jeonse-reversal-prototype)의 :root 변수를 그대로 옮겨 온 파일이다.
+  색·간격·모서리 값을 여기 한 곳에서만 관리하고, 각 화면 CSS는 var(--...)로 가져다 쓴다.
+
+  main.tsx에서 index.css 다음에 불러온다. index.css가 :root에 --bg 같은 이름을 이미 쓰고
+  다크모드 값까지 정의하고 있어서, 나중에 로드되는 이 파일이 최종적으로 이기도록 순서를 맞춘 것이다.
+*/
+
+:root {
+    /* 글자색 (진한 순서) */
+    --ink: #111114;
+    --ink-2: #3f3f48;
+    --ink-3: #5a5a65;
+
+    /* 경계선 */
+    --line: #e7e7eb;
+    --line-2: #f0f0f3;
+
+    /* 배경 */
+    --bg: #ffffff;
+    --bg-2: #f7f7f8;
+
+    /* 브랜드 보라 계열 */
+    --v: #4B0082;
+    --v-deep: #31005A;
+    --v-pale: #ECE6F5;
+
+    /* 시세 신호색 (저평가 = 초록, 고평가 = 주황) */
+    --sig-low: #2E6F52;
+    --sig-high: #9C4A1A;
+
+    /* 글자 크기 */
+    --fs-mono: 12px;
+    --fs-xs: 13px;
+    --fs-sm: 13.5px;
+    --fs-md: 14px;
+    --fs-lg: 16px;
+    --fs-h3: 19px;
+    --fs-h2: 27px;
+
+    /* 레이아웃: wrap = 본문 최대 너비, hd = 헤더 높이, sub = 섹션 목차(스크롤스파이) 바 높이 */
+    --wrap: 1240px;
+    --hd: 60px;
+    --sub: 46px;
+
+    /* 모서리 둥글기 */
+    --r-s: 6px;
+    --r-m: 12px;
+    --r-l: 18px;
+    --r-xl: 26px;
+
+    --ease: cubic-bezier(.22, .61, .36, 1);
+    --shadow: 0 14px 44px rgba(17, 17, 20, .09);
+
+    /* index.css가 :root에 지정해 둔 큰 기본 글꼴(18px)과 색을 이 디자인 기준으로 되돌린다 */
+    font: var(--fs-md) / 1.65 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    background: var(--bg);
+    /* 다크모드로 자동 반전되지 않게 고정한다(이 디자인은 라이트 전용이다) */
+    color-scheme: light;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
+    font-size: var(--fs-md);
+    font-weight: 450;
+    line-height: 1.65;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.26;
+}
+
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); }
+
+/* 본문 최대 너비를 잡아 주는 공통 컨테이너 */
+.rv-wrap {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+/* 숫자는 폭이 일정한 글꼴로 표시해 자릿수가 흔들리지 않게 한다 */
+.rv-num {
+    font-family: 'IBM Plex Mono', 'Pretendard Variable', Pretendard, ui-monospace, monospace;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+}
+
+.rv-muted { color: var(--ink-2); }
+.rv-dim { color: var(--ink-3); }
+.rv-xs { font-size: var(--fs-xs); }
+.rv-sm { font-size: var(--fs-sm); }
+
+/* 키보드로 이동할 때만 보이는 포커스 표시 */
+:focus-visible {
+    outline: 2px solid var(--v);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition-duration: .01ms !important;
+    }
+}

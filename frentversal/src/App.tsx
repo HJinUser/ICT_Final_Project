@@ -1,14 +1,32 @@
-import './App.css';
-
 // 외부 컴포넌트 import하기
 // import 컴포넌트이름 from '경로와 파일명';
 import MenuItems from './ui/MenuItems';
+import SiteFooter from './ui/SiteFooter';
 import AppRoutes from './routes/AppRoutes';
 import React, { useEffect, useState } from 'react';
 import type { User } from './types/User';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import customAxios from './api/axiosInstance.tsx';
 
+// 취향 초기 설정 화면의 주소. 가드가 이 주소로 되돌린다.
+const PREFERENCE_SETUP_PATH = '/preference-setup';
+
+/*
+  취향 초기 설정을 마치지 않은 사용자에게도 열어 두어야 하는 주소.
+
+  로그인과 회원가입을 막으면 계정을 바꿔 들어올 수 없고,
+  소셜 로그인 도착 지점을 막으면 로그인 처리 자체가 끝나지 않는다.
+  약관은 가입 과정에서 확인하는 문서라 함께 열어 둔다.
+*/
+const SETUP_ALLOWED_PATHS = [
+    PREFERENCE_SETUP_PATH,
+    '/member/login',
+    '/member/signup',
+    '/member/passwordless',
+    '/oauth/callback',
+    '/oauth/signup',
+    '/terms',
+];
 
 function App() {
   const appName = "ICT Final Project";
@@ -21,8 +39,15 @@ function App() {
 
     // 타입을 확인하는 함수
     if (typeof loginUser === 'string') {
-      const parsed = JSON.parse(loginUser);
-      setUser(parsed);
+      try {
+        const parsed = JSON.parse(loginUser);
+        setUser(parsed);
+      } catch (error) {
+        // 저장된 값이 깨져 있으면 로그인하지 않은 것으로 보고 지운다.
+        // 그대로 두면 화면을 열 때마다 같은 오류가 반복된다.
+        console.error('저장된 로그인 정보를 읽지 못했습니다.', error);
+        localStorage.removeItem('user');
+      }
     }
   }, []);
 
@@ -35,7 +60,49 @@ function App() {
     console.log('로그인 성공');
   };
 
+  /*
+    취향 초기 설정을 마쳤을 때 로그인 정보를 갱신하는 함수.
+
+    서버에서는 완료로 바뀌었지만 화면이 들고 있는 사용자 정보는 아직 미완료 상태다.
+    이것을 함께 바꾸지 않으면 아래 가드가 계속 초기 설정 화면으로 되돌려서,
+    설정을 마치고도 빠져나가지 못하고 같은 화면을 반복해서 보게 된다.
+  */
+  const handlePreferenceComplete = () => {
+    setUser((previous) => {
+      if (!previous) {
+        return previous;
+      }
+
+      const updated: User = { ...previous, preferenceCompleted: true };
+
+      localStorage.setItem('user', JSON.stringify(updated));
+
+      return updated;
+    });
+  };
+
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /*
+    취향 초기 설정을 마치지 않은 일반 사용자를 그 화면으로 되돌리는 가드.
+
+    로그인 직후에만 보내면 주소창에 다른 주소를 직접 쳐서 빠져나갈 수 있다.
+    회원가입 뒤 첫 로그인이라면 반드시 거치게 해야 하므로 주소가 바뀔 때마다 확인한다.
+
+    중개인과 관리자는 맞춤 추천을 쓰지 않으므로 대상이 아니다.
+  */
+  useEffect(() => {
+    if (!user || user.role !== 'USER' || user.preferenceCompleted) {
+      return;
+    }
+
+    const allowed = SETUP_ALLOWED_PATHS.some((path) => location.pathname.startsWith(path));
+
+    if (!allowed) {
+      navigate(PREFERENCE_SETUP_PATH, { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
 
   // 사용자가 '로그 아웃' 메뉴 클릭
   const handleLogout = async (event: React.MouseEvent<HTMLElement>) => {
@@ -57,14 +124,26 @@ function App() {
     navigate('/member/login');
   };
 
+  /*
+    취향 초기 설정 화면에서는 상단 메뉴와 아래 안내를 감춘다.
+
+    설정을 반드시 거치게 해 놓고 메뉴를 그대로 두면, 눌렀다가 곧바로 되돌아오는 일이 반복되어
+    화면이 고장 난 것처럼 보인다. 아예 나갈 곳을 보여 주지 않는 편이 덜 혼란스럽다.
+    로그아웃은 메뉴가 아니라 이 화면 안에 두지 않았으므로, 계정을 바꾸려면 로그인 화면 주소로 간다.
+  */
+  const inPreferenceSetup = location.pathname.startsWith(PREFERENCE_SETUP_PATH);
+
   return (
     <>
-      <MenuItems appName={appName} user={user} handleLogout={handleLogout} />
-      <AppRoutes user={user} handleLoginSuccess={handleLoginSuccess} />
-
-      <footer className="bg-dark text-light text-center py-3 mt-5">
-        <p>&copy; 2026 {appName}. All rights reserved.</p>
-      </footer>
+      {!inPreferenceSetup && (
+        <MenuItems appName={appName} user={user} handleLogout={handleLogout} />
+      )}
+      <AppRoutes
+        user={user}
+        handleLoginSuccess={handleLoginSuccess}
+        handlePreferenceComplete={handlePreferenceComplete}
+      />
+      {!inPreferenceSetup && <SiteFooter />}
     </>
   );
 }

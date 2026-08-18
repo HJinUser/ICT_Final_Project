@@ -1,0 +1,1 @@
+# Komoran·TF-IDF 텍스트 분석 공통 기능

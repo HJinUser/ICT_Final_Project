@@ -6,6 +6,8 @@ import com.brentversal.agency.dto.AgencyResponseDto;
 import com.brentversal.agency.entity.Agency;
 import com.brentversal.agency.repository.AgencyRepository;
 import com.brentversal.agency.repository.AgencyReviewRepository;
+import com.brentversal.common.geocoding.KakaoGeocodingService;
+import com.brentversal.member.entity.Member;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,23 +28,74 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
     private final PropertyRepository propertyRepository;
     private final AgencyReviewRepository agencyReviewRepository;
 
+    // 사무소를 새로 만들 때 주소로 좌표(위도·경도)를 채우기 위해 쓴다
+    private final KakaoGeocodingService kakaoGeocodingService;
+
     // 상세 페이지에 카드로 보여 줄 최근 매물 개수
     private static final int RECENT_PROPERTY_LIMIT = 2;
 
-    // 중개사무소 목록 조회 (검색어 + 지역 필터)
+    // 중개인에게 사무소가 없으면 인증 신청 정보로 만들어 준다. 이미 있으면 그대로 돌려준다.
+    //
+    // 사무소는 원래 중개인 회원가입(MemberService.saveBrokerProfile)에서 함께 만들어진다.
+    // 하지만 일반 회원으로 가입한 뒤 중개인 인증을 신청하는 길도 열려 있어서,
+    // 그 경우에는 사무소 없이 중개인 자격만 생겨 "내 중개사무소" 화면이 열리지 않았다.
+    // 인증 신청 때 받는 상호·소재지·대표자가 사무소에 필요한 값과 같으므로 그대로 사용한다.
+    @Transactional
+    public Agency createIfAbsent(Member member, String name, String brokerName,
+                                 String address, String sigungu, String dong, String registrationNo){
+
+        Optional<Agency> found = agencyRepository.findByMemberId(member.getId());
+
+        if(found.isPresent()) return found.get();
+
+        Agency agency = new Agency();
+
+        agency.setMember(member);
+        agency.setName(name);
+        agency.setBrokerName(brokerName);
+        agency.setAddress(address);
+        agency.setSigungu(sigungu);
+        agency.setDong(dong);
+        agency.setRegistrationNo(registrationNo);
+        agency.setRegdate(LocalDate.now());
+
+        // 좌표를 못 찾아도(카카오 키가 없거나 검색 실패) 사무소 등록은 정상적으로 끝나야 한다.
+        // 지도에 안 보일 뿐이고, 나중에 사무소 정보를 저장할 때 다시 채워진다.
+        kakaoGeocodingService.findCoordinates(address).ifPresent(coordinates -> {
+            agency.setLatitude(coordinates.latitude());
+            agency.setLongitude(coordinates.longitude());
+        });
+
+        return agencyRepository.save(agency);
+    }
+
+    // 중개사무소 목록 조회 (검색어 + 지역(구·동) 필터)
     // readOnly = true : 조회 전용 트랜잭션이라 변경 감지(dirty checking)를 하지 않아 조금 더 가볍다.
     @Transactional(readOnly = true)
-    public List<AgencyResponseDto> search(String keyword, String region){
+    public List<AgencyResponseDto> search(String keyword, String region, String dong){
         // 프론트에서 값을 안 보내면 null 로 들어오므로 빈 문자열로 바꿔 준다.
         // 리포지토리의 like '%%' 조건이 "조건 없음"으로 동작하게 하기 위함이다.
         String searchKeyword = (keyword == null) ? "" : keyword.trim();
         String searchRegion  = (region  == null) ? "" : region.trim();
+        String searchDong    = (dong    == null) ? "" : dong.trim();
 
-        List<Agency> agencyList = agencyRepository.search(searchKeyword, searchRegion);
+        List<Agency> agencyList = agencyRepository.search(searchKeyword, searchRegion, searchDong);
 
-        // 엔터티 목록을 DTO 목록으로 변환해서 반환한다
+        // 엔터티 목록을 DTO 목록으로 변환해서 반환한다.
+        //
+        // 담당 매물 건수는 agency 테이블의 listing_count 컬럼이 아니라 property 테이블을 실제로 센다.
+        // 컬럼 값은 예시 데이터에 박혀 있을 뿐 실제 매물 수와 맞지 않아서,
+        // 목록에서 "24건"을 보고 들어갔는데 상세는 "2건"으로 나오는 일이 있었다.
+        // 상세(findDetailById)와 같은 조건(게시중 + 공개)으로 세어 두 화면의 숫자를 맞춘다.
         return agencyList.stream()
-                .map(AgencyResponseDto::of)
+                .map(agency -> {
+                    AgencyResponseDto dto = AgencyResponseDto.of(agency);
+
+                    dto.setListingCount((int) propertyRepository
+                            .countByAgencyIdAndStatusAndVisibleTrue(agency.getId(), PropertyStatus.ACTIVE));
+
+                    return dto;
+                })
                 .toList();
     }
 
@@ -70,14 +123,16 @@ public class AgencyService { // AgencyService가 AgencyRepository를 의존하�
             dto.setTodayNewCount(propertyRepository
                     .countByAgencyIdAndStatusAndVisibleTrueAndCreatedAtAfter(id, PropertyStatus.ACTIVE, todayStart));
 
-            // 가장 최근에 올라온 매물 2건만 카드로 보여 준다
-            List<AgencyPropertyDto> recent = propertyRepository
+            // 담당 매물 전체. 상담 요청 폼에서 문의할 매물을 고를 때 쓴다.
+            List<AgencyPropertyDto> properties = propertyRepository
                     .findByAgencyIdAndStatusAndVisibleTrueOrderByCreatedAtDesc(id, PropertyStatus.ACTIVE)
                     .stream()
-                    .limit(RECENT_PROPERTY_LIMIT)
                     .map(AgencyPropertyDto::of)
                     .toList();
-            dto.setRecentProperties(recent);
+            dto.setProperties(properties);
+
+            // 그중 가장 최근 것 몇 건만 카드로 보여 준다
+            dto.setRecentProperties(properties.stream().limit(RECENT_PROPERTY_LIMIT).toList());
 
             dto.setReviewCount(agencyReviewRepository.countByAgencyId(id));
 

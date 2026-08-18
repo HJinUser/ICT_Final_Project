@@ -21,6 +21,9 @@ export async function submitVerification(
         licenseNumber: string;
         businessName: string;
         officeAddress: string;
+        // 주소 검색이 함께 준 지역 조각. 승인 시 중개사무소로 옮겨진다.
+        officeSigungu?: string;
+        officeDong?: string;
         ownerName: string;
         registeredDate: string;
     },
