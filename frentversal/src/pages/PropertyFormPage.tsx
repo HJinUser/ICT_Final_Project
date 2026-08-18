@@ -37,17 +37,42 @@ const TAG_CATEGORY_LABELS: Record<TagResponse["category"], string> = {
 // 어느 중개사무소의 매물인지는 보내지 않는다.
 // 서버가 로그인한 중개인(JWT)의 사무소로 정하기 때문이다.
 // 여기서 보내 봐야 무시되고, 보낼 수 있게 두면 남의 사무소 번호를 넣는 요청도 가능해진다.
-const initial_value: Property = {
+// 등록 폼 전용 상태 타입.
+// 숫자 칸을 처음부터 0으로 채우면 이어서 타이핑할 때 앞자리 0이 안 지워지고 남는 문제가 있다.
+// react_cafe의 ProductInsertForm(price: '')과 같은 이유로, 편집 중에는 숫자 칸에 빈 문자열도
+// 허용해 두고 빈 값으로 시작시킨 뒤, 제출 직전(toNumber)에만 실제 숫자로 바꾼다.
+type PropertyFormState = Omit<
+    Property,
+    "area" | "floor" | "roomCount" | "bathroomCount" | "price" | "deposit" | "monthlyDeposit" | "monthlyRent" | "maintenanceFee"
+> & {
+    area: number | "";
+    floor: number | "";
+    roomCount: number | "";
+    bathroomCount: number | "";
+    price?: number | "";
+    deposit?: number | "";
+    monthlyDeposit?: number | "";
+    monthlyRent?: number | "";
+    maintenanceFee: number | "";
+};
+
+// PropertyFormState의 숫자 칸(빈 문자열일 수 있음)을 실제 숫자로 바꾼다.
+// 필수 칸이 비어 있으면 0으로, 선택 칸(price/deposit/monthlyDeposit/monthlyRent)이 비어 있으면
+// undefined로 보내서 백엔드의 dealType별 필수값 검증(validatePricingFields)이 그대로 동작하게 한다.
+const toNumber = (value: number | "" | undefined): number | undefined =>
+    value === "" || value === undefined ? undefined : value;
+
+const initial_value: PropertyFormState = {
     name: "", description: "", type: "ONE_TWO_ROOM", dealType: "JEONSE",
-    address: "", area: 0, floor: 0, roomCount: 0, bathroomCount: 0,
-    price: 0, maintenanceFee: 0,
+    address: "", area: "", floor: "", roomCount: "", bathroomCount: "",
+    maintenanceFee: "",
     moveInDate: "", contractStatus: "IMMEDIATE",
     detailDescription: "", tagIds: [],
 };
 
-// 서버 응답(PropertyResponse)을 폼에서 쓰는 요청 형태(Property)로 변환. 수정 화면 진입 시 기존 값을 채우는 용도.
+// 서버 응답(PropertyResponse)을 폼에서 쓰는 요청 형태(PropertyFormState)로 변환. 수정 화면 진입 시 기존 값을 채우는 용도.
 // agency는 넣지 않는다 — Property(요청) 타입에 애초에 없는 필드고, 서버도 로그인한 사람 걸로 직접 정하기 때문이다.
-const mapResponseToProperty = (data: PropertyResponse): Property => ({
+const mapResponseToProperty = (data: PropertyResponse): PropertyFormState => ({
     id: data.id,
     neighborhoodId: data.neighborhoodId ?? undefined,
     name: data.name,
@@ -83,7 +108,7 @@ function PropertyFormPage() {
     const [step, setStep] = useState(0);
 
     // property는 등록/수정하고자 하는 매물의 정보 (ProductInsertForm의 product와 같은 역할)
-    const [property, setProperty] = useState<Property>(initial_value);
+    const [property, setProperty] = useState<PropertyFormState>(initial_value);
 
     // 필드별 오류 메시지 (백엔드 응답의 필드별 오류를 그대로 매칭)
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -159,13 +184,14 @@ function PropertyFormPage() {
     //   });
     //   setAiEstimate(response.data);
 
-    // input, textarea, select 공통 변경 핸들러 (숫자 필드는 Number로 변환)
+    // input, textarea, select 공통 변경 핸들러.
+    // 숫자 필드는 빈 문자열이면 그대로 두고(다시 0으로 채우지 않는다), 값이 있을 때만 Number로 바꾼다.
     const ControlChange = (
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = event.target;
         const isNumber = NUMBER_FIELDS.includes(name);
-        setProperty({ ...property, [name]: isNumber ? Number(value) : value });
+        setProperty({ ...property, [name]: isNumber ? (value === "" ? "" : Number(value)) : value });
     };
 
     // 거래유형이 바뀌면 이전 유형에서 쓰던 가격 필드들을 비워준다.
@@ -229,9 +255,21 @@ function PropertyFormPage() {
             // 상세주소는 아직 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 한 덩어리로 보낸다.
             const address = [property.address, addressDetail].filter(Boolean).join(' ');
 
-            const payload: Property = isEditMode
-                ? { ...property, address, keepImageIds: existingImages.map((image) => image.id) }
-                : { ...property, address };
+            // PropertyFormState -> Property. 편집 중 빈 문자열이었던 숫자 칸을 여기서만 실제 숫자로 바꾼다.
+            const payload: Property = {
+                ...property,
+                address,
+                area: toNumber(property.area) ?? 0,
+                floor: toNumber(property.floor) ?? 0,
+                roomCount: toNumber(property.roomCount) ?? 0,
+                bathroomCount: toNumber(property.bathroomCount) ?? 0,
+                maintenanceFee: toNumber(property.maintenanceFee) ?? 0,
+                price: toNumber(property.price),
+                deposit: toNumber(property.deposit),
+                monthlyDeposit: toNumber(property.monthlyDeposit),
+                monthlyRent: toNumber(property.monthlyRent),
+                ...(isEditMode ? { keepImageIds: existingImages.map((image) => image.id) } : {}),
+            };
 
             const formData = new FormData();
             formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
@@ -410,7 +448,7 @@ function PropertyFormPage() {
                                         <div className="field">
                                             <label>매매가(만 원)</label>
                                             <input
-                                                type="number" name="price" value={property.price ?? 0}
+                                                type="number" name="price" value={property.price ?? ""}
                                                 onChange={ControlChange}
                                             />
                                             {errors.price && <span className="field-error">{errors.price}</span>}
@@ -427,7 +465,7 @@ function PropertyFormPage() {
                                         <div className="field">
                                             <label>전세가(만 원)</label>
                                             <input
-                                                type="number" name="deposit" value={property.deposit ?? 0}
+                                                type="number" name="deposit" value={property.deposit ?? ""}
                                                 onChange={ControlChange}
                                             />
                                             {errors.deposit && <span className="field-error">{errors.deposit}</span>}
@@ -445,7 +483,7 @@ function PropertyFormPage() {
                                             <div className="field">
                                                 <label>월세 보증금(만 원)</label>
                                                 <input
-                                                    type="number" name="monthlyDeposit" value={property.monthlyDeposit ?? 0}
+                                                    type="number" name="monthlyDeposit" value={property.monthlyDeposit ?? ""}
                                                     onChange={ControlChange}
                                                 />
                                                 {errors.monthlyDeposit && <span className="field-error">{errors.monthlyDeposit}</span>}
@@ -453,7 +491,7 @@ function PropertyFormPage() {
                                             <div className="field">
                                                 <label>월세 금액(만 원)</label>
                                                 <input
-                                                    type="number" name="monthlyRent" value={property.monthlyRent ?? 0}
+                                                    type="number" name="monthlyRent" value={property.monthlyRent ?? ""}
                                                     onChange={ControlChange}
                                                 />
                                                 {errors.monthlyRent && <span className="field-error">{errors.monthlyRent}</span>}
@@ -582,7 +620,7 @@ function PropertyFormPage() {
                                     <div style={{ marginTop: 10 }}>
                                         <strong>AI 예상 시세 {aiEstimate.estimatedPrice.toLocaleString()}만 원</strong>
                                         <p className="dim" style={{ marginTop: 4 }}>
-                                            입력 가격 {(property.price ?? 0).toLocaleString()}만 원은 예상 시세보다 약{" "}
+                                            입력 가격 {(toNumber(property.price) ?? 0).toLocaleString()}만 원은 예상 시세보다 약{" "}
                                             {Math.abs(aiEstimate.diffPercent)}%{" "}
                                             {aiEstimate.diffPercent < 0 ? "낮습니다" : "높습니다"}.
                                         </p>

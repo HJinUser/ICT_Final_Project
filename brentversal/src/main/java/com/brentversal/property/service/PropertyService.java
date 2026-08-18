@@ -78,6 +78,25 @@ public class PropertyService {
         });
     }
 
+    private void normalizePriceFields(Property property){
+        switch (property.getDealType()) {
+            case SALE -> {
+                property.setDeposit(null);
+                property.setMonthlyDeposit(null);
+                property.setMonthlyRent(null);
+            }
+            case JEONSE -> {
+                property.setPrice(null);
+                property.setMonthlyDeposit(null);
+                property.setMonthlyRent(null);
+            }
+            case MONTHLY -> {
+                property.setPrice(null);
+                property.setDeposit(null);
+            }
+        }
+    }
+
     private Property findPropertyOrThrow(Long id) {
         return propertyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 매물을 찾을 수 없습니다. id=" + id));
@@ -212,6 +231,7 @@ public class PropertyService {
         property.setDeposit(changes.getDeposit());
         property.setMonthlyDeposit(changes.getMonthlyDeposit());
         property.setMonthlyRent(changes.getMonthlyRent());
+        normalizePriceFields(property);
         property.setMaintenanceFee(changes.getMaintenanceFee());
         property.setDescription(changes.getDescription());
         property.setDetailDescription(changes.getDetailDescription());
@@ -302,6 +322,7 @@ public class PropertyService {
             bean.setLatitude(coordinates.latitude());
             bean.setLongitude(coordinates.longitude());
         });
+        normalizePriceFields(bean);
         bean.setStatus(PropertyStatus.PENDING);
         bean.setVisible(true);
         bean.setCreatedAt(LocalDateTime.now());
