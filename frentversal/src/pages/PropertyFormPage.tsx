@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { Container, Row, Col, Form, Button, Alert, ListGroup, Card, Spinner } from "react-bootstrap";
 // customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/insert" 처럼 그 뒤만 적는다.
 // 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/insert" 가 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
@@ -263,306 +262,337 @@ function PropertyFormPage() {
     };
 
     return (
-        <Container style={{ marginTop: "30px", marginBottom: "50px" }}>
-            <h1>{isEditMode ? "매물 수정" : "매물 등록"}</h1>
+        <main>
+            <section className="page-hero"><div className="wrap">
+                <div>
+                    <div className="eyebrow">Property Form</div>
+                    <h1>{isEditMode ? "매물 수정" : "매물 등록"}</h1>
+                    <p>중개인이 입력한 매물은 저장 후 관리자 승인 대기 상태가 되며 승인된 뒤 메인과 지도에 노출됩니다.</p>
+                </div>
+                <div className="hero-stat">
+                    <span className="mono dim">등록 단계</span>
+                    <strong>{step + 1} / {STEPS.length}</strong>
+                    <span className="xs dim">{STEPS[step]}</span>
+                </div>
+            </div></section>
 
-            {errors.general && <Alert variant="danger">{errors.general}</Alert>}
+            <section className="section"><div className="wrap">
+                {errors.general && <div className="form-alert">{errors.general}</div>}
 
-            <Row>
-                {/* 좌측 사이드바: 단계 이동 */}
-                <Col md={3} className="mb-3">
-                    <ListGroup>
-                        {STEPS.map((label, i) => (
-                            <ListGroup.Item key={i} action active={i === step} onClick={() => setStep(i)}>
-                                {i + 1}. {label}
-                            </ListGroup.Item>
-                        ))}
-                    </ListGroup>
-                </Col>
+                <div className="app-layout">
+                    <aside className="sidebar">
+                        <div className="side-title">등록 순서</div>
+                        <div className="side-nav">
+                            {STEPS.map((label, i) => (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    className={i === step ? "on" : ""}
+                                    onClick={() => setStep(i)}
+                                >
+                                    {i + 1}. {label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="side-note">임시 저장 후 나중에 이어서 작성할 수 있습니다.</div>
+                    </aside>
 
-                {/* 우측 폼 영역 */}
-                <Col md={9}>
-                    {step === 0 && (
-                        <Card className="p-3 mb-3">
-                            <h2>1. 기본 정보</h2>
+                    <div className="stack">
+                        {step === 0 && (
+                            <section className="card">
+                                <h2>1. 기본 정보</h2>
 
-                            <Form.Group as={Row} className="mb-3" controlId="formName">
-                                <Form.Label column sm={2}>매물명</Form.Label>
-                                <Col sm={10}>
-                                    <Form.Control
+                                <div className="field">
+                                    <label>매물명</label>
+                                    <input
                                         name="name"
                                         placeholder="매물을 특정할 수 있는 이름"
                                         value={property.name}
                                         onChange={ControlChange}
-                                        isInvalid={!!errors.name}
                                     />
-                                    <Form.Control.Feedback type="invalid">{errors.name}</Form.Control.Feedback>
-                                </Col>
-                            </Form.Group>
+                                    {errors.name && <span className="field-error">{errors.name}</span>}
+                                </div>
 
-                            <Form.Group as={Row} className="mb-3" controlId="formDescription">
-                                <Form.Label column sm={2}>소개 글</Form.Label>
-                                <Col sm={10}>
-                                    <Form.Control
-                                        as="textarea"
+                                <div className="field">
+                                    <label>소개 글</label>
+                                    <textarea
                                         rows={3}
                                         name="description"
                                         placeholder="매물의 특징과 장점을 간단히 소개하세요"
                                         value={property.description}
                                         onChange={ControlChange}
                                     />
-                                </Col>
-                            </Form.Group>
-
-                            <Form.Group as={Row} className="mb-3">
-                                <Form.Label column sm={2}>매물 유형</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Select name="type" value={property.type} onChange={ControlChange}>
-                                        <option value="ONE_TWO_ROOM">원/투룸</option>
-                                        <option value="APARTMENT">아파트</option>
-                                        <option value="VILLA">주택/빌라</option>
-                                        <option value="OFFICETEL">오피스텔</option>
-                                    </Form.Select>
-                                </Col>
-                                <Form.Label column sm={2}>거래 유형</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Select name="dealType" value={property.dealType} onChange={handleDealTypeChange}>
-                                        <option value="SALE">매매</option>
-                                        <option value="JEONSE">전세</option>
-                                        <option value="MONTHLY">월세</option>
-                                    </Form.Select>
-                                </Col>
-                            </Form.Group>
-
-                            <Form.Group as={Row} className="mb-3" controlId="formAddress">
-                                <Form.Label column sm={2}>주소</Form.Label>
-                                <Col sm={10}>
-                                    {/* 주소는 검색해서 고르게 한다. 직접 타이핑하면 표기가 제각각이 되어
-                                        지역 검색·지도 표시가 어긋난다. */}
-                                    <AddressInput
-                                        label=""
-                                        value={property.address}
-                                        detail={addressDetail}
-                                        onChange={({ address, detail, selected }) => {
-                                            // 주소를 새로 고르면 구·동도 함께 담는다 (지도에서 동네끼리 묶는 기준)
-                                            setProperty((prev) => selected
-                                                ? { ...prev, address, sigungu: selected.sigungu, dong: selected.dong }
-                                                : { ...prev, address });
-                                            setAddressDetail(detail);
-                                        }}
-                                    />
-                                </Col>
-                            </Form.Group>
-
-                            <Form.Group as={Row} className="mb-3">
-                                <Form.Label column sm={2}>전용면적(㎡)</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Control type="number" name="area" value={property.area} onChange={ControlChange} />
-                                </Col>
-                                <Form.Label column sm={2}>층수</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Control type="number" name="floor" value={property.floor} onChange={ControlChange} />
-                                </Col>
-                            </Form.Group>
-
-                            <Form.Group as={Row} className="mb-3">
-                                <Form.Label column sm={2}>방 개수</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Control type="number" name="roomCount" value={property.roomCount} onChange={ControlChange} />
-                                </Col>
-                                <Form.Label column sm={2}>욕실 개수</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Control type="number" name="bathroomCount" value={property.bathroomCount} onChange={ControlChange} />
-                                </Col>
-                            </Form.Group>
-                        </Card>
-                    )}
-
-                    {step === 1 && (
-                        <Card className="p-3 mb-3">
-                            <h2>2. 가격·계약</h2>
-
-                            {property.dealType === "SALE" && (
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={2}>매매가(만 원)</Form.Label>
-                                    <Col sm={4}>
-                                        <Form.Control
-                                            type="number" name="price" value={property.price ?? 0}
-                                            onChange={ControlChange} isInvalid={!!errors.price}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{errors.price}</Form.Control.Feedback>
-                                    </Col>
-                                    <Form.Label column sm={2}>관리비(만 원)</Form.Label>
-                                    <Col sm={4}>
-                                        <Form.Control type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
-                                    </Col>
-                                </Form.Group>
-                            )}
-
-                            {property.dealType === "JEONSE" && (
-                                <Form.Group as={Row} className="mb-3">
-                                    <Form.Label column sm={2}>전세가(만 원)</Form.Label>
-                                    <Col sm={4}>
-                                        <Form.Control
-                                            type="number" name="deposit" value={property.deposit ?? 0}
-                                            onChange={ControlChange} isInvalid={!!errors.deposit}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{errors.deposit}</Form.Control.Feedback>
-                                    </Col>
-                                    <Form.Label column sm={2}>관리비(만 원)</Form.Label>
-                                    <Col sm={4}>
-                                        <Form.Control type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
-                                    </Col>
-                                </Form.Group>
-                            )}
-
-                            {property.dealType === "MONTHLY" && (
-                                <>
-                                    <Form.Group as={Row} className="mb-3">
-                                        <Form.Label column sm={2}>월세 보증금(만 원)</Form.Label>
-                                        <Col sm={4}>
-                                            <Form.Control
-                                                type="number" name="monthlyDeposit" value={property.monthlyDeposit ?? 0}
-                                                onChange={ControlChange} isInvalid={!!errors.monthlyDeposit}
-                                            />
-                                            <Form.Control.Feedback type="invalid">{errors.monthlyDeposit}</Form.Control.Feedback>
-                                        </Col>
-                                        <Form.Label column sm={2}>월세 금액(만 원)</Form.Label>
-                                        <Col sm={4}>
-                                            <Form.Control
-                                                type="number" name="monthlyRent" value={property.monthlyRent ?? 0}
-                                                onChange={ControlChange} isInvalid={!!errors.monthlyRent}
-                                            />
-                                            <Form.Control.Feedback type="invalid">{errors.monthlyRent}</Form.Control.Feedback>
-                                        </Col>
-                                    </Form.Group>
-                                    <Form.Group as={Row} className="mb-3">
-                                        <Form.Label column sm={2}>관리비(만 원)</Form.Label>
-                                        <Col sm={4}>
-                                            <Form.Control type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
-                                        </Col>
-                                    </Form.Group>
-                                </>
-                            )}
-
-                            <Form.Group as={Row} className="mb-3">
-                                <Form.Label column sm={2}>입주 가능일</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Control type="date" name="moveInDate" value={property.moveInDate} onChange={ControlChange} />
-                                </Col>
-                                <Form.Label column sm={2}>계약 가능 상태</Form.Label>
-                                <Col sm={4}>
-                                    <Form.Select name="contractStatus" value={property.contractStatus} onChange={ControlChange}>
-                                        <option value="IMMEDIATE">즉시 계약 가능</option>
-                                        <option value="NEGOTIABLE">협상 후 결정</option>
-                                    </Form.Select>
-                                </Col>
-                            </Form.Group>
-                        </Card>
-                    )}
-
-                    {step === 2 && (
-                        <Card className="p-3 mb-3">
-                            <h2>3. 사진</h2>
-                            <Form.Group controlId="formPhotos" className="mb-3">
-                                <Form.Control type="file" multiple accept="image/*" onChange={FileSelect} />
-                            </Form.Group>
-                            <div className="photo-preview-list">
-                                {/* 수정 화면에서 서버에 이미 저장돼 있는 기존 사진들 */}
-                                {existingImages.map((image) => (
-                                    <div key={`existing-${image.id}`} className="photo-preview">
-                                        <img src={image.url} alt="기존 매물 사진" />
-                                        <Button size="sm" variant="dark" onClick={() => removeExistingImage(image.id)}>삭제</Button>
-                                    </div>
-                                ))}
-                                {/* 이번에 새로 선택한 사진들 */}
-                                {photoPreviews.map((url, i) => (
-                                    <div key={`new-${i}`} className="photo-preview">
-                                        <img src={url} alt={`매물 사진 ${i + 1}`} />
-                                        <Button size="sm" variant="dark" onClick={() => removePhoto(i)}>삭제</Button>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-                    )}
-
-                    {step === 3 && (
-                        <Card className="p-3 mb-3">
-                            <h2>4. 태그 선택</h2>
-                            {(Object.keys(TAG_CATEGORY_LABELS) as TagResponse["category"][]).map((category) => {
-                                const tagsInCategory = availableTags.filter((tag) => tag.category === category);
-                                if (tagsInCategory.length === 0) return null;
-                                return (
-                                    <div key={category} className="mb-3">
-                                        <Form.Label className="d-block">{TAG_CATEGORY_LABELS[category]}</Form.Label>
-                                        {tagsInCategory.map((tag) => (
-                                            <Button
-                                                key={tag.id}
-                                                size="sm"
-                                                className="me-2 mb-2"
-                                                variant={(property.tagIds ?? []).includes(tag.id) ? "primary" : "outline-secondary"}
-                                                onClick={() => toggleTag(tag.id)}
-                                            >
-                                                {tag.name}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                );
-                            })}
-                            <Form.Group controlId="formDetail">
-                                <Form.Label>상세 설명</Form.Label>
-                                <Form.Control
-                                    as="textarea"
-                                    rows={4}
-                                    name="detailDescription"
-                                    value={property.detailDescription}
-                                    onChange={ControlChange}
-                                />
-                            </Form.Group>
-                        </Card>
-                    )}
-
-                    {step === 4 && (
-                        <Card className="p-3 mb-3 ai-band">
-                            <h2>5. AI 시세 확인</h2>
-                            {aiLoading && <Spinner animation="border" size="sm" />}
-                            {!aiEstimate && !aiLoading && (
-                                <p className="text-muted mb-0">
-                                    AI 시세 예측은 준비 중입니다. 이 단계는 건너뛰고 등록을 진행하셔도 됩니다.
-                                </p>
-                            )}
-                            {aiEstimate && (
-                                <div>
-                                    <strong>AI 예상 시세 {aiEstimate.estimatedPrice.toLocaleString()}만 원</strong>
-                                    <p className="text-muted mb-0">
-                                        입력 가격 {(property.price ?? 0).toLocaleString()}만 원은 예상 시세보다 약{" "}
-                                        {Math.abs(aiEstimate.diffPercent)}%{" "}
-                                        {aiEstimate.diffPercent < 0 ? "낮습니다" : "높습니다"}.
-                                    </p>
                                 </div>
-                            )}
-                        </Card>
-                    )}
 
-                    {step === 5 && (
-                        <Card className="p-3 mb-3">
-                            <h2>6. 관리자 승인 요청</h2>
-                            <p className="text-muted mb-0">
-                                승인 요청을 보내면 관리자 검토 후 승인되어야 매물 등록이 완료되고
-                                메인·지도에 노출됩니다. 수정도 마찬가지로 다시 승인을 받아야 합니다.
-                            </p>
-                        </Card>
-                    )}
+                                <div className="fields-2">
+                                    <div className="field">
+                                        <label>매물 유형</label>
+                                        <select name="type" value={property.type} onChange={ControlChange}>
+                                            <option value="ONE_TWO_ROOM">원/투룸</option>
+                                            <option value="APARTMENT">아파트</option>
+                                            <option value="VILLA">주택/빌라</option>
+                                            <option value="OFFICETEL">오피스텔</option>
+                                        </select>
+                                    </div>
+                                    <div className="field">
+                                        <label>거래 유형</label>
+                                        <select name="dealType" value={property.dealType} onChange={handleDealTypeChange}>
+                                            <option value="SALE">매매</option>
+                                            <option value="JEONSE">전세</option>
+                                            <option value="MONTHLY">월세</option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                    <div className="d-flex justify-content-end gap-2">
-                        <Button variant="outline-secondary" onClick={handleDraftSave}>임시 저장</Button>
-                        <Button variant="primary" onClick={handleSubmit}>
-                            {isEditMode ? "수정 완료" : "관리자 승인 요청"}
-                        </Button>
+                                {/* 주소는 검색해서 고르게 한다. 직접 타이핑하면 표기가 제각각이 되어
+                                    지역 검색·지도 표시가 어긋난다. */}
+                                <AddressInput
+                                    label="주소"
+                                    value={property.address}
+                                    detail={addressDetail}
+                                    onChange={({ address, detail, selected }) => {
+                                        // 주소를 새로 고르면 구·동도 함께 담는다 (지도에서 동네끼리 묶는 기준)
+                                        setProperty((prev) => selected
+                                            ? { ...prev, address, sigungu: selected.sigungu, dong: selected.dong }
+                                            : { ...prev, address });
+                                        setAddressDetail(detail);
+                                    }}
+                                />
+
+                                <div className="fields-2">
+                                    <div className="field">
+                                        <label>전용면적(㎡)</label>
+                                        <input type="number" name="area" value={property.area} onChange={ControlChange} />
+                                    </div>
+                                    <div className="field">
+                                        <label>층수</label>
+                                        <input type="number" name="floor" value={property.floor} onChange={ControlChange} />
+                                    </div>
+                                </div>
+
+                                <div className="fields-2">
+                                    <div className="field">
+                                        <label>방 개수</label>
+                                        <input type="number" name="roomCount" value={property.roomCount} onChange={ControlChange} />
+                                    </div>
+                                    <div className="field">
+                                        <label>욕실 개수</label>
+                                        <input type="number" name="bathroomCount" value={property.bathroomCount} onChange={ControlChange} />
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {step === 1 && (
+                            <section className="card">
+                                <h2>2. 가격·계약</h2>
+
+                                {property.dealType === "SALE" && (
+                                    <div className="fields-2">
+                                        <div className="field">
+                                            <label>매매가(만 원)</label>
+                                            <input
+                                                type="number" name="price" value={property.price ?? 0}
+                                                onChange={ControlChange}
+                                            />
+                                            {errors.price && <span className="field-error">{errors.price}</span>}
+                                        </div>
+                                        <div className="field">
+                                            <label>관리비(만 원)</label>
+                                            <input type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {property.dealType === "JEONSE" && (
+                                    <div className="fields-2">
+                                        <div className="field">
+                                            <label>전세가(만 원)</label>
+                                            <input
+                                                type="number" name="deposit" value={property.deposit ?? 0}
+                                                onChange={ControlChange}
+                                            />
+                                            {errors.deposit && <span className="field-error">{errors.deposit}</span>}
+                                        </div>
+                                        <div className="field">
+                                            <label>관리비(만 원)</label>
+                                            <input type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {property.dealType === "MONTHLY" && (
+                                    <>
+                                        <div className="fields-2">
+                                            <div className="field">
+                                                <label>월세 보증금(만 원)</label>
+                                                <input
+                                                    type="number" name="monthlyDeposit" value={property.monthlyDeposit ?? 0}
+                                                    onChange={ControlChange}
+                                                />
+                                                {errors.monthlyDeposit && <span className="field-error">{errors.monthlyDeposit}</span>}
+                                            </div>
+                                            <div className="field">
+                                                <label>월세 금액(만 원)</label>
+                                                <input
+                                                    type="number" name="monthlyRent" value={property.monthlyRent ?? 0}
+                                                    onChange={ControlChange}
+                                                />
+                                                {errors.monthlyRent && <span className="field-error">{errors.monthlyRent}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="fields-2">
+                                            <div className="field">
+                                                <label>관리비(만 원)</label>
+                                                <input type="number" name="maintenanceFee" value={property.maintenanceFee} onChange={ControlChange} />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                <div className="fields-2">
+                                    <div className="field">
+                                        <label>입주 가능일</label>
+                                        <input type="date" name="moveInDate" value={property.moveInDate} onChange={ControlChange} />
+                                    </div>
+                                    <div className="field">
+                                        <label>계약 가능 상태</label>
+                                        <select name="contractStatus" value={property.contractStatus} onChange={ControlChange}>
+                                            <option value="IMMEDIATE">즉시 계약 가능</option>
+                                            <option value="NEGOTIABLE">협상 후 결정</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {step === 2 && (
+                            <section className="card">
+                                <h2>3. 사진</h2>
+                                <div className="upload-zone" style={{ marginTop: 16 }}>
+                                    <strong>매물 사진을 선택해 주세요</strong>
+                                    <p className="xs dim" style={{ marginTop: 5 }}>
+                                        첫 번째 사진이 대표(메인) 사진이 됩니다. 최대 {MAX_PHOTOS}장
+                                    </p>
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={FileSelect}
+                                        style={{ marginTop: 14 }}
+                                    />
+                                </div>
+                                <div className="photo-preview-list">
+                                    {/* 수정 화면에서 서버에 이미 저장돼 있는 기존 사진들 */}
+                                    {existingImages.map((image) => (
+                                        <div key={`existing-${image.id}`} className="photo-preview">
+                                            <img src={image.url} alt="기존 매물 사진" />
+                                            <button
+                                                type="button"
+                                                className="ghost-btn"
+                                                style={{ minHeight: "auto", padding: "4px 10px", fontSize: 11 }}
+                                                onClick={() => removeExistingImage(image.id)}
+                                            >
+                                                삭제
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {/* 이번에 새로 선택한 사진들 */}
+                                    {photoPreviews.map((url, i) => (
+                                        <div key={`new-${i}`} className="photo-preview">
+                                            <img src={url} alt={`매물 사진 ${i + 1}`} />
+                                            <button
+                                                type="button"
+                                                className="ghost-btn"
+                                                style={{ minHeight: "auto", padding: "4px 10px", fontSize: 11 }}
+                                                onClick={() => removePhoto(i)}
+                                            >
+                                                삭제
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        {step === 3 && (
+                            <section className="card">
+                                <h2>4. 태그 선택</h2>
+                                {(Object.keys(TAG_CATEGORY_LABELS) as TagResponse["category"][]).map((category) => {
+                                    const tagsInCategory = availableTags.filter((tag) => tag.category === category);
+                                    if (tagsInCategory.length === 0) return null;
+                                    return (
+                                        <div className="field" key={category}>
+                                            <label>{TAG_CATEGORY_LABELS[category]}</label>
+                                            <div className="chip-group">
+                                                {tagsInCategory.map((tag) => (
+                                                    <button
+                                                        key={tag.id}
+                                                        type="button"
+                                                        className={`filter-chip${(property.tagIds ?? []).includes(tag.id) ? " on" : ""}`}
+                                                        onClick={() => toggleTag(tag.id)}
+                                                    >
+                                                        {tag.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                <div className="field">
+                                    <label>상세 설명</label>
+                                    <textarea
+                                        rows={4}
+                                        name="detailDescription"
+                                        value={property.detailDescription}
+                                        onChange={ControlChange}
+                                    />
+                                </div>
+                            </section>
+                        )}
+
+                        {step === 4 && (
+                            <section className="card ai-band">
+                                <h2>5. AI 시세 확인</h2>
+                                {aiLoading && <p className="xs dim" style={{ marginTop: 10 }}>불러오는 중…</p>}
+                                {!aiEstimate && !aiLoading && (
+                                    <p className="dim" style={{ marginTop: 10 }}>
+                                        AI 시세 예측은 준비 중입니다. 이 단계는 건너뛰고 등록을 진행하셔도 됩니다.
+                                    </p>
+                                )}
+                                {aiEstimate && (
+                                    <div style={{ marginTop: 10 }}>
+                                        <strong>AI 예상 시세 {aiEstimate.estimatedPrice.toLocaleString()}만 원</strong>
+                                        <p className="dim" style={{ marginTop: 4 }}>
+                                            입력 가격 {(property.price ?? 0).toLocaleString()}만 원은 예상 시세보다 약{" "}
+                                            {Math.abs(aiEstimate.diffPercent)}%{" "}
+                                            {aiEstimate.diffPercent < 0 ? "낮습니다" : "높습니다"}.
+                                        </p>
+                                    </div>
+                                )}
+                            </section>
+                        )}
+
+                        {step === 5 && (
+                            <section className="card">
+                                <h2>6. 관리자 승인 요청</h2>
+                                <p className="dim" style={{ marginTop: 6 }}>
+                                    승인 요청을 보내면 관리자 검토 후 승인되어야 매물 등록이 완료되고
+                                    메인·지도에 노출됩니다. 수정도 마찬가지로 다시 승인을 받아야 합니다.
+                                </p>
+                            </section>
+                        )}
+
+                        <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
+                            <button type="button" className="ghost-btn" onClick={handleDraftSave}>임시 저장</button>
+                            <button type="button" className="solid-btn" onClick={handleSubmit}>
+                                {isEditMode ? "수정 완료" : "관리자 승인 요청"}
+                            </button>
+                        </div>
                     </div>
-                </Col>
-            </Row>
-        </Container>
+                </div>
+            </div></section>
+        </main>
     );
 }
 

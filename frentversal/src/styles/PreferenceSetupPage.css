@@ -1,0 +1,12 @@
+/* react-bootstrap의 Alert(variant="danger")를 대신하는 최소 스타일 */
+.preference-alert {
+    padding: 14px 16px;
+    border-radius: var(--r-s);
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.preference-alert.danger {
+    background: #fbefef;
+    color: var(--red);
+}

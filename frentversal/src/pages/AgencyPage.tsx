@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { getAgencies } from '../api/agencyApi';
 import AgencyMap from './components/AgencyMap';
 import type { AgencyResponse, AgencyStatus } from '../types/Agency';
 import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
+import '../styles/AgencyPage.css';
 
 // 프로토타입 agency.html 을 옮긴 화면입니다.
 // 중개사무소 목록은 백엔드 GET /agency 에서 받아옵니다.
@@ -21,6 +22,10 @@ const STATUS_COLORS: Record<AgencyStatus, string> = {
 
 // 지역 필터 (option 의 value 가 그대로 서버로 넘어가 주소·동 조회에 쓰입니다)
 // 구 목록과 구별 동 목록은 utils/seoulDistricts 에 모아 두고 화면끼리 함께 씁니다.
+
+// 목록에 한 번에 보여 줄 중개사무소 카드 수. 화살표를 누르면 이만큼씩 옆으로 넘어간다.
+// .grid-4 가 한 줄에 4칸이라 이 값과 맞춰 둔다.
+const CARDS_PER_PAGE = 4;
 
 const CHAT_QUICK = ['강남역 5억 이하', '조용한 동네 추천', '이 집 시세가 적당해?'];
 
@@ -43,6 +48,9 @@ function AgencyPage() {
     const [keyword, setKeyword] = useState('');
     const [region, setRegion] = useState('');
     const [dong, setDong] = useState('');
+
+    // 지금 몇 번째 묶음(4개씩)을 보고 있는지. 화살표로만 바뀐다.
+    const [cardPage, setCardPage] = useState(0);
 
     // 토스트
     const [toastMessage, setToastMessage] = useState('');
@@ -68,6 +76,7 @@ function AgencyPage() {
 
             setAgencies(data.content);
             setVerifiedCount(data.verifiedCount);
+            setCardPage(0); // 검색 결과가 바뀌면 항상 첫 묶음부터 보여 준다
         } catch (error) {
             console.error('중개사무소 목록 조회 실패', error);
             setLoadError('중개사무소 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
@@ -86,6 +95,20 @@ function AgencyPage() {
         loadAgencies({ keyword, region, dong });
         showToast('검색 조건을 적용했습니다.');
     };
+
+    // 사무소 목록을 4개씩 잘라 "한 화면"에 담을 묶음들로 만든다.
+    const agencyPages = useMemo(() => {
+        const pages: AgencyResponse[][] = [];
+
+        for (let index = 0; index < agencies.length; index += CARDS_PER_PAGE) {
+            pages.push(agencies.slice(index, index + CARDS_PER_PAGE));
+        }
+
+        return pages;
+    }, [agencies]);
+
+    const isFirstPage = cardPage === 0;
+    const isLastPage = cardPage >= agencyPages.length - 1;
 
     // 챗봇
     const [chatOpen, setChatOpen] = useState(false);
@@ -179,30 +202,66 @@ function AgencyPage() {
                             <p className="xs dim">조건에 맞는 중개사무소가 없습니다.</p>
                         )}
 
-                        <div className="grid-4">
-                            {agencies.map((agency) => (
-                                <Link className="card" to={`/agency/${agency.id}`} key={agency.id}>
-                                    <div className="row between">
-                                        <span className={`status ${STATUS_COLORS[agency.status]}`}>{agency.statusLabel}</span>
-                                        <div className="avatar">{agency.brokerName.charAt(0)}</div>
+                        {/* 카드는 4개씩만 보여 주고, 나머지는 양옆 화살표로 넘겨서 본다 */}
+                        {agencyPages.length > 0 && (
+                            <div className="agency-carousel">
+                                <button
+                                    className={`agency-carousel-arrow${agencyPages.length <= 1 ? ' is-hidden' : ''}`}
+                                    type="button"
+                                    aria-label="이전 중개사무소 보기"
+                                    onClick={() => setCardPage((current) => Math.max(0, current - 1))}
+                                    disabled={isFirstPage}
+                                >
+                                    ‹
+                                </button>
+
+                                <div className="agency-carousel-viewport">
+                                    <div
+                                        className="agency-carousel-track"
+                                        style={{ transform: `translateX(-${cardPage * 100}%)` }}
+                                    >
+                                        {agencyPages.map((pageAgencies) => (
+                                            <div className="agency-carousel-page" key={pageAgencies[0].id}>
+                                                <div className="grid-4">
+                                                    {pageAgencies.map((agency) => (
+                                                        <Link className="card" to={`/agency/${agency.id}`} key={agency.id}>
+                                                            <div className="row between">
+                                                                <span className={`status ${STATUS_COLORS[agency.status]}`}>{agency.statusLabel}</span>
+                                                                <div className="avatar">{agency.brokerName.charAt(0)}</div>
+                                                            </div>
+                                                            <h3 style={{ marginTop: 13 }}>
+                                                                {agency.name}
+                                                                {agency.verified && <span className="xs" style={{ marginLeft: 6, color: 'var(--green)' }}>✓ 인증</span>}
+                                                            </h3>
+                                                            <p className="xs dim" style={{ marginTop: 6 }}>
+                                                                {agency.brokerName} 공인중개사<br />
+                                                                {agency.address}
+                                                                {agency.hours && <><br />{agency.hours}</>}
+                                                            </p>
+                                                            <div className="divider" style={{ margin: '15px 0' }}></div>
+                                                            <div className="row between">
+                                                                <span className="xs dim">★ {agency.ratingAvg.toFixed(1)}</span>
+                                                                <strong className="num">{agency.listingCount}건</strong>
+                                                            </div>
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <h3 style={{ marginTop: 13 }}>
-                                        {agency.name}
-                                        {agency.verified && <span className="xs" style={{ marginLeft: 6, color: 'var(--green)' }}>✓ 인증</span>}
-                                    </h3>
-                                    <p className="xs dim" style={{ marginTop: 6 }}>
-                                        {agency.brokerName} 공인중개사<br />
-                                        {agency.address}
-                                        {agency.hours && <><br />{agency.hours}</>}
-                                    </p>
-                                    <div className="divider" style={{ margin: '15px 0' }}></div>
-                                    <div className="row between">
-                                        <span className="xs dim">★ {agency.ratingAvg.toFixed(1)}</span>
-                                        <strong className="num">{agency.listingCount}건</strong>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                                </div>
+
+                                <button
+                                    className={`agency-carousel-arrow${agencyPages.length <= 1 ? ' is-hidden' : ''}`}
+                                    type="button"
+                                    aria-label="다음 중개사무소 보기"
+                                    onClick={() => setCardPage((current) => Math.min(agencyPages.length - 1, current + 1))}
+                                    disabled={isLastPage}
+                                >
+                                    ›
+                                </button>
+                            </div>
+                        )}
 
                         <div className="section-head" style={{ marginTop: 48 }}>
                             <div>
