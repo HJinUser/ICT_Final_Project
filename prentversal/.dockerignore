@@ -1,0 +1,22 @@
+# 로컬 가상환경·Python 캐시·비밀정보·IDE 설정을 Docker 이미지에서 제외함
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.git
+.pytest_cache
+.idea
+*.iml
+
+# 수집·학습·검증·테스트 코드는 로컬 전용이므로 운영 추론 이미지에서 제외함
+collectors
+training
+checks
+tests
+
+# 재수집 가능한 대용량 원본/발표용 이미지/로그를 이미지에서 제외함
+data/raw
+outputs/*.png
+*.log

@@ -1,0 +1,36 @@
+# FastAPI 서버 Docker 이미지 생성 설정
+
+# FastAPI 컨테이너의 기반이 될 Python 런타임 이미지 지정함
+FROM python:3.11-slim
+
+# 이후 COPY/RUN/CMD가 실행될 컨테이너 내부 기준 폴더 지정함
+WORKDIR /app
+
+# Python 컨테이너 실행 시 사용할 환경변수 설정함
+ENV PYTHONDONTWRITEBYTECODE=1
+# Python 컨테이너 실행 시 사용할 환경변수 설정함
+ENV PYTHONUNBUFFERED=1
+
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY requirements.txt ./requirements.txt
+# 이미지 생성 단계에서 필요한 패키지 설치 명령 실행함
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY app ./app
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY models ./models
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY data/reference ./data/reference
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY data/processed/district_features.csv ./data/processed/district_features.csv
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY data/processed/neighborhood_features.csv ./data/processed/neighborhood_features.csv
+# Docker build context의 필요한 파일/폴더를 이미지 안으로 복사함
+COPY outputs ./outputs
+
+# FastAPI가 사용할 컨테이너 포트를 문서화함
+EXPOSE 8000
+
+# 컨테이너 시작 시 기본으로 실행할 Uvicorn 명령 지정함
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

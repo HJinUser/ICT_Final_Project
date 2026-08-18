@@ -1,0 +1,1 @@
+# 맞춤 추천 요청·응답 Pydantic Schema
