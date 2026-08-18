@@ -550,15 +550,27 @@ public class RecommendationService {
             reasons.add("버스 편함");
         }
 
-        // 고른 태그 가운데 몇 개나 이 매물에 붙어 있는지 비율로 준다.
-        // 태그를 많이 고른 사람이 무조건 높은 점수를 받지 않도록 개수가 아니라 비율로 계산한다.
+        /*
+          고른 태그 가운데 몇 개나 이 매물에 붙어 있는지 비율로 준다.
+          태그를 많이 고른 사람이 무조건 높은 점수를 받지 않도록 개수가 아니라 비율로 계산한다.
+
+          같은 태그가 두 번 세어지지 않도록 매물의 태그를 id 기준으로 추린 뒤에 센다.
+          매물과 태그를 잇는 표에 같은 짝이 여러 줄 들어가면 일치 개수가 실제보다 커지고,
+          그러면 이 항목 하나가 배점(12점)을 넘겨 전체 점수를 왜곡한다.
+          표에 제약을 걸어 두었지만, 자료가 잘못되어도 점수만은 배점을 넘지 않게 여기서도 막는다.
+        */
         if (!preferredTagIds.isEmpty() && property.getTags() != null) {
             long matched = property.getTags().stream()
-                    .filter(tag -> preferredTagIds.contains(tag.getId()))
+                    .map(Tag::getId)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .filter(preferredTagIds::contains)
                     .count();
 
             if (matched > 0) {
-                score += W_TAG * ((double) matched / preferredTagIds.size());
+                double ratio = Math.min(1.0, (double) matched / preferredTagIds.size());
+
+                score += W_TAG * ratio;
                 reasons.add("관심 태그 " + matched + "개 일치");
             }
         }
@@ -582,13 +594,20 @@ public class RecommendationService {
         double score = 0;
 
         // 좋아요를 누른 매물들에 붙어 있던 태그와 겹치는 만큼 점수를 준다.
+        // 위 취향 태그 계산과 같은 이유로 태그 이름을 추린 뒤에 센다.
         if (!likedTagNames.isEmpty() && property.getTags() != null && !property.getTags().isEmpty()) {
-            long matched = property.getTags().stream()
-                    .filter(tag -> likedTagNames.contains(tag.getName()))
+            List<String> tagNames = property.getTags().stream()
+                    .map(Tag::getName)
+                    .filter(name -> name != null && !name.isBlank())
+                    .distinct()
+                    .toList();
+
+            long matched = tagNames.stream()
+                    .filter(likedTagNames::contains)
                     .count();
 
-            if (matched > 0) {
-                score += W_FEEDBACK * Math.min(1.0, (double) matched / property.getTags().size());
+            if (matched > 0 && !tagNames.isEmpty()) {
+                score += W_FEEDBACK * Math.min(1.0, (double) matched / tagNames.size());
                 reasons.add("좋아요한 집과 비슷함");
             }
         }
