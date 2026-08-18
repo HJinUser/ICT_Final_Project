@@ -30,6 +30,8 @@
 .neighborhood-card.hidden-card { opacity: .64; }
 .neighborhood-visual { position: relative; height: 172px; display: grid; place-items: center; background: linear-gradient(135deg, #d8c6e4, #a9c9ba); background-position: center; background-size: cover; color: rgba(255, 255, 255, .9); }
 .neighborhood-visual strong { font-size: 42px; letter-spacing: -.08em; text-shadow: 0 3px 18px rgba(36, 20, 46, .2); }
+/* 카드 안 작은 지도. 시각 영역을 꽉 채우고, 카드 클릭(상세 이동)을 지도가 가로채지 않게 한다. */
+.neighborhood-visual .neighborhood-map { width: 100%; height: 100%; pointer-events: none; }
 .neighborhood-visual .status { position: absolute; top: 14px; right: 14px; }
 .neighborhood-card-body { padding: 21px; }
 .neighborhood-card-body h2 { margin-top: 3px; font-size: 24px; }

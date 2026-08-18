@@ -17,6 +17,7 @@ import com.brentversal.notification.dto.NotificationDto;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,7 +110,9 @@ public class NotificationService {
                         NotificationType.NOTICE,
                         notice.getId(),
                         "[공지] " + notice.getTitle(),
-                        summarize(notice.getContent()),
+                        // 공지 본문은 편집기로 쓴 HTML 이라 그대로 자르면
+                        // "<p>오늘 수업만 끝나면</p><h2>..." 처럼 태그가 알림에 노출된다.
+                        summarize(stripHtml(notice.getContent())),
                         "/notice/" + notice.getId(), // 공지 상세 화면
                         notice.getCreatedAt())));
     }
@@ -189,5 +192,16 @@ public class NotificationService {
     private String summarize(String text){
         if(text == null) return "";
         return text.length() <= 40 ? text : text.substring(0, 40) + "…";
+    }
+
+    // HTML 로 저장된 글에서 사람이 읽을 글자만 남긴다.
+    //
+    // 공지사항은 편집기로 작성해서 본문이 "<p>...</p><h2><strong>..." 형태로 저장된다.
+    // 알림은 한 줄 미리보기라 HTML 을 그려 줄 수 없으므로 태그를 걷어내고 글자만 쓴다.
+    // 직접 잘라내지 않고 jsoup 에 맡기는 이유는 &nbsp; 같은 문자 표기와 줄바꿈·공백까지
+    // 함께 정리해 주기 때문이다. 태그 안에 '>' 가 들어간 경우처럼 직접 자르면 틀리는 경우도 있다.
+    private String stripHtml(String html){
+        if(html == null) return "";
+        return Jsoup.parse(html).text();
     }
 }

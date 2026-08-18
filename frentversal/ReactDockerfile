@@ -7,9 +7,16 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# 소스 전체 복사 후 빌드
+# 소스 전체 복사
 COPY . .
+
+# GitHub Actions에서 전달한 카카오맵 JavaScript 키를
+# Vite 빌드 시 사용할 수 있도록 전달받음
+ARG VITE_KAKAO_MAP_KEY
+
+# React 빌드
 RUN npm run build
+
 
 # ===== 2단계: nginx에 빌드 결과물 담기 =====
 FROM nginx:alpine
