@@ -1,0 +1,86 @@
+prentversal/
+├─ app/                                   # FastAPI 서버 실행 및 API 기능 관련 코드
+│  ├─ __init__.py                         # app 폴더를 Python 패키지로 인식시키는 파일
+│  ├─ main.py                             # FastAPI 앱 생성 및 Router 등록, 서버 진입점
+│  ├─ config.py                           # 모델·데이터·outputs 공통 경로 설정
+│  ├─ routers/                            # FastAPI API 엔드포인트 정의
+│  │  ├─ __init__.py                     # routers 폴더를 Python 패키지로 인식시키는 파일
+│  │  ├─ price.py                        # 시세 예측 API 엔드포인트
+│  │  ├─ recommendation.py               # 맞춤 추천 API 엔드포인트
+│  │  ├─ neighborhood.py                 # 동네 군집·키워드 API 엔드포인트
+│  │  └─ admin_ml.py                     # 관리자 ML 상태 조회 API 엔드포인트
+│  ├─ schemas/                            # FastAPI 요청·응답 데이터 구조 정의
+│  │  ├─ __init__.py                     # schemas 폴더를 Python 패키지로 인식시키는 파일
+│  │  ├─ price.py                        # 시세 예측 요청·응답 Pydantic Schema
+│  │  └─ recommendation.py               # 맞춤 추천 요청·응답 Pydantic Schema
+│  └─ services/                           # FastAPI의 실제 ML·분석 처리 로직
+│     ├─ __init__.py                     # services 폴더를 Python 패키지로 인식시키는 파일
+│     ├─ artifact_store.py               # 학습 모델·CSV·JSON 결과를 로딩하고 캐시
+│     ├─ feature_service.py              # 좌표 기준 역거리·주변시설 Feature 계산
+│     ├─ price_service.py                # SALE/JEONSE/MONTHLY 시세 예측 처리
+│     ├─ recommendation_service.py       # 57/33/10 맞춤 추천 점수 계산
+│     └─ neighborhood_service.py         # 동네 군집·키워드 결과 조회 처리
+│
+├─ collectors/                            # 원본 데이터 수집·정규화 관련 코드
+│  ├─ __init__.py                        # collectors 폴더를 Python 패키지로 인식시키는 파일
+│  ├─ common.py                          # API Retry/Backoff/Resume 등 공통 기능
+│  ├─ transaction_common.py              # 전월세 API 원본 공통 정리 기능
+│  ├─ manual_common.py                   # 수동 다운로드 데이터 정규화 공통 기능
+│  ├─ collect_sale.py                    # 서울 매매 실거래가 API 원본 수집
+│  ├─ make_sale.py                       # 매매 API 원본을 학습 전 구조로 정리
+│  ├─ collect_rent.py                    # 서울 전월세 API 원본 수집
+│  ├─ make_jeonse.py                     # 전월세 원본에서 전세 데이터 분리
+│  ├─ make_monthly.py                    # 전월세 원본에서 월세 데이터 분리
+│  ├─ collect_bus_stops.py               # 서울 버스정류소 위치 데이터 수집
+│  ├─ collect_hospitals.py               # 서울 병원 위치 데이터 수집
+│  ├─ collect_academies.py               # 서울 학원·교습소 데이터 수집
+│  ├─ normalize_subway.py                # 지하철 원본을 공통 좌표 구조로 정규화
+│  ├─ normalize_schools.py               # 학교 원본을 공통 좌표 구조로 정규화
+│  ├─ normalize_parks.py                 # 공원 원본을 공통 좌표 구조로 정규화
+│  ├─ normalize_commercial.py            # 상가 원본에서 생활편의시설 POI 추출
+│  └─ normalize_admin_boundary.py        # 행정동 SHP를 GeoJSON으로 정규화
+│
+├─ training/                              # 로컬 데이터셋 생성·모델 학습·분석 관련 코드
+│  ├─ __init__.py                        # training 폴더를 Python 패키지로 인식시키는 파일
+│  ├─ spatial_common.py                  # 공간조인·시설 집계 공통 기능
+│  ├─ build_neighborhood_features.py     # 행정동 단위 공간 Feature 생성
+│  ├─ build_district_features.py         # 자치구 단위 가격모델 Feature 생성
+│  ├─ price_dataset_common.py            # 가격 학습 데이터 생성 공통 처리
+│  ├─ prepare_sale_dataset.py            # SALE 최종 학습 데이터 생성
+│  ├─ prepare_jeonse_dataset.py          # JEONSE 최종 학습 데이터 생성
+│  ├─ prepare_monthly_dataset.py         # MONTHLY 최종 학습 데이터 생성
+│  ├─ price_training_common.py           # 가격모델 전처리·학습·평가 공통 기능
+│  ├─ train_sale_model.py                # SALE 가격예측 모델 학습·저장
+│  ├─ train_jeonse_model.py              # JEONSE 가격예측 모델 학습·저장
+│  ├─ train_monthly_model.py             # MONTHLY 다중출력 모델 학습·저장
+│  ├─ make_price_metadata.py             # 세 가격모델 성능 metadata JSON 생성
+│  ├─ clustering_common.py               # K-Means·Silhouette·군집명 공통 기능
+│  ├─ cluster_neighborhoods.py           # 행정동 K-Means 군집 결과 생성
+│  ├─ make_cluster_profiles.py           # 군집별 특성·Silhouette metadata 생성
+│  ├─ text_common.py                     # Komoran·TF-IDF 텍스트 분석 공통 기능
+│  ├─ merge_neighborhood_reviews.py      # 설문·서비스 한줄평을 분석용으로 병합
+│  ├─ mine_neighborhood_text.py          # 행정동별 대표 키워드 분석
+│  └─ make_neighborhood_wordcloud.py     # 발표용 한줄평 WordCloud 이미지 생성
+│
+├─ data/                                  # 수집·정규화·학습에 사용하는 데이터 보관
+│  ├─ raw/                               # 수집·다운로드한 가공 전 원본 데이터
+│  │  ├─ api/                            # API에서 받은 실거래가 중간 원본
+│  │  ├─ manual/                         # 브라우저에서 직접 받은 공공데이터 원본
+│  │  │  └─ admin_dong_boundary/         # 행정동 SHP·SHX·DBF·PRJ 파일 보관
+│  │  └─ text/                           # 설문·서비스 한줄평 원본
+│  ├─ reference/                         # 정규화 완료된 시설·경계 기준 데이터
+│  └─ processed/                         # Feature·모델 학습·분석용 가공 데이터
+│
+├─ models/                                # 학습 완료 가격예측 모델과 모델 metadata
+├─ outputs/                               # K-Means·텍스트마이닝 최종 분석 결과
+├─ tests/                                 # FastAPI API와 추천 기능 자동 테스트 코드
+│  ├─ test_health.py                     # FastAPI Health API 정상 동작 테스트
+│  └─ test_recommendation.py             # 맞춤 추천 핵심 규칙 테스트
+│
+├─ .env                                   # 실제 API Key 등 로컬 환경변수
+├─ .env.example                           # 필요한 환경변수 이름을 공유하는 예시 파일
+├─ .gitignore                             # Python·비밀정보·로컬 파일 Git 제외 설정
+├─ requirements.txt                       # AWS FastAPI 추론 서버용 패키지 목록
+├─ requirements-ml.txt                    # 로컬 데이터 수집·전처리·학습용 추가 패키지 목록
+├─ PythonDockerfile                       # FastAPI ML 서버 Docker 이미지 구성
+└─ .dockerignore                          # Docker 이미지에 포함하지 않을 파일 설정

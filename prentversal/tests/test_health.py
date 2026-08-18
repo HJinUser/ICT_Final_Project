@@ -1,0 +1,1 @@
+# FastAPI Health API 정상 동작 테스트

@@ -1,0 +1,1 @@
+# SALE/JEONSE/MONTHLY 시세 예측 처리

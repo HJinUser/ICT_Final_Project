@@ -1,0 +1,497 @@
+======================================================================
+Rentversal Python / 머신러닝 초기 세팅 방법
+======================================================================
+
+GitHub에서 ICT_Final_Project를 처음 Clone하거나 Pull 받은 뒤
+prentversal Python/FastAPI 프로젝트를 실행하기 위한 PC별 초기 세팅 방법임.
+
+Python 버전은 3.11.9 사용.
+
+.venv와 .env는 Git에 올리지 않으므로
+해당 파일이 없으면 아래 순서대로 직접 생성 및 설정함.
+
+명령어 실행은 별도 CMD 창이 아니라 PyCharm 내장 Terminal의 CMD 기준으로 진행함.
+
+
+======================================================================
+1. ICT_Final_Project를 PyCharm으로 열기
+======================================================================
+
+PyCharm에서는 prentversal만 별도 프로젝트로 다시 열지 않고
+모노레포인 ICT_Final_Project를 그대로 엶.
+
+학원 PC의 예시 프로젝트 위치:
+
+D:\ICT_Final_Project
+
+PC마다 Clone 위치는 다를 수 있으므로 D: 경로가 아니어도 됨.
+
+
+======================================================================
+2. PyCharm Terminal을 CMD로 설정
+======================================================================
+
+PyCharm 좌측 상단 File
+→ Settings
+→ 왼쪽 메뉴 Tools
+→ Terminal
+
+오른쪽 설정 화면의 Shell path를 아래처럼 설정함.
+
+cmd.exe
+
+설정 창 오른쪽 하단 Apply → OK 선택.
+
+이미 열려 있는 Terminal이 있으면 닫고 새 Terminal을 엶.
+
+정상 예시:
+
+D:\ICT_Final_Project>
+
+
+======================================================================
+3. Python 3.11.9 설치 확인
+======================================================================
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project
+
+python --version
+
+정상 예:
+
+Python 3.11.9
+
+Python 3.11.9가 설치되어 있지 않으면 먼저 설치함.
+
+
+======================================================================
+4. prentversal 폴더로 이동
+======================================================================
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project
+
+cd prentversal
+
+이동 후 현재 경로가 아래와 같은 형태인지 확인함.
+
+D:\ICT_Final_Project\prentversal
+
+PC마다 Clone 위치가 달라도 핵심은 현재 위치가
+각자 프로젝트의 prentversal 폴더라는 점임.
+
+
+======================================================================
+5. Python 가상환경(.venv) 생성
+======================================================================
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -m venv .venv
+
+생성 결과 예:
+
+ICT_Final_Project
+└─ prentversal
+   └─ .venv
+
+.venv는 각 PC의 로컬 Python 환경이므로 Git에 올리지 않음.
+
+
+======================================================================
+6. PyCharm Python Interpreter를 .venv에 연결
+======================================================================
+
+PyCharm 좌측 상단 File
+→ Settings
+→ Python
+→ Interpreter
+
+오른쪽 Interpreter 설정 화면에서 Add Interpreter
+→ Add Local Interpreter... 선택.
+
+기존 가상환경 사용(Select existing)을 선택하고
+아래 Python 실행 파일을 지정함.
+
+프로젝트경로\prentversal\.venv\Scripts\python.exe
+
+예:
+
+D:\ICT_Final_Project\prentversal\.venv\Scripts\python.exe
+
+설정 완료 후 현재 Interpreter가 반드시
+prentversal\.venv\Scripts\python.exe를 사용하고 있는지 확인함.
+
+PyCharm 버전에 따라 메뉴 이름이나 버튼 위치가 조금 다를 수 있으나
+핵심은 현재 ICT_Final_Project 프로젝트의 Python Interpreter를
+prentversal\.venv의 python.exe로 지정하는 것임.
+
+
+======================================================================
+7. prentversal을 Sources Root로 지정 — 중요
+======================================================================
+
+PyCharm 왼쪽 Project 창에서
+prentversal 폴더 우클릭
+→ Mark Directory as
+→ Sources Root
+
+설정 후 prentversal 폴더가 파란색 계열로 표시되는지 확인함.
+
+이 프로젝트의 Python import 기준점은 prentversal임.
+
+로컬:
+
+D:\ICT_Final_Project\prentversal    ← Python import 기준점
+├─ app
+├─ collectors
+└─ training
+
+Docker:
+
+/app                                ← Python import 기준점
+├─ app
+├─ models
+├─ data
+└─ outputs
+
+따라서 코드는 아래 형태를 사용함.
+
+from collectors.common import ...
+from app.config import ...
+
+from prentversal.collectors... 형태로 바꾸지 않음.
+
+
+======================================================================
+8. PyCharm Terminal의 가상환경 자동 활성화 확인
+======================================================================
+
+PyCharm 좌측 상단 File
+→ Settings
+→ Tools
+→ Terminal
+
+Activate virtualenv가 있으면 체크된 상태로 설정함.
+
+설정 창 오른쪽 하단 Apply → OK 선택 후
+기존 Terminal을 닫고 새 Terminal을 엶.
+
+정상 예:
+
+(.venv) D:\ICT_Final_Project\prentversal>
+
+자동 활성화되지 않으면 아래 명령어로 직접 활성화함.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+.venv\Scripts\activate
+
+활성화 후 다시 확인함.
+
+python --version
+
+정상 결과:
+
+Python 3.11.9
+
+PyCharm Interpreter 설정과 Terminal의 가상환경 활성화는 별개이므로
+둘 다 정상인지 확인함.
+
+
+======================================================================
+9. 필요한 Python 라이브러리 설치
+======================================================================
+
+requirements.txt와 requirements-ml.txt가 있는 상태에서 진행함.
+
+머신러닝 전체 가이드대로 처음부터 프로젝트를 만드는 경우에는
+전체 가이드에서 두 requirements 파일을 먼저 작성한 뒤 이 단계의 명령을 실행함.
+
+먼저 pip 자체를 현재 가상환경 기준으로 최신화함.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -m pip install --upgrade pip
+
+
+----------------------------------------------------------------------
+9-1. FastAPI 서버 실행용 기본 라이브러리
+----------------------------------------------------------------------
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -m pip install -r requirements.txt
+
+
+----------------------------------------------------------------------
+9-2. 데이터 수집/전처리/모델 학습까지 하는 경우
+----------------------------------------------------------------------
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -m pip install -r requirements-ml.txt
+
+requirements-ml.txt가 requirements.txt를 포함하도록 구성하므로
+머신러닝 담당자는 requirements-ml.txt 설치까지 완료하면 됨.
+
+
+======================================================================
+10. KoNLPy 실행을 위한 Java 확인 및 환경변수 설정
+======================================================================
+
+KoNLPy의 Komoran 형태소 분석기는 Java(JVM)를 사용하므로
+텍스트마이닝을 실행할 PC에서는 Java도 확인함.
+
+먼저 현재 Java 확인.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+java -version
+
+정상적으로 Java 버전이 나오면 다음으로 JAVA_HOME을 확인함.
+
+where java
+echo %JAVA_HOME%
+
+JAVA_HOME이 비어 있거나 현재 사용하는 JDK를 가리키지 않으면
+아래 방식으로 JDK 경로를 확인하고 설정함.
+
+
+----------------------------------------------------------------------
+10-1. IntelliJ에서 현재 JDK 경로 확인
+----------------------------------------------------------------------
+
+IntelliJ 좌측 상단 File
+→ Project Structure...
+→ 왼쪽 Platform Settings
+→ SDKs
+→ 현재 사용하는 JDK 선택
+
+JDK home path 확인.
+
+예:
+
+C:\Users\사용자명\.jdks\ms-21.0.10
+
+JDK 종류, 버전, 설치 경로는 PC마다 다를 수 있으므로
+각자 IntelliJ에서 확인한 실제 경로를 사용함.
+
+
+----------------------------------------------------------------------
+10-2. Windows 사용자 환경변수에 JAVA_HOME 추가
+----------------------------------------------------------------------
+
+Windows 검색에서
+환경 변수
+→ 시스템 환경 변수 편집
+→ 환경 변수...
+
+위쪽 사용자 변수 영역에서 새로 만들기 선택.
+
+변수 이름:
+
+JAVA_HOME
+
+변수 값:
+
+IntelliJ에서 확인한 JDK home path
+
+예:
+
+C:\Users\사용자명\.jdks\ms-21.0.10
+
+JAVA_HOME에는 \bin을 붙이지 않음.
+
+그 다음 같은 사용자 변수의 Path 선택
+→ 편집
+→ 새로 만들기
+
+아래 값 추가.
+
+%JAVA_HOME%\bin
+
+열려 있는 환경 변수 창에서 확인을 눌러 저장함.
+
+
+----------------------------------------------------------------------
+10-3. 환경변수 적용 후 다시 확인
+----------------------------------------------------------------------
+
+환경변수를 변경한 경우 이미 실행 중인 PyCharm에는
+바로 반영되지 않을 수 있음.
+
+PyCharm을 완전히 종료한 뒤 다시 실행하고 새 Terminal을 엶.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+java -version
+where java
+echo %JAVA_HOME%
+
+정상 예:
+
+openjdk version "21.0.10"
+
+C:\Users\사용자명\.jdks\ms-21.0.10\bin\java.exe
+
+C:\Users\사용자명\.jdks\ms-21.0.10
+
+Java 환경변수 설정은 해당 PC에서 처음 세팅할 때 한 번만 하면 됨.
+Python 가상환경(.venv)과 Java는 별개이므로
+.venv 활성화 때마다 Java를 다시 설정할 필요 없음.
+
+
+----------------------------------------------------------------------
+10-4. KoNLPy Komoran 실제 실행 확인
+----------------------------------------------------------------------
+
+Java 경로가 정상이어도 Python에서 JVM을 실제로 불러오는 단계에서
+문제가 생길 수 있으므로 Komoran 자체 실행까지 한 번 확인함.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -c "from konlpy.tag import Komoran; print(Komoran().morphs('테스트 문장'))"
+
+리스트 형태 결과가 출력되고 JVM 또는 JPype 관련 오류가 없으면 정상임.
+오류가 발생하면 JAVA_HOME이 현재 JDK를 가리키는지 확인하고
+PyCharm을 완전히 종료한 뒤 다시 실행하여 재확인함.
+
+
+======================================================================
+11. .env 파일 생성
+======================================================================
+
+.env에는 실제 API Key 등의 비밀정보가 들어가므로 Git에서 제외함.
+
+prentversal\.env.example을 복사해서 같은 위치에 .env 생성.
+
+prentversal
+├─ .env
+└─ .env.example
+
+.env.example에 있는 환경변수 이름은 임의로 바꾸지 않고
+.env에 각자 사용할 실제 값을 입력함.
+
+실제 API Key는 GitHub에 Commit/Push하지 않음.
+
+머신러닝 전체 가이드대로 처음부터 프로젝트를 만드는 경우에는
+전체 가이드의 .env.example 작성 단계까지 진행한 뒤 이 단계를 수행함.
+
+
+======================================================================
+12. .idea / *.iml Git 추적 방지
+======================================================================
+
+PyCharm 프로젝트 설정은 PC마다 달라질 수 있으므로
+Git으로 공유하지 않는 방향 사용.
+
+프로젝트 루트 ICT_Final_Project의 .gitignore에 아래 규칙이 있는지 확인하고
+없으면 추가함.
+
+.idea/
+*.iml
+
+이미 Git이 해당 파일을 추적 중인 경우 .gitignore만 추가해도
+기존 추적은 자동으로 끊기지 않음.
+
+따라서 아래 명령을 한 번 실행함.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project
+
+git rm -r --cached --ignore-unmatch .idea
+git rm --cached --ignore-unmatch "*.iml"
+
+--cached를 사용하므로 로컬의 IDE 설정 파일 자체는 삭제하지 않음.
+이미 추적 중이 아니면 --ignore-unmatch로 별다른 오류 없이 넘어감.
+
+
+======================================================================
+13. FastAPI 서버 실행 확인
+======================================================================
+
+이 단계는 머신러닝 전체 가이드에서 app\main.py와 필요한 모델/데이터 산출물을
+만든 뒤 최종적으로 확인하는 단계임.
+
+app\main.py는 FastAPI 객체를 정의하고
+uvicorn이 해당 객체를 불러와 서버를 실행하는 구조 사용.
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+정상 주소:
+
+http://127.0.0.1:8000
+
+Swagger:
+
+http://127.0.0.1:8000/docs
+
+Health:
+
+http://127.0.0.1:8000/health
+
+app\main.py를 일반 Python 파일처럼 직접 실행하는 방식보다
+위 uvicorn 실행을 최종 기준으로 사용함.
+
+
+======================================================================
+14. Git Pull 후 requirements 파일이 변경된 경우
+======================================================================
+
+requirements.txt 또는 requirements-ml.txt가 변경되었다면
+Pull 후 현재 .venv에 다시 설치함.
+
+기본 라이브러리만 필요한 경우:
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -m pip install -r requirements.txt
+
+머신러닝 수집/전처리/학습까지 필요한 경우:
+
+[PyCharm Terminal(CMD)에서 실행함]
+
+현재 위치:
+D:\ICT_Final_Project\prentversal
+
+python -m pip install -r requirements-ml.txt
