@@ -13,6 +13,7 @@ jobs:
   deploy:
     # GitHub Actions Runner 운영체제 지정함
     runs-on: ubuntu-latest
+
     # 앞선 작업 결과 등에 따라 실행 여부 제한함
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -20,24 +21,34 @@ jobs:
     steps:
       # GitHub Actions 화면에 표시될 워크플로우/단계 이름 지정함
       - name: Deploy ML to EC2
+
         # GitHub Marketplace Action을 가져와 사용함
         uses: appleboy/ssh-action@v1.0.3
+
         # 사용하는 Action에 전달할 입력값 정의함
         with:
-          # SSH로 접속할 대상 EC2 주소 지정함
+          # SSH로 접속할 대상 ML EC2 주소 지정함
           host: ${{ secrets.ML_EC2_HOST }}
+
           # EC2 SSH 접속 계정 지정함
           username: ubuntu
-          # SSH 인증에 사용할 private key 전달함
-          key: ${{ secrets.ML_EC2_KEY }}
+
+          # ML EC2도 기존 EC2와 동일한 Key Pair를 사용하므로
+          # 기존 EC2_KEY Secret을 그대로 재사용함
+          key: ${{ secrets.EC2_KEY }}
+
           # EC2에 접속한 뒤 실행할 배포 명령 묶음 정의함
           script: |
             echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
             sudo docker pull "${{ secrets.ML_DOCKER_IMAGE }}"
+
             sudo docker rm -f "${{ secrets.ML_DOCKER_CONTAINER }}" || true
+
             sudo docker run -d \
               --name "${{ secrets.ML_DOCKER_CONTAINER }}" \
               --network host \
               --restart unless-stopped \
               "${{ secrets.ML_DOCKER_IMAGE }}"
+
             sudo docker image prune -f

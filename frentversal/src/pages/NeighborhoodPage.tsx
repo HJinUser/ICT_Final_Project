@@ -13,6 +13,7 @@ import type {
 } from '../types/Neighborhood';
 import type { TagCategoryCode, TagResponse } from '../types/Tag';
 import type { User } from '../types/User';
+import NeighborhoodMap from './components/NeighborhoodMap';
 import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
 import '../styles/NeighborhoodPage.css';
 
@@ -221,7 +222,14 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
                                     className="neighborhood-visual"
                                     style={neighborhood.imageUrl ? { backgroundImage: `url('${neighborhood.imageUrl}')` } : undefined}
                                 >
-                                    {!neighborhood.imageUrl && <strong>{neighborhood.dong.slice(0, 2)}</strong>}
+                                    {/* 관리자가 넣은 대표 사진이 있으면 그것을, 없으면 그 동네 지도를 보여 준다 */}
+                                    {!neighborhood.imageUrl && (
+                                        <NeighborhoodMap
+                                            city={neighborhood.city}
+                                            district={neighborhood.district}
+                                            dong={neighborhood.dong}
+                                        />
+                                    )}
                                     {!neighborhood.visible && <span className="status gray">숨김</span>}
                                 </div>
                                 <div className="neighborhood-card-body">

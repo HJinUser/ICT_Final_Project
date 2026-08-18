@@ -86,8 +86,16 @@ function PreferenceSidebar({ preference, tags, saving, error, onChange, onSave }
         return Number.isFinite(parsed) ? parsed : null;
     };
 
-    // 화면에 보여 줄 태그 목록. 접혀 있으면 앞쪽 몇 개만 보여 준다.
-    const visibleTags = tagExpanded ? tags : tags.slice(0, TAG_PREVIEW_COUNT);
+    /*
+      화면에 보여 줄 태그 목록.
+
+      접혀 있으면 앞쪽 몇 개만 보여 주되, 이미 고른 태그는 뒤쪽에 있어도 함께 보여 준다.
+      고른 태그가 접힘에 가려지면 값은 남아 있는데 화면에는 안 보여서,
+      선택이 사라진 것으로 오해하고 같은 항목을 다시 고르게 된다.
+    */
+    const visibleTags = tagExpanded
+        ? tags
+        : tags.filter((tag, index) => index < TAG_PREVIEW_COUNT || preference.tagIds.includes(tag.id));
 
     // 선호 지역도 같은 방식으로 접어 둔다. 고른 지역은 접혀 있어도 계속 보여 준다.
     const visibleDistricts = districtExpanded
