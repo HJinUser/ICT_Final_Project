@@ -22,3 +22,6 @@ data/raw/
 
 # 로컬 발표 확인용 이미지
 outputs/*.png
+
+.idea/
+*.iml
