@@ -20,6 +20,7 @@ const DUMMY_PROPERTY: PropertyDetail = {
     floor: 12,
     roomCount: 3,
     bathroomCount: 2,
+    buildYear: 2005,
     price: null,
     deposit: 49000,
     monthlyDeposit: null,

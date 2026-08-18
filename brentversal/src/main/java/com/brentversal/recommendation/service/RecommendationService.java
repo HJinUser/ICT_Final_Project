@@ -87,6 +87,17 @@ public class RecommendationService {
     private static final int ITEM_LIMIT = 3;
     private static final int NEIGHBORHOOD_LIMIT = 3;
 
+    /*
+      추천 동네 점수의 항목별 배점이다. 합이 100 이 된다.
+
+      직접 고른 지역을 가장 크게 보고, 그다음이 최근에 찾아본 지역이다.
+      관심 태그와 생활환경은 지역을 고르지 않은 사람에게도 순위를 매길 수 있게 하는 몫이다.
+    */
+    private static final double HOOD_W_DISTRICT = 45;
+    private static final double HOOD_W_RECENT = 25;
+    private static final double HOOD_W_TAG = 20;
+    private static final double HOOD_W_LIFESTYLE = 10;
+
     // 직접 설정한 취향 57점의 항목별 배점이다.
     private static final double W_PROPERTY_TYPE = 7;
     private static final double W_AREA = 6;
@@ -405,7 +416,7 @@ public class RecommendationService {
         RecommendationResponseDto response = new RecommendationResponseDto();
         response.setModelVersion(MODEL_VERSION);
         response.setItems(scored);
-        response.setNeighborhoods(recommendNeighborhoods(preference, recentSearches));
+        response.setNeighborhoods(recommendNeighborhoods(preference, preferredTagIds, recentSearches));
 
         return response;
     }
@@ -881,9 +892,20 @@ public class RecommendationService {
 
       최종적으로는 행정동 군집 분석 결과를 그대로 내보내는 자리다.
       지금은 그 결과가 없어서 지금 있는 동네 자료로 점수를 매긴다.
-      선호 지역에 있는 동네인지, 최근 검색한 지역인지, 관심 태그와 겹치는지를 본다.
+
+      보는 것은 네 가지다.
+          선호 지역에 있는 동네인지
+          최근 검색한 지역인지
+          고른 관심 태그가 동네 태그와 겹치는지
+          생활환경 취향이 동네 태그와 맞는지
+
+      관심 태그를 함께 보는 이유가 있다.
+      취향 초기 설정에서는 키워드만 고르고 지역은 고르지 않는다.
+      그래서 지역과 최근 검색만 보면 방금 가입한 사람에게는 추천할 동네가 하나도 없어서
+      이 영역이 늘 비어 있게 된다. 고른 키워드는 그 사람이 남긴 유일한 단서이므로 함께 본다.
     */
     private List<NeighborhoodRecommendationItemDto> recommendNeighborhoods(UserPreference preference,
+                                                                          Set<Long> preferredTagIds,
                                                                           List<RecentSearch> recentSearches) {
         List<Neighborhood> neighborhoods;
 
@@ -915,18 +937,34 @@ public class RecommendationService {
             List<String> reasons = new ArrayList<>();
 
             if (preferredDistricts.contains(neighborhood.getDistrict())) {
-                score += 60;
+                score += HOOD_W_DISTRICT;
                 reasons.add("선호 지역");
             }
 
             if (recentDistricts.contains(neighborhood.getDistrict())) {
-                score += 30;
+                score += HOOD_W_RECENT;
                 reasons.add("최근 찾아본 지역");
+            }
+
+            // 고른 관심 태그가 이 동네에도 붙어 있는지 본다.
+            // 매물 점수와 같은 이유로 개수가 아니라 비율로 계산한다.
+            if (!preferredTagIds.isEmpty() && neighborhood.getTags() != null) {
+                long matched = neighborhood.getTags().stream()
+                        .map(Tag::getId)
+                        .filter(java.util.Objects::nonNull)
+                        .distinct()
+                        .filter(preferredTagIds::contains)
+                        .count();
+
+                if (matched > 0) {
+                    score += HOOD_W_TAG * Math.min(1.0, (double) matched / preferredTagIds.size());
+                    reasons.add("관심 태그 " + matched + "개 일치");
+                }
             }
 
             // 동네에 붙은 태그가 이 사람의 생활환경 선호와 맞는지 본다.
             if (matchesLifestyle(neighborhood, preference, reasons)) {
-                score += 10;
+                score += HOOD_W_LIFESTYLE;
             }
 
             if (score <= 0) {
