@@ -83,6 +83,35 @@ export function findDistrictBoundary(name: string): DistrictBoundary | null {
     return found ?? null;
 }
 
+// 서울 법정동 경계선 좌표. 동네 카드에서 "이 동네가 여기다" 하고 보여 줄 때 쓴다.
+//
+// 출처는 구 경계와 같은 southkorea/seoul-maps (juso/2015 법정동).
+// 원본 467개를 가공해 393개로 줄였다.
+//   - "당산동1가~6가" 같은 하위 동은 상위 동("당산동") 하나로 합쳤다.
+//   - 같은 이름의 동이 여러 구에 있어(신사동=은평·강남) 구까지 함께 보관한다.
+//   - 좌표는 소수 5자리로 반올림하고 촘촘한 점을 솎아 냈다(카드 썸네일용이라 충분하다).
+import dongBoundaries from '../assets/seoulDongs.json';
+
+export interface DongBoundary {
+    district: string;          // 영등포구
+    name: string;              // 당산동
+    coordinates: number[][][]; // 테두리 목록. 하위 동을 합쳤으므로 여러 조각일 수 있다.
+}
+
+// 구 이름과 동 이름으로 법정동 경계를 찾는다.
+// 동 이름만으로 찾으면 다른 구의 같은 이름 동네가 걸리므로 구를 함께 받는다.
+// "당산동4가"처럼 하위 동으로 물어봐도 합쳐 둔 "당산동" 경계를 돌려준다.
+export function findDongBoundary(district: string, dong: string): DongBoundary | null {
+    if (!district || !dong) return null;
+
+    const base = dong.match(/^(.+동)\d+가$/)?.[1] ?? dong;
+
+    const found = (dongBoundaries as DongBoundary[])
+        .find((item) => district.includes(item.district) && item.name === base);
+
+    return found ?? null;
+}
+
 // 주소 문자열을 지도 좌표로 바꾼다.
 //
 // 회원이 가입할 때 적은 주소로 지도 시작 위치를 맞추는 데 쓴다.

@@ -39,6 +39,10 @@ export interface NeighborhoodCreatePayload {
     district: string;
     dong: string;
     description: string;
-    imageUrl: string;
+
+    // 대표 이미지 주소. 등록 폼에서는 더 이상 입력받지 않는다 —
+    // 동네 카드가 그 동네 지도를 직접 그려 주기 때문이다(NeighborhoodMap 참고).
+    // 서버는 이 값이 없어도 등록을 받아 주고, 값이 있으면 지도 대신 그 사진을 쓴다.
+    imageUrl?: string;
     tagIds: number[];
 }
