@@ -1,0 +1,119 @@
+{
+  "version": "price-20260818-1423",
+  "trained_at": "2026-08-18T14:23:42",
+  "feature_columns": [
+    "property_type",
+    "district_name",
+    "area",
+    "floor",
+    "build_year",
+    "station_density",
+    "bus_stop_density",
+    "hospital_density",
+    "mart_density",
+    "convenience_density",
+    "laundry_density",
+    "school_density",
+    "academy_density",
+    "academy_official_density",
+    "park_density",
+    "park_area_ratio"
+  ],
+  "currency_unit": "만원",
+  "sale": {
+    "selected_model": "HistGradientBoostingRegressor",
+    "trained_at": "2026-08-18T14:21:30",
+    "rows": 296828,
+    "train_rows": 237462,
+    "test_rows": 59366,
+    "metrics": {
+      "mae": 17826.503767820737,
+      "rmse": 31961.1647839198,
+      "r2": 0.8612738123291644
+    },
+    "candidates": {
+      "LinearRegression": {
+        "mae": 32837.76335307945,
+        "rmse": 53999.57162360973,
+        "r2": 0.6040011868296058
+      },
+      "HistGradientBoostingRegressor": {
+        "mae": 17826.503767820737,
+        "rmse": 31961.1647839198,
+        "r2": 0.8612738123291644
+      }
+    }
+  },
+  "jeonse": {
+    "selected_model": "HistGradientBoostingRegressor",
+    "trained_at": "2026-08-18T14:22:04",
+    "rows": 1030258,
+    "train_rows": 824206,
+    "test_rows": 206052,
+    "metrics": {
+      "mae": 6820.431903840621,
+      "rmse": 11041.747617593695,
+      "r2": 0.8945219934471847
+    },
+    "candidates": {
+      "LinearRegression": {
+        "mae": 11664.953351163,
+        "rmse": 19331.9323697808,
+        "r2": 0.6766768395854613
+      },
+      "HistGradientBoostingRegressor": {
+        "mae": 6820.431903840621,
+        "rmse": 11041.747617593695,
+        "r2": 0.8945219934471847
+      }
+    }
+  },
+  "monthly": {
+    "selected_model": "HistGradientBoostingRegressor",
+    "trained_at": "2026-08-18T14:22:59",
+    "rows": 1542624,
+    "train_rows": 1234099,
+    "test_rows": 308525,
+    "metrics": {
+      "deposit": {
+        "mae": 6387.6153990023195,
+        "rmse": 11043.516145437092,
+        "r2": 0.5716655208724192
+      },
+      "rent": {
+        "mae": 30.422573248259088,
+        "rmse": 54.161495954015656,
+        "r2": 0.5633360103431995
+      },
+      "combined_mae": 3209.0189861252893
+    },
+    "candidates": {
+      "LinearRegression": {
+        "deposit": {
+          "mae": 8153.371847187383,
+          "rmse": 13520.958330838088,
+          "r2": 0.35792872252319796
+        },
+        "rent": {
+          "mae": 38.34119021156111,
+          "rmse": 68.69001254534639,
+          "r2": 0.2976505162755576
+        },
+        "combined_mae": 4095.856518699472
+      },
+      "HistGradientBoostingRegressor": {
+        "deposit": {
+          "mae": 6387.6153990023195,
+          "rmse": 11043.516145437092,
+          "r2": 0.5716655208724192
+        },
+        "rent": {
+          "mae": 30.422573248259088,
+          "rmse": 54.161495954015656,
+          "r2": 0.5633360103431995
+        },
+        "combined_mae": 3209.0189861252893
+      }
+    }
+  }
+}
