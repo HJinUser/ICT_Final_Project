@@ -1,0 +1,77 @@
+/*
+  NeighborhoodRecommendCard.css
+
+  추천 동네 카드 한 장의 모양.
+  클래스 이름은 전부 hoodrec- 로 시작한다. 동네 탐색 화면의 카드와 이름이 겹치면
+  CSS 를 읽는 순서에 따라 그쪽 화면이 함께 바뀌기 때문이다.
+*/
+
+.hoodrec-card {
+    padding: 16px 18px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: #fff;
+    transition: .2s;
+}
+
+.hoodrec-card:hover {
+    border-color: #cfc7da;
+}
+
+.hoodrec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.hoodrec-rank {
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: var(--v-pale);
+    color: var(--v-deep);
+    font-size: 11px;
+    font-weight: 550;
+}
+
+.hoodrec-score {
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.hoodrec-name {
+    margin: 12px 0 0;
+    font-size: 17px;
+    letter-spacing: -.02em;
+}
+
+.hoodrec-cluster {
+    margin-top: 5px;
+    font-size: var(--fs-mono);
+    color: var(--v);
+}
+
+.hoodrec-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 12px;
+}
+
+.hoodrec-reasons span {
+    padding: 3px 8px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    font-size: 11px;
+    color: var(--ink-2);
+}
+
+.hoodrec-link {
+    margin-top: 14px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--v);
+    font-size: var(--fs-mono);
+    cursor: pointer;
+}

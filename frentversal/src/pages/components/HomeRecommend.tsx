@@ -13,8 +13,7 @@ import type { NavItem } from '../../types/Navigation';
 import type { User } from '../../types/User';
 import { navigateOrNotice } from '../../utils/navigateOrNotice';
 
-// 맞춤 추천 페이지는 아직 없다. 만들어지면 ready를 true로 바꾼다.
-const RECOMMEND_ITEM: NavItem = { label: '맞춤 추천', path: '/recommend', ready: false };
+const RECOMMEND_ITEM: NavItem = { label: '맞춤 추천', path: '/recommend', ready: true };
 
 interface Props {
     id: string;

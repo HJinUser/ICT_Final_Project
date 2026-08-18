@@ -198,15 +198,11 @@ public class MemberController {
         return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK) ; // 회원 가입 성공 (OK라는건 200번대라는 뜻)
     }
 
-    // 취향 초기 설정 화면에서 "메인으로 가기"를 누르면 호출된다. 로그인이 필요하다(permitUrls에 없음).
-    @PatchMapping("/preference/complete")
-    public ResponseEntity<?> completePreference(Authentication authentication){
-        String email = authentication.getName(); // JwtAuthenticationFilter 가 principal 로 넣어둔 이메일
-        try {
-            memberService.completePreferenceSetup(email);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("general", e.getMessage()));
-        }
-        return ResponseEntity.ok(Map.of("message", "설정이 완료되었습니다."));
-    }
+    // 취향 초기 설정 완료 처리는 여기에 두지 않는다.
+    //
+    // 예전에는 이 자리에 PATCH /member/preference/complete 가 있었는데,
+    // 그것만 직접 부르면 취향을 저장하지도, 샘플 매물을 평가하지도 않고
+    // 완료 상태로 만들 수 있어서 초기설정을 건너뛰는 통로가 됐다.
+    // 지금은 취향 저장과 평가를 모두 마친 뒤에만 부를 수 있도록
+    // POST /recommendation/preference-complete 한 곳에서만 처리한다.
 }

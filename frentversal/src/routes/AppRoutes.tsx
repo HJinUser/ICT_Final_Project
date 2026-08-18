@@ -20,6 +20,7 @@ import AgencyDetailPage from './../pages/AgencyDetailPage';
 import OAuthCallbackPage from './../pages/OAuthCallbackPage';
 import SocialSignupPage from './../pages/SocialSignupPage';
 import PreferenceSetupPage from './../pages/PreferenceSetupPage';
+import RecommendPage from './../pages/RecommendPage';
 import BrokerMyPage from './../pages/BrokerMyPage';
 import MyAgencyPage from './../pages/MyAgencyPage';
 import ConsultationReplyPage from './../pages/ConsultationReplyPage';
@@ -44,9 +45,12 @@ import ListingsPage from "../pages/ListingsPage.tsx";
 interface AppProps {
   user: User | null;
   handleLoginSuccess: (userData: User) => void;
+  // 취향 초기 설정을 마쳤을 때 로그인 정보의 완료 여부를 갱신한다.
+  // 이것을 갱신해야 강제 진입 가드가 더 이상 그 화면으로 되돌리지 않는다.
+  handlePreferenceComplete: () => void;
 }
 
-function App({ user, handleLoginSuccess }: AppProps) {
+function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
   return (
     <Routes>
       <Route path="/" element={<HomePage user={user} />} />
@@ -58,8 +62,14 @@ function App({ user, handleLoginSuccess }: AppProps) {
       <Route path='/oauth/callback' element={<OAuthCallbackPage onLogin={handleLoginSuccess} />} />
       {/* 카카오 최초 로그인 시 추가정보를 받는 페이지 (신규 회원) */}
       <Route path='/oauth/signup' element={<SocialSignupPage />} />
-      {/* 일반 사용자(USER)가 최초 로그인 시 1회 거치는 취향 초기 설정. 지금은 스텁 화면이다. */}
-      <Route path='/preference-setup' element={<PreferenceSetupPage />} />
+      {/* 일반 사용자(USER)가 최초 로그인 시 1회 거치는 취향 초기 설정.
+          취향 저장과 샘플 매물 평가를 모두 마쳐야 완료 처리된다. */}
+      <Route
+        path='/preference-setup'
+        element={<PreferenceSetupPage onComplete={handlePreferenceComplete} />}
+      />
+      {/* 맞춤 추천. 일반 사용자 전용이라 비로그인 사용자는 화면에서 로그인으로 보낸다. */}
+      <Route path='/recommend' element={<RecommendPage user={user} />} />
       <Route path='/property/form' element={<PropertyFormPage />} />
       <Route path='/property/form/:id' element={<PropertyFormPage />} />
       <Route path="/broker/properties" element={<MyPropertiesPage />} />
