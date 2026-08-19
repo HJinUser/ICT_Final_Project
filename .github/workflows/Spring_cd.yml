@@ -49,6 +49,10 @@ jobs:
               -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
               -e NAVER_CLIENT_ID="${{ secrets.NAVER_CLIENT_ID }}" \
               -e NAVER_CLIENT_SECRET="${{ secrets.NAVER_CLIENT_SECRET }}" \
+              -e PASSWORDLESS_AUTH_SERVER_URL="${{ secrets.PASSWORDLESS_AUTH_SERVER_URL }}" \
+              -e PASSWORDLESS_CORP_ID="${{ secrets.PASSWORDLESS_CORP_ID }}" \
+              -e PASSWORDLESS_SERVER_ID="${{ secrets.PASSWORDLESS_SERVER_ID }}" \
+              -e PASSWORDLESS_SERVER_KEY="${{ secrets.PASSWORDLESS_SERVER_KEY }}" \
               "${{ secrets.BACK_DOCKER_IMAGE }}"
             # 5. 안 쓰는 옛날 이미지 정리
             sudo docker image prune -f
