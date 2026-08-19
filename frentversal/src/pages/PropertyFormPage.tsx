@@ -1,28 +1,21 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 // customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/insert" 처럼 그 뒤만 적는다.
 // 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/insert" 가 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
 import AddressInput from "./components/AddressInput";
 import { useNavigate, useParams } from "react-router-dom";
-import type { Property, PropertyResponse, PropertyImageResponse } from "../types/Property";
+import type {
+    Property,
+    PropertyResponse,
+    PropertyImageResponse,
+    PropertyDraftSummary,
+} from "../types/Property";
 import type { TagResponse } from "../types/Tag";
 import "../styles/PropertyFormPage.css"; // 부트스트랩이 못 커버하는 부분만 남긴 커스텀 css
 
 const STEPS = ["기본 정보", "가격·계약", "사진", "태그 선택", "AI 시세 확인", "관리자 승인 요청"];
 
-// 서버는 주소로 좌표를 못 구해도 매물 저장 자체는 성공시키고, latitude/longitude 만 비워서 돌려준다
-// (KakaoGeocodingService 참고 — 좌표를 못 구했다고 등록이 실패하면 안 되기 때문이다).
-// 그런데 좌표가 없으면 지도 검색에 핀이 찍히지 않는다.
-// 아무 말도 안 해 주면 "등록은 됐는데 지도에 왜 안 보이지?" 하고 원인을 찾을 방법이 없어서,
-// 저장 직후에 알려 준다.
-const NO_COORDINATES_NOTICE =
-    "\n\n다만 주소로 위치를 찾지 못해 지도에는 표시되지 않습니다."
-    + "\n주소가 정확한지 확인해 주세요. 주소를 고쳐도 계속 이러면 관리자에게 알려 주세요.";
-
-function hasNoCoordinates(saved: PropertyResponse) {
-    return saved.latitude == null || saved.longitude == null;
-}
 const NUMBER_FIELDS = ["price", "deposit", "monthlyDeposit", "monthlyRent", "area", "floor", "roomCount", "bathroomCount", "maintenanceFee", "buildYear"];
 
 // 비워 둘 수 있는 숫자 칸. 빈 값을 0 으로 바꾸지 않고 값 없음으로 남긴다.
@@ -73,6 +66,7 @@ const toNumber = (value: number | "" | undefined): number | undefined =>
 const initial_value: PropertyFormState = {
     name: "", description: "", type: "ONE_TWO_ROOM", dealType: "JEONSE",
     address: "", area: "", floor: "", roomCount: "", bathroomCount: "",
+    buildYear: new Date().getFullYear(),
     maintenanceFee: "",
     moveInDate: "", contractStatus: "IMMEDIATE",
     detailDescription: "", tagIds: [],
@@ -109,6 +103,30 @@ const mapResponseToProperty = (data: PropertyResponse): PropertyFormState => ({
     tagIds: data.tags.map((tag) => tag.id),
 });
 
+// 서버의 저장 시각을 화면에 YYYY-MM-DD HH:mm 형식으로 표시하는 함수임
+const formatDraftDateTime = (value: string) => {
+    const date = new Date(value);
+
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const hh = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+};
+
+// AI 예측에 사용한 입력값 묶음을 문자열 Key로 만들어 변경 여부 비교에 사용함
+// 현재 화면은 상세주소를 별도 state로 들고 있으므로 실제 서버에 보낼 주소와 같은 형태로 합쳐 비교함
+const makePredictionInputKey = (value: PropertyFormState, detail = "") => JSON.stringify([
+    value.type,
+    value.dealType,
+    [value.address, detail].filter(Boolean).join(" ").trim(),
+    value.area,
+    value.floor,
+    value.buildYear,
+]);
+
 function PropertyFormPage() {
     const navigate = useNavigate();
     // 주소에 :id가 있으면 수정 화면, 없으면 등록 화면이다 (라우트: /property/form, /property/form/:id)
@@ -116,6 +134,12 @@ function PropertyFormPage() {
     const isEditMode = Boolean(id);
 
     const [step, setStep] = useState(0);
+
+    // 화면에서 값이 바뀔 때 다시 렌더링해야 하는 DRAFT 관련 상태값으로 관리함
+    const [draftId, setDraftId] = useState<number | null>(null);
+    const [drafts, setDrafts] = useState<PropertyDraftSummary[]>([]);
+    const [draftSaving, setDraftSaving] = useState(false);
+    const [stepError, setStepError] = useState<string | null>(null);
 
     // property는 등록/수정하고자 하는 매물의 정보 (ProductInsertForm의 product와 같은 역할)
     const [property, setProperty] = useState<PropertyFormState>(initial_value);
@@ -176,23 +200,132 @@ function PropertyFormPage() {
         fetchTags();
     }, []);
 
+    // 5단계 AI 시세예측 결과의 DRAFT ID·예측가격·역거리·모델버전을 보관하는 TypeScript 타입임
     interface AiEstimate {
-        estimatedPrice: number;
-        diffPercent: number;
+        draftId: number;
+        aiPrice: number | null;
+        aiDeposit: number | null;
+        aiMonthlyDeposit: number | null;
+        aiMonthlyRent: number | null;
+        stationDistance: number | null;
+        modelVersion: string;
     }
-    // 서버 조회가 되살아나면 다시 setState 로 채운다. 지금은 항상 비어 있어 안내 문구가 보인다.
-    const [aiEstimate] = useState<AiEstimate | null>(null);
-    const [aiLoading] = useState(false);
 
-    // AI 시세 조회(/ai/estimate)는 아직 서버에 없다.
-    // 없는 주소로 요청하면 콘솔에 오류만 쌓이고 사용자에게는 아무 설명이 없으므로,
-    // 엔드포인트가 생기기 전까지는 요청을 보내지 않고 화면에 안내만 띄운다.
-    //
-    // 서버가 준비되면 이 자리에서 아래 요청을 되살리면 된다.
-    //   const response = await customAxios.get<AiEstimate>('/ai/estimate', {
-    //       params: { address: property.address, area: property.area, dealType: property.dealType },
-    //   });
-    //   setAiEstimate(response.data);
+    const [aiEstimate, setAiEstimate] = useState<AiEstimate | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState<string | null>(null);
+
+    // 로그인한 중개인의 임시저장 목록을 서버에서 조회하는 함수임
+    const loadDrafts = useCallback(async () => {
+        if (isEditMode) return;
+
+        try {
+            const response = await customAxios.get<PropertyDraftSummary[]>(
+                "/property/drafts"
+            );
+            setDrafts(response.data);
+        } catch (error) {
+            console.error("임시저장 목록 조회 실패:", error);
+            setDrafts([]);
+        }
+    }, [isEditMode]);
+
+    useEffect(() => {
+        void loadDrafts();
+    }, [loadDrafts]);
+
+    // 의존값이 바뀔 때만 계산해서 불필요한 재계산을 줄임
+    const predictionInputKey = useMemo(
+        () => makePredictionInputKey(property, addressDetail),
+        [
+            property.type,
+            property.dealType,
+            property.address,
+            property.area,
+            property.floor,
+            property.buildYear,
+            addressDetail,
+        ]
+    );
+
+    const [predictedInputKey, setPredictedInputKey] = useState<string | null>(null);
+
+    // 현재 Wizard 단계의 필수 입력이 충족됐는지 단계별로 확인하는 함수임
+    const isStepComplete = (targetStep: number, value: PropertyFormState) => {
+        switch (targetStep) {
+            case 0:
+                return Boolean(value.name?.trim())
+                    && Boolean(value.address?.trim())
+                    && Number(value.area) > 0
+                    && Number.isFinite(Number(value.floor))
+                    && Number(value.buildYear) > 0
+                    && Number(value.roomCount) >= 1
+                    && Number(value.bathroomCount) >= 1;
+
+            case 1:
+                if (value.dealType === "SALE") {
+                    return Number(value.price) > 0;
+                }
+
+                if (value.dealType === "JEONSE") {
+                    return Number(value.deposit) > 0;
+                }
+
+                return Number(value.monthlyDeposit) > 0
+                    && Number(value.monthlyRent) > 0;
+
+            // 현재 코드 기준 사진/태그/상세설명은 필수 제약이 없으므로 통과.
+            case 2:
+            case 3:
+                return true;
+
+            case 4:
+                return aiEstimate !== null
+                    && predictedInputKey === predictionInputKey;
+
+            default:
+                return true;
+        }
+    };
+
+    // 기존 DRAFT를 불러왔을 때 처음으로 미완성인 단계 위치를 찾는 함수임
+    const findFirstIncompleteStep = (value: PropertyFormState) => {
+        for (let i = 0; i <= 3; i += 1) {
+            if (!isStepComplete(i, value)) {
+                return i;
+            }
+        }
+
+        return 4;
+    };
+
+    // 현재 단계 검증을 통과했을 때만 다음 Wizard 단계로 이동하는 함수임
+    const handleNext = () => {
+        setStepError(null);
+
+        if (!isStepComplete(step, property)) {
+            setStepError("현재 단계의 필수 항목을 모두 입력해 주세요.");
+            return;
+        }
+
+        setStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+    };
+
+    // 현재 Wizard에서 이전 단계로 이동하는 함수임
+    const handlePrev = () => {
+        setStepError(null);
+        setStep((prev) => Math.max(prev - 1, 0));
+    };
+
+    // AI 입력을 바꾸면 화면에 보관 중인 이전 예측 결과를 즉시 무효화함
+    useEffect(() => {
+        if (predictedInputKey !== null
+                && predictedInputKey !== predictionInputKey) {
+            setAiEstimate(null);
+            setAiError(null);
+            setPredictedInputKey(null);
+        }
+    }, [predictionInputKey, predictedInputKey]);
 
     // input, textarea, select 공통 변경 핸들러.
     // 숫자 필드는 빈 문자열이면 그대로 두고(다시 0으로 채우지 않는다), 값이 있을 때만 Number로 바꾼다.
@@ -268,92 +401,267 @@ function PropertyFormPage() {
         setExistingImages((prev) => prev.filter((image) => image.id !== imageId));
     };
 
-    // 등록/수정 제출. 백엔드가 멀티파트(consumes = MULTIPART_FORM_DATA_VALUE)로 받으므로
-    // "data" 파트엔 JSON, "files" 파트엔 실제 사진 파일들을 담아 FormData로 함께 보낸다.
-    // Content-Type 헤더는 직접 지정하지 않는다 — axios가 FormData를 보고 boundary까지 포함해 자동으로 설정해준다.
-    const handleSubmit = async () => {
-        /*
-          건축 연도는 비워 둘 수 있지만, 적었다면 있을 수 있는 연도여야 한다.
-          서버도 같은 범위를 확인하지만, 여기서 먼저 막으면 사진까지 올렸다가 되돌아오는 일을 줄일 수 있다.
-        */
-        if (property.buildYear != null) {
-            const year = property.buildYear;
+    // 현재 폼 상태를 Spring Property 요청 형태로 변환함
+    // 상세주소는 현재 화면 구조에 맞게 도로명 주소 뒤에 합치고 숫자 입력도 실제 number로 바꿈
+    const buildPayload = (includeKeepImageIds: boolean): Property => {
+        const address = [property.address, addressDetail].filter(Boolean).join(" ");
 
-            if (!Number.isInteger(year) || year < MIN_BUILD_YEAR || year > MAX_BUILD_YEAR) {
-                setErrors({
-                    buildYear: `건축 연도는 ${MIN_BUILD_YEAR}년부터 ${MAX_BUILD_YEAR}년 사이로 입력해 주세요.`,
-                    general: `건축 연도는 ${MIN_BUILD_YEAR}년부터 ${MAX_BUILD_YEAR}년 사이로 입력해 주세요.`,
-                });
-                return;
+        return {
+            ...property,
+            address,
+            area: toNumber(property.area) ?? 0,
+            floor: toNumber(property.floor) ?? 0,
+            roomCount: toNumber(property.roomCount) ?? 0,
+            bathroomCount: toNumber(property.bathroomCount) ?? 0,
+            maintenanceFee: toNumber(property.maintenanceFee) ?? 0,
+            price: toNumber(property.price),
+            deposit: toNumber(property.deposit),
+            monthlyDeposit: toNumber(property.monthlyDeposit),
+            monthlyRent: toNumber(property.monthlyRent),
+            ...(includeKeepImageIds
+                ? { keepImageIds: existingImages.map((image) => image.id) }
+                : {}),
+        };
+    };
+
+    // 현재 폼과 파일을 multipart FormData로 묶어 DRAFT API에 저장하는 함수임
+    const saveDraft = async (showMessage: boolean) => {
+        const payload = buildPayload(true);
+
+        const formData = new FormData();
+        formData.append(
+            "data",
+            new Blob([JSON.stringify(payload)], { type: "application/json" })
+        );
+        photoFiles.forEach((file) => formData.append("files", file));
+
+        const response = await customAxios.post<PropertyResponse>(
+            "/property/draft",
+            formData,
+            {
+                params: {
+                    draftId: draftId ?? undefined,
+                },
             }
+        );
+
+        setDraftId(response.data.id);
+        setProperty(mapResponseToProperty(response.data));
+        // 서버에는 상세주소가 합쳐진 한 문자열로 저장되므로 다시 저장할 때 중복으로 붙지 않게 비움
+        setAddressDetail("");
+        setExistingImages(response.data.images);
+        setPhotoFiles([]);
+
+        if (showMessage) {
+            alert("임시 저장했습니다.");
+        }
+
+        await loadDrafts();
+        return response.data;
+    };
+
+    // 사용자가 임시저장 버튼을 눌렀을 때 저장 요청과 안내를 처리하는 함수임
+    const handleDraftSave = async () => {
+        if (isEditMode) {
+            return;
         }
 
         try {
-            // 수정 화면에서는 "지금까지 남아 있는 기존 사진 id 목록"을 같이 보내야
-            // 백엔드가 그 목록에 없는 기존 사진을 지운다 (PropertyService.update 참고)
-            // 상세주소는 아직 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 한 덩어리로 보낸다.
-            const address = [property.address, addressDetail].filter(Boolean).join(' ');
-
-            // PropertyFormState -> Property. 편집 중 빈 문자열이었던 숫자 칸을 여기서만 실제 숫자로 바꾼다.
-            const payload: Property = {
-                ...property,
-                address,
-                area: toNumber(property.area) ?? 0,
-                floor: toNumber(property.floor) ?? 0,
-                roomCount: toNumber(property.roomCount) ?? 0,
-                bathroomCount: toNumber(property.bathroomCount) ?? 0,
-                maintenanceFee: toNumber(property.maintenanceFee) ?? 0,
-                price: toNumber(property.price),
-                deposit: toNumber(property.deposit),
-                monthlyDeposit: toNumber(property.monthlyDeposit),
-                monthlyRent: toNumber(property.monthlyRent),
-                ...(isEditMode ? { keepImageIds: existingImages.map((image) => image.id) } : {}),
-            };
-
-            const formData = new FormData();
-            formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }));
-            photoFiles.forEach((file) => formData.append("files", file));
-
-            if (isEditMode) {
-                const response = await customAxios.put<PropertyResponse>(`/property/${id}`, formData);
-                alert("매물 정보를 수정했습니다."
-                    + (hasNoCoordinates(response.data) ? NO_COORDINATES_NOTICE : ""));
-                navigate(`/property/${id}`);
-            } else {
-                const response = await customAxios.post<PropertyResponse>(`/property/insert`, formData);
-                alert("관리자 승인 요청을 보냈습니다."
-                    + (hasNoCoordinates(response.data) ? NO_COORDINATES_NOTICE : ""));
-                navigate("/broker/agency"); // 방금 등록한 매물이 "내 중개사무소 > 요약"에 바로 보인다
-            }
-        } catch (error: unknown) {
-            if (axios.isAxiosError(error) && error.response) {
-                // 서버가 돌려주는 400 응답은 두 가지 모양이다.
-                //   ① 필드별 검증 오류 : { "name": "매물명은 필수...", "roomCount": "..." }  (본문이 곧 오류 목록)
-                //   ② 그 외 오류      : { "message": "등록된 중개사무소가 없습니다." }
-                // ①을 data.errors 안에서 찾으면 아무것도 못 찾아 원인이 화면에 안 보인다.
-                const { message, ...fieldErrors } = error.response.data ?? {};
-
-                // 입력 칸이 없는 필드(status 등)의 오류도 묻히지 않도록 상단에 함께 보여 준다
-                const detail = Object.entries(fieldErrors)
-                    .map(([field, text]) => `${field}: ${text}`)
-                    .join(" / ");
-
-                setErrors({
-                    ...fieldErrors,
-                    general: message || detail || "매물 저장 중 오류가 발생했습니다.",
-                });
-            } else {
-                setErrors({ general: "서버와의 통신 중 오류가 발생했습니다." });
-            }
+            setDraftSaving(true);
+            await saveDraft(true);
+        } catch (error) {
+            console.error(error);
+            alert("임시 저장에 실패했습니다.");
+        } finally {
+            setDraftSaving(false);
         }
     };
 
-    const handleDraftSave = async () => {
-        // 임시 저장(/property/draft)은 아직 서버에 없다.
-        // 없는 주소로 보내면 오류만 나고 저장된 것처럼 알림이 뜨므로, 준비 중임을 알린다.
-        // 엔드포인트가 생기면 아래 한 줄을 되살리면 된다.
-        //   await customAxios.post('/property/draft', property);
-        alert("임시 저장은 준비 중입니다.");
+    // 선택한 임시저장 매물을 불러와 폼을 복원하고 이어 작성 위치로 이동하는 함수임
+    const handleContinueDraft = async (targetDraftId: number) => {
+        try {
+            const response = await customAxios.get<PropertyResponse>(
+                `/property/draft/${targetDraftId}`
+            );
+
+            const restored = mapResponseToProperty(response.data);
+
+            setDraftId(response.data.id);
+            setProperty(restored);
+            setAddressDetail("");
+            setExistingImages(response.data.images);
+            setPhotoFiles([]);
+
+            const restoredAi: AiEstimate | null = (() => {
+                const hasAi = response.data.aiPrice !== null
+                    || response.data.aiDeposit !== null
+                    || response.data.aiMonthlyDeposit !== null
+                    || response.data.aiMonthlyRent !== null;
+
+                if (!hasAi) return null;
+
+                return {
+                    draftId: response.data.id,
+                    aiPrice: response.data.aiPrice,
+                    aiDeposit: response.data.aiDeposit,
+                    aiMonthlyDeposit: response.data.aiMonthlyDeposit,
+                    aiMonthlyRent: response.data.aiMonthlyRent,
+                    stationDistance: response.data.stationDistance,
+                    modelVersion: "saved",
+                };
+            })();
+
+            setAiEstimate(restoredAi);
+            setAiError(null);
+
+            if (restoredAi) {
+                setPredictedInputKey(makePredictionInputKey(restored));
+                setStep(5);
+            } else {
+                setPredictedInputKey(null);
+                setStep(findFirstIncompleteStep(restored));
+            }
+        } catch (error) {
+            console.error(error);
+            alert("임시 저장된 매물을 불러오지 못했습니다.");
+            await loadDrafts();
+        }
+    };
+
+    // 현재 입력을 먼저 DRAFT로 저장한 뒤 AI 시세예측 API를 호출하는 함수임
+    const handleAiPredict = async () => {
+        try {
+            if (isEditMode) {
+                setAiLoading(true);
+                setAiError(null);
+
+                const response = await customAxios.post<AiEstimate>(
+                    `/property/${id}/edit-ai-price`,
+                    buildPayload(false),
+                    {
+                        params: {
+                            draftId: draftId ?? undefined,
+                        },
+                    }
+                );
+
+                setDraftId(response.data.draftId);
+                setAiEstimate(response.data);
+                setPredictedInputKey(predictionInputKey);
+                return;
+            }
+
+            setAiLoading(true);
+            setAiError(null);
+
+            // 현재 화면을 먼저 같은 DRAFT에 저장함
+            const savedDraft = await saveDraft(false);
+
+            const response = await customAxios.post<AiEstimate>(
+                `/property/draft/${savedDraft.id}/ai-price`
+            );
+
+            setAiEstimate(response.data);
+            // saveDraft 응답의 주소/숫자값 기준으로 AI 입력 Key를 맞춰 둠
+            setPredictedInputKey(
+                makePredictionInputKey(mapResponseToProperty(savedDraft))
+            );
+            await loadDrafts();
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                setAiError(
+                    error.response?.data?.message
+                    ?? "AI 시세 예측에 실패했습니다."
+                );
+            } else {
+                setAiError("AI 시세 예측에 실패했습니다.");
+            }
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    // 최종 입력을 저장하고 DRAFT를 관리자 승인대기 PENDING으로 제출하는 함수임
+    const handleSubmit = async () => {
+        try {
+            if (isEditMode) {
+                if (!draftId || !aiEstimate
+                        || predictedInputKey !== predictionInputKey) {
+                    setStep(4);
+                    setAiError("수정 완료 전에 현재 입력 정보로 AI 시세 예측을 실행해 주세요.");
+                    return;
+                }
+
+                const payload = buildPayload(true);
+
+                const formData = new FormData();
+                formData.append(
+                    "data",
+                    new Blob([JSON.stringify(payload)], { type: "application/json" })
+                );
+                photoFiles.forEach((file) => formData.append("files", file));
+
+                await customAxios.put(`/property/${id}`, formData, {
+                    params: { draftId },
+                });
+
+                alert("매물 정보를 수정했습니다. 관리자 재승인을 기다려 주세요.");
+                navigate(`/property/${id}`);
+                return;
+            }
+
+            // 전체 1~4단계 검증
+            for (let i = 0; i <= 3; i += 1) {
+                if (!isStepComplete(i, property)) {
+                    setStep(i);
+                    setStepError("필수 항목을 모두 입력해 주세요.");
+                    return;
+                }
+            }
+
+            if (!aiEstimate || predictedInputKey !== predictionInputKey) {
+                setStep(4);
+                setAiError("관리자 승인 요청 전에 현재 입력 정보로 AI 시세 예측을 실행해 주세요.");
+                return;
+            }
+
+            // 5단계 이후 바뀐 일반 필드까지 서버 DRAFT에 마지막으로 저장함
+            const savedDraft = await saveDraft(false);
+
+            // AI 입력이 달라져 서버가 AI 값을 무효화했다면 제출 금지
+            const hasSavedAi = property.dealType === "SALE"
+                ? savedDraft.aiPrice !== null
+                : property.dealType === "JEONSE"
+                    ? savedDraft.aiDeposit !== null
+                    : savedDraft.aiMonthlyDeposit !== null
+                        && savedDraft.aiMonthlyRent !== null;
+
+            if (!hasSavedAi) {
+                setAiEstimate(null);
+                setPredictedInputKey(null);
+                setStep(4);
+                setAiError("AI 시세 예측에 사용한 입력값이 변경되었습니다. 다시 예측해 주세요.");
+                return;
+            }
+
+            await customAxios.post("/property/insert", null, {
+                params: { draftId: savedDraft.id },
+            });
+
+            alert("관리자 승인 요청을 보냈습니다.");
+            navigate("/broker/agency");
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                setErrors({
+                    general: error.response?.data?.message
+                        ?? "관리자 승인 요청 중 오류가 발생했습니다.",
+                });
+            } else {
+                setErrors({
+                    general: "서버와의 통신 중 오류가 발생했습니다.",
+                });
+            }
+        }
     };
 
     return (
@@ -376,6 +684,41 @@ function PropertyFormPage() {
 
                 <div className="app-layout">
                     <aside className="sidebar">
+                        {/* 신규 등록 모드에서만 왼쪽 위에 임시저장 DRAFT 목록을 표시함 */}
+                        {!isEditMode && (
+                            <div className="draft-list-box mb-3">
+                                <div className="fw-bold mb-2">임시 저장된 매물</div>
+
+                                {drafts.length === 0 ? (
+                                    <div className="text-muted small">
+                                        임시 저장된 매물이 없습니다.
+                                    </div>
+                                ) : (
+                                    drafts.map((draft) => (
+                                        <div key={draft.id} className="draft-list-row">
+                                            <div className="draft-list-text text-truncate">
+                                                <span className="fw-semibold">
+                                                    {draft.name?.trim() || "제목 없는 임시저장"}
+                                                </span>
+                                                <span className="text-muted">
+                                                    {" · "}{formatDraftDateTime(draft.updatedAt)}
+                                                </span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                className="ghost-btn"
+                                                style={{ minHeight: "auto", padding: "4px 10px", fontSize: 11 }}
+                                                onClick={() => handleContinueDraft(draft.id)}
+                                            >
+                                                이어 작성
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
+
                         <div className="side-title">등록 순서</div>
                         <div className="side-nav">
                             {STEPS.map((label, i) => (
@@ -383,7 +726,6 @@ function PropertyFormPage() {
                                     key={i}
                                     type="button"
                                     className={i === step ? "on" : ""}
-                                    onClick={() => setStep(i)}
                                 >
                                     {i + 1}. {label}
                                 </button>
@@ -491,7 +833,7 @@ function PropertyFormPage() {
                                         />
                                         {errors.buildYear && <span className="field-error">{errors.buildYear}</span>}
                                         <div className="xs dim" style={{ marginTop: 6 }}>
-                                            맞춤 추천에서 신축 여부를 판단할 때 씁니다. 모르면 비워 두세요.
+                                            매물의 실제 건축연도를 입력해 주세요. 임시 저장 시에는 비워둘 수 있지만, 최종 승인 요청 전에는 반드시 입력해야 합니다.
                                         </div>
                                     </div>
                                 </div>
@@ -669,20 +1011,40 @@ function PropertyFormPage() {
                         {step === 4 && (
                             <section className="card ai-band">
                                 <h2>5. AI 시세 확인</h2>
-                                {aiLoading && <p className="xs dim" style={{ marginTop: 10 }}>불러오는 중…</p>}
-                                {!aiEstimate && !aiLoading && (
-                                    <p className="dim" style={{ marginTop: 10 }}>
-                                        AI 시세 예측은 준비 중입니다. 이 단계는 건너뛰고 등록을 진행하셔도 됩니다.
-                                    </p>
-                                )}
+
+                                {aiError && <div className="form-alert" style={{ marginTop: 10 }}>{aiError}</div>}
+
+                                <button
+                                    type="button"
+                                    className="solid-btn"
+                                    onClick={handleAiPredict}
+                                    disabled={aiLoading}
+                                    style={{ marginTop: 12 }}
+                                >
+                                    {aiLoading ? "AI 시세 예측 중..." : "AI 시세 예측"}
+                                </button>
+
                                 {aiEstimate && (
-                                    <div style={{ marginTop: 10 }}>
-                                        <strong>AI 예상 시세 {aiEstimate.estimatedPrice.toLocaleString()}만 원</strong>
-                                        <p className="dim" style={{ marginTop: 4 }}>
-                                            입력 가격 {(toNumber(property.price) ?? 0).toLocaleString()}만 원은 예상 시세보다 약{" "}
-                                            {Math.abs(aiEstimate.diffPercent)}%{" "}
-                                            {aiEstimate.diffPercent < 0 ? "낮습니다" : "높습니다"}.
-                                        </p>
+                                    <div style={{ marginTop: 14 }}>
+                                        {property.dealType === "SALE" && (
+                                            <strong>
+                                                AI 예상 매매가 {aiEstimate.aiPrice?.toLocaleString()}만 원
+                                            </strong>
+                                        )}
+
+                                        {property.dealType === "JEONSE" && (
+                                            <strong>
+                                                AI 예상 전세가 {aiEstimate.aiDeposit?.toLocaleString()}만 원
+                                            </strong>
+                                        )}
+
+                                        {property.dealType === "MONTHLY" && (
+                                            <strong>
+                                                AI 예상 월세 보증금 {aiEstimate.aiMonthlyDeposit?.toLocaleString()}만 원
+                                                {" / "}
+                                                월세 {aiEstimate.aiMonthlyRent?.toLocaleString()}만 원
+                                            </strong>
+                                        )}
                                     </div>
                                 )}
                             </section>
@@ -698,11 +1060,48 @@ function PropertyFormPage() {
                             </section>
                         )}
 
-                        <div className="row" style={{ justifyContent: "flex-end", gap: 8 }}>
-                            <button type="button" className="ghost-btn" onClick={handleDraftSave}>임시 저장</button>
-                            <button type="button" className="solid-btn" onClick={handleSubmit}>
-                                {isEditMode ? "수정 완료" : "관리자 승인 요청"}
-                            </button>
+                        {stepError && (
+                            <div className="form-alert" style={{ marginTop: 12 }}>
+                                {stepError}
+                            </div>
+                        )}
+
+                        <div
+                            className="row"
+                            style={{ justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 12 }}
+                        >
+                            <div>
+                                {!isEditMode && (
+                                    <button
+                                        type="button"
+                                        className="ghost-btn"
+                                        onClick={handleDraftSave}
+                                        disabled={draftSaving}
+                                    >
+                                        {draftSaving ? "저장 중..." : "임시 저장"}
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="row" style={{ gap: 8 }}>
+                                {step > 0 && (
+                                    <button type="button" className="ghost-btn" onClick={handlePrev}>
+                                        이전
+                                    </button>
+                                )}
+
+                                {step < 5 && (
+                                    <button type="button" className="solid-btn" onClick={handleNext}>
+                                        다음
+                                    </button>
+                                )}
+
+                                {step === 5 && (
+                                    <button type="button" className="solid-btn" onClick={handleSubmit}>
+                                        관리자 승인 요청
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

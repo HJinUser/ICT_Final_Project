@@ -266,6 +266,27 @@
     cursor: not-allowed;
 }
 
+/* ── 비밀번호 찾기 링크 ─────────────────────────────────
+   로그인 버튼 바로 아래에 붙는 작은 글자 링크다.
+   이름에 login- 접두어를 붙인 이유는 .auth-foot 같은 공통 이름을 재정의하면
+   SignupPage.css / FindPasswordPage.css 와 로드 순서에 따라 한쪽이 조용히 죽기 때문이다. */
+.login-findpw {
+    margin-top: 12px;
+    text-align: right;
+}
+
+.login-findpw button {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+    transition: .2s;
+}
+
+.login-findpw button:hover { color: var(--v); }
+
 /* ── 구분선 ("또는 소셜 로그인") ────────────────────── */
 .auth-or {
     display: flex;

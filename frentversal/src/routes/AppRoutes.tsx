@@ -5,6 +5,7 @@ import LoginPage from './../pages/LoginPage';
 import HomePage from './../pages/HomePage';
 import PropertyFormPage from './../pages/PropertyFormPage';
 import PasswordlessRegisterPage from '../pages/PasswordlessRegisterPage';
+import FindPasswordPage from '../pages/FindPasswordPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
 import ComparePage from './../pages/ComparePage';
@@ -58,6 +59,9 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
       <Route path='/member/signup' element={<SignupPage />} />
       <Route path='/member/passwordless' element={<PasswordlessRegisterPage />} />
       <Route path='/member/login' element={<LoginPage onLogin={handleLoginSuccess} />} />
+      {/* 비밀번호 찾기. 이메일 인증번호로 본인을 확인한 뒤 새 비밀번호를 설정한다.
+          단계가 나뉘어 있지만 중간 단계를 주소로 직접 열 수 없도록 한 페이지에서 처리한다. */}
+      <Route path='/member/find-password' element={<FindPasswordPage />} />
       {/* 카카오 로그인 성공 후 백엔드가 돌려보내는 도착 지점 (기존 회원) */}
       <Route path='/oauth/callback' element={<OAuthCallbackPage onLogin={handleLoginSuccess} />} />
       {/* 카카오 최초 로그인 시 추가정보를 받는 페이지 (신규 회원) */}

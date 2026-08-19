@@ -32,6 +32,7 @@ export interface PropertyDetail extends PropertyResponse {
 
 // 화면에 보여줄 거래상태 한글 라벨. PropertyStatusCode(백엔드 enum)와 1:1 매칭
 export const PROPERTY_STATUS_LABELS: Record<PropertyStatusCode, string> = {
+    DRAFT: "임시저장",
     PENDING: "승인대기",
     ACTIVE: "게시중",
     IN_PROGRESS: "거래진행중",

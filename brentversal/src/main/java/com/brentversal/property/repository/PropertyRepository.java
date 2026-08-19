@@ -146,4 +146,29 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     Double findAverageJeonseDepositByNeighborhoodId(@Param("neighborhoodId") Long neighborhoodId,
                                                       @Param("status") PropertyStatus status);
 
+    // 매물 등록 페이지 왼쪽 위의 사용자 임시저장 목록.
+    // visible=true인 DRAFT만 사용자가 직접 만든 신규 등록 DRAFT로 사용함
+    List<Property> findByAgencyIdAndStatusAndVisibleTrueOrderByUpdatedAtDesc(
+            Long agencyId,
+            PropertyStatus status
+    );
+
+    // 기존 "내 매물"에서는 DRAFT를 제외함
+    Page<Property> findByAgencyIdAndStatusNotOrderByCreatedAtDesc(
+            Long agencyId,
+            PropertyStatus status,
+            Pageable pageable
+    );
+
+    // 중개인 대시보드의 "등록 매물 수"에서도 DRAFT를 제외함
+    long countByAgencyIdAndStatusNot(
+            Long agencyId,
+            PropertyStatus status
+    );
+
+    // 관리자 ALL 목록에서도 DRAFT를 제외함
+    Page<Property> findByStatusNotOrderByCreatedAtDesc(
+            PropertyStatus status,
+            Pageable pageable
+    );
 }

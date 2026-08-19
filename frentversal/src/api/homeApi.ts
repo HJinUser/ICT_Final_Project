@@ -125,30 +125,12 @@ const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'ne
 const WEEKLY_CARD_LIMIT = 4;
 const HOME_NEIGHBORHOOD_LIMIT = 3;
 
-// 시세 막대(home-gauge)에서 이 매물이 찍히는 위치(0~100). 50이 동네 평균이고,
-// 예상 시세보다 많이 쌀수록(priceDiff가 클수록) 왼쪽(작은 값)으로 옮긴다.
-// 화면정의서에 정해진 척도가 없어서, 기존 예시 데이터의 비율(할인율 1%당 대략 2씩 이동)을 따랐다.
-function toGaugePosition(priceDiff: number, aiPrice: number): number {
-    if (aiPrice <= 0) return 50;
-    const discountRatio = priceDiff / aiPrice;
-    return Math.min(95, Math.max(5, 50 - discountRatio * 200));
-}
-
 function toWeeklyProperty(item: PropertySearchItem): WeeklyProperty {
     const summary = [
         [item.gu, item.dong].filter(Boolean).join(' '),
         item.areaLabel,
         item.floor ? `${item.floor}층` : null,
     ].filter(Boolean).join(' · ');
-
-    const diff = item.priceDiff ?? 0;
-    const diffLabel = item.aiPrice == null
-        ? '시세 정보 없음'
-        : diff === 0
-            ? '동네 시세와 비슷'
-            : diff > 0
-                ? `시세보다 ${formatManwon(diff)} 낮음`
-                : `시세보다 ${formatManwon(Math.abs(diff))} 높음`;
 
     return {
         id: item.id,
@@ -157,10 +139,8 @@ function toWeeklyProperty(item: PropertySearchItem): WeeklyProperty {
         summary,
         // 최근접 지하철역 "이름"은 백엔드가 아직 안 내려준다(거리만 있고 역 이름이 없다) — 비워 둔다.
         transit: '',
-        marketPriceLabel: item.aiPrice == null ? 'AI 시세 정보 없음' : `AI 예상 시세 ${formatManwon(item.aiPrice)}`,
-        diffLabel,
-        level: item.priceLevel ?? 'MID',
-        gaugePosition: item.aiPrice == null ? 50 : toGaugePosition(diff, item.aiPrice),
+        // 이 함수는 이미 priceEvaluation === 'UNDERVALUED'로 걸러진 매물만 받는다(getHomeData 참고).
+        priceEvaluation: 'UNDERVALUED',
     };
 }
 
@@ -190,11 +170,10 @@ export async function getHomeData(): Promise<HomeData> {
         getNeighborhoods({ sort: 'POPULAR' }),
     ]);
 
-    // "시세보다 싸게 나온 집" = AI 예상 시세보다 호가가 낮게 평가된(LOW) 매물.
-    // 할인 폭이 큰 것부터 보여 준다.
+    // "시세보다 싸게 나온 집" = 관리자가 저평가(UNDERVALUED)로 평가한 매물.
+    // searchProperties를 이미 LATEST 정렬로 불렀으므로 그 순서를 그대로 쓴다.
     const lowItems = propertyResult.content
-        .filter((item) => item.priceLevel === 'LOW')
-        .sort((a, b) => (b.priceDiff ?? 0) - (a.priceDiff ?? 0));
+        .filter((item) => item.priceEvaluation === 'UNDERVALUED');
 
     return {
         ...MOCK_HOME_DATA,

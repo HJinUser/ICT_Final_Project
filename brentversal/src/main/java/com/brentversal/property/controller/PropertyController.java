@@ -2,11 +2,14 @@ package com.brentversal.property.controller;
 
 import com.brentversal.favorite.service.FavoriteService;
 import com.brentversal.property.constant.PropertyStatus;
+import com.brentversal.property.dto.AiPricePreviewResponseDto;
+import com.brentversal.property.dto.PropertyDraftSummaryDto;
 import com.brentversal.property.dto.PropertyResponseDto;
 import com.brentversal.property.dto.PropertySearchCondition;
 import com.brentversal.property.dto.PropertySearchDto;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.service.PropertyService;
+import com.brentversal.property.validation.PropertyFinalValidation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,34 +37,112 @@ public class PropertyController {
     private final PropertyService propertyService;
     private final FavoriteService favoriteService;
 
-    // 매물 등록
-    //
-    // Principal : 시큐리티가 넣어 주는 로그인 사용자 정보(JwtAuthenticationFilter 가 이메일을 담아 둔다).
-    // 어느 사무소의 매물인지는 이 값으로 서버가 정한다. 요청 본문의 agency 는 쓰지 않는다.
-    @PostMapping(value = "/insert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> insert(@Valid @RequestPart("data") Property bean,
-                                    BindingResult bindingResult,
-                                    @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                                    Principal principal){
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            for (FieldError error : bindingResult.getFieldErrors()) {
-                errors.put(error.getField(), error.getDefaultMessage());
-            }
-            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-        }
+    // DRAFT ID를 받아 최종 검증 후 해당 매물을 관리자 승인대기 PENDING으로 제출하는 Controller 메서드임
+    @PostMapping("/insert")
+    public ResponseEntity<?> insert(
+            @RequestParam Long draftId,
+            Principal principal) {
 
-        // 거래유형에 맞는 가격 필드가 채워졌는지 확인 (Bean Validation만으로는 표현 못 하는 조건)
-        Map<String, String> pricingErrors = propertyService.validatePricingFields(bean);
-        if (!pricingErrors.isEmpty()) {
-            return new ResponseEntity<>(pricingErrors, HttpStatus.BAD_REQUEST);
-        }
-
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
         try {
-            PropertyResponseDto saved = propertyService.insert(bean, files, principal.getName());
-            return new ResponseEntity<>(saved, HttpStatus.OK);
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(
+                    propertyService.submitDraft(
+                            draftId,
+                            principal.getName()
+                    )
+            );
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PostMapping(
+            value = "/draft",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    // 신규 또는 기존 임시저장 매물을 같은 DRAFT 행에 저장·갱신하는 메서드임
+    public ResponseEntity<?> saveDraft(
+            @RequestParam(required = false) Long draftId,
+            @RequestPart("data") Property bean,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            Principal principal) {
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
+        try {
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(
+                    propertyService.saveDraft(
+                            draftId,
+                            bean,
+                            files,
+                            principal.getName()
+                    )
+            );
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 현재 로그인한 중개인의 사용자용 DRAFT 목록을 최근 수정순으로 조회해 반환하는 API 메서드임
+    @GetMapping("/drafts")
+    public ResponseEntity<List<PropertyDraftSummaryDto>> myDrafts(Principal principal) {
+        // 정상 처리 결과를 HTTP 200 응답으로 반환함
+        return ResponseEntity.ok(
+                propertyService.findMyDrafts(principal.getName())
+        );
+    }
+
+    // 지정한 DRAFT가 현재 로그인한 중개인 소유인지 확인한 뒤 이어쓰기용 상세정보를 반환하는 API 메서드임
+    @GetMapping("/draft/{draftId}")
+    public ResponseEntity<?> myDraft(
+            @PathVariable Long draftId,
+            Principal principal) {
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
+        try {
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(
+                    propertyService.findMyDraft(
+                            draftId,
+                            principal.getName()
+                    )
+            );
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 저장된 신규등록 DRAFT를 대상으로 AI 시세예측을 실행하고 결과를 저장하는 메서드임
+    @PostMapping("/draft/{draftId}/ai-price")
+    public ResponseEntity<?> predictDraftAi(
+            @PathVariable Long draftId,
+            Principal principal) {
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
+        try {
+            AiPricePreviewResponseDto response =
+                    propertyService.predictDraftAi(
+                            draftId,
+                            principal.getName()
+                    );
+
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            // ML 서버 예측 실패를 HTTP 503 Service Unavailable 응답으로 반환함
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 
@@ -161,24 +243,61 @@ public class PropertyController {
         }
     }
 
-    // 매물 수정 (내 사무소의 매물만 가능)
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> update(@PathVariable Long id,
-                                    @Valid @RequestPart("data") Property bean,
-                                    BindingResult bindingResult,
-                                    @RequestPart(value = "files", required = false) List<MultipartFile> files,
-                                    Principal principal) {
-        if (bindingResult.hasErrors()) {
-            Map<String, String> errors = new HashMap<>();
-            for (FieldError error : bindingResult.getFieldErrors()) {
-                errors.put(error.getField(), error.getDefaultMessage());
-            }
-            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-        }
+    // 기존 공개 매물을 직접 건드리지 않고 hidden shadow DRAFT에서 수정용 AI 예측을 수행하는 메서드임
+    @PostMapping("/{id}/edit-ai-price")
+    public ResponseEntity<?> predictEditAi(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long draftId,
+            @RequestBody Property bean,
+            Principal principal) {
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
         try {
-            return ResponseEntity.ok(propertyService.update(id, bean, files, principal.getName()));
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(
+                    propertyService.predictEditAi(
+                            id,
+                            draftId,
+                            bean,
+                            principal.getName()
+                    )
+            );
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            // 수정용 ML 예측 실패를 HTTP 503 Service Unavailable 응답으로 반환함
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 수정 폼·파일·shadow DRAFT ID를 받아 PropertyService.update로 기존 매물 수정 요청을 처리하는 Controller 메서드임
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @RequestParam Long draftId,
+            @RequestPart("data") Property bean,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            Principal principal) {
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
+        try {
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(
+                    propertyService.update(
+                            id,
+                            draftId,
+                            bean,
+                            files,
+                            principal.getName()
+                    )
+            );
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 

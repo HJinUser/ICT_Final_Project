@@ -790,6 +790,25 @@
     transition: filter .55s var(--ease), transform .7s var(--ease);
 }
 
+/* 아직 대표 사진을 넣지 않은 동네.
+   흑백 처리를 걸어 두면 회색 판처럼 보여서, 여기서는 색을 살리고 동네 이름을 얹는다. */
+.home-hood .ph.no-photo {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #d8c6e4, #a9c9ba);
+    filter: none;
+}
+
+.home-hood .ph.no-photo .ph-name {
+    font-weight: 700;
+    font-size: 44px;
+    letter-spacing: -.06em;
+    color: rgba(255, 255, 255, .92);
+    text-shadow: 0 3px 18px rgba(36, 20, 46, .25);
+}
+
+.home-hood.short .ph.no-photo .ph-name { font-size: 30px; }
+
 .home-hood:hover .ph {
     filter: grayscale(.05);
     transform: scale(1.04);
