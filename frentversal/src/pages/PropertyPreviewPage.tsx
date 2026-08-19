@@ -54,6 +54,7 @@ const DUMMY_PROPERTY: PropertyDetail = {
     aiMonthlyDeposit: null,
     aiMonthlyRent: null,
     priceStatus: "DOWN", // "가격 하락" 배지 확인용. null로 바꾸면 배지가 안 보임
+    priceEvaluation: "UNDERVALUED", // 관리자 수동 시세평가 배지 확인용. null로 바꾸면 배지가 안 보임
     aiRecommendScore: 82,
     createdAt: "2026-07-01T00:00:00",
     updatedAt: "2026-07-01T00:00:00",

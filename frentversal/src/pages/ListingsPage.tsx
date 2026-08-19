@@ -28,16 +28,16 @@ const DEAL_TYPE_LABELS: Record<string, string> = {
     MONTHLY: '월세',
 };
 
-const PRICE_LEVEL_LABEL: Record<string, string> = {
-    LOW: '시세보다 쌈',
-    MID: '시세와 비슷',
-    HIGH: '시세보다 비쌈',
+const PRICE_EVALUATION_LABEL: Record<string, string> = {
+    UNDERVALUED: '저평가',
+    FAIR: '적정',
+    OVERVALUED: '고평가',
 };
 
-const PRICE_LEVEL_BADGE: Record<string, string> = {
-    LOW: 'green',
-    MID: 'gray',
-    HIGH: 'orange',
+const PRICE_EVALUATION_BADGE: Record<string, string> = {
+    UNDERVALUED: 'green',
+    FAIR: 'gray',
+    OVERVALUED: 'orange',
 };
 
 const EMPTY: PropertyListingsResponse = { content: [], totalCount: 0, totalPages: 0, page: 0 };
@@ -222,9 +222,9 @@ function ListingCard({ property }: { property: PropertySearchItem }) {
                         </span>
                         <span className="tag">{property.typeLabel}</span>
                     </div>
-                    {property.priceLevel && (
-                        <span className={`status ${PRICE_LEVEL_BADGE[property.priceLevel]}`}>
-                            {PRICE_LEVEL_LABEL[property.priceLevel]}
+                    {property.priceEvaluation && (
+                        <span className={`status ${PRICE_EVALUATION_BADGE[property.priceEvaluation]}`}>
+                            {PRICE_EVALUATION_LABEL[property.priceEvaluation]}
                         </span>
                     )}
                 </div>
