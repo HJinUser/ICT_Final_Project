@@ -21,6 +21,17 @@ public class AdminPropertyDto {
     private String name ;        // 매물 이름
     private String typeLabel ;   // 매물 유형 한글
     private String priceLabel ;  // "전세 4억 9,000"
+
+    // 관리자 매물 DTO에 거래유형·AI 예측 시세·관리자 가격평가 값을 추가함
+    private String dealType;
+
+    private Long aiPrice;
+    private Long aiDeposit;
+    private Long aiMonthlyDeposit;
+    private Long aiMonthlyRent;
+
+    private String priceEvaluation;
+
     private String address ;     // 위치
     private String area ;        // 면적 "84㎡"
     private Integer floor ;      // 층수
@@ -46,6 +57,23 @@ public class AdminPropertyDto {
         dto.setName(card.getName());
         dto.setTypeLabel(card.getTypeLabel());
         dto.setPriceLabel(card.getPriceLabel());
+
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (bean.getDealType() != null) {
+            dto.setDealType(bean.getDealType().name());
+        }
+
+        dto.setAiPrice(bean.getAiPrice());
+        dto.setAiDeposit(bean.getAiDeposit());
+        dto.setAiMonthlyDeposit(bean.getAiMonthlyDeposit());
+        dto.setAiMonthlyRent(bean.getAiMonthlyRent());
+
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (bean.getPriceEvaluation() != null) {
+            // 관리자 수동 가격평가 Enum을 문자열로 DTO에 복사함
+            dto.setPriceEvaluation(bean.getPriceEvaluation().name());
+        }
+
         dto.setAddress(card.getAddress());
         dto.setArea(card.getArea());
         dto.setFloor(card.getFloor());

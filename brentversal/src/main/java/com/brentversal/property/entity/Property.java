@@ -226,6 +226,10 @@ public class Property {
     @Column(name = "price_status", length = 10)
     private PriceChangeStatus priceStatus; // 가장 최근 가격 수정의 방향. 수정 이력이 없거나 변동 없으면 null
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "price_evaluation", length = 20)
+    private PriceEvaluationStatus priceEvaluation;
+
     // Property의 최초 생성시각과 마지막 수정시각을 각각 저장하는 컬럼임
     @Column(name = "created_at")
     private LocalDateTime createdAt;

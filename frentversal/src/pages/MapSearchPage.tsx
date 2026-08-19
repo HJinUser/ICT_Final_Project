@@ -44,22 +44,13 @@ const SPECIAL_TAG_CATEGORIES = ['TRANSPORTATION', 'LIVING_ENVIRONMENT', 'NATURAL
 // 한 페이지에 보여 줄 매물 카드 수 (기획서: 4개)
 const PAGE_SIZE = 4;
 
-// 시세 평가 배지 색
-const PRICE_LEVEL_CLASS: Record<string, string> = {
-    LOW: 'green',   // 시세보다 싸게 나옴
-    MID: 'gray',    // 비슷
-    HIGH: 'orange', // 시세보다 비쌈
-};
+// 관리자 가격평가 상태별 화면 라벨과 표시 메타데이터를 정의함
+const PRICE_EVALUATION_META = {
+    UNDERVALUED: { label: '저평가', className: 'green' },
+    FAIR: { label: '적정', className: 'gray' },
+    OVERVALUED: { label: '고평가', className: 'orange' },
+} as const;
 
-// "시세 -5,000만" 처럼 만원 단위를 읽기 쉽게 바꾼다
-function toDiffLabel(diff: number | null, level: string | null): string {
-    if (level === 'MID' || diff == null) return '시세와 비슷';
-
-    const abs = Math.abs(diff);
-    const text = abs >= 10000 ? `${Number((abs / 10000).toFixed(1))}억` : `${abs.toLocaleString()}만`;
-
-    return diff > 0 ? `시세보다 ${text} 낮음` : `시세보다 ${text} 높음`;
-}
 
 function MapSearchPage({ user }: Props) {
     // 헤더 검색창·메인 검색창에서 ?keyword=... 로 들어온다.
@@ -598,12 +589,13 @@ function MapSearchPage({ user }: Props) {
                                 <div>
                                     <div className="row between">
                                         {/* 시세 평가 */}
-                                        {property.priceLevel ? (
-                                            <span className={`status ${PRICE_LEVEL_CLASS[property.priceLevel]}`}>
-                                                {toDiffLabel(property.priceDiff, property.priceLevel)}
+                                        {/* 관리자 수동 priceEvaluation 값이 있으면 해당 상태 배지를 표시함 */}
+                                        {property.priceEvaluation ? (
+                                            <span className={`status ${PRICE_EVALUATION_META[property.priceEvaluation].className}`}>
+                                                {PRICE_EVALUATION_META[property.priceEvaluation].label}
                                             </span>
                                         ) : (
-                                            <span className="status gray">시세 정보 없음</span>
+                                            <span className="status gray">시세 평가 없음</span>
                                         )}
 
                                         {myAgencyId != null && property.agencyId === myAgencyId && (
