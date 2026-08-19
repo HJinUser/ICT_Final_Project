@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// 이 클래스에서 사용할 Java/Spring/프로젝트 타입 불러옴
+import com.brentversal.property.validation.PropertyFinalValidation;
+
 @Getter @Setter @ToString @Entity
 @Table(name = "properties")
 public class Property {
@@ -47,25 +50,37 @@ public class Property {
     @OrderBy("sortOrder ASC")
     private List<PropertyImage> images = new ArrayList<>();
 
-    @NotBlank(message = "매물명은 필수 입력 사항입니다.")
+    @NotBlank(
+            message = "매물명은 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
     @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;         // 소개 글
 
-    @NotNull(message = "매물 유형은 필수 선택 사항입니다.")
+    @NotNull(
+            message = "매물 유형은 필수 선택 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 20, nullable = false)
     private PropertyType type;
 
-    @NotNull(message = "거래 유형은 필수 선택 사항입니다.")
+    @NotNull(
+            message = "거래 유형은 필수 선택 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Enumerated(EnumType.STRING)
     @Column(name = "deal_type", length = 20, nullable = false)
     private DealType dealType;
 
-    @NotBlank(message = "주소는 필수 입력 사항입니다.")
+    @NotBlank(
+            message = "주소는 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Column(name = "address", length = 200, nullable = false)
     private String address;
 
@@ -79,25 +94,56 @@ public class Property {
     @Column(length = 30)
     private String dong;    // 당산동4가
 
-    // 주소를 Python이 지오코딩해서 얻은 좌표. 백엔드는 계산 안 하고 값만 받아 저장한다.
+    // 중개인이 입력한 주소를 Spring의 KakaoGeocodingService로 변환해 저장함
     @Column(name = "latitude")
-    private Double latitude;  // 매물 위도
+    private Double latitude; // 매물 위도
 
     @Column(name = "longitude")
     private Double longitude; // 매물 경도
 
+    @NotNull(
+            message = "전용면적은 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     private BigDecimal area;   // 전용면적(㎡)
+
+    @NotNull(
+            message = "층수는 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     private Integer floor;     // 층수
 
-    @NotNull(message = "방 개수는 필수 입력 사항입니다.")
-    @Min(value = 1, message = "방 개수는 1개 이상이어야 합니다.")
-    @Max(value = 6, message = "방 개수는 6개를 초과할 수 없습니다.")
+    @NotNull(
+            message = "방 개수는 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
+    @Min(
+            value = 1,
+            message = "방 개수는 1개 이상이어야 합니다.",
+            groups = PropertyFinalValidation.class
+    )
+    @Max(
+            value = 6,
+            message = "방 개수는 6개를 초과할 수 없습니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Column(name = "room_count")
     private Integer roomCount; // 방 개수
 
-    @NotNull(message = "욕실 개수는 필수 입력 사항입니다.")
-    @Min(value = 1, message = "욕실 개수는 1개 이상이어야 합니다.")
-    @Max(value = 3, message = "욕실 개수는 3개를 초과할 수 없습니다.")
+    @NotNull(
+            message = "욕실 개수는 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
+    @Min(
+            value = 1,
+            message = "욕실 개수는 1개 이상이어야 합니다.",
+            groups = PropertyFinalValidation.class
+    )
+    @Max(
+            value = 3,
+            message = "욕실 개수는 3개를 초과할 수 없습니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Column(name = "bathroom_count")
     private Integer bathroomCount; // 욕실 개수
 
@@ -106,10 +152,14 @@ public class Property {
     //
     // 위쪽 한계는 아직 다 짓지 않은 건물도 등록할 수 있게 다음 해까지 열어 둔다.
     // 오타로 먼 미래 연도가 들어가면 계속 신축으로 잡혀 추천이 왜곡되므로 위쪽도 막아 둔다.
+    @NotNull(
+            message = "건축년도는 필수 입력 사항입니다.",
+            groups = PropertyFinalValidation.class
+    )
     @Min(value = 1900, message = "건축 연도는 1900년 이후로 입력해 주세요.")
     @Max(value = 2100, message = "건축 연도를 다시 확인해 주세요.")
     @Column(name = "build_year")
-    private Integer buildYear; // 건축 연도
+    private Integer buildYear; // 건축 연도. 신축 기준 = 현재연도 - buildYear <= 5
 
     // 거래유형(dealType)에 따라 쓰이는 필드가 달라짐:
     // 매매(SALE)    → price 사용 (매매가, 만원)
@@ -146,8 +196,8 @@ public class Property {
     private Double aiRecommendScore;   // AI 추천 점수. 다른 기능이 계산해서 저장하며, 계산 전에는 null
 
     @Lob
-    @Column(name = "detail_description")
-    private String detailDescription;   // 상세 설명
+    @Column(name = "detail_description", columnDefinition = "TEXT")
+    private String detailDescription;
 
     @Column(name = "move_in_date")
     private LocalDate moveInDate;        // 입주 가능일
@@ -168,16 +218,20 @@ public class Property {
     @Column(name = "visible", nullable = false)
     private Boolean visible = true; // 공개/비공개 여부. 기본값은 공개(true)
 
-    // 매물 좌표와 최근접 지하철역 좌표 사이의 유클리드 거리(Python 계산). 단위(m/km)는 Python 담당과 확정 필요.
+    // 최근접 역까지 거리를 미터 단위로 저장할 컬럼 필드임
     @Column(name = "station_distance")
-    private Double stationDistance; // 최근접 역까지 거리
+    private Double stationDistance; // 최근접 역까지 거리(m)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "price_status", length = 10)
     private PriceChangeStatus priceStatus; // 가장 최근 가격 수정의 방향. 수정 이력이 없거나 변동 없으면 null
 
+    // Property의 최초 생성시각과 마지막 수정시각을 각각 저장하는 컬럼임
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // 같은 매물에 같은 태그가 두 번 붙지 않도록 DB 가 막게 한다.
     //
@@ -201,4 +255,23 @@ public class Property {
 
     @Transient
     private List<Long> keepImageIds; // 수정 시 유지할 기존 사진 id 목록. 여기 없는 기존 사진은 삭제됨
+
+    // Property가 처음 저장될 때 생성·수정 시간을 자동으로 채우는 lifecycle 메서드임
+    @PrePersist
+    private void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (createdAt == null) {
+            createdAt = now;
+        }
+
+        updatedAt = now;
+    }
+
+    // Property가 수정될 때 updatedAt을 현재 시각으로 갱신하는 lifecycle 메서드임
+    @PreUpdate
+    private void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

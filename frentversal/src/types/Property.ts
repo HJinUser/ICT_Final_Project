@@ -5,7 +5,16 @@ import type { TagResponse } from "./Tag";
 export type PropertyTypeCode = "ONE_TWO_ROOM" | "APARTMENT" | "VILLA" | "OFFICETEL";
 export type DealTypeCode = "SALE" | "JEONSE" | "MONTHLY";
 export type ContractStatusCode = "IMMEDIATE" | "NEGOTIABLE";
-export type PropertyStatusCode = "PENDING" | "ACTIVE" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+// 프론트에서 사용할 매물 상태 문자열을 DRAFT부터 CANCELLED까지 제한하는 TypeScript Union 타입임
+export type PropertyStatusCode =
+    | "DRAFT"
+    | "PENDING"
+    | "ACTIVE"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "CANCELLED";
+
 export type PriceChangeStatusCode = "UP" | "DOWN";
 
 // 매물 등록/수정 시 서버로 보내는 요청 형태 (PropertyController가 받는 Property 엔터티와 대응).
@@ -26,6 +35,7 @@ export interface Property {
 
     // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 따로 보낸다.
     // 지도에서 동네끼리 묶을 때 서버가 이 값을 쓴다.
+    // 매물 등록 요청 타입에 주소검색에서 분리한 자치구·동 값을 유지함
     sigungu?: string;
     dong?: string;
 
@@ -36,6 +46,7 @@ export interface Property {
 
     // 건축 연도. 맞춤 추천에서 신축인지 판단하는 데 쓴다.
     // 이 항목이 생기기 전에 등록한 매물은 값이 없어서 선택 항목으로 둔다.
+    // 매물 등록 요청 타입에 건축년도 필드 추가함
     buildYear?: number;
 
     // 거래유형(dealType)에 따라 쓰이는 필드가 다름 — validatePricingFields와 동일한 규칙
@@ -78,6 +89,7 @@ export interface PropertyResponse {
 
     // 주소 검색이 함께 준 지역 조각. 도로명 주소에는 동이 없어서 서버가 따로 보관한다.
     // 수정 화면이 이 값을 그대로 되돌려 보내야 저장할 때 지워지지 않는다.
+    // 매물 조회 응답 타입에 자치구·동·건축년도 필드 추가함
     sigungu: string | null;
     dong: string | null;
 
@@ -112,10 +124,19 @@ export interface PropertyResponse {
     aiRecommendScore: number | null;
     priceStatus: PriceChangeStatusCode | null;
 
-    // Python이 지오코딩/유클리드 거리로 계산해서 채워주는 값. 연동 전이라 지금은 대부분 null로 옴.
     latitude: number | null;
     longitude: number | null;
-    stationDistance: number | null; // 최근접 역까지 거리 (단위는 Python 연동 시 확정)
+    stationDistance: number | null; // 최근접 역까지 거리(m)
 
     createdAt: string; // LocalDateTime -> JSON에선 문자열로 옴
+
+    // 프론트 PropertyResponse 타입에 마지막 수정시각 필드 추가함
+    updatedAt: string;
+}
+
+// 임시저장 목록 한 건의 DRAFT ID·매물명·마지막 수정시각을 표현하는 TypeScript 타입임
+export interface PropertyDraftSummary {
+    id: number;
+    name: string | null;
+    updatedAt: string;
 }
