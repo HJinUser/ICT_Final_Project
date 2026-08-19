@@ -1,0 +1,3108 @@
+{
+  "analyzed_at": "2026-08-18T17:54:21",
+  "document_count": 167,
+  "neighborhood_count": 111,
+  "neighborhoods": {
+    "11170555": {
+      "adminName": "청파동",
+      "districtName": "용산구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "숙대",
+          "score": 1.0
+        },
+        {
+          "keyword": "대학가",
+          "score": 1.0
+        },
+        {
+          "keyword": "주변",
+          "score": 1.0
+        },
+        {
+          "keyword": "근처",
+          "score": 1.0
+        },
+        {
+          "keyword": "맛집",
+          "score": 1.0
+        },
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "4호선",
+          "score": 1.0
+        },
+        {
+          "keyword": "1호선",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        }
+      ]
+    },
+    "11200645": {
+      "adminName": "옥수동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "오르막",
+          "score": 1.0
+        },
+        {
+          "keyword": "심하",
+          "score": 1.0
+        }
+      ]
+    },
+    "11200650": {
+      "adminName": "성수1가1동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "상점",
+          "score": 1.0
+        },
+        {
+          "keyword": "분위기",
+          "score": 1.0
+        },
+        {
+          "keyword": "활기차",
+          "score": 1.0
+        },
+        {
+          "keyword": "물가",
+          "score": 1.0
+        },
+        {
+          "keyword": "비싸",
+          "score": 1.0
+        },
+        {
+          "keyword": "느낌",
+          "score": 1.0
+        }
+      ]
+    },
+    "11200660": {
+      "adminName": "성수1가2동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "상점",
+          "score": 1.0
+        },
+        {
+          "keyword": "분위기",
+          "score": 1.0
+        },
+        {
+          "keyword": "활기차",
+          "score": 1.0
+        },
+        {
+          "keyword": "물가",
+          "score": 1.0
+        },
+        {
+          "keyword": "비싸",
+          "score": 1.0
+        },
+        {
+          "keyword": "느낌",
+          "score": 1.0
+        }
+      ]
+    },
+    "11200670": {
+      "adminName": "성수2가1동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "상점",
+          "score": 1.0
+        },
+        {
+          "keyword": "분위기",
+          "score": 1.0
+        },
+        {
+          "keyword": "활기차",
+          "score": 1.0
+        },
+        {
+          "keyword": "물가",
+          "score": 1.0
+        },
+        {
+          "keyword": "비싸",
+          "score": 1.0
+        },
+        {
+          "keyword": "느낌",
+          "score": 1.0
+        }
+      ]
+    },
+    "11200690": {
+      "adminName": "성수2가3동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "상점",
+          "score": 1.0
+        },
+        {
+          "keyword": "분위기",
+          "score": 1.0
+        },
+        {
+          "keyword": "활기차",
+          "score": 1.0
+        },
+        {
+          "keyword": "물가",
+          "score": 1.0
+        },
+        {
+          "keyword": "비싸",
+          "score": 1.0
+        },
+        {
+          "keyword": "느낌",
+          "score": 1.0
+        }
+      ]
+    },
+    "11200790": {
+      "adminName": "용답동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "차드",
+          "score": 1.0
+        },
+        {
+          "keyword": "중고차",
+          "score": 1.0
+        }
+      ]
+    },
+    "11215820": {
+      "adminName": "자양1동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "한강",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        }
+      ]
+    },
+    "11215830": {
+      "adminName": "자양2동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "한강",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        }
+      ]
+    },
+    "11215840": {
+      "adminName": "자양3동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "한강",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        }
+      ]
+    },
+    "11215847": {
+      "adminName": "자양4동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "한강",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        }
+      ]
+    },
+    "11260655": {
+      "adminName": "망우본동",
+      "districtName": "중랑구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        }
+      ]
+    },
+    "11260660": {
+      "adminName": "망우3동",
+      "districtName": "중랑구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        }
+      ]
+    },
+    "11290620": {
+      "adminName": "정릉1동",
+      "districtName": "성북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "아이",
+          "score": 1.0
+        },
+        {
+          "keyword": "거주자",
+          "score": 1.0
+        }
+      ]
+    },
+    "11290660": {
+      "adminName": "길음1동",
+      "districtName": "성북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "아이",
+          "score": 1.0
+        },
+        {
+          "keyword": "거주자",
+          "score": 1.0
+        }
+      ]
+    },
+    "11290685": {
+      "adminName": "길음2동",
+      "districtName": "성북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "아이",
+          "score": 1.0
+        },
+        {
+          "keyword": "거주자",
+          "score": 1.0
+        }
+      ]
+    },
+    "11305534": {
+      "adminName": "삼양동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "끝판",
+          "score": 0.3536
+        },
+        {
+          "keyword": "느낌",
+          "score": 0.3536
+        },
+        {
+          "keyword": "마트",
+          "score": 0.3536
+        },
+        {
+          "keyword": "시가지",
+          "score": 0.3536
+        }
+      ]
+    },
+    "11305535": {
+      "adminName": "미아동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "끝판",
+          "score": 0.3536
+        },
+        {
+          "keyword": "느낌",
+          "score": 0.3536
+        },
+        {
+          "keyword": "마트",
+          "score": 0.3536
+        },
+        {
+          "keyword": "시가지",
+          "score": 0.3536
+        }
+      ]
+    },
+    "11305545": {
+      "adminName": "송중동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "끝판",
+          "score": 0.3536
+        },
+        {
+          "keyword": "느낌",
+          "score": 0.3536
+        },
+        {
+          "keyword": "마트",
+          "score": 0.3536
+        },
+        {
+          "keyword": "시가지",
+          "score": 0.3536
+        }
+      ]
+    },
+    "11305555": {
+      "adminName": "송천동",
+      "districtName": "강북구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "끝판",
+          "score": 0.2357
+        },
+        {
+          "keyword": "느낌",
+          "score": 0.2357
+        },
+        {
+          "keyword": "마트",
+          "score": 0.2357
+        },
+        {
+          "keyword": "시가지",
+          "score": 0.2357
+        },
+        {
+          "keyword": "가까이",
+          "score": 0.1667
+        },
+        {
+          "keyword": "괜찮",
+          "score": 0.1667
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1667
+        },
+        {
+          "keyword": "편의",
+          "score": 0.1667
+        }
+      ]
+    },
+    "11305575": {
+      "adminName": "삼각산동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "끝판",
+          "score": 0.3536
+        },
+        {
+          "keyword": "느낌",
+          "score": 0.3536
+        },
+        {
+          "keyword": "마트",
+          "score": 0.3536
+        },
+        {
+          "keyword": "시가지",
+          "score": 0.3536
+        }
+      ]
+    },
+    "11305615": {
+      "adminName": "수유1동",
+      "districtName": "강북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "이것저것",
+          "score": 1.0
+        }
+      ]
+    },
+    "11305625": {
+      "adminName": "수유2동",
+      "districtName": "강북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "이것저것",
+          "score": 1.0
+        }
+      ]
+    },
+    "11305635": {
+      "adminName": "수유3동",
+      "districtName": "강북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "이것저것",
+          "score": 1.0
+        }
+      ]
+    },
+    "11305645": {
+      "adminName": "우이동",
+      "districtName": "강북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "이것저것",
+          "score": 1.0
+        }
+      ]
+    },
+    "11305660": {
+      "adminName": "인수동",
+      "districtName": "강북구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "이것저것",
+          "score": 1.0
+        }
+      ]
+    },
+    "11320511": {
+      "adminName": "창1동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "인프라",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "은행",
+          "score": 1.0
+        },
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "병원",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "주거",
+          "score": 1.0
+        }
+      ]
+    },
+    "11320512": {
+      "adminName": "창2동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "인프라",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "은행",
+          "score": 1.0
+        },
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "병원",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "주거",
+          "score": 1.0
+        }
+      ]
+    },
+    "11320513": {
+      "adminName": "창3동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "인프라",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "은행",
+          "score": 1.0
+        },
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "병원",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "주거",
+          "score": 1.0
+        }
+      ]
+    },
+    "11320514": {
+      "adminName": "창4동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "인프라",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "은행",
+          "score": 1.0
+        },
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "병원",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "주거",
+          "score": 1.0
+        }
+      ]
+    },
+    "11320515": {
+      "adminName": "창5동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "인프라",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "은행",
+          "score": 1.0
+        },
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "병원",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "주거",
+          "score": 1.0
+        }
+      ]
+    },
+    "11410615": {
+      "adminName": "연희동",
+      "districtName": "서대문구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "쇼핑몰",
+          "score": 0.3333
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.2357
+        },
+        {
+          "keyword": "중식",
+          "score": 0.2357
+        },
+        {
+          "keyword": "구역",
+          "score": 0.126
+        },
+        {
+          "keyword": "냄새",
+          "score": 0.126
+        },
+        {
+          "keyword": "맛있",
+          "score": 0.126
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.126
+        },
+        {
+          "keyword": "전체",
+          "score": 0.126
+        },
+        {
+          "keyword": "특정",
+          "score": 0.126
+        },
+        {
+          "keyword": "하수도",
+          "score": 0.126
+        }
+      ]
+    },
+    "11440590": {
+      "adminName": "용강동",
+      "districtName": "마포구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "경의선",
+          "score": 1.0
+        },
+        {
+          "keyword": "숲길",
+          "score": 1.0
+        },
+        {
+          "keyword": "걷기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11440600": {
+      "adminName": "대흥동",
+      "districtName": "마포구",
+      "documentCount": 5,
+      "keywords": [
+        {
+          "keyword": "길이",
+          "score": 0.1414
+        },
+        {
+          "keyword": "오르막",
+          "score": 0.1414
+        },
+        {
+          "keyword": "걷기",
+          "score": 0.1155
+        },
+        {
+          "keyword": "경의선",
+          "score": 0.1155
+        },
+        {
+          "keyword": "근처",
+          "score": 0.1155
+        },
+        {
+          "keyword": "대학가",
+          "score": 0.1155
+        },
+        {
+          "keyword": "대학교",
+          "score": 0.1155
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1155
+        },
+        {
+          "keyword": "번화가",
+          "score": 0.1155
+        },
+        {
+          "keyword": "부족",
+          "score": 0.1155
+        }
+      ]
+    },
+    "11440630": {
+      "adminName": "신수동",
+      "districtName": "마포구",
+      "documentCount": 5,
+      "keywords": [
+        {
+          "keyword": "길이",
+          "score": 0.1414
+        },
+        {
+          "keyword": "오르막",
+          "score": 0.1414
+        },
+        {
+          "keyword": "걷기",
+          "score": 0.1155
+        },
+        {
+          "keyword": "경의선",
+          "score": 0.1155
+        },
+        {
+          "keyword": "근처",
+          "score": 0.1155
+        },
+        {
+          "keyword": "대학가",
+          "score": 0.1155
+        },
+        {
+          "keyword": "대학교",
+          "score": 0.1155
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1155
+        },
+        {
+          "keyword": "번화가",
+          "score": 0.1155
+        },
+        {
+          "keyword": "부족",
+          "score": 0.1155
+        }
+      ]
+    },
+    "11440655": {
+      "adminName": "서강동",
+      "districtName": "마포구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "시끄럽",
+          "score": 0.5
+        },
+        {
+          "keyword": "건물",
+          "score": 0.25
+        },
+        {
+          "keyword": "곤란",
+          "score": 0.25
+        },
+        {
+          "keyword": "골목골목",
+          "score": 0.25
+        },
+        {
+          "keyword": "평화",
+          "score": 0.25
+        }
+      ]
+    },
+    "11440690": {
+      "adminName": "망원1동",
+      "districtName": "마포구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "가깝",
+          "score": 0.357
+        },
+        {
+          "keyword": "산책",
+          "score": 0.357
+        },
+        {
+          "keyword": "한강",
+          "score": 0.357
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.2665
+        },
+        {
+          "keyword": "주말",
+          "score": 0.2665
+        },
+        {
+          "keyword": "분위기",
+          "score": 0.2352
+        },
+        {
+          "keyword": "시장",
+          "score": 0.2352
+        },
+        {
+          "keyword": "활기차",
+          "score": 0.2352
+        }
+      ]
+    },
+    "11440700": {
+      "adminName": "망원2동",
+      "districtName": "마포구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "가깝",
+          "score": 0.357
+        },
+        {
+          "keyword": "산책",
+          "score": 0.357
+        },
+        {
+          "keyword": "한강",
+          "score": 0.357
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.2665
+        },
+        {
+          "keyword": "주말",
+          "score": 0.2665
+        },
+        {
+          "keyword": "분위기",
+          "score": 0.2352
+        },
+        {
+          "keyword": "시장",
+          "score": 0.2352
+        },
+        {
+          "keyword": "활기차",
+          "score": 0.2352
+        }
+      ]
+    },
+    "11440710": {
+      "adminName": "연남동",
+      "districtName": "마포구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "카페",
+          "score": 1.0
+        },
+        {
+          "keyword": "식당",
+          "score": 1.0
+        },
+        {
+          "keyword": "주말",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470510": {
+      "adminName": "목1동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "맛집",
+          "score": 1.0
+        },
+        {
+          "keyword": "학원가",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470520": {
+      "adminName": "목2동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "맛집",
+          "score": 1.0
+        },
+        {
+          "keyword": "학원가",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470530": {
+      "adminName": "목3동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "맛집",
+          "score": 1.0
+        },
+        {
+          "keyword": "학원가",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470540": {
+      "adminName": "목4동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "맛집",
+          "score": 1.0
+        },
+        {
+          "keyword": "학원가",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470550": {
+      "adminName": "목5동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "맛집",
+          "score": 1.0
+        },
+        {
+          "keyword": "학원가",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470560": {
+      "adminName": "신월1동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470570": {
+      "adminName": "신월2동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470580": {
+      "adminName": "신월3동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470590": {
+      "adminName": "신월4동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470600": {
+      "adminName": "신월5동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470610": {
+      "adminName": "신월6동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470611": {
+      "adminName": "신월7동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "번화가",
+          "score": 1.0
+        },
+        {
+          "keyword": "편의",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470620": {
+      "adminName": "신정1동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "나무",
+          "score": 1.0
+        },
+        {
+          "keyword": "평지",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470630": {
+      "adminName": "신정2동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "나무",
+          "score": 1.0
+        },
+        {
+          "keyword": "평지",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470640": {
+      "adminName": "신정3동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "나무",
+          "score": 1.0
+        },
+        {
+          "keyword": "평지",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470650": {
+      "adminName": "신정4동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "나무",
+          "score": 1.0
+        },
+        {
+          "keyword": "평지",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470670": {
+      "adminName": "신정6동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "나무",
+          "score": 1.0
+        },
+        {
+          "keyword": "평지",
+          "score": 1.0
+        }
+      ]
+    },
+    "11470680": {
+      "adminName": "신정7동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "나무",
+          "score": 1.0
+        },
+        {
+          "keyword": "평지",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500540": {
+      "adminName": "화곡1동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500550": {
+      "adminName": "화곡2동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500560": {
+      "adminName": "화곡3동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500570": {
+      "adminName": "화곡4동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500590": {
+      "adminName": "화곡본동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500591": {
+      "adminName": "화곡6동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500593": {
+      "adminName": "화곡8동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11500615": {
+      "adminName": "우장산동",
+      "districtName": "강서구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11530520": {
+      "adminName": "구로1동",
+      "districtName": "구로구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 1.0
+        },
+        {
+          "keyword": "간판",
+          "score": 1.0
+        },
+        {
+          "keyword": "안보",
+          "score": 1.0
+        }
+      ]
+    },
+    "11530530": {
+      "adminName": "구로2동",
+      "districtName": "구로구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 1.0
+        },
+        {
+          "keyword": "간판",
+          "score": 1.0
+        },
+        {
+          "keyword": "안보",
+          "score": 1.0
+        }
+      ]
+    },
+    "11530540": {
+      "adminName": "구로3동",
+      "districtName": "구로구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 1.0
+        },
+        {
+          "keyword": "간판",
+          "score": 1.0
+        },
+        {
+          "keyword": "안보",
+          "score": 1.0
+        }
+      ]
+    },
+    "11530550": {
+      "adminName": "구로4동",
+      "districtName": "구로구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 1.0
+        },
+        {
+          "keyword": "간판",
+          "score": 1.0
+        },
+        {
+          "keyword": "안보",
+          "score": 1.0
+        }
+      ]
+    },
+    "11530560": {
+      "adminName": "구로5동",
+      "districtName": "구로구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 1.0
+        },
+        {
+          "keyword": "간판",
+          "score": 1.0
+        },
+        {
+          "keyword": "안보",
+          "score": 1.0
+        }
+      ]
+    },
+    "11560560": {
+      "adminName": "당산2동",
+      "districtName": "영등포구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "직장인",
+          "score": 0.3333
+        },
+        {
+          "keyword": "대가",
+          "score": 0.1925
+        },
+        {
+          "keyword": "안전",
+          "score": 0.1925
+        },
+        {
+          "keyword": "지구",
+          "score": 0.1925
+        },
+        {
+          "keyword": "2호선",
+          "score": 0.126
+        },
+        {
+          "keyword": "9호선",
+          "score": 0.126
+        },
+        {
+          "keyword": "가깝",
+          "score": 0.126
+        },
+        {
+          "keyword": "이용",
+          "score": 0.126
+        },
+        {
+          "keyword": "편리",
+          "score": 0.126
+        },
+        {
+          "keyword": "평지",
+          "score": 0.126
+        }
+      ]
+    },
+    "11560670": {
+      "adminName": "신길5동",
+      "districtName": "영등포구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 2.0
+        },
+        {
+          "keyword": "저녁",
+          "score": 1.0
+        },
+        {
+          "keyword": "무섭",
+          "score": 1.0
+        }
+      ]
+    },
+    "11560700": {
+      "adminName": "대림1동",
+      "districtName": "영등포구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 2.0
+        },
+        {
+          "keyword": "저녁",
+          "score": 1.0
+        },
+        {
+          "keyword": "무섭",
+          "score": 1.0
+        }
+      ]
+    },
+    "11560710": {
+      "adminName": "대림2동",
+      "districtName": "영등포구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 2.0
+        },
+        {
+          "keyword": "저녁",
+          "score": 1.0
+        },
+        {
+          "keyword": "무섭",
+          "score": 1.0
+        }
+      ]
+    },
+    "11560720": {
+      "adminName": "대림3동",
+      "districtName": "영등포구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "중국",
+          "score": 2.0
+        },
+        {
+          "keyword": "저녁",
+          "score": 1.0
+        },
+        {
+          "keyword": "무섭",
+          "score": 1.0
+        }
+      ]
+    },
+    "11590510": {
+      "adminName": "노량진1동",
+      "districtName": "동작구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "주변",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620525": {
+      "adminName": "보라매동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620545": {
+      "adminName": "청림동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620565": {
+      "adminName": "성현동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620575": {
+      "adminName": "행운동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620585": {
+      "adminName": "낙성대동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620595": {
+      "adminName": "청룡동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620605": {
+      "adminName": "은천동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620615": {
+      "adminName": "중앙동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620625": {
+      "adminName": "인헌동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철역",
+          "score": 1.0
+        },
+        {
+          "keyword": "상권",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "언덕",
+          "score": 1.0
+        }
+      ]
+    },
+    "11620645": {
+      "adminName": "서원동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620655": {
+      "adminName": "신원동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620665": {
+      "adminName": "서림동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620685": {
+      "adminName": "신사동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620695": {
+      "adminName": "신림동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620715": {
+      "adminName": "난향동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620725": {
+      "adminName": "조원동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620735": {
+      "adminName": "대학동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620745": {
+      "adminName": "삼성동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.3203
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.2653
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1558
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1558
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1558
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1361
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1361
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1361
+        }
+      ]
+    },
+    "11620765": {
+      "adminName": "미성동",
+      "districtName": "관악구",
+      "documentCount": 4,
+      "keywords": [
+        {
+          "keyword": "생각",
+          "score": 0.2465
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.1963
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1163
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1163
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1163
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1163
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1021
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1021
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1021
+        },
+        {
+          "keyword": "음식점",
+          "score": 0.1021
+        }
+      ]
+    },
+    "11620775": {
+      "adminName": "난곡동",
+      "districtName": "관악구",
+      "documentCount": 4,
+      "keywords": [
+        {
+          "keyword": "쓰레기",
+          "score": 0.25
+        },
+        {
+          "keyword": "생각",
+          "score": 0.2465
+        },
+        {
+          "keyword": "외국인",
+          "score": 0.1963
+        },
+        {
+          "keyword": "맛집",
+          "score": 0.1163
+        },
+        {
+          "keyword": "서울대",
+          "score": 0.1163
+        },
+        {
+          "keyword": "서울대입구역",
+          "score": 0.1163
+        },
+        {
+          "keyword": "입구",
+          "score": 0.1163
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1021
+        },
+        {
+          "keyword": "시끄럽",
+          "score": 0.1021
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1021
+        }
+      ]
+    },
+    "11680600": {
+      "adminName": "대치1동",
+      "districtName": "강남구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "학원",
+          "score": 0.5
+        },
+        {
+          "keyword": "교통량",
+          "score": 0.2236
+        },
+        {
+          "keyword": "생활",
+          "score": 0.2236
+        },
+        {
+          "keyword": "시설",
+          "score": 0.2236
+        },
+        {
+          "keyword": "학원가",
+          "score": 0.2236
+        },
+        {
+          "keyword": "형성",
+          "score": 0.2236
+        }
+      ]
+    },
+    "11680610": {
+      "adminName": "대치2동",
+      "districtName": "강남구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "학원",
+          "score": 0.5
+        },
+        {
+          "keyword": "교통량",
+          "score": 0.2236
+        },
+        {
+          "keyword": "생활",
+          "score": 0.2236
+        },
+        {
+          "keyword": "시설",
+          "score": 0.2236
+        },
+        {
+          "keyword": "학원가",
+          "score": 0.2236
+        },
+        {
+          "keyword": "형성",
+          "score": 0.2236
+        }
+      ]
+    },
+    "11680630": {
+      "adminName": "대치4동",
+      "districtName": "강남구",
+      "documentCount": 2,
+      "keywords": [
+        {
+          "keyword": "학원",
+          "score": 0.5
+        },
+        {
+          "keyword": "교통량",
+          "score": 0.2236
+        },
+        {
+          "keyword": "생활",
+          "score": 0.2236
+        },
+        {
+          "keyword": "시설",
+          "score": 0.2236
+        },
+        {
+          "keyword": "학원가",
+          "score": 0.2236
+        },
+        {
+          "keyword": "형성",
+          "score": 0.2236
+        }
+      ]
+    },
+    "11680640": {
+      "adminName": "역삼1동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철",
+          "score": 1.0
+        },
+        {
+          "keyword": "버스",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "출퇴근",
+          "score": 1.0
+        },
+        {
+          "keyword": "시간",
+          "score": 1.0
+        }
+      ]
+    },
+    "11680650": {
+      "adminName": "역삼2동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철",
+          "score": 1.0
+        },
+        {
+          "keyword": "버스",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        },
+        {
+          "keyword": "출퇴근",
+          "score": 1.0
+        },
+        {
+          "keyword": "시간",
+          "score": 1.0
+        }
+      ]
+    },
+    "11680660": {
+      "adminName": "개포1동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "아파트",
+          "score": 1.0
+        },
+        {
+          "keyword": "자동차",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "불편",
+          "score": 1.0
+        }
+      ]
+    },
+    "11680670": {
+      "adminName": "개포2동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "아파트",
+          "score": 1.0
+        },
+        {
+          "keyword": "자동차",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "불편",
+          "score": 1.0
+        }
+      ]
+    },
+    "11680690": {
+      "adminName": "개포4동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "아파트",
+          "score": 1.0
+        },
+        {
+          "keyword": "자동차",
+          "score": 1.0
+        },
+        {
+          "keyword": "교통",
+          "score": 1.0
+        },
+        {
+          "keyword": "불편",
+          "score": 1.0
+        }
+      ]
+    },
+    "11680740": {
+      "adminName": "일원2동",
+      "districtName": "강남구",
+      "documentCount": 3,
+      "keywords": [
+        {
+          "keyword": "학원",
+          "score": 0.3333
+        },
+        {
+          "keyword": "교통",
+          "score": 0.1667
+        },
+        {
+          "keyword": "불편",
+          "score": 0.1667
+        },
+        {
+          "keyword": "아파트",
+          "score": 0.1667
+        },
+        {
+          "keyword": "자동차",
+          "score": 0.1667
+        },
+        {
+          "keyword": "교통량",
+          "score": 0.1491
+        },
+        {
+          "keyword": "생활",
+          "score": 0.1491
+        },
+        {
+          "keyword": "시설",
+          "score": 0.1491
+        },
+        {
+          "keyword": "학원가",
+          "score": 0.1491
+        },
+        {
+          "keyword": "형성",
+          "score": 0.1491
+        }
+      ]
+    },
+    "11710600": {
+      "adminName": "석촌동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "석촌",
+          "score": 1.0
+        },
+        {
+          "keyword": "호수",
+          "score": 1.0
+        },
+        {
+          "keyword": "주변",
+          "score": 1.0
+        },
+        {
+          "keyword": "산책",
+          "score": 1.0
+        },
+        {
+          "keyword": "음식점",
+          "score": 1.0
+        },
+        {
+          "keyword": "분위기",
+          "score": 1.0
+        }
+      ]
+    },
+    "11710647": {
+      "adminName": "위례동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "계획",
+          "score": 1.0
+        },
+        {
+          "keyword": "신도시",
+          "score": 1.0
+        },
+        {
+          "keyword": "위력",
+          "score": 1.0
+        }
+      ]
+    },
+    "11710650": {
+      "adminName": "잠실본동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "공원",
+          "score": 1.0
+        },
+        {
+          "keyword": "쇼핑",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        }
+      ]
+    },
+    "11710670": {
+      "adminName": "잠실2동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "공원",
+          "score": 1.0
+        },
+        {
+          "keyword": "쇼핑",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        }
+      ]
+    },
+    "11710680": {
+      "adminName": "잠실3동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "공원",
+          "score": 1.0
+        },
+        {
+          "keyword": "쇼핑",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        }
+      ]
+    },
+    "11710720": {
+      "adminName": "잠실7동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "keywords": [
+        {
+          "keyword": "지하철",
+          "score": 1.0
+        },
+        {
+          "keyword": "이용",
+          "score": 1.0
+        },
+        {
+          "keyword": "편하",
+          "score": 1.0
+        },
+        {
+          "keyword": "공원",
+          "score": 1.0
+        },
+        {
+          "keyword": "쇼핑",
+          "score": 1.0
+        },
+        {
+          "keyword": "시설",
+          "score": 1.0
+        },
+        {
+          "keyword": "가깝",
+          "score": 1.0
+        },
+        {
+          "keyword": "생활",
+          "score": 1.0
+        },
+        {
+          "keyword": "편리",
+          "score": 1.0
+        }
+      ]
+    }
+  }
+}
