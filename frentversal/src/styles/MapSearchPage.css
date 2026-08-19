@@ -69,36 +69,68 @@
     color: #fff;
 }
 
-/* 지도를 축소했을 때 나오는 묶음 표식 (지역 이름 + 매물 개수).
-   개별 매물 표식보다 조금 크고, 개수를 원 안에 넣어 구분한다. */
+/* 지도를 축소했을 때 나오는 묶음 표식 (매물 개수 + 지역 이름).
+   넓게 볼 때 가장 먼저 알아야 하는 건 "어디에 몇 건 있나"라서,
+   개수를 큰 원으로 앞세우고 지역 이름을 옆에 붙여 한 덩어리로 보이게 한다. */
 .map-canvas .marker.cluster {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 7px 8px 7px 12px;
-    background: #fff;
-    border-color: var(--v);
-}
-
-.map-canvas .marker.cluster .cluster-name {
-    font: 600 12px/1 'Pretendard Variable', sans-serif;
-    color: var(--ink-1);
+    gap: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
 }
 
 .map-canvas .marker.cluster .cluster-count {
+    position: relative; /* 이름표 위로 올라오도록 */
+    z-index: 1;
     display: inline-grid;
     place-items: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 5px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 9px;
     border-radius: 100px;
     background: var(--v);
     color: #fff;
-    font: 600 11px/1 'IBM Plex Mono', monospace;
+    font: 700 14px/1 'IBM Plex Mono', monospace;
+    box-shadow: 0 2px 8px rgba(36, 20, 46, .3);
 }
 
-.map-canvas .marker.cluster:hover {
-    background: var(--v-pale);
+/* 원에 살짝 물려 놓아 두 조각이 아니라 하나로 읽히게 한다 */
+.map-canvas .marker.cluster .cluster-name {
+    margin-left: -8px;
+    padding: 6px 11px 6px 15px;
+    border-radius: 0 100px 100px 0;
+    background: #fff;
+    color: var(--ink);
+    font: 600 12px/1 'Pretendard Variable', sans-serif;
+    box-shadow: 0 2px 8px rgba(36, 20, 46, .18);
+}
+
+.map-canvas .marker.cluster:hover .cluster-count {
+    background: #3a0068;
+}
+
+.map-canvas .marker.cluster:hover .cluster-name {
+    color: var(--v);
+}
+
+/* 시·도 단위로 묶는 거리 : 개수 없이 지역 이름만 둔다.
+   붙일 원이 없으므로 양쪽 모두 둥글게 하고, 이름 자체가 표식이 되도록 색을 채운다. */
+.map-canvas .marker.cluster.name-only .cluster-name {
+    margin-left: 0;
+    padding: 8px 15px;
+    border-radius: 100px;
+    background: var(--v);
+    color: #fff;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(36, 20, 46, .3);
+}
+
+.map-canvas .marker.cluster.name-only:hover .cluster-name {
+    background: #3a0068;
+    color: #fff;
 }
 
 /* 지도 위에 겹쳐 보여 주는 안내 문구 */
