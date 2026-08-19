@@ -66,7 +66,13 @@ public class MyAgencyService {
         MyAgencyDashboardDto dto = new MyAgencyDashboardDto();
 
         // 매물 현황
-        dto.setTotalCount(propertyRepository.countByAgencyId(agencyId));
+        // Repository를 통해 필요한 DB 데이터를 조회/변경함
+        dto.setTotalCount(
+                propertyRepository.countByAgencyIdAndStatusNot(
+                        agencyId,
+                        PropertyStatus.DRAFT
+                )
+        );
         dto.setActiveCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.ACTIVE));
         dto.setInProgressCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.IN_PROGRESS));
         dto.setCompletedCount(propertyRepository.countByAgencyIdAndStatus(agencyId, PropertyStatus.COMPLETED));

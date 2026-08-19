@@ -5,7 +5,16 @@ import type { TagResponse } from "./Tag";
 export type PropertyTypeCode = "ONE_TWO_ROOM" | "APARTMENT" | "VILLA" | "OFFICETEL";
 export type DealTypeCode = "SALE" | "JEONSE" | "MONTHLY";
 export type ContractStatusCode = "IMMEDIATE" | "NEGOTIABLE";
-export type PropertyStatusCode = "PENDING" | "ACTIVE" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+// 프론트에서 사용할 매물 상태 문자열을 DRAFT부터 CANCELLED까지 제한하는 TypeScript Union 타입임
+export type PropertyStatusCode =
+    | "DRAFT"
+    | "PENDING"
+    | "ACTIVE"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "CANCELLED";
+
 export type PriceChangeStatusCode = "UP" | "DOWN";
 
 // 매물 등록/수정 시 서버로 보내는 요청 형태 (PropertyController가 받는 Property 엔터티와 대응).
@@ -120,4 +129,14 @@ export interface PropertyResponse {
     stationDistance: number | null; // 최근접 역까지 거리(m)
 
     createdAt: string; // LocalDateTime -> JSON에선 문자열로 옴
+
+    // 프론트 PropertyResponse 타입에 마지막 수정시각 필드 추가함
+    updatedAt: string;
+}
+
+// 임시저장 목록 한 건의 DRAFT ID·매물명·마지막 수정시각을 표현하는 TypeScript 타입임
+export interface PropertyDraftSummary {
+    id: number;
+    name: string | null;
+    updatedAt: string;
 }

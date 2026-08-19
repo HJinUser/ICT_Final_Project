@@ -33,7 +33,12 @@ public class AdminPropertyService {
         Pageable pageable = PageRequest.of(Math.max(0, page), PAGE_SIZE);
 
         if(status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)){
-            return propertyRepository.findAllByOrderByCreatedAtDesc(pageable).map(AdminPropertyDto::of);
+            // Repository를 통해 필요한 DB 데이터를 조회/변경함
+            return propertyRepository.findByStatusNotOrderByCreatedAtDesc(
+                            PropertyStatus.DRAFT,
+                            pageable
+                    )
+                    .map(AdminPropertyDto::of);
         }
 
         return propertyRepository.findByStatusOrderByCreatedAtAsc(toStatus(status), pageable)
@@ -86,10 +91,22 @@ public class AdminPropertyService {
 
     // 문자열로 들어온 상태값을 열거형으로 바꾼다. 잘못된 값이면 안내 메시지를 준다.
     private PropertyStatus toStatus(String status){
+        PropertyStatus parsed;
+
         try {
-            return PropertyStatus.valueOf(status.toUpperCase());
+            parsed = PropertyStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("알 수 없는 상태값입니다 : " + status);
         }
+
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (parsed == PropertyStatus.DRAFT) {
+            // 조건을 만족하지 않으면 이후 처리를 중단하도록 예외 발생시킴
+            throw new IllegalArgumentException(
+                    "DRAFT는 사용자 작성 중 상태이므로 관리자 매물 목록에서 조회하지 않습니다.");
+        }
+
+        // 처리 완료된 결과를 호출한 쪽으로 반환함
+        return parsed;
     }
 }
