@@ -53,6 +53,7 @@ jobs:
               -e PASSWORDLESS_CORP_ID="${{ secrets.PASSWORDLESS_CORP_ID }}" \
               -e PASSWORDLESS_SERVER_ID="${{ secrets.PASSWORDLESS_SERVER_ID }}" \
               -e PASSWORDLESS_SERVER_KEY="${{ secrets.PASSWORDLESS_SERVER_KEY }}" \
+              -e ML_BASE_URL="http://${{ secrets.ML_EC2_HOST }}:8000" \
               "${{ secrets.BACK_DOCKER_IMAGE }}"
             # 5. 안 쓰는 옛날 이미지 정리
             sudo docker image prune -f
