@@ -79,9 +79,9 @@ public class Property {
     @Column(length = 30)
     private String dong;    // 당산동4가
 
-    // 주소를 Python이 지오코딩해서 얻은 좌표. 백엔드는 계산 안 하고 값만 받아 저장한다.
+    // 중개인이 입력한 주소를 Spring의 KakaoGeocodingService로 변환해 저장함
     @Column(name = "latitude")
-    private Double latitude;  // 매물 위도
+    private Double latitude; // 매물 위도
 
     @Column(name = "longitude")
     private Double longitude; // 매물 경도
@@ -109,7 +109,7 @@ public class Property {
     @Min(value = 1900, message = "건축 연도는 1900년 이후로 입력해 주세요.")
     @Max(value = 2100, message = "건축 연도를 다시 확인해 주세요.")
     @Column(name = "build_year")
-    private Integer buildYear; // 건축 연도
+    private Integer buildYear; // 건축 연도. 신축 기준 = 현재연도 - buildYear <= 5
 
     // 거래유형(dealType)에 따라 쓰이는 필드가 달라짐:
     // 매매(SALE)    → price 사용 (매매가, 만원)
@@ -168,9 +168,9 @@ public class Property {
     @Column(name = "visible", nullable = false)
     private Boolean visible = true; // 공개/비공개 여부. 기본값은 공개(true)
 
-    // 매물 좌표와 최근접 지하철역 좌표 사이의 유클리드 거리(Python 계산). 단위(m/km)는 Python 담당과 확정 필요.
+    // 최근접 역까지 거리를 미터 단위로 저장할 컬럼 필드임
     @Column(name = "station_distance")
-    private Double stationDistance; // 최근접 역까지 거리
+    private Double stationDistance; // 최근접 역까지 거리(m)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "price_status", length = 10)
