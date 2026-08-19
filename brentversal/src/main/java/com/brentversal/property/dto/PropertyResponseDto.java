@@ -66,6 +66,8 @@ public class PropertyResponseDto {
     private String priceStatus; // "UP" / "DOWN" / null (수정 이력 없거나 변동 없음)
 
     private LocalDateTime createdAt; // 등록일시
+    // 응답 DTO에 마지막 수정시각을 내려주기 위한 필드 추가함
+    private LocalDateTime updatedAt;
 
     // 엔터티 -> dto 변환 메소드
     public static PropertyResponseDto of (Property bean) {
@@ -132,6 +134,9 @@ public class PropertyResponseDto {
         dto.setVisible(bean.getVisible());
         dto.setStationDistance(bean.getStationDistance());
         dto.setCreatedAt(bean.getCreatedAt());
+
+        // Property의 updatedAt 값을 응답 DTO 생성 시 복사함
+        dto.setUpdatedAt(bean.getUpdatedAt());
 
         if (bean.getPriceStatus() != null) {
             dto.setPriceStatus(bean.getPriceStatus().name());

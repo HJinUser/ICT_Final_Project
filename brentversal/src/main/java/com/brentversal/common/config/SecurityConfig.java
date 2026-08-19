@@ -76,6 +76,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/property/favorites").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/property/mine").authenticated()
+                        // DRAFT 목록·상세 조회는 일반 공개 GET 규칙보다 먼저 BROKER만 허용함
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/property/drafts",
+                                "/property/draft/**"
+                        ).hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/property/**").permitAll()
                         // 매물 등록·수정·상태변경은 중개인만 할 수 있다.
                         // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
