@@ -47,6 +47,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PropertyService {
@@ -965,6 +968,8 @@ public class PropertyService {
             // Spring에서 FastAPI 시세예측 API를 호출함
             response = mlClient.predictPrice(request);
         } catch (Exception e) {
+            // 원인(연결 실패/타임아웃/4xx 등)을 로그로 남겨야 배포 후 원격 진단이 가능함
+            log.error("ML 서버 시세예측 호출 실패", e);
             // 조건을 만족하지 않으면 이후 처리를 중단하도록 예외 발생시킴
             throw new IllegalStateException(
                     "ML 서버 시세예측에 실패했습니다. 잠시 후 다시 시도해 주세요.");

@@ -287,6 +287,15 @@ function App({ onLogin }: Props) {
                             </button>
                         </form>
 
+                        {/* 비밀번호를 잊은 사용자를 이메일 인증 재설정 화면으로 보낸다.
+                            일반 로그인 탭에만 둔다. 패스워드리스·소셜 계정은 비밀번호 자체가 없어
+                            그 탭에서는 안내할 대상이 아니다. */}
+                        <p className="login-findpw">
+                            <button type="button" onClick={() => navigate('/member/find-password')}>
+                                비밀번호를 잊으셨나요?
+                            </button>
+                        </p>
+
                         <div className="auth-or">또는 소셜 로그인</div>
 
                         {/*
