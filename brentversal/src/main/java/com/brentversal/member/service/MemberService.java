@@ -10,6 +10,7 @@ import com.brentversal.member.entity.Broker;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
 import com.brentversal.member.repository.MemberRepository;
+import com.brentversal.member.validation.PasswordPolicy;
 import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -86,33 +87,11 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
             member.setPassword(null);
         } else {
             String password = dto.getPassword();
-            if (password == null) {
-                throw new IllegalArgumentException("비밀번호를 입력해 주세요.");
-            }
 
-            boolean hasUpper = false; //대문자인지
-            boolean hasLower = false; //소문자인지
-            boolean hasDigit = false; //숫자인지
-            boolean hasSpecial = false; //특수기호인지
-
-            for(char c : password.toCharArray()) {
-                if(Character.isUpperCase(c)){
-                    hasUpper=true;
-                }
-                else if(Character.isLowerCase(c)){
-                    hasLower=true;
-                }
-                else if(Character.isDigit(c)){
-                    hasDigit = true;
-                }
-                else if(!Character.isLetterOrDigit(c)){
-                    hasSpecial=true;
-                }
-            }
-
-            if(!(hasUpper==true && hasLower==true && hasSpecial==true && hasDigit==true)){
-                throw new IllegalArgumentException("비밀번호는 대문자, 소문자, 숫자, 특수문자가 포함되어야합니다.");
-            }
+            // 규칙 검사는 PasswordPolicy 에 맡긴다.
+            // 비밀번호 재설정(PasswordResetService)도 같은 메서드를 부르므로,
+            // 규칙을 바꿀 일이 생기면 그 파일 한 곳만 고치면 양쪽에 함께 반영된다.
+            PasswordPolicy.validate(password);
 
             member.setPassword(passwordEncoder.encode(password));
         }
