@@ -439,7 +439,9 @@ public class PropertyService {
         property.setDetailDescription(changes.getDetailDescription());
         property.setMoveInDate(changes.getMoveInDate());
         property.setContractStatus(changes.getContractStatus());
-        property.setTags(tagService.findByIds(changes.getTagIds()));
+        // Hibernate가 관리하는 기존 태그 컬렉션은 유지하고 내용만 교체함
+        property.getTags().clear();
+        property.getTags().addAll(tagService.findByIds(changes.getTagIds()));
 
         // 거래유형이 그대로일 때만 가격 등락을 비교한다 (유형이 바뀌면 가격 성격이 달라서 비교 자체가 의미 없음)
         if (oldDealType == property.getDealType()) {
