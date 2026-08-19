@@ -123,6 +123,7 @@ export interface PropertyResponse {
     aiMonthlyRent: number | null;
     aiRecommendScore: number | null;
     priceStatus: PriceChangeStatusCode | null;
+    priceEvaluation: "UNDERVALUED" | "FAIR" | "OVERVALUED" | null;
 
     latitude: number | null;
     longitude: number | null;
