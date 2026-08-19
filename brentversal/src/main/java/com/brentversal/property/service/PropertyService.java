@@ -439,7 +439,9 @@ public class PropertyService {
         property.setDetailDescription(changes.getDetailDescription());
         property.setMoveInDate(changes.getMoveInDate());
         property.setContractStatus(changes.getContractStatus());
-        property.setTags(tagService.findByIds(changes.getTagIds()));
+        // Hibernate가 관리하는 기존 태그 컬렉션은 유지하고 내용만 교체함
+        property.getTags().clear();
+        property.getTags().addAll(tagService.findByIds(changes.getTagIds()));
 
         // 거래유형이 그대로일 때만 가격 등락을 비교한다 (유형이 바뀌면 가격 성격이 달라서 비교 자체가 의미 없음)
         if (oldDealType == property.getDealType()) {
@@ -486,6 +488,9 @@ public class PropertyService {
         property.setAiDeposit(aiDraft.getAiDeposit());
         property.setAiMonthlyDeposit(aiDraft.getAiMonthlyDeposit());
         property.setAiMonthlyRent(aiDraft.getAiMonthlyRent());
+
+        // 기존 관리자 가격평가를 지워 수정 매물을 재평가하도록 초기화함
+        property.setPriceEvaluation(null);
 
         // 기존 매물 수정 완료 후 관리자 재승인 대기 PENDING으로 변경함
         property.setStatus(PropertyStatus.PENDING);
