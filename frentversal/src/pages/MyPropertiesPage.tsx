@@ -7,6 +7,7 @@ import { formatPrice, DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 
 // 매물 상태 -> 뱃지 라벨/색상 (목업 agent-dashboard.html의 상태 배지 색을 따름)
 const STATUS_LABELS: Record<PropertyStatusCode, string> = {
+    DRAFT: "임시저장",
     PENDING: "승인 대기",
     ACTIVE: "게시중",
     IN_PROGRESS: "거래진행중",
@@ -17,6 +18,7 @@ const STATUS_LABELS: Record<PropertyStatusCode, string> = {
 // 목업(agent-dashboard.html)에서 노출 중=green, 승인 대기=orange, 거래 완료=gray 를 그대로 따르고,
 // 거래진행중/등록취소는 목업에 없어서 기존 bootstrap variant(primary/danger)와 가장 가까운 색으로 맞췄다.
 const STATUS_COLORS: Record<PropertyStatusCode, string> = {
+    DRAFT: "gray",
     PENDING: "orange",
     ACTIVE: "green",
     IN_PROGRESS: "purple",

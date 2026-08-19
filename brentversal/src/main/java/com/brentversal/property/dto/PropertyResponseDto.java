@@ -51,6 +51,7 @@ public class PropertyResponseDto {
     private Long aiMonthlyDeposit;
     private Long aiMonthlyRent;
     private Double aiRecommendScore;
+    private String priceEvaluation;
 
     private String description;      // 소개 글
     private String detailDescription; // 상세 설명
@@ -112,6 +113,10 @@ public class PropertyResponseDto {
         dto.setAiMonthlyDeposit(bean.getAiMonthlyDeposit());
         dto.setAiMonthlyRent(bean.getAiMonthlyRent());
         dto.setAiRecommendScore(bean.getAiRecommendScore());
+
+        if (bean.getPriceEvaluation() != null) {
+            dto.setPriceEvaluation(bean.getPriceEvaluation().name());
+        }
 
         dto.setImages(bean.getImages().stream()
                 .map(PropertyImageResponseDto::of)

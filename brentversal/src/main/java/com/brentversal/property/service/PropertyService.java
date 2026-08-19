@@ -489,6 +489,9 @@ public class PropertyService {
         property.setAiMonthlyDeposit(aiDraft.getAiMonthlyDeposit());
         property.setAiMonthlyRent(aiDraft.getAiMonthlyRent());
 
+        // 기존 관리자 가격평가를 지워 수정 매물을 재평가하도록 초기화함
+        property.setPriceEvaluation(null);
+
         // 기존 매물 수정 완료 후 관리자 재승인 대기 PENDING으로 변경함
         property.setStatus(PropertyStatus.PENDING);
 
