@@ -1,9 +1,11 @@
 package com.brentversal.property.constant;
 
+// 매물의 임시저장부터 승인·거래완료까지 업무 상태값을 정의하는 Enum임
 public enum PropertyStatus {
-    PENDING,        // 승인대기 (신규 등록 시 기본값, 관리자 승인 전)
+    DRAFT,          // 중개인이 작성 중인 임시 저장 매물
+    PENDING,        // 관리자 승인 대기
     ACTIVE,         // 게시중
     IN_PROGRESS,    // 거래진행중
-    COMPLETED,      // 거래완료 (되돌릴 수 없음)
-    CANCELLED       // 등록취소 (되돌릴 수 없음)
+    COMPLETED,      // 거래완료
+    CANCELLED       // 등록취소
 }
