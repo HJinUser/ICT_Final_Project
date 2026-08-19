@@ -102,8 +102,11 @@ public class MyAgencyService {
         // PageRequest.of(페이지번호, 한페이지크기) - 페이지 번호는 0부터 시작한다
         Pageable pageable = PageRequest.of(Math.max(0, page), PROPERTY_PAGE_SIZE);
 
-        return propertyRepository.findByAgencyIdOrderByCreatedAtDesc(agency.getId(), pageable)
-                .map(MyPropertyCardDto::of);
+        return propertyRepository.findByAgencyIdAndStatusNotOrderByCreatedAtDesc(
+                agency.getId(),
+                PropertyStatus.DRAFT,
+                pageable
+        ).map(MyPropertyCardDto::of);
     }
 
     // 내 사무소로 들어온 상담 요청 목록

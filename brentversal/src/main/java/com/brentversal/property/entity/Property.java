@@ -58,7 +58,7 @@ public class Property {
     private String name;
 
     @Lob
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;         // 소개 글
 
     @NotNull(
@@ -196,8 +196,8 @@ public class Property {
     private Double aiRecommendScore;   // AI 추천 점수. 다른 기능이 계산해서 저장하며, 계산 전에는 null
 
     @Lob
-    @Column(name = "detail_description")
-    private String detailDescription;   // 상세 설명
+    @Column(name = "detail_description", columnDefinition = "TEXT")
+    private String detailDescription;
 
     @Column(name = "move_in_date")
     private LocalDate moveInDate;        // 입주 가능일

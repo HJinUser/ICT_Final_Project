@@ -204,7 +204,9 @@ public class PropertyService {
         target.setDetailDescription(source.getDetailDescription());
         target.setMoveInDate(source.getMoveInDate());
         target.setContractStatus(source.getContractStatus());
-        target.setTags(tagService.findByIds(source.getTagIds()));
+        // Hibernate가 관리하는 기존 태그 컬렉션은 유지하고 내용만 교체함
+        target.getTags().clear();
+        target.getTags().addAll(tagService.findByIds(source.getTagIds()));
     }
 
     // 주소 비교 전에 앞뒤 공백과 연속 공백을 정리하는 메서드임
