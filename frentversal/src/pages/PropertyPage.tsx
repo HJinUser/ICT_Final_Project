@@ -203,7 +203,32 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const isOwner = user?.role === "BROKER" && user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
 
     const aiPrice = getPrimaryAiPrice(property);
-    const priceDiff = (aiPrice ?? 0) - getPrimaryPrice(property);
+
+    const PRICE_EVALUATION_META = {
+        UNDERVALUED: { label: '저평가', className: 'green' },
+        FAIR: { label: '적정', className: 'gray' },
+        OVERVALUED: { label: '고평가', className: 'orange' },
+    } as const;
+
+    const formatAiPrice = (property: PropertyResponse): string => {
+        if (property.dealType === 'SALE') {
+            return property.aiPrice == null
+                ? '예측 전'
+                : `${property.aiPrice.toLocaleString()}만 원`;
+        }
+
+        if (property.dealType === 'JEONSE') {
+            return property.aiDeposit == null
+                ? '예측 전'
+                : `${property.aiDeposit.toLocaleString()}만 원`;
+        }
+
+        if (property.aiMonthlyDeposit == null || property.aiMonthlyRent == null) {
+            return '예측 전';
+        }
+
+        return `보증금 ${property.aiMonthlyDeposit.toLocaleString()}만 원 / 월세 ${property.aiMonthlyRent.toLocaleString()}만 원`;
+    };
 
     return (
         <main>
@@ -212,9 +237,13 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                     <div className="eyebrow">Property Detail</div>
                     <h1>{property.name}</h1>
                     <div className="row gap8" style={{ marginTop: 10 }}>
-                        <span className={`status ${priceDiff >= 0 ? "green" : "red"}`}>
-                            시세보다 {Math.abs(priceDiff).toLocaleString()} {priceDiff >= 0 ? "낮음" : "높음"}
-                        </span>
+                        {property.priceEvaluation && (
+                            <span
+                                className={`status ${PRICE_EVALUATION_META[property.priceEvaluation].className}`}
+                            >
+                                관리자 시세평가 · {PRICE_EVALUATION_META[property.priceEvaluation].label}
+                            </span>
+                        )}
                         {property.priceStatus && (
                             <span className={`status ${property.priceStatus === "DOWN" ? "green" : "red"}`}>
                                 가격 {property.priceStatus === "DOWN" ? "하락" : "상승"}
@@ -225,7 +254,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 </div>
                 <div className="hero-stat">
                     <span className="mono dim">AI 예상 시세</span>
-                    <strong>{(aiPrice ?? 0).toLocaleString()}</strong>
+                    <strong>{formatAiPrice(property)}</strong>
                 </div>
             </div></section>
 
@@ -272,7 +301,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                     <div>
                                         <span className="xs dim">예상 적정 전세가</span>
                                         <strong style={{ display: "block", fontFamily: "'IBM Plex Mono',monospace", fontSize: 28, fontWeight: 600, marginTop: 5 }}>
-                                            {(aiPrice ?? 0).toLocaleString()}
+                                            {formatAiPrice(property)}
                                         </strong>
                                     </div>
                                     <div style={{ textAlign: "right" }}>

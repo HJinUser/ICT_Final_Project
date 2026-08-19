@@ -7,6 +7,18 @@ export interface AdminProperty {
     name: string;
     typeLabel: string;   // 아파트 / 원투룸 ...
     priceLabel: string;  // "전세 4억 9,000"
+
+    // React 관리자 매물 타입에 거래유형·AI 예측 시세·관리자 가격평가 필드를 추가함
+    dealType: "SALE" | "JEONSE" | "MONTHLY";
+
+    aiPrice: number | null;
+    aiDeposit: number | null;
+    aiMonthlyDeposit: number | null;
+    aiMonthlyRent: number | null;
+
+    priceEvaluation: "UNDERVALUED" | "FAIR" | "OVERVALUED" | null;
+
+
     address: string;
     area: string | null; // "84㎡"
     floor: number | null;

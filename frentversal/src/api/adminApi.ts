@@ -11,12 +11,35 @@ import type {
     AdminPropertyListResponse,
 } from '../types/Admin';
 
+export type PriceEvaluationStatus =
+    | "UNDERVALUED"
+    | "FAIR"
+    | "OVERVALUED";
+
 // 매물 목록. status 를 넘기지 않으면 승인 대기(PENDING)만 받는다.
 export async function getAdminProperties(status = 'PENDING', page = 0): Promise<AdminPropertyListResponse> {
     const response = await customAxios.get<AdminPropertyListResponse>('/admin/properties', {
         params: { status, page },
     });
 
+    return response.data;
+}
+
+// 관리자 가격평가 상태를 Spring API에 전송하고 갱신된 매물 정보를 반환하는 함수임
+export async function evaluatePropertyPrice(
+    id: number,
+    status: PriceEvaluationStatus,
+): Promise<{ message: string; property: AdminProperty }> {
+    // 선택한 관리자 가격평가 상태를 해당 매물의 price-evaluation API에 PATCH 요청함
+    const response = await customAxios.patch<{
+        message: string;
+        property: AdminProperty;
+    }>(
+        `/admin/properties/${id}/price-evaluation`,
+        { status },
+    );
+
+    // 계산 또는 렌더링할 최종 결과를 반환함
     return response.data;
 }
 

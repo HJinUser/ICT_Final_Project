@@ -253,7 +253,9 @@ function PropertyMap({
                 pin.title = property.name;
 
                 // 시세보다 싸게 나온 매물은 눈에 띄게 표시한다 (기획서: 저평가 매물 강조)
-                if (property.priceLevel === 'LOW') pin.classList.add('deal');
+                if (property.priceEvaluation === 'UNDERVALUED') {
+                    pin.classList.add('deal');
+                }
 
                 // 내가 등록한 매물과 지금 고른 매물을 구분한다
                 if (myAgencyId != null && property.agencyId === myAgencyId) pin.classList.add('mine');

@@ -54,17 +54,10 @@ public class PropertySearchDto {
     private String typeLabel ;
 
     // ── 시세 평가 ────────────────────────────────────────
-    // AI 예상 시세(aiPrice)와 실제 호가를 비교한 결과다.
-    // 화면 카드의 "시세 -5,000만" 배지에 쓴다. 예상 시세가 없으면 비교하지 않는다.
-    private Long aiPrice ;
-    private Long priceDiff ;    // 예상 시세 - 호가. 양수면 시세보다 싸게 나온 것
-    private String priceLevel ; // LOW(시세보다 싸다) / MID(비슷) / HIGH(비싸다) / null(비교 불가)
+    private String priceEvaluation;
 
     // 카드에 붙는 핵심 키워드 (태그 이름 몇 개)
     private List<String> keywords = new ArrayList<>();
-
-    // 시세와 "비슷하다"로 볼 차이. 이 값 이내면 MID 로 본다. (만원)
-    private static final long SIMILAR_RANGE = 1000 ;
 
     // 카드에 몇 개까지 키워드를 보여 줄지
     private static final int KEYWORD_LIMIT = 3 ;
@@ -107,13 +100,10 @@ public class PropertySearchDto {
         }
 
         // 시세 평가 : 예상 시세가 있을 때만 비교한다
-        dto.setAiPrice(bean.getAiPrice());
-
-        if(bean.getAiPrice() != null && dto.getPrice() != null){
-            long diff = bean.getAiPrice() - dto.getPrice();
-
-            dto.setPriceDiff(diff);
-            dto.setPriceLevel(Math.abs(diff) <= SIMILAR_RANGE ? "MID" : (diff > 0 ? "LOW" : "HIGH"));
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (bean.getPriceEvaluation() != null) {
+            // 지도검색 응답 DTO에 관리자 수동 가격평가 Enum 이름을 문자열로 복사함
+            dto.setPriceEvaluation(bean.getPriceEvaluation().name());
         }
 
         // 핵심 키워드 (태그 이름 몇 개만)

@@ -33,9 +33,7 @@ export interface PropertySearchItem {
     typeLabel: string; // 원/투룸 · 아파트 ...
 
     // 시세 평가 (AI 예상 시세와 호가 비교). 예상 시세가 없으면 priceLevel 이 null 이다.
-    aiPrice: number | null;
-    priceDiff: number | null;   // 예상 시세 - 호가. 양수면 시세보다 싸다
-    priceLevel: 'LOW' | 'MID' | 'HIGH' | null;
+    priceEvaluation: 'UNDERVALUED' | 'FAIR' | 'OVERVALUED' | null;
 
     keywords: string[]; // 카드에 붙는 핵심 키워드(태그)
 }

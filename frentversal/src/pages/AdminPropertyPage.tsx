@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { approveProperty, getAdminProperties, rejectProperty } from '../api/adminApi';
+// 이 컴포넌트/함수에서 사용할 React 기능과 프로젝트 모듈 불러옴
+import {
+    approveProperty,
+    evaluatePropertyPrice,
+    getAdminProperties,
+    rejectProperty,
+    // 관리자 API에서 사용하는 가격평가 상태 TypeScript 타입도 함께 import함
+    type PriceEvaluationStatus,
+} from '../api/adminApi';
+
 import type { AdminProperty } from '../types/Admin';
 import type { User } from '../types/User';
 
@@ -31,6 +40,40 @@ const STATUS_COLORS: Record<string, string> = {
     IN_PROGRESS: 'purple',
     COMPLETED: 'gray',
     CANCELLED: 'red',
+};
+
+const PRICE_EVALUATION_LABELS: Record<PriceEvaluationStatus, string> = {
+    UNDERVALUED: '저평가',
+    FAIR: '적정',
+    OVERVALUED: '고평가',
+};
+
+// 거래유형에 따라 AI 가격 카드의 제목 문구를 선택하는 함수임
+const getAiPriceLabel = (property: AdminProperty): string => {
+    if (property.dealType === 'SALE') {
+        // 계산 또는 렌더링할 최종 결과를 반환함
+        return property.aiPrice == null
+            ? 'AI 예상 시세 없음'
+            : `AI 예상 매매가 ${property.aiPrice.toLocaleString()}만원`;
+    }
+
+    if (property.dealType === 'JEONSE') {
+        // 계산 또는 렌더링할 최종 결과를 반환함
+        return property.aiDeposit == null
+            ? 'AI 예상 시세 없음'
+            : `AI 예상 전세보증금 ${property.aiDeposit.toLocaleString()}만원`;
+    }
+
+    if (
+        property.aiMonthlyDeposit == null ||
+        property.aiMonthlyRent == null
+    ) {
+        // 계산 또는 렌더링할 최종 결과를 반환함
+        return 'AI 예상 시세 없음';
+    }
+
+    // 계산 또는 렌더링할 최종 결과를 반환함
+    return `AI 예상 보증금 ${property.aiMonthlyDeposit.toLocaleString()}만원 / 월세 ${property.aiMonthlyRent.toLocaleString()}만원`;
 };
 
 function AdminPropertyPage({ user }: Props) {
@@ -73,6 +116,30 @@ function AdminPropertyPage({ user }: Props) {
         load();
     }, [load]);
 
+    // 관리자가 선택한 가격평가 상태를 서버에 저장하고 화면 목록/메시지를 갱신하는 함수임
+    const handlePriceEvaluation = async (
+        property: AdminProperty,
+        status: PriceEvaluationStatus,
+    ) => {
+        // API 호출이나 비동기 처리 실패에 대비해 예외 처리 범위로 묶어둠
+        try {
+            const result = await evaluatePropertyPrice(property.id, status);
+
+            setProperties((prev) =>
+                prev.map((item) =>
+                    item.id === property.id ? result.property : item,
+                ),
+            );
+
+            setMessage(`${property.name} — ${result.message}`);
+        } catch (error: any) {
+            setMessage(
+                error.response?.data?.message ??
+                '가격 평가 저장에 실패했습니다.',
+            );
+        }
+    };
+
     // 승인 : 승인 대기 -> 게시중
     const handleApprove = async (property: AdminProperty) => {
         try {
@@ -108,107 +175,166 @@ function AdminPropertyPage({ user }: Props) {
     return (
         <>
             <div className="section-head">
-                        <div>
-                            <h2>매물 관리</h2>
-                            <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. 오래 기다린 매물이 위에 옵니다.</p>
+                <div>
+                    <h2>매물 관리</h2>
+                    <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. 오래 기다린 매물이 위에 옵니다.</p>
+                </div>
+                <span className={`status ${pendingCount > 0 ? 'orange' : 'green'}`}>
+                    승인 대기 {pendingCount}건
+                </span>
+            </div>
+
+            <div className="section-head">
+                <div>
+                    <h2 style={{ fontSize: 17 }}>매물 목록</h2>
+                    <p>한 페이지에 10건씩 표시됩니다.</p>
+                </div>
+                <select
+                    className="search-box"
+                    style={{ maxWidth: 180 }}
+                    value={filter}
+                    onChange={(event) => { setFilter(event.target.value); setPage(0); }}
+                >
+                    {STATUS_FILTERS.map((item) => (
+                        <option value={item.value} key={item.value}>{item.label}</option>
+                    ))}
+                </select>
+            </div>
+
+            {message && <p className="xs" style={{ marginBottom: 16, color: 'var(--v)' }}>{message}</p>}
+
+            {loading && <p className="xs dim">불러오는 중입니다…</p>}
+
+            {!loading && properties.length === 0 && (
+                <p className="xs dim">해당 조건의 매물이 없습니다.</p>
+            )}
+
+            <div className="stack">
+                {properties.map((property) => (
+                    <div className="card" key={property.id}>
+                        <div className="row between">
+                            <span className={`status ${STATUS_COLORS[property.status] ?? 'gray'}`}>
+                                {property.statusLabel}
+                            </span>
+                            <span className="xs dim">신청 {property.createdAt}</span>
                         </div>
-                        <span className={`status ${pendingCount > 0 ? 'orange' : 'green'}`}>
-                            승인 대기 {pendingCount}건
-                        </span>
-                    </div>
 
-                    <div className="section-head">
-                        <div>
-                            <h2 style={{ fontSize: 17 }}>매물 목록</h2>
-                            <p>한 페이지에 10건씩 표시됩니다.</p>
+                        <h3 style={{ marginTop: 10 }}>
+                            <Link to={`/property/${property.id}`}>{property.name}</Link>
+                        </h3>
+
+                        <p className="xs dim" style={{ marginTop: 6 }}>
+                            {property.typeLabel} · {property.priceLabel}
+                        </p>
+                        <p className="xs dim" style={{ marginTop: 4 }}>
+                            {property.address}
+                            {property.area ? ` · ${property.area}` : ''}
+                            {property.floor != null ? ` · ${property.floor}층` : ''}
+                        </p>
+
+                        <div className="divider" style={{ margin: '12px 0' }}></div>
+
+                        {/* 어느 사무소가 올렸는지. 인증되지 않은 사무소는 승인 전에 한 번 더 살펴봐야 한다. */}
+                        <div className="row between">
+                            <span className="xs dim">
+                                {property.agencyId ? (
+                                    <Link to={`/agency/${property.agencyId}`}>{property.agencyName}</Link>
+                                ) : '사무소 없음'}
+                                {property.brokerName ? ` · ${property.brokerName}` : ''}
+                            </span>
+                            <span className={`status ${property.agencyVerified ? 'green' : 'gray'}`}>
+                                {property.agencyVerified ? '인증 사무소' : '미인증 사무소'}
+                            </span>
                         </div>
-                        <select
-                            className="search-box"
-                            style={{ maxWidth: 180 }}
-                            value={filter}
-                            onChange={(event) => { setFilter(event.target.value); setPage(0); }}
-                        >
-                            {STATUS_FILTERS.map((item) => (
-                                <option value={item.value} key={item.value}>{item.label}</option>
-                            ))}
-                        </select>
-                    </div>
 
-                    {message && <p className="xs" style={{ marginBottom: 16, color: 'var(--v)' }}>{message}</p>}
+                        {/* 관리자 승인대기 매물 카드에 등록가격·AI 적정시세·수동 가격평가 선택 UI를 추가함 */}
+                        <>
+                            <div className="divider" style={{ margin: '12px 0' }}></div>
 
-                    {loading && <p className="xs dim">불러오는 중입니다…</p>}
-
-                    {!loading && properties.length === 0 && (
-                        <p className="xs dim">해당 조건의 매물이 없습니다.</p>
-                    )}
-
-                    <div className="stack">
-                        {properties.map((property) => (
-                            <div className="card" key={property.id}>
-                                <div className="row between">
-                                    <span className={`status ${STATUS_COLORS[property.status] ?? 'gray'}`}>
-                                        {property.statusLabel}
-                                    </span>
-                                    <span className="xs dim">신청 {property.createdAt}</span>
-                                </div>
-
-                                <h3 style={{ marginTop: 10 }}>
-                                    <Link to={`/property/${property.id}`}>{property.name}</Link>
-                                </h3>
-
-                                <p className="xs dim" style={{ marginTop: 6 }}>
-                                    {property.typeLabel} · {property.priceLabel}
-                                </p>
-                                <p className="xs dim" style={{ marginTop: 4 }}>
-                                    {property.address}
-                                    {property.area ? ` · ${property.area}` : ''}
-                                    {property.floor != null ? ` · ${property.floor}층` : ''}
+                            <div>
+                                <p className="xs" style={{ marginBottom: 6 }}>
+                                    <strong>중개인 등록가격</strong> · {property.priceLabel}
                                 </p>
 
-                                <div className="divider" style={{ margin: '12px 0' }}></div>
+                                <p className="xs" style={{ marginBottom: 10 }}>
+                                    <strong>AI 적정 시세</strong> · {getAiPriceLabel(property)}
+                                </p>
 
-                                {/* 어느 사무소가 올렸는지. 인증되지 않은 사무소는 승인 전에 한 번 더 살펴봐야 한다. */}
-                                <div className="row between">
-                                    <span className="xs dim">
-                                        {property.agencyId ? (
-                                            <Link to={`/agency/${property.agencyId}`}>{property.agencyName}</Link>
-                                        ) : '사무소 없음'}
-                                        {property.brokerName ? ` · ${property.brokerName}` : ''}
-                                    </span>
-                                    <span className={`status ${property.agencyVerified ? 'green' : 'gray'}`}>
-                                        {property.agencyVerified ? '인증 사무소' : '미인증 사무소'}
-                                    </span>
-                                </div>
-
-                                {/* 승인·반려는 승인 대기 상태에서만 할 수 있다 (서버도 같은 조건으로 막는다) */}
                                 {property.status === 'PENDING' && (
-                                    <div className="row" style={{ gap: 10, marginTop: 16 }}>
-                                        <button className="solid-btn" onClick={() => handleApprove(property)}>
-                                            승인
-                                        </button>
-                                        <button className="outline-btn" onClick={() => handleReject(property)}>
-                                            반려
-                                        </button>
-                                    </div>
+                                    <>
+                                        <p className="xs dim" style={{ marginBottom: 8 }}>
+                                            AI 시세를 참고해 관리자가 직접 가격 상태를 선택합니다.
+                                        </p>
+
+                                        <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                                            {(
+                                                [
+                                                    'UNDERVALUED',
+                                                    'FAIR',
+                                                    'OVERVALUED',
+                                                ] as PriceEvaluationStatus[]
+                                            ).map((status) => (
+                                                <button
+                                                    key={status}
+                                                    type="button"
+                                                    className={
+                                                        property.priceEvaluation === status
+                                                            ? 'solid-btn'
+                                                            : 'outline-btn'
+                                                    }
+                                                    onClick={() =>
+                                                        handlePriceEvaluation(property, status)
+                                                    }
+                                                >
+                                                    {PRICE_EVALUATION_LABELS[status]}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+
+                                {property.status !== 'PENDING' && property.priceEvaluation && (
+                                    <p className="xs" style={{ marginTop: 8 }}>
+                                        관리자 가격평가 ·{' '}
+                                        {PRICE_EVALUATION_LABELS[property.priceEvaluation]}
+                                    </p>
                                 )}
                             </div>
-                        ))}
-                    </div>
+                        </>
 
-                    {/* 페이징 */}
-                    {totalPages > 1 && (
-                        <div className="row" style={{ gap: 6, marginTop: 18, justifyContent: 'center' }}>
-                            {Array.from({ length: totalPages }, (_, index) => (
+                        {/* 승인·반려는 승인 대기 상태에서만 할 수 있다 (서버도 같은 조건으로 막는다) */}
+                        {property.status === 'PENDING' && (
+                            <div className="row" style={{ gap: 10, marginTop: 16 }}>
                                 <button
-                                    className={`tab-btn${page === index ? ' on' : ''}`}
-                                    onClick={() => setPage(index)}
-                                    key={index}
+                                    className="solid-btn"
+                                    disabled={!property.priceEvaluation}
+                                    onClick={() => handleApprove(property)}
                                 >
-                                    {index + 1}
+                                    승인
                                 </button>
-                            ))}
-                        </div>
-                    )}
+                                <button className="outline-btn" onClick={() => handleReject(property)}>
+                                    반려
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* 페이징 */}
+            {totalPages > 1 && (
+                <div className="row" style={{ gap: 6, marginTop: 18, justifyContent: 'center' }}>
+                    {Array.from({ length: totalPages }, (_, index) => (
+                        <button
+                            className={`tab-btn${page === index ? ' on' : ''}`}
+                            onClick={() => setPage(index)}
+                            key={index}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+                </div>
+            )}
         </>
     );
 }
