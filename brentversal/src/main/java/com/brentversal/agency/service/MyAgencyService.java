@@ -109,6 +109,7 @@ public class MyAgencyService {
         ).map(MyPropertyCardDto::of);
     }
 
+
     // 내 사무소로 들어온 상담 요청 목록
     // status 가 null 이거나 "ALL" 이면 전체를 보여 준다 (문의 관리 필터의 기본값).
     @Transactional(readOnly = true)
