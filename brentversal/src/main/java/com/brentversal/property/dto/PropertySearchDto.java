@@ -28,6 +28,7 @@ public class PropertySearchDto {
     @JsonIgnore
     private Long comparablePrice;
     private String address ;
+    private String city ;       // 주소에서 뽑은 시·도 (지도를 아주 넓게 봤을 때 묶는 기준)
     private String gu ;         // 주소에서 뽑은 구·시·군 (지도를 많이 축소했을 때 묶는 기준)
     private String dong ;       // 주소에서 뽑은 동네 이름 (조금 축소했을 때 묶는 기준)
     private BigDecimal area ;   // 전용면적 (숫자 — 필터·정렬용)
@@ -85,6 +86,7 @@ public class PropertySearchDto {
         //
         // 컬럼이 비어 있는 것은 주소 검색을 붙이기 전에 등록된 자료다.
         // 그런 자료는 대개 지번 주소라서 주소 문자열에서 뽑을 수 있어, 예전 방식으로 한 번 더 시도한다.
+        dto.setCity(toCity(bean.getAddress()));
         dto.setGu(bean.getSigungu() != null ? bean.getSigungu() : toGu(bean.getAddress()));
         dto.setDong(bean.getDong() != null ? bean.getDong() : toDong(bean.getAddress()));
         dto.setAreaLabel(card.getArea());
@@ -125,6 +127,25 @@ public class PropertySearchDto {
                 .ifPresent(image -> dto.setThumbnailUrl(image.getUrl()));
 
         return dto;
+    }
+
+    // 주소 맨 앞의 시·도 조각을 찾는다. 지도를 아주 넓게 봤을 때 이 단위로 묶는다.
+    //
+    // 표기가 자료마다 섞여 있다. 주소 검색을 붙인 뒤 등록한 매물은 "서울시"로 들어오지만
+    // 그 전에 넣은 예시 자료는 "서울 서초구 ..."처럼 짧게 적혀 있다.
+    // 그대로 두면 같은 서울인데 "서울"과 "서울시" 두 덩어리로 갈라져 표식이 두 개 생긴다.
+    // 그래서 앞부분이 같으면 팀 표기(daumPostcode.ts 의 normalizeSido)인 "서울시"로 맞춘다.
+    //
+    // 지금은 서울만 다루는 서비스라 서울만 정리한다.
+    // 다른 지역을 받게 되면 여기에 같은 방식으로 덧붙이면 된다.
+    private static String toCity(String address){
+        if(address == null || address.isBlank()) return null;
+
+        String first = address.trim().split(" ")[0];
+
+        if(first.startsWith("서울")) return "서울시";
+
+        return first.isBlank() ? null : first;
     }
 
     // 주소에서 '구'(또는 시·군)로 끝나는 조각을 찾는다.
