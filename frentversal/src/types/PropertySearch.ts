@@ -10,6 +10,7 @@ export interface PropertySearchItem {
     address: string;
     // 지도에서 묶는 기준이자 카드에 보여 줄 지역 이름.
     // 주소에서 뽑지 못하면 null 이고, 그런 매물은 묶이지 않고 개별로만 표시된다.
+    city: string | null; // 시·도 (아주 넓게 봤을 때)
     gu: string | null;   // 구·시·군 (많이 축소했을 때)
     dong: string | null; // 동 (조금 축소했을 때)
     area: number | null;      // 숫자 (정렬용)
