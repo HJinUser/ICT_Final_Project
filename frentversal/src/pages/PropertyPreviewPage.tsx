@@ -56,6 +56,7 @@ const DUMMY_PROPERTY: PropertyDetail = {
     priceStatus: "DOWN", // "가격 하락" 배지 확인용. null로 바꾸면 배지가 안 보임
     aiRecommendScore: 82,
     createdAt: "2026-07-01T00:00:00",
+    updatedAt: "2026-07-01T00:00:00",
 
     // ── 여기부터는 PropertyResponse에 없는, 화면 확인용 전용 필드 ──
     ownerId: 1, // PREVIEW_USER의 id와 같음 → "내 매물" 로직(중개인 전용 버튼) 확인용

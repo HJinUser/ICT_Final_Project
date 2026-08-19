@@ -28,6 +28,7 @@ public class PropertySearchDto {
     @JsonIgnore
     private Long comparablePrice;
     private String address ;
+    private String city ;       // 주소에서 뽑은 시·도 (지도를 아주 넓게 봤을 때 묶는 기준)
     private String gu ;         // 주소에서 뽑은 구·시·군 (지도를 많이 축소했을 때 묶는 기준)
     private String dong ;       // 주소에서 뽑은 동네 이름 (조금 축소했을 때 묶는 기준)
     private BigDecimal area ;   // 전용면적 (숫자 — 필터·정렬용)
@@ -54,17 +55,10 @@ public class PropertySearchDto {
     private String typeLabel ;
 
     // ── 시세 평가 ────────────────────────────────────────
-    // AI 예상 시세(aiPrice)와 실제 호가를 비교한 결과다.
-    // 화면 카드의 "시세 -5,000만" 배지에 쓴다. 예상 시세가 없으면 비교하지 않는다.
-    private Long aiPrice ;
-    private Long priceDiff ;    // 예상 시세 - 호가. 양수면 시세보다 싸게 나온 것
-    private String priceLevel ; // LOW(시세보다 싸다) / MID(비슷) / HIGH(비싸다) / null(비교 불가)
+    private String priceEvaluation;
 
     // 카드에 붙는 핵심 키워드 (태그 이름 몇 개)
     private List<String> keywords = new ArrayList<>();
-
-    // 시세와 "비슷하다"로 볼 차이. 이 값 이내면 MID 로 본다. (만원)
-    private static final long SIMILAR_RANGE = 1000 ;
 
     // 카드에 몇 개까지 키워드를 보여 줄지
     private static final int KEYWORD_LIMIT = 3 ;
@@ -92,6 +86,7 @@ public class PropertySearchDto {
         //
         // 컬럼이 비어 있는 것은 주소 검색을 붙이기 전에 등록된 자료다.
         // 그런 자료는 대개 지번 주소라서 주소 문자열에서 뽑을 수 있어, 예전 방식으로 한 번 더 시도한다.
+        dto.setCity(toCity(bean.getAddress()));
         dto.setGu(bean.getSigungu() != null ? bean.getSigungu() : toGu(bean.getAddress()));
         dto.setDong(bean.getDong() != null ? bean.getDong() : toDong(bean.getAddress()));
         dto.setAreaLabel(card.getArea());
@@ -107,13 +102,10 @@ public class PropertySearchDto {
         }
 
         // 시세 평가 : 예상 시세가 있을 때만 비교한다
-        dto.setAiPrice(bean.getAiPrice());
-
-        if(bean.getAiPrice() != null && dto.getPrice() != null){
-            long diff = bean.getAiPrice() - dto.getPrice();
-
-            dto.setPriceDiff(diff);
-            dto.setPriceLevel(Math.abs(diff) <= SIMILAR_RANGE ? "MID" : (diff > 0 ? "LOW" : "HIGH"));
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (bean.getPriceEvaluation() != null) {
+            // 지도검색 응답 DTO에 관리자 수동 가격평가 Enum 이름을 문자열로 복사함
+            dto.setPriceEvaluation(bean.getPriceEvaluation().name());
         }
 
         // 핵심 키워드 (태그 이름 몇 개만)
@@ -135,6 +127,25 @@ public class PropertySearchDto {
                 .ifPresent(image -> dto.setThumbnailUrl(image.getUrl()));
 
         return dto;
+    }
+
+    // 주소 맨 앞의 시·도 조각을 찾는다. 지도를 아주 넓게 봤을 때 이 단위로 묶는다.
+    //
+    // 표기가 자료마다 섞여 있다. 주소 검색을 붙인 뒤 등록한 매물은 "서울시"로 들어오지만
+    // 그 전에 넣은 예시 자료는 "서울 서초구 ..."처럼 짧게 적혀 있다.
+    // 그대로 두면 같은 서울인데 "서울"과 "서울시" 두 덩어리로 갈라져 표식이 두 개 생긴다.
+    // 그래서 앞부분이 같으면 팀 표기(daumPostcode.ts 의 normalizeSido)인 "서울시"로 맞춘다.
+    //
+    // 지금은 서울만 다루는 서비스라 서울만 정리한다.
+    // 다른 지역을 받게 되면 여기에 같은 방식으로 덧붙이면 된다.
+    private static String toCity(String address){
+        if(address == null || address.isBlank()) return null;
+
+        String first = address.trim().split(" ")[0];
+
+        if(first.startsWith("서울")) return "서울시";
+
+        return first.isBlank() ? null : first;
     }
 
     // 주소에서 '구'(또는 시·군)로 끝나는 조각을 찾는다.

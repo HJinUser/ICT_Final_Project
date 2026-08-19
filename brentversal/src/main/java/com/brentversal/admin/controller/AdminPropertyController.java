@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.brentversal.property.constant.PriceEvaluationStatus;
 
 import java.util.Map;
 
@@ -41,6 +42,54 @@ public class AdminPropertyController {
 
         } catch (IllegalArgumentException e) {
             return badRequest(e);
+        }
+    }
+
+    // 요청으로 받은 가격평가 문자열을 Enum으로 검증한 뒤 Service에 저장을 요청하는 Controller 메서드임
+    @PatchMapping("/{id}/price-evaluation")
+    public ResponseEntity<?> evaluatePrice(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request
+    ) {
+        String value = request.get("status");
+
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (value == null || value.isBlank()) {
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "가격 평가값이 필요합니다."));
+        }
+
+        final PriceEvaluationStatus evaluation;
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
+        try {
+            evaluation = PriceEvaluationStatus.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            // 잘못된 요청 내용을 HTTP 400 응답으로 반환함
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "message",
+                            "가격 평가는 UNDERVALUED, FAIR, OVERVALUED 중 하나여야 합니다."
+                    ));
+        }
+
+        // 외부 호출/변환 중 오류가 날 수 있어 예외 처리 범위로 묶어둠
+        try {
+            AdminPropertyDto saved =
+                    adminPropertyService.evaluatePrice(id, evaluation);
+
+            // 정상 처리 결과를 HTTP 200 응답으로 반환함
+            return ResponseEntity.ok(Map.of(
+                    "message", "가격 평가를 저장했습니다.",
+                    "property", saved
+            ));
+        } catch (IllegalArgumentException e) {
+            // 평가 대상 매물을 찾지 못한 오류를 기존 404 응답 Helper로 변환함
+            return notFound(e);
+        } catch (IllegalStateException e) {
+            // 평가할 수 없는 매물 상태 오류를 기존 409 Conflict 응답 Helper로 변환함
+            return conflict(e);
         }
     }
 

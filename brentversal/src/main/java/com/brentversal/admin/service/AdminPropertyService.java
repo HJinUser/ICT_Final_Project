@@ -2,6 +2,7 @@ package com.brentversal.admin.service;
 
 import com.brentversal.admin.dto.AdminPropertyDto;
 import com.brentversal.property.constant.PropertyStatus;
+import com.brentversal.property.constant.PriceEvaluationStatus;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
@@ -51,14 +52,41 @@ public class AdminPropertyService {
         return propertyRepository.countByStatus(PropertyStatus.PENDING);
     }
 
-    // 승인 : 승인 대기 -> 게시중
-    // 이 시점부터 사용자 화면에 노출된다.
+    // 승인대기 매물에 관리자가 선택한 저평가·적정·고평가 값을 저장하고 DTO로 반환하는 Service 메서드임
+    @Transactional
+    public AdminPropertyDto evaluatePrice(Long id, PriceEvaluationStatus evaluation) {
+        Property property = findPendingOrThrow(id);
+
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (evaluation == null) {
+            // 조건을 만족하지 않으면 이후 처리를 중단하도록 예외 발생시킴
+            throw new IllegalArgumentException("가격 평가값이 필요합니다.");
+        }
+
+        // 관리자가 선택한 가격평가 상태를 Property에 반영함
+        property.setPriceEvaluation(evaluation);
+
+        // 처리 완료된 결과를 호출한 쪽으로 반환함
+        return AdminPropertyDto.of(property);
+    }
+
+    // 관리자 가격평가가 완료된 승인대기 매물을 ACTIVE 상태로 승인하는 Service 메서드임
     @Transactional
     public AdminPropertyDto approve(Long id){
         Property property = findPendingOrThrow(id);
 
+        // 현재 값/권한/상태가 조건을 만족하는지 확인함
+        if (property.getPriceEvaluation() == null) {
+            // 조건을 만족하지 않으면 이후 처리를 중단하도록 예외 발생시킴
+            throw new IllegalStateException(
+                    "AI 예상 시세를 확인한 뒤 저평가/적정/고평가 중 하나를 먼저 선택해 주세요."
+            );
+        }
+
+        // 관리자 승인 완료 매물을 게시중 ACTIVE 상태로 변경함
         property.setStatus(PropertyStatus.ACTIVE);
 
+        // 처리 완료된 결과를 호출한 쪽으로 반환함
         return AdminPropertyDto.of(property);
     }
 

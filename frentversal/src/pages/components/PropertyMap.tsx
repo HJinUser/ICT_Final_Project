@@ -25,8 +25,12 @@ const MEMBER_AREA_LEVEL = 6;
 
 // 어느 레벨부터 묶어서 보여 줄지.
 // 이 값보다 크면(= 더 넓게 보면) 묶는다.
-const DONG_GROUP_LEVEL = 6; // 6 이상이면 동끼리 묶는다
-const GU_GROUP_LEVEL = 8;   // 8 이상이면 구끼리 묶는다
+//
+// 수도권 전체가 한 화면에 들어올 만큼 넓게 보면 구 배지가 수십 개 흩어져 읽히지 않는다.
+// 그 거리에서는 "어느 시·도에 몇 건"만 알면 되므로 한 단계 더 묶는다.
+const DONG_GROUP_LEVEL = 6;  // 6 이상이면 동끼리 묶는다
+const GU_GROUP_LEVEL = 8;    // 8 이상이면 구끼리 묶는다
+const CITY_GROUP_LEVEL = 10; // 10 이상이면 시·도끼리 묶는다
 
 // 필터에서 동까지 고른 경우의 확대 정도.
 // DONG_GROUP_LEVEL 보다 한 단계 더 확대해서, 동을 고른 순간 매물이 묶이지 않고
@@ -75,7 +79,7 @@ function toShortPrice(manwon: number | null): string {
 
 // 좌표가 있는 매물들을 지역 이름별로 묶는다.
 // 표식 위치는 그 지역 매물들의 좌표 평균으로 정한다.
-function groupByArea(properties: PropertySearchItem[], key: 'gu' | 'dong') {
+function groupByArea(properties: PropertySearchItem[], key: 'city' | 'gu' | 'dong') {
     const groups = new Map<string, { name: string; count: number; latSum: number; lngSum: number }>();
 
     properties.forEach((property) => {
@@ -214,13 +218,20 @@ function PropertyMap({
         };
 
         if (level >= DONG_GROUP_LEVEL) {
-            // 묶어서 보여 주기 : 넓게 볼수록 구 단위로 묶는다
-            const key = level >= GU_GROUP_LEVEL ? 'gu' : 'dong';
+            // 묶어서 보여 주기 : 넓게 볼수록 큰 단위로 묶는다 (동 → 구 → 시·도)
+            const key = level >= CITY_GROUP_LEVEL ? 'city'
+                : level >= GU_GROUP_LEVEL ? 'gu'
+                : 'dong';
+
+            // 시·도 단위로 묶는 거리에서는 개수를 빼고 지역 이름만 보여 준다.
+            // 그만큼 넓게 보고 있으면 "몇 건"보다 "어디를 볼지" 고르는 단계라,
+            // 숫자까지 얹으면 표식만 커지고 읽을 것이 늘어난다.
+            const nameOnly = key === 'city';
 
             groupByArea(properties, key).forEach((group) => {
                 const pin = document.createElement('button');
 
-                pin.className = 'marker cluster';
+                pin.className = `marker cluster${nameOnly ? ' name-only' : ''}`;
                 pin.title = `${group.name} 매물 ${group.count}건`;
 
                 // 지역 이름과 개수를 함께 보여 준다 (가격은 묶으면 의미가 없다)
@@ -228,11 +239,16 @@ function PropertyMap({
                 name.className = 'cluster-name';
                 name.textContent = group.name;
 
-                const count = document.createElement('span');
-                count.className = 'cluster-count';
-                count.textContent = String(group.count);
+                if (nameOnly) {
+                    pin.append(name);
+                } else {
+                    const count = document.createElement('span');
+                    count.className = 'cluster-count';
+                    count.textContent = String(group.count);
 
-                pin.append(name, count);
+                    // 개수를 먼저 놓는다. 좁혀 볼 때 가장 먼저 읽혀야 하는 정보가 "몇 건"이라서다.
+                    pin.append(count, name);
+                }
 
                 // 누르면 그 지역 매물만 목록에 남긴다
                 pin.onclick = () => onSelectGroup?.([group.name]);
@@ -253,7 +269,9 @@ function PropertyMap({
                 pin.title = property.name;
 
                 // 시세보다 싸게 나온 매물은 눈에 띄게 표시한다 (기획서: 저평가 매물 강조)
-                if (property.priceLevel === 'LOW') pin.classList.add('deal');
+                if (property.priceEvaluation === 'UNDERVALUED') {
+                    pin.classList.add('deal');
+                }
 
                 // 내가 등록한 매물과 지금 고른 매물을 구분한다
                 if (myAgencyId != null && property.agencyId === myAgencyId) pin.classList.add('mine');
@@ -366,7 +384,10 @@ function PropertyMap({
     }, [highlightRegion, highlightDong, focusNonce, sdkLoaded]);
 
     const pinnableCount = properties.filter((property) => property.latitude != null).length;
-    const grouping = level >= GU_GROUP_LEVEL ? '구' : level >= DONG_GROUP_LEVEL ? '동' : null;
+    const grouping = level >= CITY_GROUP_LEVEL ? '시·도'
+        : level >= GU_GROUP_LEVEL ? '구'
+        : level >= DONG_GROUP_LEVEL ? '동'
+        : null;
 
     // 확대 / 축소
     const zoom = (delta: number) => {

@@ -10,6 +10,7 @@ export interface PropertySearchItem {
     address: string;
     // 지도에서 묶는 기준이자 카드에 보여 줄 지역 이름.
     // 주소에서 뽑지 못하면 null 이고, 그런 매물은 묶이지 않고 개별로만 표시된다.
+    city: string | null; // 시·도 (아주 넓게 봤을 때)
     gu: string | null;   // 구·시·군 (많이 축소했을 때)
     dong: string | null; // 동 (조금 축소했을 때)
     area: number | null;      // 숫자 (정렬용)
@@ -33,9 +34,7 @@ export interface PropertySearchItem {
     typeLabel: string; // 원/투룸 · 아파트 ...
 
     // 시세 평가 (AI 예상 시세와 호가 비교). 예상 시세가 없으면 priceLevel 이 null 이다.
-    aiPrice: number | null;
-    priceDiff: number | null;   // 예상 시세 - 호가. 양수면 시세보다 싸다
-    priceLevel: 'LOW' | 'MID' | 'HIGH' | null;
+    priceEvaluation: 'UNDERVALUED' | 'FAIR' | 'OVERVALUED' | null;
 
     keywords: string[]; // 카드에 붙는 핵심 키워드(태그)
 }
