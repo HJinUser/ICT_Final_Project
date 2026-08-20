@@ -25,4 +25,12 @@ export type MlNeighborhoodResponse = {
     keywords: string[];
     // 위 키워드를 뽑는 데 쓰인 한줄평 문서 수
     reviewDocumentCount: number;
+
+    // 지도에 그릴 행정동 경계. [위도, 경도] 쌍의 목록이고 소수 5자리(약 1m)로 줄여 온다.
+    // 경계 자료에 없는 행정동이면 빈 배열이다.
+    boundary: [number, number][];
+
+    // 설문으로 받은 한줄평. 사용자가 서비스에서 쓴 한줄평과는 별개이고 고칠 수 없다.
+    // 작성자가 없는 자료라 DB에 넣지 않고 파이썬이 파일에서 읽어 그대로 내려준다.
+    surveyReviews: string[];
 };

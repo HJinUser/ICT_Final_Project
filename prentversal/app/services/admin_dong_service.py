@@ -138,3 +138,30 @@ def resolve_admin_dong(latitude: float, longitude: float) -> dict | None:
     # 서울 밖 좌표이거나 경계에서 벗어난 경우임
     # 계산/조회가 끝난 최종 결과를 호출한 쪽에 반환함
     return None
+
+
+# 지도에 그릴 때 좌표를 소수 몇 자리까지 보낼지.
+# 5자리면 약 1m 정밀도이고, 경계선을 그리는 용도에는 충분하다.
+# 원본 그대로 보내면 행정동 하나에 30KB가 넘는 경우가 있다.
+BOUNDARY_PRECISION = 5
+
+
+# 행정동 코드로 경계 좌표를 찾아 지도에 바로 쓸 수 있는 (위도, 경도) 목록으로 반환하는 함수임
+def get_boundary(admin_code: str) -> list[list[float]] | None:
+    rings, _, props = _boundaries()
+
+    # 대상 데이터를 하나씩 순회하면서 같은 처리 반복함
+    for index, prop in enumerate(props):
+        # 코드가 일치하는 행정동의 경계만 골라 반환함
+        if prop["adminCode"] == str(admin_code):
+            ring = rings[index]
+            # GeoJSON은 (경도, 위도) 순서인데 지도 API는 (위도, 경도)를 받으므로 뒤집어 보냄
+            return [
+                [round(float(point[1]), BOUNDARY_PRECISION),
+                 round(float(point[0]), BOUNDARY_PRECISION)]
+                for point in ring
+            ]
+
+    # 경계 자료에 없는 행정동 코드임
+    # 계산/조회가 끝난 최종 결과를 호출한 쪽에 반환함
+    return None

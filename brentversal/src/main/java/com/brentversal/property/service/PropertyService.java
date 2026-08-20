@@ -1,6 +1,7 @@
 package com.brentversal.property.service;
 
 import com.brentversal.agency.service.MyAgencyService;
+import jakarta.persistence.EntityNotFoundException;
 import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.common.ml.MlClient;
 import com.brentversal.common.ml.MlPriceRequest;
@@ -88,6 +89,36 @@ public class PropertyService {
     // 방 개수 "3개 이상" 조건을 펼칠 때 쓰는 상한.
     // Property.roomCount 의 @Max(6) 과 같은 값이라, 그쪽이 바뀌면 여기도 함께 바꾼다.
     private static final int MAX_ROOM_COUNT = 6;
+
+    /*
+      매물 상세 지도에 찍을 주변시설을 가져온다.
+
+      좌표를 프론트에서 받지 않고 저장된 매물의 좌표를 쓴다.
+      임의 좌표를 그대로 통과시키면 이 API가 시설 위치 조회기로 쓰일 수 있기 때문이다.
+
+      좌표가 없는 매물이면 빈 결과를 준다. 파이썬이 꺼져 있어도 상세 화면 전체가
+      실패하지 않도록 예외를 여기서 삼키고 빈 결과로 대신한다.
+    */
+    @Transactional(readOnly = true)
+    public Map<String, Object> findNearbyPlaces(Long id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("해당 매물을 찾을 수 없습니다."));
+
+        // 좌표가 없으면 반경을 잴 기준이 없으므로 빈 결과로 돌려줌
+        if (property.getLatitude() == null || property.getLongitude() == null) {
+            return Map.of();
+        }
+
+        // 외부 호출이 실패해도 상세 화면은 그려져야 하므로 예외를 여기서 처리함
+        try {
+            Map<String, Object> result =
+                    mlClient.nearbyPlaces(property.getLatitude(), property.getLongitude());
+            return result == null ? Map.of() : result;
+        } catch (Exception e) {
+            log.warn("주변시설 조회 실패. propertyId={}", id, e);
+            return Map.of();
+        }
+    }
 
     private void updateCoordinates(Property property, String previousAddress){
         String address = property.getAddress();

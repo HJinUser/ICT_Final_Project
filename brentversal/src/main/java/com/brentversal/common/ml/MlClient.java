@@ -73,6 +73,19 @@ public class MlClient {
         }
     }
 
+    // 매물 좌표 주변의 지하철·버스·병원·편의점을 좌표와 함께 받아오는 메서드임
+    // 매물 상세 지도에 표시할 값이며, 반경은 FastAPI가 시세예측과 같은 기준으로 정한다.
+    public Map<String, Object> nearbyPlaces(double latitude, double longitude) {
+        // 주변시설 GET 요청을 /ml/place/nearby로 보내고 Map 응답으로 변환함
+        return restClient.get()
+                .uri(builder -> builder.path("/ml/place/nearby")
+                        .queryParam("lat", latitude)
+                        .queryParam("lng", longitude)
+                        .build())
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
     // Spring에서 FastAPI 관리자 ML 상태 API를 호출하는 메서드임
     public Map<String, Object> adminStatus() {
         // 관리자 ML 상태 GET 요청을 /ml/admin/status로 보내고 Map 응답으로 변환함
