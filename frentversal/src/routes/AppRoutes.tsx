@@ -34,6 +34,7 @@ import AdminHomePanel from './../pages/AdminHomePanel';
 import AdminPropertyPage from './../pages/AdminPropertyPage';
 import AdminBrokerPage from './../pages/AdminBrokerPage';
 import AdminNeighborhoodPage from './../pages/AdminNeighborhoodPage';
+import AdminMlPage from './../pages/AdminMlPage';
 import MyConsultationPage from './../pages/MyConsultationPage';
 import MyPage from './../pages/MyPage';
 import MapSearchPage from './../pages/MapSearchPage';
@@ -125,6 +126,10 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
         <Route path="properties" element={<AdminPropertyPage user={user} />} />
         <Route path="brokers" element={<AdminBrokerPage user={user} />} />
         <Route path="neighborhoods" element={<AdminNeighborhoodPage />} />
+
+        {/* 관리자 콘솔 하위에 모델 관리 페이지 라우트를 연결함 */}
+        <Route path="models" element={<AdminMlPage />} />
+
         <Route path="reports" element={<ReportAdminListPage user={user} />} />
         <Route path="reports/:id" element={<ReportAdminDetailPage user={user} />} />
       </Route>
