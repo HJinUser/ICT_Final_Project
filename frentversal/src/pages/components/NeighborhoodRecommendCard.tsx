@@ -1,14 +1,14 @@
 /*
   추천 동네 카드 한 장.
 
-  이동할 곳이 두 군데다.
+  버튼이 두 개인데, 같은 화면의 중복이 아니라 answer 가 다른 두 질문이다.
 
-  "AI 동네 분석"  → /neighborhood/ml/:adminCode  (행정동. K-Means 군집 결과)
-  "동네 살펴보기" → /neighborhood/:id            (법정동. 기존 동네 탐색 화면)
+  "왜 이 동네를 추천했나"  → AI 동네 분석   → /neighborhood/ml/:adminCode
+  "여기 집이 얼마나 있나"  → 매물·시세 보기 → /neighborhood/:id
 
-  법정동과 행정동은 코드 체계가 서로 달라서 같은 키로 볼 수 없다.
-  서버는 두 값을 각각 채우려 시도하고, 동 이름이 이 서버의 동네 자료에도 있으면
-  둘 다 값이 있다. 그래서 각 버튼은 자기 값이 있을 때만 따로 나온다.
+  앞은 파이썬이 계산한 행정동 군집 결과이고, 뒤는 관리자가 등록한 법정동 동네 자료다.
+  행정동과 법정동은 경계가 서로 달라 1:1 로 대응하지 않기 때문에 두 값을 합칠 수 없다.
+  서버는 둘을 각각 채우므로 버튼은 자기 값이 있을 때만 나온다.
   두 값을 서로 바꿔 넣으면 엉뚱한 동네가 열린다.
 */
 
@@ -53,7 +53,7 @@ function NeighborhoodRecommendCard({ item, rank }: Props) {
                         className="hoodrec-link"
                         onClick={() => navigate(`/neighborhood/ml/${item.adminCode}`)}
                     >
-                        AI 동네 분석 보기
+                        AI 동네 분석
                     </button>
                 )}
 
@@ -63,7 +63,7 @@ function NeighborhoodRecommendCard({ item, rank }: Props) {
                         className="hoodrec-link hoodrec-link-quiet"
                         onClick={() => navigate(`/neighborhood/${item.neighborhoodId}`)}
                     >
-                        동네 살펴보기
+                        매물·시세 보기
                     </button>
                 )}
             </div>
