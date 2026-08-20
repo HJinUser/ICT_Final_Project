@@ -15,3 +15,8 @@ public interface UserPreferenceRepository extends JpaRepository<UserPreference, 
     @EntityGraph(attributePaths = {"preferredPropertyTypes", "preferredDistricts"})
     Optional<UserPreference> findByMemberId(Long memberId);
 }
+
+
+
+
+

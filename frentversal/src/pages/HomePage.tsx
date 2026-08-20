@@ -10,7 +10,7 @@ import HomeBrokerSummary from "./components/HomeBrokerSummary";
 import HomeRecommend from "./components/HomeRecommend";
 import HomeSectionNav, { type SectionNavItem } from "./components/HomeSectionNav";
 import { buildCompareRows } from "../types/HomeCompareMapper";
-import type { HomeData, PriceLevel } from "../types/Home";
+import type { HomeData, PriceEvaluation } from "../types/Home";
 import type { Notice } from "../types/Notice";
 import type { User } from "../types/User";
 import type { NavItem } from "../types/Navigation";
@@ -73,11 +73,17 @@ const HOME_NOTICE_COUNT = 5;
 // 비교표의 "주변 환경" 칸에 보여 줄 태그 개수. 화면정의서에 최대 5개로 정해져 있다.
 const COMPARE_TAG_LIMIT = 5;
 
-// 시세 평가 값을 배지 색 클래스로 바꾼다.
-const LEVEL_CLASS: Record<PriceLevel, string> = {
-    LOW: 'low',
-    MID: 'mid',
-    HIGH: 'high',
+// 시세 평가 값을 배지 색 클래스/문구로 바꾼다. 다른 화면(ListingsPage 등)과 같은 저평가/적정/고평가 표현이다.
+const PRICE_EVALUATION_CLASS: Record<PriceEvaluation, string> = {
+    UNDERVALUED: 'low',
+    FAIR: 'mid',
+    OVERVALUED: 'high',
+};
+
+const PRICE_EVALUATION_LABEL: Record<PriceEvaluation, string> = {
+    UNDERVALUED: '저평가',
+    FAIR: '적정',
+    OVERVALUED: '고평가',
 };
 
 const MAP_ITEM: NavItem = { label: '지도 검색', path: '/map', ready: true };
@@ -371,8 +377,7 @@ function App({ user }: Props) {
                         <div>
                             <h2>이번 주, 시세보다 싸게 나온 집</h2>
                             <p>
-                                같은 동네 비슷한 면적의 최근 거래와 비교했습니다.
-                                가운데 선이 동네 시세, 점이 이 집의 호가입니다.
+                                관리자가 동네 시세 대비 저평가로 표시한 매물만 모았습니다.
                             </p>
                         </div>
                         <button className="home-more" onClick={() => navigateOrNotice(MAP_ITEM, navigate)}>
@@ -391,32 +396,16 @@ function App({ user }: Props) {
                                 onClick={() => navigate(`/property/${property.id}`)}
                             >
                                 <div className="ph" style={{ backgroundImage: `url('${property.imageUrl}')` }}>
-                                    <span className={`home-badge ${LEVEL_CLASS[property.level]} bd`}>
-                                        {property.diffLabel}
+                                    <span className={`home-badge ${PRICE_EVALUATION_CLASS[property.priceEvaluation]} bd`}>
+                                        {PRICE_EVALUATION_LABEL[property.priceEvaluation]}
                                     </span>
                                 </div>
                                 <div className="pb">
                                     <div className="price">{property.priceLabel}</div>
                                     <div className="meta">{property.summary}</div>
 
-                                    {/* 시세 막대: 가운데(50%)가 동네 평균, 점이 이 매물 위치 */}
-                                    <div className="home-gauge">
-                                        <div className="track">
-                                            <div
-                                                className="fill"
-                                                style={{
-                                                    left: `${Math.min(property.gaugePosition, 50)}%`,
-                                                    width: `${Math.abs(50 - property.gaugePosition)}%`,
-                                                }}
-                                            />
-                                            <div className="base" />
-                                            <div className="pin" style={{ left: `${property.gaugePosition}%` }} />
-                                        </div>
-                                    </div>
-
                                     <div className="foot">
                                         <span className="rv-xs rv-dim">{property.transit}</span>
-                                        <span className="diff">{property.marketPriceLabel}</span>
                                     </div>
                                 </div>
                             </button>
@@ -554,7 +543,14 @@ function App({ user }: Props) {
                                 className="home-hood tall"
                                 onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                             >
-                                <div className="ph" style={{ backgroundImage: `url('${hood.imageUrl}')` }} />
+                                <div
+                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
+                                >
+                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
+                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
+                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                </div>
                                 <div className="ov" />
                                 <div className="txt">
                                     <span className="kind">{hood.kind}</span>
@@ -576,7 +572,14 @@ function App({ user }: Props) {
                                     className="home-hood short"
                                     onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                                 >
-                                    <div className="ph" style={{ backgroundImage: `url('${hood.imageUrl}')` }} />
+                                    <div
+                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
+                                >
+                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
+                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
+                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                </div>
                                     <div className="ov" />
                                     <div className="txt">
                                         <span className="kind">{hood.kind}</span>

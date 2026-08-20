@@ -7,9 +7,9 @@
   화면 코드는 손대지 않아도 된다.
 */
 
-// 시세 대비 평가. 저평가/적정/고평가 3단계이며 화면에서 배지 색이 달라진다.
+// 시세 대비 평가. 관리자가 매물마다 수동으로 저평가/적정/고평가 중 하나를 고른 값이다.
 // 백엔드 PropertyStatus가 아니라 "시세 비교 결과"라서 별도 값이다.
-export type PriceLevel = 'LOW' | 'MID' | 'HIGH';
+export type PriceEvaluation = 'UNDERVALUED' | 'FAIR' | 'OVERVALUED';
 
 // 메인의 "이번 주 시세보다 싸게 나온 집" 카드 1건
 export type WeeklyProperty = {
@@ -22,13 +22,9 @@ export type WeeklyProperty = {
     summary: string;
     // "반포역 도보 4분"
     transit: string;
-    // "동네 시세 5억 4,000"
-    marketPriceLabel: string;
-    // "시세보다 5,000만 낮음" — 배지에 그대로 노출한다
-    diffLabel: string;
-    level: PriceLevel;
-    // 시세 막대에서 이 매물의 호가가 찍히는 위치(0~100). 50이 동네 평균이다.
-    gaugePosition: number;
+    // 이 목록 자체가 이미 저평가(UNDERVALUED) 매물만 모아 둔 것이지만,
+    // 배지 표시는 다른 화면(ListingsPage 등)과 같은 값을 그대로 재사용한다.
+    priceEvaluation: PriceEvaluation;
 };
 
 // 메인의 "동네부터 고르는 방법" 타일 1건

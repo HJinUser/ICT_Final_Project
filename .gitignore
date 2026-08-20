@@ -42,3 +42,14 @@ brentversal/.env
 /planning/
 
 .env
+# 화면 확인용으로 웹에서 받아 둔 동네 사진.
+# 저작권이 확인되지 않아 저장소·배포에 넣지 않는다.
+# 로컬에서는 C:/upload/files 로 복사해 /files 경로로 띄운다(DB image_url 은 로컬 DB 에만 넣는다).
+/반포동.png
+/서초동.png
+.env
+.env.bak
+*.env.bak
+.env
+.env.bak
+*.env.bak
