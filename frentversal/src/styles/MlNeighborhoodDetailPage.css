@@ -76,6 +76,27 @@
     color: var(--ink-3);
 }
 
+/* 매물 보러 가는 길. 이 화면에 없는 것을 어디서 보는지 알려 주는 자리다. */
+.mlhood-next {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 16px 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: var(--bg-2);
+}
+
+.mlhood-next p {
+    margin: 0;
+    max-width: 520px;
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+}
+
 @media (max-width: 720px) {
     .mlhood-hero {
         padding: 40px 0;
@@ -83,5 +104,14 @@
 
     .mlhood-cluster {
         padding: 22px 20px;
+    }
+
+    .mlhood-next {
+        padding: 16px;
+    }
+
+    .mlhood-next .outline-btn {
+        width: 100%;
+        text-align: center;
     }
 }

@@ -1,13 +1,15 @@
 /*
   행정동 AI 분석 상세 (K-Means 군집).
 
-  주소는 /neighborhood/ml/:adminCode 다.
-  기존 /neighborhood/:id 는 법정동 기준 동네 탐색 화면이고 이 화면과 별개다.
-  둘은 코드 체계가 달라서 서로의 키를 넘겨 쓰면 안 된다.
+  이 화면이 답하는 질문은 "이 동네는 어떤 성격인가" 하나다.
+  집값·매물 목록은 여기 없고 동네 탐색(/neighborhood/:id)이 맡는다.
+  그쪽은 관리자가 등록한 법정동 자료이고 이 화면은 파이썬이 계산한 행정동 자료라,
+  경계가 서로 달라 1:1 로 대응하지 않는다. 서로의 키를 넘겨 쓰면 안 된다.
 
-  대표 키워드와 동네 한줄평은 텍스트마이닝 담당이 이 페이지에 이어서 붙인다.
-  API 응답에는 이미 keywords / reviewDocumentCount 가 들어 있지만
-  여기서는 군집 결과까지만 그린다.
+  아래쪽 한줄평은 NeighborhoodReviewSection 이 맡는다. 그 부품에는 법정동 id 가 아니라
+  analysis.adminCode 를 넘긴다.
+
+  대표 키워드(keywords / reviewDocumentCount)는 응답에 이미 들어 있지만 아직 그리지 않는다.
 */
 
 import { useEffect, useState } from 'react';
@@ -16,6 +18,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getMlNeighborhood } from '../api/neighborhoodApi';
 import type { MlNeighborhoodResponse } from '../types/MlNeighborhood';
 import '../styles/MlNeighborhoodDetailPage.css';
+import NeighborhoodReviewSection from './components/NeighborhoodReviewSection';
 
 function MlNeighborhoodDetailPage() {
     const { adminCode } = useParams();
@@ -96,8 +99,9 @@ function MlNeighborhoodDetailPage() {
                     <span className="eyebrow">K-Means 동네 군집 분석</span>
                     <h1>{analysis.districtName} {analysis.adminName}</h1>
                     <p>
-                        서울 행정동의 교통·생활·의료·교육·녹지 지표를 함께 묶어
-                        비슷한 성격끼리 나눈 결과입니다.
+                        교통·생활·의료·교육·녹지 다섯 가지를 한꺼번에 보고,
+                        성격이 비슷한 동네끼리 묶었습니다.
+                        추천 목록에 이 동네가 올라온 이유를 여기서 확인할 수 있습니다.
                     </p>
                 </div>
             </section>
@@ -115,10 +119,23 @@ function MlNeighborhoodDetailPage() {
                         <span className="mlhood-code">행정동 코드 {analysis.adminCode}</span>
                     </div>
 
-                    {/*
-                      대표 키워드와 동네 한줄평은 텍스트마이닝 담당이 이 아래에 이어 붙인다.
-                      그때 넘길 값은 법정동 번호가 아니라 analysis.adminCode 다.
-                    */}
+                    {/* 이 화면에는 매물이 없다. 찾으러 갈 곳을 알려 준다. */}
+                    <div className="mlhood-next">
+                        <p>
+                            이 화면은 동네의 성격만 다룹니다.
+                            시세와 매물은 지도 검색에서 볼 수 있습니다.
+                        </p>
+                        <Link className="outline-btn" to={`/map?keyword=${encodeURIComponent(analysis.adminName)}`}>
+                            {analysis.adminName} 매물 보기
+                        </Link>
+                    </div>
+
+                    {/* 동네 상세 화면에 해당 동네의 한줄평 목록·작성 컴포넌트를 연결함 */}
+                    <NeighborhoodReviewSection
+                        adminCode={analysis.adminCode}
+                        adminName={analysis.adminName}
+                        districtName={analysis.districtName}
+                    />
                 </div>
             </section>
         </main>
