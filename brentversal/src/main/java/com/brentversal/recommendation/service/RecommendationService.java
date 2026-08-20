@@ -1,5 +1,10 @@
 package com.brentversal.recommendation.service;
 
+// TODO: common.ml.MlClient 클래스가 아직 저장소에 없어서 잠시 꺼 두었다.
+//       ML 담당이 그 클래스를 올리면 이 import 와 아래 두 곳(mlClient 필드,
+//       requestMlRecommendation 의 호출)의 주석을 되살리면 된다.
+//       지금은 호출 대신 null 을 넣어, 원래 있던 "파이썬이 꺼져 있으면 이 서버가 계산" 경로를 탄다.
+// import com.brentversal.common.ml.MlClient;
 import com.brentversal.favorite.entity.Favorite;
 import com.brentversal.favorite.repository.FavoriteRepository;
 import com.brentversal.member.entity.Member;
@@ -40,7 +45,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,9 +62,13 @@ import java.util.stream.Collectors;
       사용자 행동       33
       최근 검색         10
 
-  지금은 이 계산을 이 클래스가 직접 한다. 나중에 학습한 모델이 준비되면
-  calculateScores 메서드 하나만 모델 호출로 바꾸면 되고, 응답 형태와 화면은 그대로 둔다.
-  그래서 점수를 만드는 부분과 자료를 모으는 부분을 일부러 분리해 두었다.
+  점수 계산은 파이썬(FastAPI) 쪽이 한다. 이 클래스는 계산에 필요한 재료를 DB 에서 모아
+  파이썬이 알아보는 모양으로 보내고, 돌아온 결과에 화면이 필요한 매물 정보를 붙여 준다.
+  배점은 파이썬 app/services/recommendation_service.py 에도 같은 값으로 들어 있다.
+
+  파이썬 서버를 부르지 못하면 아래 calculateScores 로 이 서버가 직접 계산한다.
+  파이썬을 아직 띄우지 않았거나 잠깐 끊겨도 추천 화면이 비지 않게 하려는 것이다.
+  그래서 응답의 modelVersion 을 보면 어느 쪽이 계산했는지 구분할 수 있다.
 
   거래 유형이나 예산이 맞지 않는 매물도 후보에서 빼지 않고 감점만 한다.
   조건을 조금 벗어나도 나머지가 잘 맞으면 볼 가치가 있기 때문이다.
@@ -78,9 +89,11 @@ public class RecommendationService {
     private final RecommendationFeedbackRepository feedbackRepository;
     private final RecommendationBestRepository bestRepository;
     private final RecentSearchRepository recentSearchRepository;
+    // private final MlClient mlClient; // 위 import 주석 참고 — 클래스가 들어오면 함께 되살린다
 
     // 이 추천을 무엇이 계산했는지 나타내는 값이다. 사용자가 남긴 평가와 함께 저장된다.
-    // 학습한 모델로 바꾸면 이 값도 함께 바꿔서 두 방식의 평가 결과를 구분할 수 있게 한다.
+    // 이 값은 파이썬을 부르지 못해 이 서버가 직접 계산했을 때 쓴다.
+    // 파이썬이 계산했을 때는 그쪽이 준 modelVersion 을 그대로 내보낸다.
     private static final String MODEL_VERSION = "rule-v1";
 
     // 화면에 내보낼 추천 매물 수와 추천 동네 수다.
@@ -338,6 +351,9 @@ public class RecommendationService {
       shownIds 는 이미 화면에 보여 준 매물 id 다. 다른 추천 보기를 눌렀을 때 같은 매물이
       다시 나오지 않게 하려고 받는다. BEST 매물은 첫 자리에 계속 두어야 하므로 여기서 빼지 않는다.
 
+      점수는 파이썬 서버가 매긴다. 여기서는 그 계산에 필요한 재료만 모아서 보내고,
+      돌아온 매물 id 에 화면이 쓸 매물 정보를 붙여서 내보낸다.
+
       조회만 하는 것처럼 보이지만 더 이상 볼 수 없게 된 BEST 를 자동으로 해제하기 때문에
       읽기 전용 트랜잭션으로 두지 않는다.
     */
@@ -375,16 +391,55 @@ public class RecommendationService {
         List<RecentSearch> recentSearches = recentSearchRepository
                 .findTop10ByMemberIdOrderByCreatedAtDesc(member.getId());
 
-        // 좋아요와 관심 매물에 붙어 있던 태그를 미리 모아 둔다.
-        // 매물마다 다시 모으면 후보 수만큼 같은 계산을 반복하게 된다.
+        /*
+          사용자가 지금까지 반응한 매물이다.
+
+          좋아요, 싫어요, 관심, BEST 를 모두 모은다. 이 매물들은 최근 200 건 밖으로 밀려나
+          후보에 없을 수 있는데, 파이썬은 이 매물들의 특징으로 취향 벡터를 만들기 때문에
+          후보와 별개로 함께 보내야 한다.
+
+          이 서버가 직접 계산할 때도 좋아요 태그와 관심 지역을 여기서 뽑아 쓴다.
+          매물마다 다시 모으면 후보 수만큼 같은 계산을 반복하게 된다.
+        */
         Set<Long> behaviorIds = new HashSet<>();
         behaviorIds.addAll(likedIds);
+        behaviorIds.addAll(dislikedIds);
         behaviorIds.addAll(favoriteIds);
+
+        if (bestPropertyId != null) {
+            behaviorIds.add(bestPropertyId);
+        }
 
         List<Property> behaviorProperties = behaviorIds.isEmpty()
                 ? List.of()
                 : propertyRepository.findByIdIn(new ArrayList<>(behaviorIds));
 
+        // 여기까지가 추천 계산에 필요한 재료다. 이제 파이썬에게 계산을 맡긴다.
+        Map<String, Object> payload = new LinkedHashMap<>();
+
+        payload.put("preference", preferencePayload(preference, member));
+        payload.put("candidates", toMlProperties(candidates));
+        payload.put("behaviorProperties", toMlProperties(behaviorProperties));
+        payload.put("likedPropertyIds", new ArrayList<>(likedIds));
+        payload.put("dislikedPropertyIds", new ArrayList<>(dislikedIds));
+        payload.put("favoritePropertyIds", new ArrayList<>(favoriteIds));
+        payload.put("bestPropertyId", bestPropertyId);
+        payload.put("recentSearches", recentSearches.stream().map(this::recentPayload).toList());
+        payload.put("shownPropertyIds", shownIds == null ? List.of() : shownIds);
+
+        RecommendationResponseDto mlResponse = requestMlRecommendation(payload, candidates);
+
+        if (mlResponse != null) {
+            return mlResponse;
+        }
+
+        /*
+          여기부터는 파이썬 서버를 부르지 못했을 때 쓰는 예비 계산이다.
+
+          파이썬을 아직 띄우지 않았거나 잠깐 끊겨도 추천 화면이 비어 보이지 않게 하려는 것이다.
+          배점은 파이썬 쪽과 같은 값을 쓰지만, 이 서버에는 시설까지의 실제 거리 자료가 없어서
+          점수가 똑같이 나오지는 않는다.
+        */
         Set<String> likedTagNames = collectTagNames(behaviorProperties, likedIds);
         Set<String> favoriteDistricts = behaviorProperties.stream()
                 .filter(property -> favoriteIds.contains(property.getId()))
@@ -422,11 +477,298 @@ public class RecommendationService {
     }
 
     /*
+      파이썬 서버에 추천 계산을 맡기고 그 결과를 화면이 쓰는 모양으로 바꿔 돌려준다.
+
+      맡길 수 없었으면 null 을 돌려준다. 그러면 부르는 쪽이 이 서버 계산으로 넘어간다.
+      파이썬이 꺼져 있는 것은 흔한 일이라 요청을 실패로 끝내지 않고 예비 계산으로 넘긴다.
+    */
+    private RecommendationResponseDto requestMlRecommendation(Map<String, Object> payload,
+                                                              List<Property> candidates) {
+        Map<String, Object> result;
+
+        try {
+            // MlClient 가 아직 없어서 부르지 못한다. 클래스가 들어오면 아래 줄로 되돌린다.
+            //   result = mlClient.recommend(payload);
+            result = null;
+        } catch (Exception e) {
+            log.warn("추천 계산 서버를 부르지 못해 이 서버 계산으로 대신한다.", e);
+            return null;
+        }
+
+        if (result == null) {
+            log.warn("추천 계산 서버가 빈 응답을 보내 이 서버 계산으로 대신한다.");
+            return null;
+        }
+
+        RecommendationResponseDto response = new RecommendationResponseDto();
+
+        Object modelVersion = result.get("modelVersion");
+        response.setModelVersion(modelVersion == null ? MODEL_VERSION : modelVersion.toString());
+        response.setItems(toItems(result.get("items"), candidates));
+        response.setNeighborhoods(toNeighborhoods(result.get("neighborhoods")));
+
+        /*
+          보낼 후보가 있었는데 추천이 하나도 돌아오지 않으면 화면이 빈 채로 남는다.
+
+          매물에 좌표가 아직 없어서 보낼 후보가 없었던 경우가 여기에 해당한다.
+          그때는 좌표를 보지 않는 이 서버 계산으로 넘겨서 화면을 채운다.
+        */
+        if (response.getItems().isEmpty() && !candidates.isEmpty()) {
+            log.warn("추천 계산 서버가 추천 매물을 하나도 돌려주지 않아 이 서버 계산으로 대신한다.");
+            return null;
+        }
+
+        return response;
+    }
+
+    // 파이썬이 돌려준 추천 매물을 화면이 쓰는 카드 정보로 바꾼다.
+    // 파이썬은 매물 id 와 점수만 알려 주므로, 사진과 가격은 이미 손에 있는 후보에서 채운다.
+    private List<RecommendationItemDto> toItems(Object raw, List<Property> candidates) {
+        List<RecommendationItemDto> items = new ArrayList<>();
+
+        if (!(raw instanceof List<?> rawItems)) {
+            return items;
+        }
+
+        Map<Long, Property> byId = new HashMap<>();
+
+        for (Property candidate : candidates) {
+            byId.put(candidate.getId(), candidate);
+        }
+
+        for (Object element : rawItems) {
+            if (!(element instanceof Map<?, ?> map)) {
+                continue;
+            }
+
+            Long propertyId = toLong(map.get("propertyId"));
+            Property property = propertyId == null ? null : byId.get(propertyId);
+
+            // 우리가 보내지 않은 매물이 섞여 있으면 화면에 채울 정보가 없으므로 건너뛴다.
+            if (property == null) {
+                log.warn("추천 결과에 후보로 보내지 않은 매물이 들어 있어 건너뛴다. propertyId={}", propertyId);
+                continue;
+            }
+
+            RecommendationItemDto item = new RecommendationItemDto();
+
+            item.setPropertyId(propertyId);
+            item.setScore(roundScore(toDouble(map.get("score"))));
+            item.setReasons(toStringList(map.get("reasons")));
+
+            // 파이썬은 isUserBest, isAiBest 라는 이름으로 보낸다. 화면이 쓰는 이름은 userBest, aiBest 다.
+            item.setUserBest(Boolean.TRUE.equals(map.get("isUserBest")));
+            item.setAiBest(Boolean.TRUE.equals(map.get("isAiBest")));
+            item.setProperty(PropertySearchDto.of(property));
+
+            items.add(item);
+        }
+
+        return items;
+    }
+
+    /*
+      파이썬이 돌려준 추천 동네를 화면이 쓰는 모양으로 바꾼다.
+
+      파이썬은 행정동으로 계산하고 이 서버의 동네 자료는 법정동이라 코드 체계가 서로 다르다.
+      그래서 이름이 같은 동네가 이 서버에도 있을 때만 상세로 갈 수 있게 id 를 붙이고,
+      없으면 비워 둔다. 화면은 id 가 없으면 이동 버튼을 감춘다.
+    */
+    private List<NeighborhoodRecommendationItemDto> toNeighborhoods(Object raw) {
+        List<NeighborhoodRecommendationItemDto> neighborhoods = new ArrayList<>();
+
+        if (!(raw instanceof List<?> rawItems)) {
+            return neighborhoods;
+        }
+
+        for (Object element : rawItems) {
+            if (!(element instanceof Map<?, ?> map)) {
+                continue;
+            }
+
+            String districtName = toText(map.get("districtName"));
+            String adminName = toText(map.get("adminName"));
+
+            NeighborhoodRecommendationItemDto item = new NeighborhoodRecommendationItemDto();
+
+            item.setAdminCode(toText(map.get("adminCode")));
+            item.setAdminName(adminName);
+            item.setDistrictName(districtName);
+            item.setScore(roundScore(toDouble(map.get("score"))));
+            item.setClusterName(toText(map.get("clusterName")));
+            item.setReasons(toStringList(map.get("reasons")));
+            item.setNeighborhoodId(findNeighborhoodId(districtName, adminName));
+
+            neighborhoods.add(item);
+        }
+
+        return neighborhoods;
+    }
+
+    // 구 이름과 동 이름으로 이 서버의 동네를 찾는다. 아직 등록하지 않은 동네면 없을 수 있다.
+    private Long findNeighborhoodId(String district, String dong) {
+        if (district == null || district.isBlank() || dong == null || dong.isBlank()) {
+            return null;
+        }
+
+        return neighborhoodRepository.findByDistrictAndDong(district, dong)
+                .map(Neighborhood::getId)
+                .orElse(null);
+    }
+
+    // 매물 여러 건을 파이썬에 보낼 모양으로 한 번에 바꾼다.
+    // 좌표나 거래 정보가 빠진 매물은 파이썬이 받지 못하므로 여기서 걸러 낸다.
+    private List<Map<String, Object>> toMlProperties(List<Property> properties) {
+        return properties.stream()
+                .filter(this::canSendToMl)
+                .map(this::propertyPayload)
+                .toList();
+    }
+
+    // 파이썬이 반드시 필요로 하는 값이 이 매물에 다 있는지 확인한다.
+    private boolean canSendToMl(Property property) {
+        return property.getType() != null
+                && property.getDealType() != null
+                && property.getLatitude() != null
+                && property.getLongitude() != null;
+    }
+
+    // 매물 한 건을 파이썬이 받는 모양으로 바꾼다.
+    // 이름과 자리는 파이썬 app/schemas/recommendation.py 의 PropertyCandidate 와 맞춰 둔 것이다.
+    private Map<String, Object> propertyPayload(Property property) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+
+        payload.put("id", property.getId());
+        payload.put("propertyType", property.getType().name());
+        payload.put("dealType", property.getDealType().name());
+        payload.put("districtName", property.getSigungu() == null ? "" : property.getSigungu());
+        payload.put("area", property.getArea() == null ? 0.0 : property.getArea().doubleValue());
+        payload.put("floor", property.getFloor());
+        payload.put("roomCount", property.getRoomCount());
+        payload.put("bathroomCount", property.getBathroomCount());
+        payload.put("buildYear", property.getBuildYear());
+        payload.put("maintenanceFee", property.getMaintenanceFee());
+        payload.put("price", property.getPrice());
+        payload.put("deposit", property.getDeposit());
+        payload.put("monthlyDeposit", property.getMonthlyDeposit());
+        payload.put("monthlyRent", property.getMonthlyRent());
+        payload.put("latitude", property.getLatitude());
+        payload.put("longitude", property.getLongitude());
+        payload.put("tags", property.getTags() == null
+                ? List.of()
+                : property.getTags().stream()
+                        .map(Tag::getName)
+                        .filter(name -> name != null && !name.isBlank())
+                        .toList());
+
+        return payload;
+    }
+
+    // 저장해 둔 취향을 파이썬이 받는 모양으로 바꾼다.
+    // 선호 태그는 취향이 아니라 회원이 가지고 있으므로 회원에서 꺼내 함께 담는다.
+    private Map<String, Object> preferencePayload(UserPreference preference, Member member) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+
+        payload.put("dealType", preference.getPreferredDealType() == null
+                ? null
+                : preference.getPreferredDealType().name());
+        payload.put("propertyTypes", preference.getPreferredPropertyTypes() == null
+                ? List.of()
+                : preference.getPreferredPropertyTypes().stream().map(Enum::name).toList());
+        payload.put("preferredDistricts", preference.getPreferredDistricts() == null
+                ? List.of()
+                : new ArrayList<>(preference.getPreferredDistricts()));
+
+        payload.put("minArea", preference.getMinArea());
+        payload.put("maxArea", preference.getMaxArea());
+        payload.put("minRoomCount", preference.getMinRoomCount());
+
+        payload.put("saleMinPrice", preference.getSaleMinPrice());
+        payload.put("saleMaxPrice", preference.getSaleMaxPrice());
+        payload.put("jeonseMinDeposit", preference.getJeonseMinDeposit());
+        payload.put("jeonseMaxDeposit", preference.getJeonseMaxDeposit());
+        payload.put("monthlyMinDeposit", preference.getMonthlyMinDeposit());
+        payload.put("monthlyMaxDeposit", preference.getMonthlyMaxDeposit());
+        payload.put("monthlyMinRent", preference.getMonthlyMinRent());
+        payload.put("monthlyMaxRent", preference.getMonthlyMaxRent());
+
+        payload.put("newBuildPreferred", preference.isNewBuildPreferred());
+        payload.put("stationPreferred", preference.isStationPreferred());
+        payload.put("educationPreferred", preference.isEducationPreferred());
+        payload.put("parkPreferred", preference.isParkPreferred());
+        payload.put("hospitalPreferred", preference.isHospitalPreferred());
+        payload.put("conveniencePreferred", preference.isConveniencePreferred());
+        payload.put("busPreferred", preference.isBusPreferred());
+        payload.put("lowMaintenancePreferred", preference.isLowMaintenancePreferred());
+
+        payload.put("preferredTags", member.getPreferredTags() == null
+                ? List.of()
+                : member.getPreferredTags().stream()
+                        .map(Tag::getName)
+                        .filter(name -> name != null && !name.isBlank())
+                        .toList());
+
+        return payload;
+    }
+
+    // 최근 검색 한 건을 파이썬이 받는 모양으로 바꾼다.
+    private Map<String, Object> recentPayload(RecentSearch search) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+
+        payload.put("districtName", search.getDistrictName());
+        payload.put("dealType", search.getDealType() == null ? null : search.getDealType().name());
+        payload.put("propertyType", search.getPropertyType() == null ? null : search.getPropertyType().name());
+        payload.put("minPrice", search.getMinPrice());
+        payload.put("maxPrice", search.getMaxPrice());
+
+        return payload;
+    }
+
+    /*
+      아래 네 개는 파이썬이 보낸 JSON 값을 꺼내 쓰는 자잘한 도우미다.
+
+      JSON 으로 받은 값은 Object 로 들어오고 숫자의 종류도 정해져 있지 않다.
+      값이 없거나 생김새가 달라도 화면이 깨지지 않게 여기서 한 번 걸러서 쓴다.
+    */
+    private Long toLong(Object value) {
+        return value instanceof Number number ? number.longValue() : null;
+    }
+
+    private double toDouble(Object value) {
+        return value instanceof Number number ? number.doubleValue() : 0.0;
+    }
+
+    private String toText(Object value) {
+        if (!(value instanceof String text) || text.isBlank()) {
+            return null;
+        }
+
+        return text;
+    }
+
+    private List<String> toStringList(Object value) {
+        if (!(value instanceof List<?> list)) {
+            return new ArrayList<>();
+        }
+
+        return list.stream()
+                .filter(element -> element instanceof String)
+                .map(Object::toString)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    // 점수는 화면에 100 점 만점으로 보이므로 범위를 벗어나지 않게 다듬는다.
+    private double roundScore(double score) {
+        double bounded = Math.max(0, Math.min(100, score));
+
+        return Math.round(bounded * 10) / 10.0;
+    }
+
+    /*
       후보 매물에 점수를 매겨 화면에 내보낼 순서대로 돌려준다.
 
-      나중에 학습한 모델을 붙일 때 바꿔야 하는 곳이 이 메서드다.
-      모델은 매물 id 와 점수, 추천 이유만 돌려주므로, 이 메서드가 하는 일 가운데
-      점수를 만드는 부분만 모델 호출로 바꾸고 아래 정렬과 BEST 규칙은 그대로 두면 된다.
+      파이썬 서버를 부르지 못했을 때만 쓰는 예비 계산이다.
+      돌려주는 모양은 파이썬 결과와 같으므로 화면은 어느 쪽이 계산했는지 몰라도 된다.
     */
     private List<RecommendationItemDto> calculateScores(List<Property> candidates,
                                                         UserPreference preference,

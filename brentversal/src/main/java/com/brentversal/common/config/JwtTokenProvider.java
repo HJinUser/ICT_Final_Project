@@ -108,6 +108,27 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
                 .compact();
     }
 
+    public static final String TYPE_PASSWORD_RESET = "password_reset";
+
+    // 메일로 받은 인증번호를 맞게 입력한 사람에게 발급하는 단기 토큰.
+    // 새 비밀번호를 저장하는 마지막 단계에서 이 토큰을 다시 제출해야 한다.
+    //
+    // 인증번호를 3단계까지 계속 들고 가지 않는 이유:
+    // 새 비밀번호가 규칙에 걸려 되돌아오는 일이 흔한데, 그때마다 인증번호를 다시 검사하면
+    // 시도 횟수가 깎여서 정상 사용자가 막힌다. 인증번호는 2단계에서 한 번만 대조하고,
+    // 그 뒤로는 이 토큰이 "본인 확인이 끝났다"는 증명 역할을 맡는다.
+    private static final long PASSWORD_RESET_EXPIRATION = 10 * 60 * 1000L; // 10분
+
+    public String createPasswordResetToken(String email){
+        return Jwts.builder()
+                .subject(email) // 토큰 주인 = 비밀번호를 바꿀 회원의 이메일
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + PASSWORD_RESET_EXPIRATION))
+                .claim(TOKEN_TYPE_CLAIM, TYPE_PASSWORD_RESET)
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
+
     public static final String TYPE_BROKER_SIGNUP = "broker_signup";
     private static final long BROKER_SIGNUP_EXPIRATION = 10 * 60 * 1000L;
 

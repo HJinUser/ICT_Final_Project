@@ -218,18 +218,14 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
                     {pagedNeighborhoods.map((neighborhood) => (
                         <article className={`neighborhood-card${neighborhood.visible ? '' : ' hidden-card'}`} key={neighborhood.id}>
                             <Link to={`/neighborhood/${neighborhood.id}`}>
-                                <div
-                                    className="neighborhood-visual"
-                                    style={neighborhood.imageUrl ? { backgroundImage: `url('${neighborhood.imageUrl}')` } : undefined}
-                                >
-                                    {/* 관리자가 넣은 대표 사진이 있으면 그것을, 없으면 그 동네 지도를 보여 준다 */}
-                                    {!neighborhood.imageUrl && (
-                                        <NeighborhoodMap
-                                            city={neighborhood.city}
-                                            district={neighborhood.district}
-                                            dong={neighborhood.dong}
-                                        />
-                                    )}
+                                <div className="neighborhood-visual">
+                                    {/* 이 화면은 "그 동네가 어디인지" 보는 곳이라 대표 사진이 있어도 지도를 보여 준다.
+                                        사진은 메인 화면의 큰 카드에서 쓴다(HomePage 참고). */}
+                                    <NeighborhoodMap
+                                        city={neighborhood.city}
+                                        district={neighborhood.district}
+                                        dong={neighborhood.dong}
+                                    />
                                     {!neighborhood.visible && <span className="status gray">숨김</span>}
                                 </div>
                                 <div className="neighborhood-card-body">
