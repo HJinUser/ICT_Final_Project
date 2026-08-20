@@ -1421,3 +1421,8 @@
 
     .metric-grid.two { grid-template-columns: 1fr; }
 }
+
+.home-hood .ph .neighborhood-map {
+    width: 100%;
+    height: 100%;
+}

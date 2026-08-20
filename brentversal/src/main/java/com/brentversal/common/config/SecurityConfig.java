@@ -69,6 +69,8 @@ public class SecurityConfig {
                 "/passwordless/login/cancel",
                 "/passwordless/register",
                 "/passwordless/register/confirm",
+                "/passwordless/register/resend",
+                "/passwordless/register/resend/exchange",
                 "/passwordless/withdrawal"
         };
 

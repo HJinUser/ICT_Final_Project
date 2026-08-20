@@ -15,6 +15,7 @@ import type { Notice } from "../types/Notice";
 import type { User } from "../types/User";
 import type { NavItem } from "../types/Navigation";
 import { navigateOrNotice } from "../utils/navigateOrNotice";
+import NeighborhoodMap from './components/NeighborhoodMap';
 import "../styles/HomePage.css";
 
 /*
@@ -543,13 +544,11 @@ function App({ user }: Props) {
                                 className="home-hood tall"
                                 onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                             >
-                                <div
-                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
-                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
-                                >
-                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
-                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
-                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                <div className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                     style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}>
+                                    {!hood.imageUrl && (
+                                        <NeighborhoodMap city="서울시" district={hood.district} dong={hood.name} />
+                                    )}
                                 </div>
                                 <div className="ov" />
                                 <div className="txt">
@@ -572,14 +571,12 @@ function App({ user }: Props) {
                                     className="home-hood short"
                                     onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                                 >
-                                    <div
-                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
-                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
-                                >
-                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
-                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
-                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
-                                </div>
+                                    <div className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                         style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}>
+                                        {!hood.imageUrl && (
+                                            <NeighborhoodMap city="서울시" district={hood.district} dong={hood.name} />
+                                        )}
+                                    </div>
                                     <div className="ov" />
                                     <div className="txt">
                                         <span className="kind">{hood.kind}</span>
