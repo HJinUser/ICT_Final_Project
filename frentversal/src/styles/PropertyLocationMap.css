@@ -1,0 +1,138 @@
+/*
+  PropertyLocationMap.css
+
+  매물 상세의 위치 지도만 쓰는 스타일.
+  클래스 이름은 전부 plmap- 으로 시작한다. 지도 검색(map-)이나 매물 상세의 공통 클래스와
+  이름이 겹치면 CSS 를 읽는 순서에 따라 그쪽 화면이 함께 바뀌기 때문이다.
+  .card / .section-head 는 common.css 것을 그대로 쓴다.
+*/
+
+.plmap-card {
+    padding: 22px 24px 20px;
+}
+
+.plmap-card .section-head {
+    margin-bottom: 14px;
+}
+
+/* 종류별 켜고 끄기 칩 */
+.plmap-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 12px;
+}
+
+.plmap-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    background: #fff;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: .15s;
+}
+
+.plmap-chip.on {
+    border-color: #d4c6e1;
+    background: var(--v-pale);
+    color: var(--ink);
+}
+
+.plmap-chip:hover {
+    border-color: #cfc7da;
+}
+
+/* 꺼진 칩은 색 견본도 흐리게 해서 지도에 없다는 것을 함께 알린다 */
+.plmap-chip:not(.on) .plmap-swatch {
+    opacity: .3;
+}
+
+.plmap-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+/* 지도가 그려지는 자리 */
+.plmap-canvas {
+    width: 100%;
+    height: 380px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+    background: var(--bg-2);
+}
+
+.plmap-note {
+    margin: 10px 0 0;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.plmap-error {
+    margin: 10px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--sig-high);
+}
+
+/* ── 지도 위 표식 ──────────────────────────────────────
+   CustomOverlay 안의 DOM 이라 CSS 변수를 쓸 수 있지만,
+   색이 종류마다 달라지는 부분은 컴포넌트에서 직접 넣는다. */
+
+/* 이 매물. 주변시설보다 확실히 크게 보이도록 점과 이름표를 함께 둔다. */
+.plmap-home {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transform: translateY(50%);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.plmap-home-dot {
+    width: 20px;
+    height: 20px;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    background: var(--v);
+    box-shadow: 0 2px 8px rgba(17, 17, 20, .35);
+}
+
+.plmap-home-label {
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: var(--v);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(17, 17, 20, .25);
+}
+
+/* 주변시설. 매물보다 작아야 해서 이름표 없이 점만 찍고, 이름은 마우스를 올렸을 때 보여 준다. */
+.plmap-poi {
+    width: 9px;
+    height: 9px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(17, 17, 20, .3);
+    cursor: default;
+}
+
+@media (max-width: 720px) {
+    .plmap-card {
+        padding: 18px 16px 16px;
+    }
+
+    .plmap-canvas {
+        height: 280px;
+    }
+
+    .plmap-home-label {
+        display: none;
+    }
+}

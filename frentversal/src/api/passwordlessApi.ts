@@ -42,3 +42,19 @@ export async function isPasswordlessRegistered(email: string): Promise<boolean> 
     const response = await customAxios.get<{ registered: boolean }>('/passwordless/status', { params: { email } });
     return response.data.registered;
 }
+
+// 중개인이 등록 도중 이탈했을 때, 새 signupToken을 이메일로 다시 받는다
+export async function resendPasswordlessSignup(email: string): Promise<{ message: string }> {
+    const response = await customAxios.post<{ message: string }>('/passwordless/register/resend', {email});
+    return response.data;
+}
+
+// 재발급 링크 교환: 링크 속 broker_resend 토큰을 실제 signupToken(JWT)으로 바꾼다.
+// "QR 코드 발급" 버튼을 누른 순간에만 호출해야 한다.
+export async function exchangeResendLink(email: string, linkToken: string): Promise<{ signupToken: string }> {
+    const response = await customAxios.post<{ signupToken: string }>('/passwordless/register/resend/exchange', {
+        email,
+        linkToken,
+    });
+    return response.data;
+}

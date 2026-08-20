@@ -59,6 +59,18 @@ export async function rejectProperty(id: number): Promise<{ message: string; pro
     return response.data;
 }
 
+export async function hideProperty(id: number): Promise<{ message: string; property: AdminProperty }> {
+    const response = await customAxios.patch<{ message: string; property: AdminProperty }>(
+        `/admin/properties/${id}/hide`);
+    return response.data;
+}
+
+export async function unhideProperty(id: number): Promise<{ message: string; property: AdminProperty }> {
+    const response = await customAxios.patch<{ message: string; property: AdminProperty }>(
+        `/admin/properties/${id}/unhide`);
+    return response.data;
+}
+
 // ── 중개인 인증 심사 ─────────────────────────────────────────
 
 // 인증 신청 목록. status 를 넘기지 않으면 심사 중(PENDING)만 받는다.

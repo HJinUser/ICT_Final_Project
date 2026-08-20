@@ -41,6 +41,16 @@ public class MemberController {
         // 인증 처리
         // 비밀번호가 틀리면 AuthenticationException 이 발생하는데, 잡지 않으면 500 으로 빠져나가
         // 클라이언트가 원인을 알 수 없다. 여기서 잡아 401 과 메시지로 돌려준다.
+        // 패스워드리스로 등록한 회원은 일반 로그인을 막는다.
+        // 비밀번호 검증(AuthenticationManager)까지 가기 전에 걸러서,
+        // 패스워드리스 전용 계정의 비밀번호 정답 여부가 새어 나가지 않게 한다.
+        Member member = memberService.findByEmail(dto.getEmail());
+        if (member != null && member.isPasswordlessRegistered()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "패스워드리스로 등록된 계정입니다. 패스워드리스 로그인을 이용해 주세요."));
+        }
+
+        // 인증 처리
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -53,9 +63,6 @@ public class MemberController {
                     .body(Map.of("message", "이메일 또는 비밀 번호가 올바르지 않습니다."));
         }
 
-
-        // 사용자 정보 조회
-        Member member = memberService.findByEmail(dto.getEmail());
 
         if(member == null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
