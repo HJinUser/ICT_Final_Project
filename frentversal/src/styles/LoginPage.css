@@ -190,7 +190,7 @@
 .auth-segmented button.login-hasrecent,
 .auth-social-btn.login-hasrecent {
     position: relative;
-    padding-right: 104px;
+    /*padding-right: 104px;*/
 }
 
 .login-recentmark {
@@ -380,4 +380,11 @@
     font-size: var(--fs-mono);
     color: var(--ink-3);
     margin-top: 5px;
+}
+
+.auth-soft .pwless-code {
+    font-size: 40px;       /* 원하는 크기로 조절 */
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-align: center;
 }

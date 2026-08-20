@@ -1,6 +1,8 @@
 package com.brentversal.passwordless.service;
 
 import com.brentversal.common.config.JwtTokenProvider;
+import com.brentversal.common.mail.MailService;
+import com.brentversal.member.constant.Role;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.member.service.MemberService;
@@ -27,6 +29,7 @@ public class PasswordlessService {
     private final MemberRepository memberRepository;
     private final MemberService memberService;  // updateRefreshToken 재사용
     private final JwtTokenProvider jwtTokenProvider;
+    private final MailService mailService;
     // 등록/해지는 아직 로그인하지 않은 상태에서 호출되므로, 여기서 이메일+비번으로 본인 확인을 한다.
     // MemberController.login()과 동일한 방식(AuthenticationManager)을 그대로 재사용한다.
     private final AuthenticationManager authenticationManager;
@@ -163,5 +166,43 @@ public class PasswordlessService {
     @Transactional(readOnly = true)
     public boolean isRegistered(String email){
         return client.isRegistered(email);
+    }
+
+    @Transactional(readOnly = true)
+    public void resendSignupToken(String email) {
+        Member member = memberRepository.findByEmail(email);
+        if (member == null || member.getRole() != Role.BROKER || member.getPassword() != null) {
+            throw new IllegalArgumentException("등록 대상이 아닌 계정입니다.");
+        }
+        if (member.isPasswordlessRegistered()) {
+            throw new IllegalStateException("이미 패스워드리스 등록이 완료된 계정입니다.");
+        }
+
+        String resendToken = jwtTokenProvider.createBrokerResendToken(member);
+        String body = "아래 링크로 접속해 \"QR 코드 발급\" 버튼을 누르면 패스워드리스 등록을 이어서 진행할 수 있습니다.\n"
+                + "https://rentversal.site/member/passwordless?email=" + email + "&linkToken=" + resendToken
+                + "\n\n이 링크는 10분간 유효합니다.";
+        mailService.sendText(email, "[전세역전] 패스워드리스 등록 안내", body);
+    }
+
+    /*
+      재발급 링크 교환: 메일 속 broker_resend 토큰을 실제 signupToken(broker_signup)으로 바꿔 준다.
+      프론트가 "QR 코드 발급" 버튼을 눌렀을 때만 호출해야 한다.
+    */
+    public String exchangeResendLink(String email, String linkToken) {
+        if (email == null || email.isBlank()
+                || linkToken == null || linkToken.isBlank()
+                || !jwtTokenProvider.validateToken(linkToken)
+                || !jwtTokenProvider.isTokenType(linkToken, JwtTokenProvider.TYPE_BROKER_RESEND)
+                || !email.equals(jwtTokenProvider.getEmail(linkToken))) {
+            throw new IllegalArgumentException("본인 확인에 실패했습니다.");
+        }
+
+        Member member = memberRepository.findByEmail(email);
+        if (member == null) {
+            throw new IllegalArgumentException("본인 확인에 실패했습니다.");
+        }
+
+        return jwtTokenProvider.createBrokerSignupToken(member);
     }
 }
