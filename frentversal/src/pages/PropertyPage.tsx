@@ -182,9 +182,9 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
             setProperty((prev) =>
                 prev
                     ? {
-                          ...prev,
-                          isFavorited: response.data.favorited,
-                      }
+                        ...prev,
+                        isFavorited: response.data.favorited,
+                    }
                     : prev
             );
         } catch (error) {
@@ -195,22 +195,27 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
     // 추천 카드의 좋아요/싫어요 선택을 Spring API로 전송하는 함수임
     const sendFeedback = async (liked: boolean) => {
-    if (!property) return;
+        if (!property) return;
 
-    // 추천 피드백 API에 매물 ID와 LIKE/DISLIKE 평가값을 전송함
-    await customAxios.post('/recommendation/feedback', {
-        propertyId: property.id,
-        type: liked ? 'LIKE' : 'DISLIKE',
-        recommendationScore: null,
-        modelVersion: null,
-    });
+        try {
+            // 추천 피드백 API에 매물 ID와 LIKE/DISLIKE 평가값을 전송함
+            await customAxios.post('/recommendation/feedback', {
+                propertyId: property.id,
+                type: liked ? 'LIKE' : 'DISLIKE',
+                recommendationScore: null,
+                modelVersion: null,
+            });
 
-    alert(
-        liked
-            ? '좋아요로 추천 데이터에 반영했습니다.'
-            : '싫어요로 추천 데이터에 반영했습니다.'
-    );
-};
+            alert(
+                liked
+                    ? '좋아요로 추천 데이터에 반영했습니다.'
+                    : '싫어요로 추천 데이터에 반영했습니다.'
+            );
+        } catch (error) {
+            console.error("추천 피드백 전송 실패:", error);
+            alert("평가 전송 중 오류가 발생했습니다.");
+        }
+    };
 
     const startWritingReview = () => {
         if (!user) {
@@ -348,11 +353,10 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         >
                             {property.priceEvaluation && (
                                 <span
-                                    className={`status ${
-                                        PRICE_EVALUATION_META[
+                                    className={`status ${PRICE_EVALUATION_META[
                                             property.priceEvaluation
                                         ].className
-                                    }`}
+                                        }`}
                                 >
                                     관리자 시세평가 ·{" "}
                                     {
@@ -365,16 +369,15 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
                             {property.priceStatus && (
                                 <span
-                                    className={`status ${
-                                        property.priceStatus ===
-                                        "DOWN"
+                                    className={`status ${property.priceStatus ===
+                                            "DOWN"
                                             ? "green"
                                             : "red"
-                                    }`}
+                                        }`}
                                 >
                                     가격{" "}
                                     {property.priceStatus ===
-                                    "DOWN"
+                                        "DOWN"
                                         ? "하락"
                                         : "상승"}
                                 </span>
@@ -582,12 +585,11 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 <div
                                                     className="bar"
                                                     style={{
-                                                        height: `${
-                                                            (point.price /
+                                                        height: `${(point.price /
                                                                 (aiPrice ||
                                                                     1)) *
                                                             100
-                                                        }px`,
+                                                            }px`,
                                                     }}
                                                 />
                                                 <span className="xs">
@@ -788,7 +790,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                     )}
                                                     {"☆".repeat(
                                                         5 -
-                                                            review.rating
+                                                        review.rating
                                                     )}
                                                 </span>
 
@@ -801,7 +803,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
                                                     {user &&
                                                         user.role !==
-                                                            "ADMIN" && (
+                                                        "ADMIN" && (
                                                             <Link
                                                                 className="outline-btn"
                                                                 style={{
@@ -811,11 +813,10 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                                     minHeight:
                                                                         "auto",
                                                                 }}
-                                                                to={`/report/form?reviewId=${
-                                                                    review.id
-                                                                }&returnTo=${encodeURIComponent(
-                                                                    `/property/${property.id}`
-                                                                )}`}
+                                                                to={`/report/form?reviewId=${review.id
+                                                                    }&returnTo=${encodeURIComponent(
+                                                                        `/property/${property.id}`
+                                                                    )}`}
                                                             >
                                                                 리뷰
                                                                 신고
@@ -844,7 +845,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                 <span className="status gray">
                                     {
                                         PROPERTY_STATUS_LABELS[
-                                            property.status
+                                        property.status
                                         ]
                                     }
                                 </span>
@@ -852,7 +853,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                 <div className="price">
                                     {
                                         DEAL_TYPE_LABELS[
-                                            property.dealType
+                                        property.dealType
                                         ]
                                     }{" "}
                                     {formatPrice(property)}
@@ -1133,11 +1134,10 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                             justifyContent:
                                                 "center",
                                         }}
-                                        to={`/report/form?propertyId=${
-                                            property.id
-                                        }&returnTo=${encodeURIComponent(
-                                            `/property/${property.id}`
-                                        )}`}
+                                        to={`/report/form?propertyId=${property.id
+                                            }&returnTo=${encodeURIComponent(
+                                                `/property/${property.id}`
+                                            )}`}
                                     >
                                         허위매물 신고
                                     </Link>
