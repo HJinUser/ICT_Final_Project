@@ -3,7 +3,7 @@
 # 이 파일에서 사용할 표준/외부 모듈과 프로젝트 내부 기능 불러옴
 from fastapi import FastAPI
 
-from app.routers import admin_ml, neighborhood, price, recommendation
+from app.routers import admin_ml, neighborhood, place, price, recommendation
 
 # 전세역전 ML API의 FastAPI 애플리케이션 객체를 생성함
 app = FastAPI(
@@ -17,6 +17,9 @@ app.include_router(price.router)
 app.include_router(recommendation.router)
 # 동네 분석 Router를 FastAPI 앱에 등록함
 app.include_router(neighborhood.router)
+
+# 매물 상세 지도에 찍을 주변시설 조회 기능을 앱에 연결함
+app.include_router(place.router)
 # 관리자 ML 상태 Router를 FastAPI 앱에 등록함
 app.include_router(admin_ml.router)
 
