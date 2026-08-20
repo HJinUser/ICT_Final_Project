@@ -153,6 +153,7 @@ function toHomeNeighborhood(neighborhood: NeighborhoodResponse): HomeNeighborhoo
     return {
         id: neighborhood.id,
         name: neighborhood.dong,
+        district: neighborhood.district,
         imageUrl: neighborhood.imageUrl ?? '',
         // K-means 군집 같은 "동네 성격" 분류는 아직 없어서, 등록된 태그 중 첫 번째로 대신한다.
         kind: neighborhood.tags[0]?.name ?? neighborhood.district,

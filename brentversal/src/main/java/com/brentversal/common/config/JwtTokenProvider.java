@@ -209,4 +209,25 @@ public class JwtTokenProvider { // JWT 생성, 검증 기능 담당자 클래스
         return false ;
     }
 
+    /*
+  중개인이 등록 도중 이탈해서 이메일로 재발급 링크를 받을 때 그 링크에 담는 토큰.
+
+  createBrokerSignupToken과 타입을 다르게 둬서, 이 토큰 혼자서는(verifyForRegister의
+  타입 검사에 걸려) 바로 등록에 쓸 수 없다. 사용자가 링크를 눌러 "QR 코드 발급" 버튼을
+  실제로 누르는 순간 이 토큰을 제출하면, 그때 서버가 검증 후 진짜 broker_signup 토큰으로
+  바꿔 준다(PasswordlessService.exchangeResendLink).
+*/
+    public static final String TYPE_BROKER_RESEND = "broker_resend";
+    private static final long BROKER_RESEND_EXPIRATION = 10 * 60 * 1000L;
+
+    public String createBrokerResendToken(Member member){
+        return Jwts.builder()
+                .subject(member.getEmail())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + BROKER_RESEND_EXPIRATION))
+                .claim(TOKEN_TYPE_CLAIM, TYPE_BROKER_RESEND)
+                .signWith(privateKey, Jwts.SIG.RS256)
+                .compact();
+    }
+
 }

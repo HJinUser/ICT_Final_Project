@@ -31,6 +31,8 @@ export type WeeklyProperty = {
 export type HomeNeighborhood = {
     id: number;
     name: string;
+    // NeighborhoodMap에 넘길 구 이름
+    district: string;
     imageUrl: string;
     // K-means 군집 결과로 붙은 동네 성격. 예: "조용한 주거형"
     kind: string;

@@ -102,6 +102,36 @@ public class PasswordlessController {
         }
     }
 
+    // 중도에 등록을 포기한 중개인을 위한 등록 링크 재발급.
+    // 이메일만 받아서, 본인 확인은 URL 접근 자체가 아니라 그 이메일함에 실제로 접근할 수 있는지로 대신한다.
+    // (BROKER이고 아직 미등록인 계정인지는 서비스 쪽에서 확인함)
+    @PostMapping("/register/resend")
+    public ResponseEntity<?> resend(@RequestBody Map<String, String> body){
+        try {
+            passwordlessService.resendSignupToken(body.get("email"));
+            return ResponseEntity.ok(Map.of("message", "등록 안내 메일을 보냈습니다."));
+        } catch (IllegalArgumentException e){
+            // 대상이 아닌 계정(존재하지 않거나, 브로커가 아니거나, 이미 비밀번호가 있는 경우)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            // 이미 패스워드리스 등록이 끝난 계정 — 재발급 대상이 아님
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 재발급 링크 교환 — "QR 코드 발급" 버튼을 누른 순간에만 호출해야 한다.
+    @PostMapping("/register/resend/exchange")
+    public ResponseEntity<?> resendExchange(@RequestBody Map<String, String> body){
+        try {
+            String signupToken = passwordlessService.exchangeResendLink(body.get("email"), body.get("linkToken"));
+            return ResponseEntity.ok(Map.of("signupToken", signupToken));
+        } catch (IllegalArgumentException e){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // 등록 여부 조회 (로그인 화면에서 패스워드리스 버튼 노출 판단용)
     @GetMapping("/status")
     public ResponseEntity<Map<String, Boolean>> status(@RequestParam String email){

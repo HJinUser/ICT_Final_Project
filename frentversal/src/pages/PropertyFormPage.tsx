@@ -66,7 +66,7 @@ const toNumber = (value: number | "" | undefined): number | undefined =>
 const initial_value: PropertyFormState = {
     name: "", description: "", type: "ONE_TWO_ROOM", dealType: "JEONSE",
     address: "", area: "", floor: "", roomCount: "", bathroomCount: "",
-    buildYear: new Date().getFullYear(),
+    buildYear: undefined,
     maintenanceFee: "",
     moveInDate: "", contractStatus: "IMMEDIATE",
     detailDescription: "", tagIds: [],
@@ -832,7 +832,7 @@ function PropertyFormPage() {
                                             onChange={ControlChange}
                                         />
                                         {errors.buildYear && <span className="field-error">{errors.buildYear}</span>}
-                                        <div className="xs dim" style={{ marginTop: 6 }}>
+                                        <div className="buildyear-hint">
                                             매물의 실제 건축연도를 입력해 주세요. 임시 저장 시에는 비워둘 수 있지만, 최종 승인 요청 전에는 반드시 입력해야 합니다.
                                         </div>
                                     </div>

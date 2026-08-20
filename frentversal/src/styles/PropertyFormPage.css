@@ -73,3 +73,14 @@
     font-size: 0.84rem;
     white-space: nowrap;
 }
+
+.buildyear-hint {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    margin-top: 6px;
+    white-space: nowrap;
+}
+
+.field > * {
+    min-width: 0;
+}
