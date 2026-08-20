@@ -193,19 +193,24 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         }
     };
 
+    // 추천 카드의 좋아요/싫어요 선택을 Spring API로 전송하는 함수임
     const sendFeedback = async (liked: boolean) => {
-        if (!property) return;
+    if (!property) return;
 
-        await customAxios.post(`/property/${property.id}/feedback`, {
-            liked,
-        });
+    // 추천 피드백 API에 매물 ID와 LIKE/DISLIKE 평가값을 전송함
+    await customAxios.post('/recommendation/feedback', {
+        propertyId: property.id,
+        type: liked ? 'LIKE' : 'DISLIKE',
+        recommendationScore: null,
+        modelVersion: null,
+    });
 
-        alert(
-            liked
-                ? "좋아요로 추천 데이터에 반영했습니다."
-                : "싫어요로 추천 데이터에 반영했습니다."
-        );
-    };
+    alert(
+        liked
+            ? '좋아요로 추천 데이터에 반영했습니다.'
+            : '싫어요로 추천 데이터에 반영했습니다.'
+    );
+};
 
     const startWritingReview = () => {
         if (!user) {
