@@ -1,5 +1,6 @@
 import axiosInstance from './axiosInstance';
 import type { TagResponse } from '../types/Tag';
+import type { MlNeighborhoodResponse } from '../types/MlNeighborhood';
 import type {
     NeighborhoodCreatePayload,
     NeighborhoodListResponse,
@@ -40,5 +41,18 @@ export async function getNeighborhoodTags(): Promise<TagResponse[]> {
 // 관리자 "동네 등록". 시세·인기도는 서버가 매물/찜을 집계해서 채우므로 여기서 보내지 않는다.
 export async function createNeighborhood(payload: NeighborhoodCreatePayload): Promise<NeighborhoodResponse> {
     const response = await axiosInstance.post<NeighborhoodResponse>('/neighborhoods', payload);
+    return response.data;
+}
+
+/*
+  행정동 ML 분석(K-Means 군집 / 키워드) 결과를 가져온다.
+
+  adminCode 는 행정동 코드라서 위의 getNeighborhood(id) 가 쓰는 법정동 번호와 다르다.
+  React 가 파이썬(FastAPI)을 직접 부르지 않고 Spring 이 대신 받아 전달한다.
+*/
+export async function getMlNeighborhood(adminCode: string): Promise<MlNeighborhoodResponse> {
+    const response = await axiosInstance.get<MlNeighborhoodResponse>(
+        `/neighborhoods/ml/${encodeURIComponent(adminCode)}`,
+    );
     return response.data;
 }

@@ -1,10 +1,6 @@
 package com.brentversal.recommendation.service;
 
-// TODO: common.ml.MlClient 클래스가 아직 저장소에 없어서 잠시 꺼 두었다.
-//       ML 담당이 그 클래스를 올리면 이 import 와 아래 두 곳(mlClient 필드,
-//       requestMlRecommendation 의 호출)의 주석을 되살리면 된다.
-//       지금은 호출 대신 null 을 넣어, 원래 있던 "파이썬이 꺼져 있으면 이 서버가 계산" 경로를 탄다.
-// import com.brentversal.common.ml.MlClient;
+import com.brentversal.common.ml.MlClient;
 import com.brentversal.favorite.entity.Favorite;
 import com.brentversal.favorite.repository.FavoriteRepository;
 import com.brentversal.member.entity.Member;
@@ -89,7 +85,7 @@ public class RecommendationService {
     private final RecommendationFeedbackRepository feedbackRepository;
     private final RecommendationBestRepository bestRepository;
     private final RecentSearchRepository recentSearchRepository;
-    // private final MlClient mlClient; // 위 import 주석 참고 — 클래스가 들어오면 함께 되살린다
+    private final MlClient mlClient;
 
     // 이 추천을 무엇이 계산했는지 나타내는 값이다. 사용자가 남긴 평가와 함께 저장된다.
     // 이 값은 파이썬을 부르지 못해 이 서버가 직접 계산했을 때 쓴다.
@@ -487,9 +483,7 @@ public class RecommendationService {
         Map<String, Object> result;
 
         try {
-            // MlClient 가 아직 없어서 부르지 못한다. 클래스가 들어오면 아래 줄로 되돌린다.
-            //   result = mlClient.recommend(payload);
-            result = null;
+            result = mlClient.recommend(payload);
         } catch (Exception e) {
             log.warn("추천 계산 서버를 부르지 못해 이 서버 계산으로 대신한다.", e);
             return null;
