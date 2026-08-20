@@ -1,0 +1,76 @@
+/*
+  MlNeighborhoodMap.css
+
+  AI 동네 분석 화면의 지도만 쓰는 스타일.
+  클래스 이름은 전부 mlmap- 으로 시작한다. 지도 검색(map-)이나 매물 상세 지도(plmap-)와
+  이름이 겹치면 CSS 를 읽는 순서에 따라 그쪽 화면이 함께 바뀌기 때문이다.
+*/
+
+.mlmap {
+    margin-top: 14px;
+}
+
+.mlmap-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.mlmap-title {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+}
+
+.mlmap-count {
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.mlmap-canvas {
+    width: 100%;
+    height: 400px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    overflow: hidden;
+    background: var(--bg-2);
+}
+
+.mlmap-note {
+    margin: 10px 0 0;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.mlmap-error {
+    margin: 10px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--sig-high);
+}
+
+/* 지도 위 매물 표식. 지도 검색의 가격 표식과 같은 모양으로 맞췄다. */
+.mlmap-pin {
+    padding: 5px 10px;
+    border: 1px solid #d5c7e3;
+    border-radius: 100px;
+    background: #fff;
+    color: var(--v);
+    font: 600 12px/1 'IBM Plex Mono', monospace;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(17, 17, 20, .18);
+    transition: .15s;
+}
+
+.mlmap-pin:hover {
+    background: var(--v);
+    color: #fff;
+    border-color: var(--v);
+}
+
+@media (max-width: 720px) {
+    .mlmap-canvas {
+        height: 300px;
+    }
+}

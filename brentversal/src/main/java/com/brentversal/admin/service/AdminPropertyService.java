@@ -2,6 +2,8 @@ package com.brentversal.admin.service;
 
 import com.brentversal.admin.dto.AdminPropertyDto;
 import com.brentversal.common.ml.MlClient;
+import com.brentversal.common.mail.MailService;
+import com.brentversal.member.entity.Member;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.constant.PriceEvaluationStatus;
 import com.brentversal.property.entity.Property;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +33,7 @@ import java.util.Map;
 public class AdminPropertyService {
     private final PropertyRepository propertyRepository ;
     private final MlClient mlClient ;
+    private final MailService mailService ;
 
     // 한 페이지에 10건씩 보여 준다
     private static final int PAGE_SIZE = 10 ;
@@ -73,7 +77,6 @@ public class AdminPropertyService {
 
         // 관리자가 선택한 가격평가 상태를 Property에 반영함
         property.setPriceEvaluation(evaluation);
-
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return AdminPropertyDto.of(property);
     }
@@ -93,7 +96,9 @@ public class AdminPropertyService {
 
         // 관리자 승인 완료 매물을 게시중 ACTIVE 상태로 변경함
         property.setStatus(PropertyStatus.ACTIVE);
-
+        notifyOwner(property,
+                "[전세역전] 매물이 승인되었습니다",
+                "\"" + property.getName() + "\" 매물이 승인되어 게시중 상태로 전환되었습니다.");
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return AdminPropertyDto.of(property);
     }
@@ -108,7 +113,35 @@ public class AdminPropertyService {
         Property property = findPendingOrThrow(id);
 
         property.setStatus(PropertyStatus.CANCELLED);
+        notifyOwner(property,
+                "[전세역전] 매물이 반려되었습니다",
+                "\"" + property.getName() + "\" 매물이 반려되어 등록이 취소되었습니다. 다시 등록하시려면 매물을 새로 등록해 주세요.");
+        return AdminPropertyDto.of(property);
+    }
 
+    // 비공개 처리 : 공개 -> 비공개 (매물 자체는 남아있고 노출만 막음)
+    @Transactional
+    public AdminPropertyDto hide(Long id){
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 매물을 찾을 수 없습니다. id=" + id));
+
+        property.setVisible(false);
+        notifyOwner(property,
+                "[전세역전] 매물이 비공개 처리되었습니다",
+                "\"" + property.getName() + "\" 매물이 비공개로 전환되어 사용자 화면에서 보이지 않습니다.");
+        return AdminPropertyDto.of(property);
+    }
+
+    // 공개 처리 : 비공개 -> 공개 (되돌리기)
+    @Transactional
+    public AdminPropertyDto unhide(Long id){
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 매물을 찾을 수 없습니다. id=" + id));
+
+        property.setVisible(true);
+        notifyOwner(property,
+                "[전세역전] 매물이 다시 공개되었습니다",
+                "\"" + property.getName() + "\" 매물이 다시 공개되어 사용자 화면에 노출됩니다.");
         return AdminPropertyDto.of(property);
     }
 
@@ -195,5 +228,28 @@ public class AdminPropertyService {
         result.put("failedCount", failed);
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return result;
+    }
+
+    // 매물 소유자(중개인)에게 상태 변경 메일을 보낸다.
+// 사무소에 아직 회원이 연결 안 됐거나 이메일이 없으면 조용히 건너뛴다.
+// 메일 발송 실패로 승인/반려 같은 실제 처리 자체가 롤백되면 안 되므로 예외를 여기서 잡아 삼킨다.
+    private void notifyOwner(Property property, String subject, String body) {
+        Member member = property.getAgency() != null ? property.getAgency().getMember() : null;
+        if (member == null || member.getEmail() == null || member.getEmail().isBlank()) {
+            return;
+        }
+        try {
+            mailService.sendText(member.getEmail(), subject, body);
+        } catch (Exception e) {
+            log.warn("매물 상태 변경 알림 메일 발송 실패. propertyId={}, email={}", property.getId(), member.getEmail(), e);
+        }
+    }
+
+    private String evaluationLabel(PriceEvaluationStatus evaluation) {
+        return switch (evaluation) {
+            case UNDERVALUED -> "저평가";
+            case FAIR -> "적정";
+            case OVERVALUED -> "고평가";
+        };
     }
 }

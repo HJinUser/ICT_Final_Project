@@ -31,6 +31,8 @@ export interface AdminProperty {
     brokerName: string | null;
     agencyVerified: boolean;
 
+    visible: boolean;// 공개/비공개 여부. false면 지도·목록 등 사용자 화면에서 숨김
+
     createdAt: string; // "2026-08-12"
 }
 
