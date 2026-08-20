@@ -543,7 +543,14 @@ function App({ user }: Props) {
                                 className="home-hood tall"
                                 onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                             >
-                                <div className="ph" style={{ backgroundImage: `url('${hood.imageUrl}')` }} />
+                                <div
+                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
+                                >
+                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
+                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
+                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                </div>
                                 <div className="ov" />
                                 <div className="txt">
                                     <span className="kind">{hood.kind}</span>
@@ -565,7 +572,14 @@ function App({ user }: Props) {
                                     className="home-hood short"
                                     onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                                 >
-                                    <div className="ph" style={{ backgroundImage: `url('${hood.imageUrl}')` }} />
+                                    <div
+                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
+                                >
+                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
+                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
+                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                </div>
                                     <div className="ov" />
                                     <div className="txt">
                                         <span className="kind">{hood.kind}</span>

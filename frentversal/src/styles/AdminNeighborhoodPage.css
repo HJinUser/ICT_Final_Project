@@ -1,0 +1,49 @@
+/*
+  관리자 "동네 관리" 화면 전용 CSS.
+  전역 골격(tokens/common/responsive)은 main.tsx 가 이미 깔아 두므로 여기서 다시 가져오지 않는다.
+*/
+
+/* 등록 결과 안내.
+   예전에는 성공과 실패가 똑같이 작은 보라색 한 줄이라, 등록이 됐는지 눈으로 알기 어려웠다.
+   색과 아이콘으로 갈라 두어 한눈에 구분되게 한다.
+   색은 common.css 의 .status.green / .status.red 와 같은 조합을 쓴다. */
+.admin-hood-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 11px 15px;
+    border-radius: var(--r-s);
+    font-size: 13.5px;
+    font-weight: 550;
+}
+
+.admin-hood-notice > span {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.admin-hood-notice[data-kind="done"] {
+    background: #edf6f1;
+    color: var(--green);
+}
+
+.admin-hood-notice[data-kind="done"] > span {
+    background: var(--green);
+}
+
+.admin-hood-notice[data-kind="error"] {
+    background: #fbefef;
+    color: var(--red);
+}
+
+.admin-hood-notice[data-kind="error"] > span {
+    background: var(--red);
+}
