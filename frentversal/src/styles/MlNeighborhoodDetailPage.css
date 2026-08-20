@@ -1,0 +1,87 @@
+/*
+  MlNeighborhoodDetailPage.css
+
+  행정동 AI 분석 상세 화면만 쓰는 스타일.
+  클래스 이름은 전부 mlhood- 로 시작한다. 동네 탐색(neighborhood-) 화면과 이름이 겹치면
+  CSS 를 읽는 순서에 따라 그쪽 화면이 함께 바뀌기 때문이다.
+  .card / .wrap / .section / .breadcrumb / .eyebrow / .outline-btn 은 common.css 것을 그대로 쓴다.
+*/
+
+.mlhood-state {
+    padding: 54px 24px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    background: #fff;
+    color: var(--ink-3);
+    text-align: center;
+}
+
+.mlhood-state-error p {
+    color: var(--ink-2);
+    margin-bottom: 18px;
+}
+
+.mlhood-hero {
+    padding: 58px 0;
+    background: linear-gradient(135deg, #fff 0%, #f8f5fb 58%, #ece6f5 100%);
+    border-bottom: 1px solid var(--line-2);
+}
+
+.mlhood-hero .breadcrumb {
+    margin-bottom: 28px;
+}
+
+.mlhood-hero h1 {
+    margin-top: 8px;
+    letter-spacing: -.03em;
+}
+
+.mlhood-hero p {
+    max-width: 680px;
+    margin-top: 14px;
+    color: var(--ink-2);
+}
+
+.mlhood-cluster {
+    padding: 28px 30px 26px;
+}
+
+.mlhood-label {
+    display: block;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.mlhood-cluster-name {
+    display: block;
+    margin-top: 8px;
+    font-size: var(--fs-h2);
+    letter-spacing: -.03em;
+    color: var(--v);
+}
+
+.mlhood-cluster-desc {
+    max-width: 640px;
+    margin-top: 14px;
+    color: var(--ink-2);
+}
+
+.mlhood-code {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: var(--bg-2);
+    font: var(--fs-mono) / 1 'IBM Plex Mono', monospace;
+    color: var(--ink-3);
+}
+
+@media (max-width: 720px) {
+    .mlhood-hero {
+        padding: 40px 0;
+    }
+
+    .mlhood-cluster {
+        padding: 22px 20px;
+    }
+}
