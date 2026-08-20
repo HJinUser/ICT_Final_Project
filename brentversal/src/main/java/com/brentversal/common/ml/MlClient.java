@@ -4,6 +4,7 @@ package com.brentversal.common.ml;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
@@ -36,6 +37,51 @@ public class MlClient {
         return restClient.post()
                 .uri("/ml/recommendation/recommend")
                 .body(request)
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
+    // Spring에서 adminCode(행정동 코드)를 받아 FastAPI 행정동 분석 API를 호출하고 결과 JSON을 반환하는 메서드임
+    public Map<String, Object> neighborhood(String adminCode) {
+        // 행정동 분석 GET 요청을 /ml/neighborhood/{adminCode}로 보내고 Map 응답으로 변환함
+        return restClient.get()
+                .uri("/ml/neighborhood/{adminCode}", adminCode)
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
+    /*
+      위경도 좌표가 속한 행정동을 FastAPI에 물어 코드·이름을 받는 메서드임.
+
+      매물 등록은 시세예측 응답에 행정동이 함께 실려 오므로 이 메서드를 쓰지 않는다.
+      행정동을 저장하기 전에 등록된 예전 매물을 채워 넣을 때(백필)만 사용한다.
+      서울 경계 밖이면 FastAPI가 404를 주고, 이 메서드는 null 을 돌려준다.
+    */
+    public Map<String, Object> resolveAdminDong(double latitude, double longitude) {
+        // 좌표 판정 GET 요청을 /ml/neighborhood/resolve로 보내고 Map 응답으로 변환함
+        try {
+            return restClient.get()
+                    .uri(builder -> builder.path("/ml/neighborhood/resolve")
+                            .queryParam("lat", latitude)
+                            .queryParam("lng", longitude)
+                            .build())
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (HttpClientErrorException.NotFound e) {
+            // 서울 경계 밖 좌표는 오류가 아니라 "해당 없음"이므로 호출한 쪽이 건너뛰게 함
+            return null;
+        }
+    }
+
+    // 매물 좌표 주변의 지하철·버스·병원·편의점을 좌표와 함께 받아오는 메서드임
+    // 매물 상세 지도에 표시할 값이며, 반경은 FastAPI가 시세예측과 같은 기준으로 정한다.
+    public Map<String, Object> nearbyPlaces(double latitude, double longitude) {
+        // 주변시설 GET 요청을 /ml/place/nearby로 보내고 Map 응답으로 변환함
+        return restClient.get()
+                .uri(builder -> builder.path("/ml/place/nearby")
+                        .queryParam("lat", latitude)
+                        .queryParam("lng", longitude)
+                        .build())
                 .retrieve()
                 .body(new ParameterizedTypeReference<Map<String, Object>>() {});
     }

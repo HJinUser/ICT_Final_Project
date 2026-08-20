@@ -50,3 +50,70 @@
 .login-modal p {
     margin: 0 0 20px;
 }
+
+/* ── AI 시세예측 카드 축소 ─────────────────────────────
+   위치 지도가 이 카드 바로 위에 들어오면서 화면이 길어져, 금액과 차트를 한 단계씩 줄였다.
+   전에는 이 크기가 PropertyPage.tsx 안에 인라인 style 로 박혀 있었다.
+   클래스로 옮겨 두어야 크기를 다시 조절할 때 tsx 를 건드리지 않는다. */
+
+.ai-price-main {
+    display: block;
+    margin-top: 4px;
+    font: 600 22px/1.2 'IBM Plex Mono', monospace;
+}
+
+.ai-price-sub {
+    display: block;
+    margin-top: 4px;
+    font: 600 17px/1.2 'IBM Plex Mono', monospace;
+}
+
+/* .ai-band 의 안여백도 함께 줄인다. common.css 의 18px 를 이 페이지에서만 덮는다.
+   (공통 클래스 자체를 고치면 다른 화면의 ai-band 까지 같이 바뀐다) */
+.detail-grid .ai-band {
+    padding: 14px 16px;
+}
+
+/* common.css 의 .bar-chart 는 180px 다. 이 페이지 전용 클래스를 함께 붙여 높이만 줄인다.
+   .bar-chart 자체를 여기서 재정의하면 다른 화면의 차트까지 낮아진다. */
+.bar-chart.property-bar-chart {
+    height: 120px;
+    padding: 14px 8px 0;
+    gap: 12px;
+}
+
+/* ── 히어로의 AI 예상 시세 ─────────────────────────────
+   common.css 의 `.hero-stat strong` 이 font 단축 속성으로 굵기 600 을 지정한다.
+   그쪽 선택자가 (0,1,1) 이라 클래스 하나(0,1,0)로는 이기지 못한다.
+   그래서 .hero-stat 을 앞에 붙여 (0,2,0) 으로 올린다.
+   common.css 의 .hero-stat strong 자체를 고치면 다른 페이지 히어로 숫자까지 굵어진다. */
+.hero-stat .property-hero-price {
+    font-weight: 700;
+}
+
+/* ── 갤러리 사진 ───────────────────────────────────────
+   사진을 누르면 크게 보도록 div 를 button 으로 바꿨다.
+   button 의 기본 테두리·여백을 지워 예전 모양 그대로 보이게 한다.
+   .photo 자체는 common.css 것이라 건드리지 않고, 이 페이지 전용 클래스를 덧붙였다. */
+.property-photo {
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.property-photo:hover {
+    filter: brightness(.92);
+}
+
+.property-photo:focus-visible {
+    outline: 3px solid var(--v);
+    outline-offset: 2px;
+}
+
+/* 한줄평 등록 실패 안내. 예전에는 예외 처리가 없어서 눌러도 아무 반응이 없었다. */
+.review-error {
+    margin: 10px 0 0;
+    font-size: var(--fs-sm);
+    color: var(--sig-high);
+}

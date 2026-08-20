@@ -155,6 +155,20 @@ public class AdminPropertyController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
     }
 
+    // 행정동이 비어 있는 기존 매물을 좌표로 판정해 채운다.
+    // POST /admin/properties/backfill-admin-code
+    //
+    // 매물을 등록·수정하면 행정동이 자동으로 저장되므로, 이 기능은 그 전에 등록된
+    // 매물에만 필요하다. 여러 번 실행해도 이미 채운 매물은 대상에서 빠진다.
+    @PostMapping("/backfill-admin-code")
+    public ResponseEntity<?> backfillAdminCode(){
+        try {
+            return ResponseEntity.ok(adminPropertyService.backfillAdminCode());
+        } catch (IllegalStateException e) {
+            return badRequest(e);
+        }
+    }
+
     private ResponseEntity<Map<String, String>> badRequest(Exception e){
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
     }

@@ -14,6 +14,7 @@ from app.services.artifact_store import (
     sale_model,
 )
 # 이 파일에서 사용할 표준/외부 모듈과 프로젝트 내부 기능 불러옴
+from app.services.admin_dong_service import resolve_admin_dong
 from app.services.feature_service import get_nearby_features
 
 # 여러 처리에서 공통으로 사용할 설정값을 상수로 미리 정의함.
@@ -112,6 +113,14 @@ def predict_price(request: PricePredictRequest) -> dict:
 
     nearby = get_nearby_features(request.latitude, request.longitude)
     response["stationDistance"] = nearby["nearest_station_distance_m"]
+
+    # 매물 좌표가 속한 행정동을 함께 알려 줌.
+    # Spring이 이 값을 매물에 저장해 두면 행정동 기준 화면에서 그 매물을 찾을 수 있다.
+    # 법정동 이름으로는 행정동을 확정할 수 없어서(같은 법정동이 여러 행정동에 걸침) 좌표로 판정한다.
+    admin_dong = resolve_admin_dong(request.latitude, request.longitude)
+    response["adminCode"] = admin_dong["adminCode"] if admin_dong else None
+    response["adminName"] = admin_dong["adminName"] if admin_dong else None
+
     response["nearby"] = nearby
     response["modelVersion"] = price_metadata()["version"]
     # 계산/조회가 끝난 최종 결과를 호출한 쪽에 반환함

@@ -12,6 +12,7 @@ import com.brentversal.property.service.PropertyService;
 import com.brentversal.property.validation.PropertyFinalValidation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -156,6 +157,21 @@ public class PropertyController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "해당 매물을 찾을 수 없습니다."));
+        }
+    }
+
+    // 매물 상세 지도에 찍을 주변시설 (지하철·버스·병원·편의점)
+    // GET /property/{id}/nearby
+    //
+    // 좌표는 저장된 매물 값을 쓰므로 따로 받지 않는다.
+    // 비회원도 보는 화면이라 로그인을 요구하지 않는다(GET /property/** 는 permitAll).
+    @GetMapping("/{id}/nearby")
+    public ResponseEntity<?> nearby(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(propertyService.findNearbyPlaces(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 

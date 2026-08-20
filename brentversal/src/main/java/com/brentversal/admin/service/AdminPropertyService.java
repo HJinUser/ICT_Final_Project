@@ -1,6 +1,7 @@
 package com.brentversal.admin.service;
 
 import com.brentversal.admin.dto.AdminPropertyDto;
+import com.brentversal.common.ml.MlClient;
 import com.brentversal.common.mail.MailService;
 import com.brentversal.member.entity.Member;
 import com.brentversal.property.constant.PropertyStatus;
@@ -16,6 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 // 관리자가 매물을 승인하거나 반려하는 서비스
 //
 // 중개인이 매물을 등록하면 상태가 PENDING(승인 대기)으로 저장된다.
@@ -27,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminPropertyService {
     private final PropertyRepository propertyRepository ;
+    private final MlClient mlClient ;
     private final MailService mailService ;
 
     // 한 페이지에 10건씩 보여 준다
@@ -174,6 +180,57 @@ public class AdminPropertyService {
 
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return parsed;
+    }
+
+    /*
+      행정동이 비어 있는 기존 매물을 좌표로 판정해 한 번에 채운다.
+
+      행정동 저장은 매물을 등록·수정할 때 자동으로 이루어지므로, 이 작업은 그 기능이
+      생기기 전에 등록된 매물에만 필요하다. 그래서 관리자가 한 번 실행하는 형태로 둔다.
+
+      한 건이 실패해도 나머지는 계속 채운다. 서울 밖 좌표처럼 판정할 수 없는 매물은
+      건너뛰고 개수만 알려 준다. 다시 실행해도 이미 채운 매물은 대상에서 빠진다.
+    */
+    @Transactional
+    public Map<String, Object> backfillAdminCode() {
+        List<Property> targets = propertyRepository.findMissingAdminCode();
+
+        int filled = 0;
+        int outside = 0;
+        int failed = 0;
+
+        for (Property property : targets) {
+            // 외부 호출 중 오류가 나도 나머지 매물 처리는 계속되어야 함
+            try {
+                Map<String, Object> resolved =
+                        mlClient.resolveAdminDong(property.getLatitude(), property.getLongitude());
+
+                // 서울 경계 밖이면 판정 결과가 없다. 오류가 아니므로 세어만 둔다.
+                if (resolved == null || resolved.get("adminCode") == null) {
+                    outside++;
+                    continue;
+                }
+
+                property.setAdminCode(String.valueOf(resolved.get("adminCode")));
+                property.setAdminName(String.valueOf(resolved.get("adminName")));
+                filled++;
+
+            } catch (Exception e) {
+                failed++;
+                log.warn("행정동 백필 실패. propertyId={}", property.getId(), e);
+            }
+        }
+
+        log.info("행정동 백필 완료. 대상={} 채움={} 경계밖={} 실패={}",
+                targets.size(), filled, outside, failed);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("targetCount", targets.size());
+        result.put("filledCount", filled);
+        result.put("outsideCount", outside);
+        result.put("failedCount", failed);
+        // 처리 완료된 결과를 호출한 쪽으로 반환함
+        return result;
     }
 
     // 매물 소유자(중개인)에게 상태 변경 메일을 보낸다.

@@ -50,7 +50,13 @@ export interface PropertySearchParams {
     // 지역명뿐 아니라 매물 이름·주소까지 함께 찾는다. 왼쪽 필터와는 별개로 동작한다.
     keyword?: string;
     region?: string;      // 구
-    dong?: string;        // 동
+    dong?: string;        // 동 (법정동)
+
+    // 행정동 코드 (예: "11650560" = 반포1동).
+    // 위의 dong 은 법정동이라 다른 체계다. 한 법정동이 여러 행정동에 걸쳐 있어
+    // 이름으로는 짝지을 수 없어서, 서버가 매물 좌표로 판정해 둔 값으로 찾는다.
+    // AI 동네 분석 화면의 "이 동네 매물 보기"가 이 조건을 쓴다.
+    adminCode?: string;
     type?: string;        // 매물 유형 (하나만)
     dealType?: string;    // SALE / JEONSE / MONTHLY / ALL
     minPrice?: number;    // 만원

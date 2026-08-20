@@ -66,12 +66,33 @@
     color: var(--ink-2);
 }
 
-.hoodrec-link {
+/* 이동 버튼 줄. AI 분석(행정동)과 동네 살펴보기(법정동)가 나란히 설 수 있다. */
+.hoodrec-links:empty {
+    display: none;
+}
+
+.hoodrec-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
     margin-top: 14px;
+}
+
+.hoodrec-link {
     padding: 0;
     border: 0;
     background: none;
     color: var(--v);
     font-size: var(--fs-mono);
     cursor: pointer;
+}
+
+.hoodrec-link:hover {
+    text-decoration: underline;
+}
+
+/* 법정동 동네 탐색은 보조 동선이라 한 단계 낮춰 둔다. */
+.hoodrec-link-quiet {
+    color: var(--ink-3);
 }
