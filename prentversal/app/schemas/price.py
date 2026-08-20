@@ -39,5 +39,8 @@ class PricePredictResponse(BaseModel):
     aiMonthlyDeposit: int | None = None
     aiMonthlyRent: int | None = None
     stationDistance: float | None = None
+    # 좌표로 판정한 행정동. 서울 경계 밖이면 둘 다 None임
+    adminCode: str | None = None
+    adminName: str | None = None
     nearby: NearbyFeatures
     modelVersion: str
