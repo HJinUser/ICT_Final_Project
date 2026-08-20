@@ -91,6 +91,9 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
            "   and (:dong is null " +
            "        or p.dong like concat(:dong, '%') " +
            "        or (p.dong is null and p.address like concat('%', :dong, '%'))) " +
+           // 행정동은 등록할 때 좌표로 판정해 둔 값이라 이름 흔들림이 없어 정확히 맞춘다.
+           // 값이 아직 없는 예전 매물은 이 조건을 걸면 빠지므로, 백필 전에는 결과가 적을 수 있다.
+           "   and (:adminCode is null or p.adminCode = :adminCode) " +
            "   and (:type is null or p.type = :type) " +
            "   and (:dealType is null or p.dealType = :dealType) " +
            "   and (:agencyId is null or p.agency.id = :agencyId) " +
@@ -106,6 +109,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                           @Param("keyword") String keyword,
                           @Param("region") String region,
                           @Param("dong") String dong,
+                          @Param("adminCode") String adminCode,
                           @Param("type") PropertyType type,
                           @Param("dealType") DealType dealType,
                           @Param("agencyId") Long agencyId,
@@ -116,6 +120,15 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                           @Param("roomCounts") List<Integer> roomCounts,
                           @Param("tagIds") List<Long> tagIds,
                           @Param("tagCount") long tagCount);
+
+    // 행정동을 아직 안 적어 둔 매물을 찾는다. 좌표가 없으면 판정할 수 없으므로 함께 거른다.
+    // 행정동 저장 기능이 생기기 전에 등록된 매물을 채워 넣을 때(백필) 쓴다.
+    @Query("select p from Property p " +
+           " where p.adminCode is null " +
+           "   and p.latitude is not null " +
+           "   and p.longitude is not null " +
+           " order by p.id asc")
+    List<Property> findMissingAdminCode();
 
     // 매물 확인 화면 - 매물유형별로 실제 존재하는 거래유형만 뽑는다 (type이 null이면 전체 대상).
     @Query("select distinct p.dealType from Property p " +

@@ -127,3 +127,58 @@ def get_nearby_features(latitude: float, longitude: float) -> dict[str, float | 
         "academy_count_1000m": count_within_m(idx["academy"], latitude, longitude, 1000),
         "park_count_1000m": count_within_m(idx["park"], latitude, longitude, 1000),
     }
+
+
+# 매물 상세 지도에 찍을 시설 종류와 반경임.
+# 반경은 위 get_nearby_features가 쓰는 값과 맞췄다. 화면에 보이는 것과 시세예측이 센 것이 달라지면
+# "지도에는 3개인데 예측은 5개를 봤다"는 식으로 설명할 수 없기 때문이다.
+MAP_PLACE_CATEGORIES = {
+    "station": 1000,
+    "bus": 500,
+    "hospital": 1000,
+    "convenience": 500,
+}
+
+# 한 종류가 화면을 덮지 않도록 가까운 순으로 이만큼만 보냄
+MAP_PLACE_LIMIT = 30
+
+
+# 매물 좌표 반경 안의 시설을 종류별로 좌표와 함께 모아 주는 함수임
+def get_nearby_places(latitude: float, longitude: float) -> dict[str, list[dict]]:
+    idx = indexes()
+    result: dict[str, list[dict]] = {}
+
+    # 대상 데이터를 하나씩 순회하면서 같은 처리 반복함
+    for category, radius_m in MAP_PLACE_CATEGORIES.items():
+        index = idx[category]
+        # 해당 시설 데이터가 0건이면 빈 목록으로 두고 다음 종류로 넘어감
+        if index.tree is None:
+            result[category] = []
+            continue
+
+        radius_radian = radius_m / EARTH_RADIUS_M
+        # 반경 안에 들어오는 시설의 위치와 거리를 함께 조회함
+        found, distances = index.tree.query_radius(
+            _query_point(latitude, longitude),
+            r=radius_radian,
+            return_distance=True,
+            sort_results=True,
+        )
+
+        places: list[dict] = []
+        # 가까운 순으로 상한까지만 담음
+        for position, distance in zip(found[0][:MAP_PLACE_LIMIT], distances[0][:MAP_PLACE_LIMIT]):
+            row = index.frame.iloc[int(position)]
+            places.append(
+                {
+                    "name": str(row["name"]),
+                    "latitude": float(row["latitude"]),
+                    "longitude": float(row["longitude"]),
+                    "distanceM": round(float(distance) * EARTH_RADIUS_M, 1),
+                }
+            )
+
+        result[category] = places
+
+    # 계산/조회가 끝난 최종 결과를 호출한 쪽에 반환함
+    return result

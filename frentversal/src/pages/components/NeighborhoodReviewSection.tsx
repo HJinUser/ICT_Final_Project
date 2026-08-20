@@ -21,6 +21,10 @@ interface Props {
     adminCode: string;
     adminName: string;
     districtName: string;
+
+    // 설문으로 받아 둔 한줄평. 서비스가 열리기 전에 모은 것이라 작성자가 없고 고칠 수 없다.
+    // 사용자가 쓴 한줄평과 섞으면 누가 쓴 글인지 알 수 없으므로 따로 묶어 보여 준다.
+    surveyReviews?: string[];
 }
 
 // "2026-08-20T11:44:00" 같은 서버 시각을 "2026.08.20" 으로 줄인다.
@@ -30,7 +34,12 @@ function formatDate(value: string): string {
     return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function NeighborhoodReviewSection({ adminCode, adminName, districtName }: Props) {
+function NeighborhoodReviewSection({
+    adminCode,
+    adminName,
+    districtName,
+    surveyReviews = [],
+}: Props) {
     const navigate = useNavigate();
 
     const [reviews, setReviews] = useState<NeighborhoodReview[]>([]);
@@ -166,7 +175,7 @@ function NeighborhoodReviewSection({ adminCode, adminName, districtName }: Props
             {listError ? (
                 <p className="hoodrev-error">{listError}</p>
             ) : (
-                !loading && reviews.length === 0 && (
+                !loading && reviews.length === 0 && surveyReviews.length === 0 && (
                     <p className="hoodrev-empty">아직 남겨진 한줄평이 없습니다. 첫 번째로 남겨 보세요.</p>
                 )
             )}
@@ -183,6 +192,28 @@ function NeighborhoodReviewSection({ adminCode, adminName, districtName }: Props
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {surveyReviews.length > 0 && (
+                <div className="hoodrev-survey">
+                    <div className="hoodrev-survey-head">
+                        <strong>설문으로 받은 이야기</strong>
+                        <span>{surveyReviews.length}건</span>
+                    </div>
+
+                    <p className="hoodrev-survey-note">
+                        서비스가 열리기 전에 모은 응답입니다. 동네 키워드 분석에도 함께 쓰였습니다.
+                    </p>
+
+                    <ul className="hoodrev-list">
+                        {/* 설문 응답에는 식별자가 없다. 같은 문장이 두 번 들어올 수 있어 순번을 함께 키로 쓴다. */}
+                        {surveyReviews.map((text, index) => (
+                            <li key={`${index}-${text}`} className="hoodrev-item">
+                                <p>{text}</p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
         </section>
     );

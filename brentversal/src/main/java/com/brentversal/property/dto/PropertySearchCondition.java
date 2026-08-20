@@ -19,6 +19,13 @@ public class PropertySearchCondition {
 
     private String region ;    // 지역 구 (주소에 포함되는 문자열, 예: "서초구")
     private String dong ;      // 동 (구를 고른 뒤 더 좁힐 때. 예: "반포동")
+
+    // 행정동 코드 (예: "11650560" = 반포1동).
+    //
+    // 위의 dong 은 법정동이라 이것과 다른 체계다. 한 법정동이 여러 행정동에 걸쳐 있어서
+    // 이름으로는 짝지을 수 없기 때문에, 매물을 등록할 때 좌표로 판정해 저장해 둔 값으로 찾는다.
+    // K-Means 동네 분석 화면("이 동네 매물 보기")이 이 조건을 쓴다.
+    private String adminCode ;
     private String type ;      // 매물 유형 ONE_TWO_ROOM / APARTMENT / VILLA / OFFICETEL. 하나만 고른다
     private String dealType ;  // SALE / JEONSE / MONTHLY. 안 고르면 전체
     private Long minPrice ;    // 만원 단위

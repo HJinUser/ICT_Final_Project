@@ -10,6 +10,9 @@ public record MlPriceResponse(
         Long aiMonthlyDeposit,
         Long aiMonthlyRent,
         Double stationDistance,
+        // 매물 좌표가 속한 행정동. 서울 경계 밖이면 둘 다 null 이다.
+        String adminCode,
+        String adminName,
         Map<String, Object> nearby,
         String modelVersion
 ) {}

@@ -92,6 +92,10 @@ public class SecurityConfig {
                         // 조회(GET)는 바로 위에서 이미 허용했으므로 여기 걸리지 않는다.
                         // "내 사무소의 매물이 맞는지"는 PropertyService 에서 한 번 더 확인한다.
                         .requestMatchers(HttpMethod.POST, "/property/*/favorite").hasRole("USER")
+                        // 매물 한줄평은 일반 사용자가 쓴다. 중개인이 자기 매물을 스스로 평가하면 안 된다.
+                        // 아래 "/property/**" 는 등록·수정을 중개인에게만 여는 규칙이라,
+                        // 이 줄이 먼저 와야 한줄평이 그 규칙에 걸려 403 이 되지 않는다.
+                        .requestMatchers(HttpMethod.POST, "/property/*/reviews").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.PUT, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")

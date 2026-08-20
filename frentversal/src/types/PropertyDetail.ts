@@ -23,7 +23,8 @@ export interface PropertyDetail extends PropertyResponse {
     // TODO: 동네/유형별 시세 추이(시장 통계) 기능. ML 쪽과 엮인 범위라 지금은 화면 확인용 목데이터
     priceHistory: PriceHistoryPoint[];
 
-    // TODO: Review 도메인 아직 안 만들어짐, 화면 확인용 목데이터
+    // 이 매물의 한줄평 목록. GET /property/{id}/reviews 로 따로 받아 채운다.
+    // (매물 상세 응답에는 들어 있지 않다)
     reviews: Review[];
 
     // TODO: 관심매물 기능 연동 전, 화면 확인용
