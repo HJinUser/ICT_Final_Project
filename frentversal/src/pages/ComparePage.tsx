@@ -165,7 +165,7 @@ function formatPriceDifference(property: PropertyResponse): string {
 // 비교 항목별 라벨. AI 비교 요약 문장을 만들 때도 재사용한다.
 const CATEGORY_LABELS: Record<string, string> = {
     price: "금액",
-    priceDiff: "시세 대비 저렴함",
+    priceDiff: "시세 대비 합리적인 가격",
     area: "면적",
     station: "교통 편의",
     fee: "관리비",
