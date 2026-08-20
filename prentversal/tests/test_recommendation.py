@@ -1,4 +1,5 @@
 # 맞춤 추천 핵심 규칙 테스트
+
 # 이 파일에서 사용할 표준/외부 모듈과 프로젝트 내부 기능 불러옴
 from app.services.recommendation_service import range_score, _budget_one
 
