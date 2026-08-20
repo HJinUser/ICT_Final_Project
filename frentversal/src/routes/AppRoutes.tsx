@@ -5,6 +5,7 @@ import LoginPage from './../pages/LoginPage';
 import HomePage from './../pages/HomePage';
 import PropertyFormPage from './../pages/PropertyFormPage';
 import PasswordlessRegisterPage from '../pages/PasswordlessRegisterPage';
+import FindPasswordPage from '../pages/FindPasswordPage';
 import type { User } from "../types/User";
 import PropertyPage from './../pages/PropertyPage';
 import ComparePage from './../pages/ComparePage';
@@ -33,11 +34,13 @@ import AdminHomePanel from './../pages/AdminHomePanel';
 import AdminPropertyPage from './../pages/AdminPropertyPage';
 import AdminBrokerPage from './../pages/AdminBrokerPage';
 import AdminNeighborhoodPage from './../pages/AdminNeighborhoodPage';
+import AdminMlPage from './../pages/AdminMlPage';
 import MyConsultationPage from './../pages/MyConsultationPage';
 import MyPage from './../pages/MyPage';
 import MapSearchPage from './../pages/MapSearchPage';
 import NeighborhoodPage from '../pages/NeighborhoodPage';
 import NeighborhoodDetailPage from '../pages/NeighborhoodDetailPage';
+import MlNeighborhoodDetailPage from '../pages/MlNeighborhoodDetailPage';
 import TermsPage from './../pages/TermsPage';
 import ListingsPage from "../pages/ListingsPage.tsx";
 
@@ -58,6 +61,9 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
       <Route path='/member/signup' element={<SignupPage />} />
       <Route path='/member/passwordless' element={<PasswordlessRegisterPage />} />
       <Route path='/member/login' element={<LoginPage onLogin={handleLoginSuccess} />} />
+      {/* 비밀번호 찾기. 이메일 인증번호로 본인을 확인한 뒤 새 비밀번호를 설정한다.
+          단계가 나뉘어 있지만 중간 단계를 주소로 직접 열 수 없도록 한 페이지에서 처리한다. */}
+      <Route path='/member/find-password' element={<FindPasswordPage />} />
       {/* 카카오 로그인 성공 후 백엔드가 돌려보내는 도착 지점 (기존 회원) */}
       <Route path='/oauth/callback' element={<OAuthCallbackPage onLogin={handleLoginSuccess} />} />
       {/* 카카오 최초 로그인 시 추가정보를 받는 페이지 (신규 회원) */}
@@ -88,6 +94,9 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
       <Route path="/neighborhood" element={<NeighborhoodPage user={user} />} />
       <Route path="/neighborhood/:id" element={<NeighborhoodDetailPage />} />
+      {/* 행정동 AI 분석 상세. 바로 위의 /:id 는 법정동 동네라서 코드 체계가 서로 다르다.
+          주소 마디 수가 하나 더 많아 /:id 와는 애초에 겹치지 않는다. */}
+      <Route path="/neighborhood/ml/:adminCode" element={<MlNeighborhoodDetailPage />} />
 
       {/* 공지사항. 목록·상세는 누구나 볼 수 있고, 작성·수정은 화면에서 관리자만 열린다. */}
       <Route path="/notice" element={<NoticeListPage user={user} />} />
@@ -117,6 +126,10 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
         <Route path="properties" element={<AdminPropertyPage user={user} />} />
         <Route path="brokers" element={<AdminBrokerPage user={user} />} />
         <Route path="neighborhoods" element={<AdminNeighborhoodPage />} />
+
+        {/* 관리자 콘솔 하위에 모델 관리 페이지 라우트를 연결함 */}
+        <Route path="models" element={<AdminMlPage />} />
+
         <Route path="reports" element={<ReportAdminListPage user={user} />} />
         <Route path="reports/:id" element={<ReportAdminDetailPage user={user} />} />
       </Route>

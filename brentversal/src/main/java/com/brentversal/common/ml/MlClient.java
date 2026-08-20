@@ -40,6 +40,15 @@ public class MlClient {
                 .body(new ParameterizedTypeReference<Map<String, Object>>() {});
     }
 
+    // Spring에서 adminCode(행정동 코드)를 받아 FastAPI 행정동 분석 API를 호출하고 결과 JSON을 반환하는 메서드임
+    public Map<String, Object> neighborhood(String adminCode) {
+        // 행정동 분석 GET 요청을 /ml/neighborhood/{adminCode}로 보내고 Map 응답으로 변환함
+        return restClient.get()
+                .uri("/ml/neighborhood/{adminCode}", adminCode)
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
     // Spring에서 FastAPI 관리자 ML 상태 API를 호출하는 메서드임
     public Map<String, Object> adminStatus() {
         // 관리자 ML 상태 GET 요청을 /ml/admin/status로 보내고 Map 응답으로 변환함

@@ -47,6 +47,11 @@ public class SecurityConfig {
                 "/member/signup",
                 "/member/login",
                 "/member/refresh", // [refresh] access token 재발급 요청. 만료된 상태에서 호출되므로 인증 없이 허용해야 한다.
+                // 비밀번호 찾기 3단계. 비밀번호를 잊어 로그인하지 못하는 사람이 부르는 경로라 인증 없이 허용한다.
+                // 대신 서비스 쪽에서 인증번호 만료(5분)·시도 횟수(5회)·재전송 쿨타임(60초)으로 막는다.
+                "/member/password/reset/send",
+                "/member/password/reset/verify",
+                "/member/password/reset/confirm",
                 // 카카오 로그인 시작(/oauth2/authorization/kakao)과 콜백(/login/oauth2/code/kakao) 경로.
                 // 로그인 전에 접근하는 경로라서 인증 없이 허용해야 한다.
                 "/oauth2/**",
@@ -122,6 +127,9 @@ public class SecurityConfig {
                         .requestMatchers("/my-agency/**").hasRole("BROKER")
                         // 관리자 전용 화면(매물 승인 등)은 관리자만 쓸 수 있다.
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+                        // 동네 한줄평은 조회는 공개, 작성은 USER 전용
+                        .requestMatchers(HttpMethod.GET, "/neighborhood/reviews").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/neighborhood/reviews").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 // 카카오 로그인 성공 후 처리를 OAuth2LoginSuccessHandler가 대신 맡는다.

@@ -241,7 +241,7 @@ function App({ user }: Props) {
                     </span>
 
                     <h1>호가 말고,<br /><em>시세</em>로 고르세요</h1>
-                    <p className="sub">같은 동네 최근 거래와 나란히 놓고 봅니다. 싸게 나온 집이 먼저 보입니다.</p>
+                    <p className="sub">같은 동네 최근 거래와 나란히 놓고 봅니다. 합리적인 가격으로 나온 집이 먼저 보입니다.</p>
 
                     <form className="bigsearch" onSubmit={submitSearch}>
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
@@ -275,7 +275,7 @@ function App({ user }: Props) {
                     서버에 /home 이 생기면 getHomeData() 안만 실제 호출로 바꾸면 이 화면은 그대로 쓴다. */}
                 <div className="floatcard">
                     <div className="v">{data.weeklyLowCount}개</div>
-                    <div className="k">이번 주 시세보다 싸게 나온 매물</div>
+                    <div className="k">이번 주 시세보다 합리적인 가격으로 나온 매물</div>
                     <button className="go" onClick={() => navigateOrNotice(MAP_ITEM, navigate)}>
                         지금 보기
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -375,7 +375,7 @@ function App({ user }: Props) {
                 <div className="rv-wrap">
                     <div className="home-shead">
                         <div>
-                            <h2>이번 주, 시세보다 싸게 나온 집</h2>
+                            <h2>이번 주, 시세보다 합리적인 가격으로 나온 집</h2>
                             <p>
                                 관리자가 동네 시세 대비 저평가로 표시한 매물만 모았습니다.
                             </p>
@@ -543,7 +543,14 @@ function App({ user }: Props) {
                                 className="home-hood tall"
                                 onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                             >
-                                <div className="ph" style={{ backgroundImage: `url('${hood.imageUrl}')` }} />
+                                <div
+                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
+                                >
+                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
+                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
+                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                </div>
                                 <div className="ov" />
                                 <div className="txt">
                                     <span className="kind">{hood.kind}</span>
@@ -565,7 +572,14 @@ function App({ user }: Props) {
                                     className="home-hood short"
                                     onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                                 >
-                                    <div className="ph" style={{ backgroundImage: `url('${hood.imageUrl}')` }} />
+                                    <div
+                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
+                                >
+                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
+                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
+                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                </div>
                                     <div className="ov" />
                                     <div className="txt">
                                         <span className="kind">{hood.kind}</span>
@@ -672,7 +686,7 @@ function App({ user }: Props) {
                             <h3>새 집이 나오면 알려드립니다</h3>
                             <p>
                                 관심 지역을 등록해두면 매주 새 매물을 살펴서,
-                                시세보다 싸게 나온 집이 생겼을 때만 알림을 보냅니다.
+                                시세보다 합리적인 가격으로 나온 집이 생겼을 때만 알림을 보냅니다.
                             </p>
                         </div>
                     </div>
