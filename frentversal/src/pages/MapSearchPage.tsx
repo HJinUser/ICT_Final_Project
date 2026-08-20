@@ -183,9 +183,11 @@ function MapSearchPage({ user }: Props) {
 
     // "선택 조건 적용" — 입력값을 조회 조건으로 옮긴다.
     // 검색어는 필터가 아니라 위에서 따로 잡은 조건이므로 그대로 유지한다.
+    // 필터 UI의 현재 선택값을 실제 조회/검색 조건에 반영하는 함수임
     const applyFilters = () => {
-        setUsingMemberRegion(false); // 직접 조건을 골랐으면 안내를 거둔다
-        setApplied({
+        setUsingMemberRegion(false);
+
+        const nextApplied: PropertySearchParams = {
             keyword,
             region,
             dong,
@@ -197,9 +199,32 @@ function MapSearchPage({ user }: Props) {
             maxArea: maxArea ? Number(maxArea) : undefined,
             roomCounts,
             tagIds,
-        });
+        };
+
+        setApplied(nextApplied);
         setPage(0);
-        setMapFocusNonce((nonce) => nonce + 1); // 지도도 고른 지역으로 옮긴다
+        setMapFocusNonce((nonce) => nonce + 1);
+
+        // 최근검색은 추천용 보조 데이터임
+        // 일반 USER일 때만 저장하고, 실패해도 실제 검색은 정상 진행함
+        if (user?.role === 'USER') {
+            // 현재 지도 검색 조건을 최근검색 로그 API로 비동기 전송함
+            void customAxios.post('/recommendation/search-log', {
+                districtName: nextApplied.region || null,
+                dealType:
+                    nextApplied.dealType && nextApplied.dealType !== 'ALL'
+                        ? nextApplied.dealType
+                        : null,
+                propertyType:
+                    nextApplied.type && nextApplied.type !== 'ALL'
+                        ? nextApplied.type
+                        : null,
+                minPrice: nextApplied.minPrice ?? null,
+                maxPrice: nextApplied.maxPrice ?? null,
+            }).catch((error) => {
+                console.error('추천용 최근 검색 기록 저장 실패', error);
+            });
+        }
     };
 
     // 지역(구·동)은 "선택 조건 적용"을 기다리지 않고 고르는 즉시 조회에 반영한다.
