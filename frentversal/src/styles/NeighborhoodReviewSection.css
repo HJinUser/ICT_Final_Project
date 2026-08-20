@@ -1,0 +1,167 @@
+/*
+  NeighborhoodReviewSection.css
+
+  동네 한줄평 부품이 자기 CSS 를 갖는다. 여러 화면에 붙을 수 있는 부품이라
+  놓이는 페이지의 CSS 에 기대지 않는다.
+
+  클래스 이름은 전부 hoodrev- 로 시작한다. 추천 동네 카드(hoodrec-)나
+  동네 탐색(neighborhood-)과 이름이 겹치면 CSS 를 읽는 순서에 따라
+  그쪽 화면이 함께 바뀌기 때문이다.
+  .solid-btn / .outline-btn 은 common.css 것을 그대로 쓴다.
+*/
+
+.hoodrev {
+    margin-top: 24px;
+    padding: 26px 30px 28px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+    background: #fff;
+}
+
+.hoodrev-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hoodrev-title {
+    margin: 0;
+    font-size: var(--fs-h3);
+    letter-spacing: -.02em;
+}
+
+.hoodrev-count {
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+/* 작성 칸 */
+.hoodrev-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.hoodrev-input {
+    position: relative;
+    flex: 1;
+}
+
+.hoodrev-input input {
+    width: 100%;
+    padding: 11px 74px 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    background: #fff;
+    font-size: var(--fs-md);
+    color: var(--ink);
+}
+
+.hoodrev-input input:focus {
+    outline: none;
+    border-color: var(--v);
+}
+
+.hoodrev-input input:disabled {
+    background: var(--bg-2);
+    color: var(--ink-3);
+}
+
+.hoodrev-length {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    font: var(--fs-mono) / 1 'IBM Plex Mono', monospace;
+    color: var(--ink-3);
+    pointer-events: none;
+}
+
+/* 비로그인 안내 */
+.hoodrev-guest {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: var(--r-s);
+    background: var(--bg-2);
+}
+
+.hoodrev-guest p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: var(--fs-sm);
+}
+
+/* 안내 문구 */
+.hoodrev-message,
+.hoodrev-error,
+.hoodrev-empty {
+    margin: 14px 0 0;
+    font-size: var(--fs-sm);
+}
+
+.hoodrev-message {
+    color: var(--v);
+}
+
+.hoodrev-error {
+    color: var(--sig-high);
+}
+
+.hoodrev-empty {
+    color: var(--ink-3);
+}
+
+/* 목록 */
+.hoodrev-list {
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line-2);
+}
+
+.hoodrev-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line-2);
+}
+
+.hoodrev-item-head {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+}
+
+.hoodrev-item-head strong {
+    font-size: var(--fs-sm);
+}
+
+.hoodrev-item-head span {
+    font: var(--fs-mono) / 1 'IBM Plex Mono', monospace;
+    color: var(--ink-3);
+}
+
+.hoodrev-item p {
+    margin: 6px 0 0;
+    color: var(--ink-2);
+    word-break: break-word;
+}
+
+@media (max-width: 720px) {
+    .hoodrev {
+        padding: 22px 20px 24px;
+    }
+
+    .hoodrev-form {
+        flex-direction: column;
+    }
+
+    .hoodrev-form .solid-btn {
+        width: 100%;
+    }
+}
