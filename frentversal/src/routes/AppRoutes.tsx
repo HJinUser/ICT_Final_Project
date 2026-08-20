@@ -39,6 +39,7 @@ import MyPage from './../pages/MyPage';
 import MapSearchPage from './../pages/MapSearchPage';
 import NeighborhoodPage from '../pages/NeighborhoodPage';
 import NeighborhoodDetailPage from '../pages/NeighborhoodDetailPage';
+import MlNeighborhoodDetailPage from '../pages/MlNeighborhoodDetailPage';
 import TermsPage from './../pages/TermsPage';
 import ListingsPage from "../pages/ListingsPage.tsx";
 
@@ -92,6 +93,9 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
       <Route path="/agency/:id" element={<AgencyDetailPage user={user} />} />
       <Route path="/neighborhood" element={<NeighborhoodPage user={user} />} />
       <Route path="/neighborhood/:id" element={<NeighborhoodDetailPage />} />
+      {/* 행정동 AI 분석 상세. 바로 위의 /:id 는 법정동 동네라서 코드 체계가 서로 다르다.
+          주소 마디 수가 하나 더 많아 /:id 와는 애초에 겹치지 않는다. */}
+      <Route path="/neighborhood/ml/:adminCode" element={<MlNeighborhoodDetailPage />} />
 
       {/* 공지사항. 목록·상세는 누구나 볼 수 있고, 작성·수정은 화면에서 관리자만 열린다. */}
       <Route path="/notice" element={<NoticeListPage user={user} />} />
