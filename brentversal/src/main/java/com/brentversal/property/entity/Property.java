@@ -101,6 +101,22 @@ public class Property {
     @Column(name = "longitude")
     private Double longitude; // 매물 경도
 
+    /*
+      매물 좌표가 속한 행정동. 위의 dong 은 법정동이라 이것과 다르다.
+
+      법정동과 행정동은 경계가 서로 달라서 이름만으로는 짝지을 수 없다.
+      한 법정동이 여러 행정동에 걸쳐 있는 경우가 467개 중 137개나 되기 때문이다.
+      그래서 이름이 아니라 좌표로 판정해서(파이썬 admin_dong_service) 여기에 적어 둔다.
+
+      이 값이 있어야 K-Means 동네 분석 화면에서 그 동네의 매물을 찾을 수 있다.
+      좌표를 못 구했거나 서울 밖이면 null 이고, 그때는 기존대로 dong 으로만 찾는다.
+    */
+    @Column(name = "admin_code", length = 20)
+    private String adminCode; // 11650560
+
+    @Column(name = "admin_name", length = 30)
+    private String adminName; // 반포1동
+
     @NotNull(
             message = "전용면적은 필수 입력 사항입니다.",
             groups = PropertyFinalValidation.class

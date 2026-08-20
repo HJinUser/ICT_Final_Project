@@ -193,3 +193,35 @@
 }
 
 .map-keyword button:hover { text-decoration: underline; }
+
+/* AI 동네 분석에서 넘어온 행정동 조건 이름표.
+   왼쪽 필터에는 행정동 항목이 없어서(이 화면은 법정동 기준), 걸려 있다는 사실을 여기서 알린다. */
+.map-adminfilter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 9px 12px;
+    border: 1px solid #d5c7e3;
+    border-radius: var(--r-s);
+    background: var(--v-pale);
+}
+
+.map-adminfilter span {
+    font-size: var(--fs-mono);
+    color: var(--v-deep);
+}
+
+.map-adminfilter button {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-size: var(--fs-mono);
+    color: var(--v);
+    cursor: pointer;
+}
+
+.map-adminfilter button:hover {
+    text-decoration: underline;
+}

@@ -641,6 +641,7 @@ public class PropertyService {
                 blankToNull(condition.getKeyword()),
                 blankToNull(condition.getRegion()),
                 blankToNull(condition.getDong()),
+                blankToNull(condition.getAdminCode()),
                 toType(condition.getType()),
                 toDealType(condition.getDealType()),
                 agencyId,
@@ -986,6 +987,13 @@ public class PropertyService {
         property.setAiMonthlyDeposit(response.aiMonthlyDeposit());
         property.setAiMonthlyRent(response.aiMonthlyRent());
         property.setStationDistance(response.stationDistance());
+
+        // 좌표로 판정한 행정동을 함께 적어 둔다. 이 값이 있어야 동네 분석 화면에서 이 매물을 찾는다.
+        // 서울 밖 좌표면 파이썬이 null 을 주므로, 예전 값을 지우지 않도록 있을 때만 덮어쓴다.
+        if (response.adminCode() != null) {
+            property.setAdminCode(response.adminCode());
+            property.setAdminName(response.adminName());
+        }
 
         ensureAiPredictionExists(property);
         // 처리 완료된 결과를 호출한 쪽으로 반환함

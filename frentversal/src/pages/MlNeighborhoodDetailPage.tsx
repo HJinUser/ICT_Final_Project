@@ -119,13 +119,22 @@ function MlNeighborhoodDetailPage() {
                         <span className="mlhood-code">행정동 코드 {analysis.adminCode}</span>
                     </div>
 
-                    {/* 이 화면에는 매물이 없다. 찾으러 갈 곳을 알려 준다. */}
+                    {/*
+                      이 화면에는 매물이 없다. 찾으러 갈 곳을 알려 준다.
+
+                      동 이름(keyword)이 아니라 행정동 코드로 넘긴다.
+                      매물에 붙은 dong 은 법정동이라, 행정동 이름으로 검색하면
+                      425개 중 338개가 한 건도 안 걸린다.
+                    */}
                     <div className="mlhood-next">
                         <p>
                             이 화면은 동네의 성격만 다룹니다.
                             시세와 매물은 지도 검색에서 볼 수 있습니다.
                         </p>
-                        <Link className="outline-btn" to={`/map?keyword=${encodeURIComponent(analysis.adminName)}`}>
+                        <Link
+                            className="outline-btn"
+                            to={`/map?adminCode=${encodeURIComponent(analysis.adminCode)}&adminName=${encodeURIComponent(analysis.adminName)}`}
+                        >
                             {analysis.adminName} 매물 보기
                         </Link>
                     </div>
