@@ -5,20 +5,24 @@ import com.brentversal.agency.entity.Agency;
 import com.brentversal.agency.entity.AgencyConsultation;
 import com.brentversal.agency.repository.AgencyConsultationRepository;
 import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.common.mail.MailService;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgencyConsultationService {
     private final AgencyConsultationRepository agencyConsultationRepository ;
     private final AgencyRepository agencyRepository ;
     private final MemberRepository memberRepository ;
+    private final MailService mailService ;
 
     // 상담 요청을 저장한다.
     // email 은 로그인한 사용자의 이메일로, 컨트롤러가 JWT 에서 꺼내어 넘겨준다.
@@ -56,6 +60,29 @@ public class AgencyConsultationService {
 
         agencyConsultationRepository.save(bean);
 
+        // 상담을 받은 중개사무소(중개인)에게 새 문의가 왔다는 메일을 보낸다.
+        notifyAgency(bean);
+
         return bean.getId();
+    }
+
+    // 상담 요청을 받은 중개사무소 회원에게 알림 메일을 보낸다.
+    // 사무소에 아직 회원이 연결 안 됐거나 이메일이 없으면 조용히 건너뛴다.
+    // 메일 발송 실패로 상담 등록 자체가 롤백되면 안 되므로 예외를 여기서 잡아 삼킨다.
+    private void notifyAgency(AgencyConsultation consultation) {
+        Member agencyMember = consultation.getAgency().getMember();
+        if (agencyMember == null || agencyMember.getEmail() == null || agencyMember.getEmail().isBlank()) {
+            return;
+        }
+        try {
+            mailService.sendText(agencyMember.getEmail(),
+                    "[전세역전] 새로운 상담 문의가 접수되었습니다",
+                    "\"" + consultation.getAgency().getName() + "\"에 "
+                            + consultation.getMember().getName() + "님의 새로운 상담 문의가 접수되었습니다.\n\n"
+                            + "문의 내용: " + consultation.getContent());
+        } catch (Exception e) {
+            log.warn("상담 문의 알림 메일 발송 실패. consultationId={}, email={}",
+                    consultation.getId(), agencyMember.getEmail(), e);
+        }
     }
 }
