@@ -25,7 +25,7 @@ load_dotenv(BASE_DIR / ".env")
 # 키가 없으면 서버는 정상 기동하고 챗봇 요청만 거절한다.
 # 챗봇 하나 때문에 시세예측·추천까지 못 뜨게 만들 이유가 없다.
 
-_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
 
 # 챗봇이 도구를 실행할 때 되돌아가서 호출하는 Spring 주소.
