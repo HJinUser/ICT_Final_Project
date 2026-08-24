@@ -2,6 +2,7 @@
 // import 컴포넌트이름 from '경로와 파일명';
 import MenuItems from './ui/MenuItems';
 import SiteFooter from './ui/SiteFooter';
+import ChatWidget from './ui/ChatWidget';
 import AppRoutes from './routes/AppRoutes';
 import React, { useEffect, useState } from 'react';
 import type { User } from './types/User';
@@ -144,6 +145,12 @@ function App() {
         handlePreferenceComplete={handlePreferenceComplete}
       />
       {!inPreferenceSetup && <SiteFooter />}
+      {/*
+        AI 챗봇. 헤더·푸터와 같은 자리에 두어 어느 화면에서든 오른쪽 아래에 떠 있게 한다.
+        취향 초기 설정 화면에서만 감추는 것은 위 메뉴·푸터와 같은 이유다.
+        그 화면은 설정을 마치기 전까지 다른 곳으로 나갈 수 없어야 한다.
+      */}
+      {!inPreferenceSetup && <ChatWidget user={user} />}
     </>
   );
 }
