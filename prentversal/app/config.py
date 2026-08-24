@@ -25,9 +25,13 @@ load_dotenv(BASE_DIR / ".env")
 # 키가 없으면 서버는 정상 기동하고 챗봇 요청만 거절한다.
 # 챗봇 하나 때문에 시세예측·추천까지 못 뜨게 만들 이유가 없다.
 
-_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+
+# 아래 두 값은 "환경변수가 없을 때"가 아니라 "비어 있을 때"도 기본값으로 돌아가야 한다.
+# 배포에서 docker run -e 로 넘기는데 GitHub Secret이 비어 있으면 빈 문자열이 들어오고,
+# 그대로 두면 모델명 없이 OpenAI를 부르거나 빈 주소로 Spring을 불러 원인을 찾기 어려운 오류가 난다.
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "").strip() or "gpt-4o-mini"
 
 # 챗봇이 도구를 실행할 때 되돌아가서 호출하는 Spring 주소.
 # 로컬은 localhost:9022, 배포에서는 메인 EC2의 Private IP를 환경변수로 넣는다.
-SPRING_BASE_URL = os.getenv("SPRING_BASE_URL", "http://127.0.0.1:9022").strip().rstrip("/")
+SPRING_BASE_URL = (os.getenv("SPRING_BASE_URL", "").strip() or "http://127.0.0.1:9022").rstrip("/")
