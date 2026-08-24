@@ -15,32 +15,31 @@ import type { Notice } from "../types/Notice";
 import type { User } from "../types/User";
 import type { NavItem } from "../types/Navigation";
 import { navigateOrNotice } from "../utils/navigateOrNotice";
+import NeighborhoodMap from './components/NeighborhoodMap';
+import WORDCLOUD_IMAGE from '../assets/neighborhoodWordcloud.png';
 import "../styles/HomePage.css";
 
-/*
-  메인 홈페이지.
 
-  화면 구성은 역할이 달라도 골격이 같다.
-  공통 블록(히어로 - 목차 - 바로가기 - 공지 - 맞춤 추천 - 이번 주 매물 - 매물 비교 - 동네 - 한줄평 - 이용 방법)을
-  모든 역할에게 그대로 보여 주고, 중개인·관리자에게만 아래 두 자리에 블록을 더 얹는다.
-
-  목차(HomeSectionNav)는 히어로(검색창) 바로 아래에 붙인다. 역할별 블록보다도 위다.
-  스크롤하면서 화면 가운데에 걸린 구역의 이름이 목차에서 강조된다(스크롤스파이).
-
-    요약 스트립  : 목차 바로 아래. 숫자만 본다. (몇 건 남았는지)
-    상세 블록    : 이용 방법 뒤, CTA 앞. 목록을 본다. (무엇을 처리해야 하는지)
-
-  이렇게 나눈 이유는, 역할 정보를 첫 화면에서 바로 보여 주면서도
-  공통 콘텐츠를 아래로 밀어내지 않기 위해서다.
-*/
 
 // 히어로/CTA 배경처럼 화면 장식으로만 쓰는 사진.
 // 매물·동네 사진과 달리 서버에서 받아올 값이 아니라서 여기에 상수로 둔다.
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=70';
 const CTA_IMAGE = 'https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=1600&q=70';
 
-// 바로가기 4장. 이동 대상이 아직 없는 화면이라 ready: false로 두고,
-// 페이지가 만들어지면 types/Navigation.ts와 같은 방식으로 true로 바꾸면 된다.
+/*
+  한줄평 워드클라우드.
+
+  prentversal/training/make_neighborhood_wordcloud.py가 만든 PNG를 그대로 가져다 쓴다.
+  서버가 그때그때 그려 주는 것이 아니라 손으로 갱신하는 이미지라서, 텍스트마이닝을
+  다시 돌렸다면 아래 세 가지를 같이 고쳐야 화면과 그림이 어긋나지 않는다.
+
+    1. outputs/neighborhood_wordcloud.png 를 src/assets/neighborhoodWordcloud.png 로 덮어쓰기
+    2. WORDCLOUD_SOURCE_COUNT 를 스크립트가 찍어 준 "원본 한줄평 N건" 으로 수정
+    3. WORDCLOUD_TOP_WORDS 를 스크립트가 찍어 준 상위 단어로 수정 (그림을 못 보는 사용자를 위한 대체 텍스트다)
+*/
+const WORDCLOUD_SOURCE_COUNT = 53;
+const WORDCLOUD_TOP_WORDS = ['시설', '교통', '편의', '맛집', '생활'];
+
 const SHORTCUTS: (NavItem & { desc: string; image: string })[] = [
     {
         label: '지도 검색', path: '/map', ready: true,
@@ -102,13 +101,7 @@ const SECTION_NAV_ITEMS: SectionNavItem[] = [
     { id: 's-hows', label: '이용 방법' },
 ];
 
-/*
-  구역 배경 2색 교대 (연회색 → 흰색 → 연회색 → 흰색 ...).
-  스크롤을 내릴 때 구역이 바뀌는 지점을 색으로 알아볼 수 있게 하는 장치다.
 
-  순서는 위 SECTION_NAV_ITEMS(= 실제 구역 순서) 하나만 보고 계산하므로,
-  나중에 구역을 넣거나 순서를 바꿔도 색은 자동으로 다시 번갈아 배치된다.
-*/
 const TONE_CYCLE = ['tone-gray', 'tone-white'] as const;
 
 function toneOf(sectionId: string): string {
@@ -229,7 +222,7 @@ function App({ user }: Props) {
 
     return (
         <>
-            {/* ── 히어로 ─────────────────────────────────────── */}
+            
             <section className="home-hero">
                 <div className="shot" style={{ backgroundImage: `url('${HERO_IMAGE}')` }} />
                 <div className="veil" />
@@ -275,7 +268,7 @@ function App({ user }: Props) {
                     서버에 /home 이 생기면 getHomeData() 안만 실제 호출로 바꾸면 이 화면은 그대로 쓴다. */}
                 <div className="floatcard">
                     <div className="v">{data.weeklyLowCount}개</div>
-                    <div className="k">이번 주 시세보다 합리적인 가격으로 나온 매물</div>
+                    <div className="k">이번 주 시세보다 <br />합리적인 가격으로 나온 매물</div>
                     <button className="go" onClick={() => navigateOrNotice(MAP_ITEM, navigate)}>
                         지금 보기
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -285,17 +278,17 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 섹션 목차 (스크롤스파이) ─────────────────────
+            {/* 섹션 목차 (스크롤스파이) 
                 히어로(검색창) 바로 아래 자리. 역할별 요약 스트립보다 위에 둬서
                 어떤 역할로 들어와도 화면 이동 안내가 같은 위치에 있게 한다. */}
             <HomeSectionNav items={sectionNavItems} />
 
-            {/* ── 역할별 요약 스트립 ─────────────────────────────
+            {/*  역할별 요약 스트립 
                 숫자만 보여 주는 자리. 목록 형태는 아래 상세 블록에서 다룬다. */}
             {user?.role === 'BROKER' && <HomeBrokerSummary user={user} />}
             {user?.role === 'ADMIN' && <HomeAdminSummary id="s-admin-summary" />}
 
-            {/* ── 공지사항 ───────────────────────────────────
+            {/*  공지사항 
                 상단 메뉴에 있던 공지를 메인으로 내렸다.
                 최근 몇 건만 걸어 두고, 전체는 공지사항 목록에서 본다.
                 목차 바로 아래 자리라 여백을 줄이고 테두리 상자로 구분한다. */}
@@ -333,7 +326,7 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 01 바로가기 ────────────────────────────────── */}
+            {/*  01 바로가기  */}
             <section className={`home-sec ${toneOf('s-shortcuts')}`} id="s-shortcuts">
                 <div className="rv-wrap">
                     <div className="home-shead">
@@ -367,10 +360,10 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 맞춤 추천 (비회원은 잠금) ───────────────────── */}
+            {/*  맞춤 추천 (비회원은 잠금)  */}
             <HomeRecommend id="s-recommend" tone={toneOf('s-recommend')} user={user} items={data.recommendations} />
 
-            {/* ── 02 이번 주 매물 ────────────────────────────── */}
+            {/*  02 이번 주 매물  */}
             <section className={`home-sec ${toneOf('s-weekly')}`} id="s-weekly">
                 <div className="rv-wrap">
                     <div className="home-shead">
@@ -414,7 +407,7 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 02b 매물 비교해보기 ───────────────────────────
+            {/*  02b 매물 비교해보기 
                 화면정의서(매물 비교 페이지)의 표 구성을 그대로 따른 미리보기다.
                 값은 예시지만 어느 쪽이 나은지는 실제로 계산해서 강조한다(HomeCompareMapper).
                 직접 고른 매물로 비교하려면 관심 목록이 있어야 해서 로그인이 필요하다. */}
@@ -519,7 +512,7 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 03 동네 둘러보기 ───────────────────────────── */}
+            {/*  03 동네 둘러보기  */}
             <section className={`home-sec ${toneOf('s-neighborhood')}`} id="s-neighborhood">
                 <div className="rv-wrap">
                     <div className="home-shead">
@@ -543,13 +536,11 @@ function App({ user }: Props) {
                                 className="home-hood tall"
                                 onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                             >
-                                <div
-                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
-                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
-                                >
-                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
-                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
-                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
+                                <div className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                     style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}>
+                                    {!hood.imageUrl && (
+                                        <NeighborhoodMap city="서울시" district={hood.district} dong={hood.name} />
+                                    )}
                                 </div>
                                 <div className="ov" />
                                 <div className="txt">
@@ -572,14 +563,12 @@ function App({ user }: Props) {
                                     className="home-hood short"
                                     onClick={() => navigateOrNotice(NEIGHBORHOOD_ITEM, navigate)}
                                 >
-                                    <div
-                                    className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
-                                    style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}
-                                >
-                                    {/* 사진이 없으면 동네 이름을 크게 둔다.
-                                        예전에는 없는 주소로 url('null') 을 걸어 회색 덩어리처럼 보였다. */}
-                                    {!hood.imageUrl && <span className="ph-name">{hood.name}</span>}
-                                </div>
+                                    <div className={`ph${hood.imageUrl ? '' : ' no-photo'}`}
+                                         style={hood.imageUrl ? { backgroundImage: `url('${hood.imageUrl}')` } : undefined}>
+                                        {!hood.imageUrl && (
+                                            <NeighborhoodMap city="서울시" district={hood.district} dong={hood.name} />
+                                        )}
+                                    </div>
                                     <div className="ov" />
                                     <div className="txt">
                                         <span className="kind">{hood.kind}</span>
@@ -595,7 +584,7 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 04 동네 이야기 ─────────────────────────────── */}
+            {/*  04 동네 이야기  */}
             <section className={`home-sec ${toneOf('s-voices')}`} id="s-voices">
                 <div className="rv-wrap">
                     <div className="home-shead">
@@ -625,21 +614,24 @@ function App({ user }: Props) {
                         </div>
 
                         <div className="home-cloudbox">
-                            <span className="rv-xs rv-dim">{data.cloudNeighborhood}에서 자주 나온 말</span>
-                            <div className="home-cloud">
-                                {data.cloudWords.map((word) => (
-                                    <span key={word.text} className={`w${word.weight}`}>{word.text}</span>
-                                ))}
-                            </div>
+                            <span className="rv-xs rv-dim">서울 전체 한줄평에서 자주 나온 말</span>
+                            <img
+                                className="home-cloudimg"
+                                src={WORDCLOUD_IMAGE}
+                                alt={`한줄평에서 자주 나온 말 ${WORDCLOUD_TOP_WORDS.join(', ')} 등을 크기로 표현한 워드클라우드`}
+                                width={1200}
+                                height={900}
+                                loading="lazy"
+                            />
                             <p className="rv-xs rv-dim" style={{ marginTop: 22 }}>
-                                글자가 클수록 많이 나온 말입니다. 한줄평 {data.cloudSourceCount}건에서 골랐습니다.
+                                글자가 클수록 많이 나온 말입니다. 한줄평 {WORDCLOUD_SOURCE_COUNT}건에서 골랐습니다.
                             </p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* ── 05 이용 방법 ───────────────────────────────── */}
+            {/*  05 이용 방법  */}
             <section className={`home-sec ${toneOf('s-hows')}`} id="s-hows">
                 <div className="rv-wrap">
                     <div className="home-shead">
@@ -693,12 +685,12 @@ function App({ user }: Props) {
                 </div>
             </section>
 
-            {/* ── 역할별 상세 블록 ───────────────────────────────
+            {/*  역할별 상세 블록 
                 공통 콘텐츠를 다 본 뒤 "그래서 무엇을 처리하나"로 이어지는 자리. */}
             {user?.role === 'BROKER' && <HomeBrokerDetail />}
             {user?.role === 'ADMIN' && <HomeAdminDetail />}
 
-            {/* ── 마무리 안내 ────────────────────────────────── */}
+            {/*  마무리 안내  */}
             <section className="home-cta">
                 <div className="ph" style={{ backgroundImage: `url('${CTA_IMAGE}')` }} />
                 <div className="ov" />

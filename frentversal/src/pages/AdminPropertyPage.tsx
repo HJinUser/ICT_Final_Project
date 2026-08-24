@@ -7,6 +7,8 @@ import {
     evaluatePropertyPrice,
     getAdminProperties,
     rejectProperty,
+    hideProperty,
+    unhideProperty,
     // 관리자 API에서 사용하는 가격평가 상태 TypeScript 타입도 함께 import함
     type PriceEvaluationStatus,
 } from '../api/adminApi';
@@ -170,6 +172,18 @@ function AdminPropertyPage({ user }: Props) {
         }
     };
 
+    const handleHide = async (property: AdminProperty) => {
+        try {
+            const result = property.visible
+                ? await hideProperty(property.id)
+                : await unhideProperty(property.id);
+            setMessage(`${property.name} — ${result.message}`);
+            await load();
+        } catch (error: any) {
+            setMessage(error.response?.data?.message ?? '처리에 실패했습니다.');
+        }
+    };
+
     // 로그인·권한 확인과 바깥 레이아웃(히어로·사이드바)은 관리자 콘솔(AdminConsolePage)이 맡는다.
     // 이 화면은 콘솔 오른쪽에 들어가는 패널만 그린다.
     return (
@@ -177,7 +191,7 @@ function AdminPropertyPage({ user }: Props) {
             <div className="section-head">
                 <div>
                     <h2>매물 관리</h2>
-                    <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. 오래 기다린 매물이 위에 옵니다.</p>
+                    <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. <br />오래 기다린 매물이 위에 옵니다.</p>
                 </div>
                 <span className={`status ${pendingCount > 0 ? 'orange' : 'green'}`}>
                     승인 대기 {pendingCount}건
@@ -314,6 +328,9 @@ function AdminPropertyPage({ user }: Props) {
                                 </button>
                                 <button className="outline-btn" onClick={() => handleReject(property)}>
                                     반려
+                                </button>
+                                <button className="outline-btn" onClick={() => handleHide(property)}>
+                                    {property.visible ? '비공개 처리' : '공개로 전환'}
                                 </button>
                             </div>
                         )}

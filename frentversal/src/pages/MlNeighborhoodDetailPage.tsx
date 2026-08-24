@@ -9,6 +9,9 @@
   아래쪽 한줄평은 NeighborhoodReviewSection 이 맡는다. 그 부품에는 법정동 id 가 아니라
   analysis.adminCode 를 넘긴다.
 
+  지도는 행정동 경계를 두르고 그 안의 매물을 찍는다. 매물은 동 이름이 아니라
+  행정동 코드로 찾는다 — 매물에 붙은 dong 은 법정동이라 이름으로는 대부분 안 걸린다.
+
   대표 키워드(keywords / reviewDocumentCount)는 응답에 이미 들어 있지만 아직 그리지 않는다.
 */
 
@@ -19,6 +22,7 @@ import { getMlNeighborhood } from '../api/neighborhoodApi';
 import type { MlNeighborhoodResponse } from '../types/MlNeighborhood';
 import '../styles/MlNeighborhoodDetailPage.css';
 import NeighborhoodReviewSection from './components/NeighborhoodReviewSection';
+import MlNeighborhoodMap from './components/MlNeighborhoodMap';
 
 function MlNeighborhoodDetailPage() {
     const { adminCode } = useParams();
@@ -117,15 +121,31 @@ function MlNeighborhoodDetailPage() {
                             다른 유형을 고르면 생활 방식이 달라집니다.
                         </p>
                         <span className="mlhood-code">행정동 코드 {analysis.adminCode}</span>
+
+                        {/* 이 동네의 범위와 그 안의 매물. 매물은 행정동 코드로 찾는다. */}
+                        <MlNeighborhoodMap
+                            adminCode={analysis.adminCode}
+                            adminName={analysis.adminName}
+                            boundary={analysis.boundary}
+                        />
                     </div>
 
-                    {/* 이 화면에는 매물이 없다. 찾으러 갈 곳을 알려 준다. */}
+                    {/*
+                      이 화면에는 매물이 없다. 찾으러 갈 곳을 알려 준다.
+
+                      동 이름(keyword)이 아니라 행정동 코드로 넘긴다.
+                      매물에 붙은 dong 은 법정동이라, 행정동 이름으로 검색하면
+                      425개 중 338개가 한 건도 안 걸린다.
+                    */}
                     <div className="mlhood-next">
                         <p>
                             이 화면은 동네의 성격만 다룹니다.
                             시세와 매물은 지도 검색에서 볼 수 있습니다.
                         </p>
-                        <Link className="outline-btn" to={`/map?keyword=${encodeURIComponent(analysis.adminName)}`}>
+                        <Link
+                            className="outline-btn"
+                            to={`/map?adminCode=${encodeURIComponent(analysis.adminCode)}&adminName=${encodeURIComponent(analysis.adminName)}`}
+                        >
                             {analysis.adminName} 매물 보기
                         </Link>
                     </div>
@@ -135,6 +155,7 @@ function MlNeighborhoodDetailPage() {
                         adminCode={analysis.adminCode}
                         adminName={analysis.adminName}
                         districtName={analysis.districtName}
+                        surveyReviews={analysis.surveyReviews}
                     />
                 </div>
             </section>

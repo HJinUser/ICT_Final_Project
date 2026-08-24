@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 // customAxios 는 baseURL 이 이미 "/api" 라서, 요청 주소는 "/property/1" 처럼 그 뒤만 적는다.
 // 여기에 API_BASE_URL 을 또 붙이면 "/api/api/property/1" 이 되어 서버가 못 알아듣는다.
 import customAxios from "../api/axiosInstance";
+import ThumbIcon from "./components/ThumbIcon";
 import type { User } from "../types/User";
 import type { PropertyDetail } from "../types/PropertyDetail";
 import { PROPERTY_STATUS_LABELS } from "../types/PropertyDetail";
@@ -11,6 +12,10 @@ import type { AgencyDetail } from "../types/Agency";
 import type { Review } from "../types/Review";
 import "../styles/PropertyPage.css";
 import { DEAL_TYPE_LABELS } from "../utils/propertyPrice.ts";
+import PropertyLocationMap from "./components/PropertyLocationMap";
+import PhotoLightbox from "./components/PhotoLightbox";
+import StarRatingInput from "./components/StarRatingInput";
+import { getPropertyReviews, savePropertyReview } from "../api/propertyReviewApi";
 
 interface PropertyPageProps {
     user: User | null;
@@ -75,12 +80,17 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const navigate = useNavigate();
 
     const [property, setProperty] = useState<PropertyDetail | null>(mockData ?? null);
+
+    // 크게 보고 있는 사진의 순번. null 이면 닫힌 상태다.
+    const [photoIndex, setPhotoIndex] = useState<number | null>(null);
     const [loading, setLoading] = useState(!mockData);
 
     const [showLoginModal, setShowLoginModal] = useState(false);
 
     const [isWritingReview, setIsWritingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
+    const [reviewSaving, setReviewSaving] = useState(false);
+    const [reviewError, setReviewError] = useState("");
     const [reviewContent, setReviewContent] = useState("");
 
     // id가 바뀔 때마다(혹은 처음 로딩될 때) 매물 상세 정보를 서버에서 받아옴.
@@ -95,6 +105,15 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 const agencyResponse = await customAxios.get<AgencyDetail>(
                     `/agency/${propertyResponse.data.agencyId}`
                 );
+
+                // 한줄평은 비회원도 볼 수 있다. 실패해도 상세 화면은 그려져야 하므로 여기서 삼킨다.
+                let reviews: Review[] = [];
+
+                try {
+                    reviews = await getPropertyReviews(propertyResponse.data.id);
+                } catch (error) {
+                    console.error("한줄평 조회 실패:", error);
+                }
 
                 let isFavorited = false;
 
@@ -126,7 +145,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         available: agencyResponse.data.status === "AVAILABLE",
                     },
                     priceHistory: [],
-                    reviews: [],
+                    reviews,
                     isFavorited,
                 });
             } catch (error) {
@@ -226,26 +245,49 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         setIsWritingReview(true);
     };
 
-    // 한줄평 등록 — TODO: Review 도메인 아직 없음, 엔드포인트 생기면 응답 타입 맞춰서 교체
+    /*
+      한줄평 등록.
+
+      같은 매물에 이미 쓴 글이 있으면 서버가 새로 만들지 않고 그 글을 고친다.
+      그래서 응답을 목록 앞에 끼워 넣지 않고 목록을 다시 읽는다.
+      끼워 넣으면 고쳐 쓴 글이 두 번 보인다.
+    */
     const submitReview = async () => {
-        if (!property) return;
+        if (!property || reviewSaving) return;
 
-        const response = await customAxios.post<Review>(
-            `/property/${property.id}/review`,
-            {
+        if (reviewRating < 1) {
+            setReviewError("별점을 선택해 주세요.");
+            return;
+        }
+
+        if (!reviewContent.trim()) {
+            setReviewError("한줄평 내용을 입력해 주세요.");
+            return;
+        }
+
+        setReviewSaving(true);
+        setReviewError("");
+
+        try {
+            await savePropertyReview(property.id, {
                 rating: reviewRating,
-                content: reviewContent,
-            }
-        );
+                content: reviewContent.trim(),
+            });
 
-        setProperty({
-            ...property,
-            reviews: [response.data, ...property.reviews],
-        });
+            const reviews = await getPropertyReviews(property.id);
 
-        setIsWritingReview(false);
-        setReviewContent("");
-        setReviewRating(5);
+            setProperty((prev) => (prev ? { ...prev, reviews } : prev));
+            setIsWritingReview(false);
+            setReviewContent("");
+            setReviewRating(5);
+        } catch (error) {
+            console.error("한줄평 등록 실패:", error);
+            // 권한(403)·로그인 만료(401)·서버 오류를 사용자가 알 수 있어야 한다.
+            // 예전에는 예외 처리가 없어서 등록을 눌러도 아무 반응이 없었다.
+            setReviewError("한줄평을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        } finally {
+            setReviewSaving(false);
+        }
     };
 
     // 거래 상태 변경 (게시중/거래진행중/거래완료). 거래완료·등록취소는 되돌릴 수 없음.
@@ -397,7 +439,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                             AI 예상 시세
                         </span>
 
-                        <strong>
+                        <strong className="property-hero-price">
                             {formatAiPrice(property)}
                         </strong>
                     </div>
@@ -408,13 +450,17 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                 <div className="wrap">
                     <div className="gallery">
                         {property.images.map((image, i) => (
-                            <div
-                                className="photo"
+                            /* 사진을 누르면 크게 본다. div 가 아니라 button 이라야
+                               키보드로도 열 수 있고 화면낭독기가 누를 것으로 읽는다. */
+                            <button
+                                type="button"
+                                className="photo property-photo"
                                 key={image.id}
                                 style={{
                                     backgroundImage: `url('${image.url}')`,
                                 }}
-                                aria-label={`매물 사진 ${i + 1}`}
+                                aria-label={`매물 사진 ${i + 1} 크게 보기`}
+                                onClick={() => setPhotoIndex(i)}
                             />
                         ))}
                     </div>
@@ -509,6 +555,16 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                 </div>
                             </section>
 
+                            {/* 위치와 주변시설. 좌표가 없는 매물은 지도를 그릴 수 없으므로 건너뛴다. */}
+                            {property.latitude != null && property.longitude != null && (
+                                <PropertyLocationMap
+                                    propertyId={property.id}
+                                    latitude={property.latitude}
+                                    longitude={property.longitude}
+                                    propertyName={property.name}
+                                />
+                            )}
+
                             <section className="card">
                                 <div className="section-head">
                                     <div>
@@ -526,17 +582,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 AI 예상 적정 시세
                                             </span>
 
-                                            <strong
-                                                style={{
-                                                    display:
-                                                        "block",
-                                                    fontFamily:
-                                                        "'IBM Plex Mono',monospace",
-                                                    fontSize: 28,
-                                                    fontWeight: 600,
-                                                    marginTop: 5,
-                                                }}
-                                            >
+                                            <strong className="ai-price-main">
                                                 {formatAiPrice(
                                                     property
                                                 )}
@@ -553,17 +599,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 현재 호가
                                             </span>
 
-                                            <strong
-                                                style={{
-                                                    display:
-                                                        "block",
-                                                    fontFamily:
-                                                        "'IBM Plex Mono',monospace",
-                                                    fontSize: 21,
-                                                    fontWeight: 600,
-                                                    marginTop: 5,
-                                                }}
-                                            >
+                                            <strong className="ai-price-sub">
                                                 {formatPrice(
                                                     property
                                                 )}
@@ -572,7 +608,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                     </div>
                                 </div>
 
-                                <div className="bar-chart">
+                                <div className="bar-chart property-bar-chart">
                                     {property.priceHistory.map(
                                         (point, i) => (
                                             <div
@@ -585,10 +621,12 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 <div
                                                     className="bar"
                                                     style={{
+                                                        // 차트 높이를 줄였으므로 막대 기준값도 함께 줄인다.
+                                                        // 그대로 두면 AI 예상가보다 비싼 해의 막대가 차트를 넘친다.
                                                         height: `${(point.price /
                                                                 (aiPrice ||
                                                                     1)) *
-                                                            100
+                                                            78
                                                             }px`,
                                                     }}
                                                 />
@@ -651,7 +689,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                     )
                                                 }
                                             >
-                                                👍 좋아요
+                                                <ThumbIcon />
+                                                좋아요
                                             </button>
 
                                             <button
@@ -662,7 +701,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                     )
                                                 }
                                             >
-                                                👎 싫어요
+                                                <ThumbIcon down />
+                                                싫어요
                                             </button>
                                         </div>
                                     </div>
@@ -691,37 +731,14 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                             marginBottom: 16,
                                         }}
                                     >
-                                        <select
-                                            className="search-box"
-                                            style={{
-                                                width: 110,
-                                                marginBottom: 10,
-                                            }}
-                                            value={
-                                                reviewRating
-                                            }
-                                            onChange={(e) =>
-                                                setReviewRating(
-                                                    Number(
-                                                        e.target
-                                                            .value
-                                                    )
-                                                )
-                                            }
-                                        >
-                                            {[5, 4, 3, 2, 1].map(
-                                                (n) => (
-                                                    <option
-                                                        key={n}
-                                                        value={n}
-                                                    >
-                                                        {"★".repeat(
-                                                            n
-                                                        )}
-                                                    </option>
-                                                )
-                                            )}
-                                        </select>
+                                        {/* 별을 눌러 점수를 고른다. 예전에는 "★★★★" 문자열이 든
+                                            드롭다운이었는데, 몇 점인지 세어 봐야 알 수 있었다. */}
+                                        <div style={{ marginBottom: 10 }}>
+                                            <StarRatingInput
+                                                value={reviewRating}
+                                                onChange={setReviewRating}
+                                            />
+                                        </div>
 
                                         <textarea
                                             className="search-box"
@@ -770,10 +787,17 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 onClick={
                                                     submitReview
                                                 }
+                                                disabled={reviewSaving}
                                             >
-                                                등록
+                                                {reviewSaving ? "등록 중" : "등록"}
                                             </button>
                                         </div>
+
+                                        {reviewError && (
+                                            <p className="review-error">
+                                                {reviewError}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
@@ -796,6 +820,9 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
 
                                                 <div className="row gap8">
                                                     <span className="xs dim">
+                                                        {review.writerName}
+                                                        {review.mine && " (내 한줄평)"}
+                                                        {" · "}
                                                         {
                                                             review.createdAt
                                                         }
@@ -1190,6 +1217,12 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                     </div>
                 </div>
             )}
+            <PhotoLightbox
+                photos={property.images}
+                index={photoIndex}
+                onClose={() => setPhotoIndex(null)}
+                onChange={setPhotoIndex}
+            />
         </main>
     );
 }

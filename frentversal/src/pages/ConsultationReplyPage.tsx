@@ -103,7 +103,7 @@ function ConsultationReplyPage() {
                 <div className="wrap" style={{ maxWidth: 860 }}>
                     <button className="outline-btn" onClick={() => navigate(-1)}>← 목록으로</button>
 
-                    {/* ── 받은 문의 (이메일처럼 보이는 영역) ───────────── */}
+                    {/*  받은 문의 (이메일처럼 보이는 영역)  */}
                     <section className="card" style={{ marginTop: 18 }}>
                         <div className="row between">
                             <div>
@@ -144,7 +144,7 @@ function ConsultationReplyPage() {
                         <p style={{ marginTop: 18, whiteSpace: 'pre-wrap' }}>{consultation.content}</p>
                     </section>
 
-                    {/* ── 이미 보낸 답변이 있으면 보여 준다 ────────────── */}
+                    {/*  이미 보낸 답변이 있으면 보여 준다  */}
                     {consultation.reply && (
                         <section className="card" style={{ marginTop: 18 }}>
                             <div className="row between">
@@ -157,7 +157,7 @@ function ConsultationReplyPage() {
 
                     {message && <p className="xs" style={{ marginTop: 14, color: 'var(--v)' }}>{message}</p>}
 
-                    {/* ── 답변하기 ─────────────────────────────────── */}
+                    {/*  답변하기  */}
                     {!writing ? (
                         <div className="row" style={{ gap: 10, marginTop: 18 }}>
                             <button className="solid-btn" onClick={() => setWriting(true)}>

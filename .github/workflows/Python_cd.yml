@@ -45,10 +45,18 @@ jobs:
 
             sudo docker rm -f "${{ secrets.ML_DOCKER_CONTAINER }}" || true
 
+            # AI 챗봇에 필요한 값 두 가지를 환경변수로 넣어 준다.
+            #
+            # OPENAI_API_KEY  : 없으면 챗봇 요청만 503으로 거절된다. 나머지 ML 기능은 그대로 뜬다.
+            # SPRING_BASE_URL : 챗봇이 매물을 찾을 때 되돌아가서 부를 메인 EC2 주소다.
+            #                   ML EC2에서 메인 EC2 9022 포트로 나가는 길이 보안그룹에 열려 있어야 한다.
+            #                   (기존 방향인 메인 -> ML 8000 과 반대 방향이라 따로 열어야 한다)
             sudo docker run -d \
               --name "${{ secrets.ML_DOCKER_CONTAINER }}" \
               --network host \
               --restart unless-stopped \
+              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+              -e SPRING_BASE_URL="http://${{ secrets.MAIN_EC2_PRIVATE_IP }}:9022" \
               "${{ secrets.ML_DOCKER_IMAGE }}"
 
             sudo docker image prune -f

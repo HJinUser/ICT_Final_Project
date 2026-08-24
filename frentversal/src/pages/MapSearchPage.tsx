@@ -62,6 +62,13 @@ function MapSearchPage({ user }: Props) {
     // 지역명일 수도, 매물 이름일 수도 있어서 구(region) 필터에 넣지 않고
     // 서버가 이름·주소·구·동을 함께 훑는 별도 조건(keyword)으로 넘긴다.
     const initialKeyword = searchParams.get('keyword') ?? '';
+
+    // AI 동네 분석 화면에서 "이 동네 매물 보기"로 들어올 때 ?adminCode=...&adminName=... 로 온다.
+    // 행정동은 왼쪽 필터에 없는 조건이라(법정동 기준 화면이므로) 주소로만 들어오고,
+    // 걸려 있는 동안에는 위쪽에 이름표를 띄워 사용자가 알 수 있게 한다.
+    const initialAdminCode = searchParams.get('adminCode') ?? '';
+    const initialAdminName = searchParams.get('adminName') ?? '';
+
     const memberRegion = user?.sigungu ?? '';
 
     // 처음 열 때 지역 필터를 회원이 사는 구로 미리 맞춰 둘지 정한다.
@@ -76,7 +83,11 @@ function MapSearchPage({ user }: Props) {
     // 검색창에 지금 들어 있는 검색어. 지역 필터와 별개로 즉시 반영된다.
     const [keyword, setKeyword] = useState(initialKeyword);
 
-    // ── 필터 입력값 ("조건 적용"을 누르기 전 상태) ─────────────
+    // 걸려 있는 행정동 조건. 코드로 조회하고 이름은 화면에 보여 주기만 한다.
+    const [adminCode, setAdminCode] = useState(initialAdminCode);
+    const [adminName, setAdminName] = useState(initialAdminName);
+
+    //  필터 입력값 ("조건 적용"을 누르기 전 상태) 
     const [type, setType] = useState('ALL');
     const [dealType, setDealType] = useState('ALL');
     const [region, setRegion] = useState(initialRegion);
@@ -93,6 +104,7 @@ function MapSearchPage({ user }: Props) {
     const [applied, setApplied] = useState<PropertySearchParams>({
         keyword: initialKeyword,
         region: initialRegion || undefined,
+        adminCode: initialAdminCode || undefined,
     });
 
     const [sort, setSort] = useState<PropertySort>('LATEST');
@@ -181,6 +193,17 @@ function MapSearchPage({ user }: Props) {
         setPinnedArea(null);
     }, [initialKeyword]);
 
+    // 행정동 조건도 주소로 들어오므로 같은 이유로 따라간다.
+    // 다른 동네의 "이 동네 매물 보기"를 이어서 눌렀을 때 앞의 조건이 남지 않도록 한다.
+    useEffect(() => {
+        setAdminCode(initialAdminCode);
+        setAdminName(initialAdminName);
+        setApplied((prev) => ({ ...prev, adminCode: initialAdminCode || undefined }));
+        setPage(0);
+        setPinnedId(null);
+        setPinnedArea(null);
+    }, [initialAdminCode, initialAdminName]);
+
     // "선택 조건 적용" — 입력값을 조회 조건으로 옮긴다.
     // 검색어는 필터가 아니라 위에서 따로 잡은 조건이므로 그대로 유지한다.
     // 필터 UI의 현재 선택값을 실제 조회/검색 조건에 반영하는 함수임
@@ -191,6 +214,8 @@ function MapSearchPage({ user }: Props) {
             keyword,
             region,
             dong,
+            // 행정동은 왼쪽 필터에 없는 조건이라 여기서 다시 넣어 주지 않으면 사라진다.
+            adminCode: adminCode || undefined,
             type,
             dealType,
             minPrice: minPrice ? Number(minPrice) : undefined,
@@ -262,7 +287,17 @@ function MapSearchPage({ user }: Props) {
         setMinArea('');
         setMaxArea('');
         setTagIds([]);
+        setAdminCode('');
+        setAdminName('');
         setApplied({ keyword });
+        setPage(0);
+    };
+
+    // 행정동 조건만 뗀다. 나머지 필터는 그대로 두고 서울 전체로 넓힌다.
+    const clearAdminFilter = () => {
+        setAdminCode('');
+        setAdminName('');
+        setApplied((prev) => ({ ...prev, adminCode: undefined }));
         setPage(0);
     };
 
@@ -312,12 +347,20 @@ function MapSearchPage({ user }: Props) {
     return (
         <main>
             <section className="map-shell">
-                {/* ── 왼쪽 : 필터 ───────────────────────────────── */}
+                {/*  왼쪽 : 필터  */}
                 <aside className="filter-panel">
                     <div className="row between">
                         <h2 style={{ fontSize: 22 }}>필터</h2>
                         <button className="xs" style={{ color: 'var(--v)' }} onClick={resetFilters}>초기화</button>
                     </div>
+
+                    {/* AI 동네 분석에서 넘어온 행정동 조건. 왼쪽 필터에는 없는 조건이라 여기서 알려 준다. */}
+                    {adminCode && (
+                        <div className="map-adminfilter">
+                            <span>AI 동네 분석 · {adminName || adminCode}</span>
+                            <button type="button" onClick={clearAdminFilter}>해제</button>
+                        </div>
+                    )}
 
                     {/* 매물 유형 — 하나만 고른다 */}
                     <div className="filter-block">
@@ -489,7 +532,7 @@ function MapSearchPage({ user }: Props) {
                     </button>
                 </aside>
 
-                {/* ── 가운데 : 지도 ─────────────────────────────── */}
+                {/*  가운데 : 지도  */}
                 <PropertyMap
                     properties={properties}
                     myAgencyId={myAgencyId}
@@ -508,7 +551,7 @@ function MapSearchPage({ user }: Props) {
                     focusNonce={mapFocusNonce}
                 />
 
-                {/* ── 오른쪽 : 매물 목록 ────────────────────────── */}
+                {/*  오른쪽 : 매물 목록  */}
                 <aside className="list-panel">
                     <div className="row between">
                         <div>

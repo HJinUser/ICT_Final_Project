@@ -17,6 +17,7 @@ export async function searchProperties(params: PropertySearchParams = {}): Promi
             keyword: params.keyword || undefined,
             region: params.region || undefined,
             dong: params.dong || undefined,
+            adminCode: params.adminCode || undefined,
             type: params.type && params.type !== 'ALL' ? params.type : undefined,
             dealType: params.dealType && params.dealType !== 'ALL' ? params.dealType : undefined,
             minPrice: params.minPrice ?? undefined,

@@ -121,7 +121,7 @@ function BrokerMyPage({ user }: Props) {
                         </div>
                     )}
 
-                    {/* ── 대시보드 : 매물이 거치는 4단계를 순서대로 배치 ──────
+                    {/*  대시보드 : 매물이 거치는 4단계를 순서대로 배치 
                         새로 등록한 매물은 "승인 대기"로 시작한다. 이 칸이 없으면
                         등록 직후 네 숫자가 모두 0으로 보여서 등록이 안 된 것처럼 보인다. */}
                     <h2>대시보드</h2>
@@ -153,7 +153,7 @@ function BrokerMyPage({ user }: Props) {
                         </div>
                     </div>
 
-                    {/* ── 바로가기 카드 ──────────────────────────────── */}
+                    {/*  바로가기 카드  */}
                     <div className="section-head" style={{ marginTop: 48 }}>
                         <div>
                             <h2>바로가기</h2>
@@ -197,7 +197,7 @@ function BrokerMyPage({ user }: Props) {
                         </Link>
                     </div>
 
-                    {/* ── 문의 관리 ─────────────────────────────────── */}
+                    {/*  문의 관리  */}
                     <div className="section-head" style={{ marginTop: 48 }}>
                         <div>
                             <h2>상담 관리</h2>

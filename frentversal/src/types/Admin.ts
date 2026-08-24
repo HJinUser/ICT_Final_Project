@@ -6,7 +6,7 @@ export interface AdminProperty {
     id: number;
     name: string;
     typeLabel: string;   // 아파트 / 원투룸 ...
-    priceLabel: string;  // "전세 4억 9,000"
+    priceLabel: string;  // "전세 36,000만원" — 관리자 화면은 AI 적정 시세와 단위를 맞추려고 억 대신 만원+콤마로 표시함
 
     // React 관리자 매물 타입에 거래유형·AI 예측 시세·관리자 가격평가 필드를 추가함
     dealType: "SALE" | "JEONSE" | "MONTHLY";
@@ -30,6 +30,8 @@ export interface AdminProperty {
     agencyName: string | null;
     brokerName: string | null;
     agencyVerified: boolean;
+
+    visible: boolean;// 공개/비공개 여부. false면 지도·목록 등 사용자 화면에서 숨김
 
     createdAt: string; // "2026-08-12"
 }
