@@ -114,18 +114,37 @@ function App() {
 
     return (
         <div className="auth-shell">
-            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
-            <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
-                <span className="pill">3 Role System</span>
-                <h2>사용자와 중개인에게<br />필요한 화면을 다르게</h2>
-                <p>역할에 맞는 정보만 입력하고, 가입 후 알맞은 화면으로 이동합니다.</p>
+            {signupType === 'USER' && (
+                <>
+                    <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
+                        <span className="pill">SignUp Page</span>
+                        <h2>일반 사용자<br />회원가입</h2>
+                        <p>매물을 검색하고 찾습니다. <br />맞춤 추천 서비스를 이용할 수 있습니다.</p>
 
-                <div className="points">
-                    <div className="point"><i>U</i> 사용자: 취향 기반 매물 추천</div>
-                    <div className="point"><i>B</i> 중개인: 매물 등록과 승인 관리</div>
-                    <div className="point"><i>✓</i> 소셜 계정으로도 가입 가능</div>
-                </div>
-            </section>
+                        <div className="points">
+                            <div className="point"><i>U</i> 사용자: 취향 기반 매물 추천</div>
+                            <div className="point"><i>B</i> 중개인: 매물 등록과 승인 관리</div>
+                            <div className="point"><i>✓</i> 소셜 계정으로도 가입 가능</div>
+                        </div>
+                    </section>
+                </>
+            )}
+            {signupType === 'BROKER' && (
+                <>
+                    <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
+                        <span className="pill">SignUp Page</span>
+                        <h2>중개인<br />회원가입</h2>
+                        <p>매물을 등록하고 관리합니다. <br />패스워드리스 등록이 필수입니다.</p>
+
+                        <div className="points">
+                            <div className="point"><i>U</i> 사용자: 취향 기반 매물 추천</div>
+                            <div className="point"><i>B</i> 중개인: 매물 등록과 승인 관리</div>
+                            <div className="point"><i>✓</i> 소셜 계정으로도 가입 가능</div>
+                        </div>
+                    </section>
+                </>
+            )}
+            
 
             {/* ── 오른쪽: 입력 폼 ───────────────────────────── */}
             <section className="auth-area">

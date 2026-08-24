@@ -87,7 +87,7 @@ function MapSearchPage({ user }: Props) {
     const [adminCode, setAdminCode] = useState(initialAdminCode);
     const [adminName, setAdminName] = useState(initialAdminName);
 
-    // ── 필터 입력값 ("조건 적용"을 누르기 전 상태) ─────────────
+    //  필터 입력값 ("조건 적용"을 누르기 전 상태) 
     const [type, setType] = useState('ALL');
     const [dealType, setDealType] = useState('ALL');
     const [region, setRegion] = useState(initialRegion);
@@ -347,7 +347,7 @@ function MapSearchPage({ user }: Props) {
     return (
         <main>
             <section className="map-shell">
-                {/* ── 왼쪽 : 필터 ───────────────────────────────── */}
+                {/*  왼쪽 : 필터  */}
                 <aside className="filter-panel">
                     <div className="row between">
                         <h2 style={{ fontSize: 22 }}>필터</h2>
@@ -532,7 +532,7 @@ function MapSearchPage({ user }: Props) {
                     </button>
                 </aside>
 
-                {/* ── 가운데 : 지도 ─────────────────────────────── */}
+                {/*  가운데 : 지도  */}
                 <PropertyMap
                     properties={properties}
                     myAgencyId={myAgencyId}
@@ -551,7 +551,7 @@ function MapSearchPage({ user }: Props) {
                     focusNonce={mapFocusNonce}
                 />
 
-                {/* ── 오른쪽 : 매물 목록 ────────────────────────── */}
+                {/*  오른쪽 : 매물 목록  */}
                 <aside className="list-panel">
                     <div className="row between">
                         <div>

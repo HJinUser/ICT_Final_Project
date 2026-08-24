@@ -195,11 +195,11 @@ function FindPasswordPage() {
 
     return (
         <div className="auth-shell">
-            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
+            {/*  왼쪽: 사진 + 안내  */}
             <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
                 <span className="pill">계정 찾기</span>
                 <h2>비밀번호를<br />다시 설정합니다</h2>
-                <p>가입할 때 쓴 이메일로 인증번호를 보내 드립니다.</p>
+                <p>가입할 때 사용한 이메일로 인증번호를 보내 드립니다.</p>
 
                 <div className="points">
                     <div className="point"><i>1</i> 가입한 이메일 주소 확인</div>
@@ -208,7 +208,7 @@ function FindPasswordPage() {
                 </div>
             </section>
 
-            {/* ── 오른쪽: 단계별 입력 폼 ─────────────────────── */}
+            {/*  오른쪽: 단계별 입력 폼  */}
             <section className="auth-area">
                 <div className="eyebrow">Reset Password</div>
                 <h1>비밀번호 찾기</h1>
@@ -236,7 +236,7 @@ function FindPasswordPage() {
                 {error && <div className="auth-alert">{error}</div>}
                 {notice && !error && <div className="findpw-notice">{notice}</div>}
 
-                {/* ── 1단계: 이메일 ─────────────────────────── */}
+                {/*  1단계: 이메일  */}
                 {step === 'email' && (
                     <form onSubmit={handleSendSubmit}>
                         <div className="auth-field">
@@ -268,7 +268,7 @@ function FindPasswordPage() {
                     </form>
                 )}
 
-                {/* ── 2단계: 인증번호 ───────────────────────── */}
+                {/*  2단계: 인증번호  */}
                 {step === 'code' && (
                     <form onSubmit={handleVerifySubmit}>
                         {/* 1단계에서 입력한 이메일 박스를 그대로 보여 준다. 여기서는 값을 바꿀 수 없고,
@@ -344,7 +344,7 @@ function FindPasswordPage() {
                     </form>
                 )}
 
-                {/* ── 3단계: 새 비밀번호 ─────────────────────── */}
+                {/*  3단계: 새 비밀번호  */}
                 {step === 'password' && (
                     <form onSubmit={handleConfirmSubmit}>
                         <PasswordField
@@ -382,7 +382,7 @@ function FindPasswordPage() {
                     </form>
                 )}
 
-                {/* ── 완료 ──────────────────────────────────── */}
+                {/*  완료  */}
                 {step === 'done' && (
                     <div className="auth-soft">
                         <strong>비밀번호가 변경되었습니다</strong>
