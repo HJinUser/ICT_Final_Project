@@ -25,10 +25,6 @@ data/raw
 # 학습 완료 후 운영 FastAPI가 사용하지 않으므로 제외함
 data/processed/*_training.csv
 
-# 텍스트마이닝 과정의 병합 중간 CSV는
-# 최종 JSON 생성 후 운영 FastAPI가 직접 사용하지 않으므로 제외함
-data/processed/neighborhood_reviews.csv
-
 # 발표용 이미지와 로그는 운영 이미지에서 제외함
 outputs/*.png
 *.log
