@@ -56,3 +56,15 @@ export async function getMlNeighborhood(adminCode: string): Promise<MlNeighborho
     );
     return response.data;
 }
+
+/*
+  이 법정동 동네에 대응하는 행정동 AI 분석 결과를 가져온다.
+
+  동네 탐색은 법정동, K-Means 는 행정동 기준이라 서버가 (자치구, 법정동) 이름으로
+  매핑표를 거쳐 찾아 준다. 매핑이 없는 동네는 404가 온다 — 호출한 쪽에서 잡아서
+  "AI 분석 준비 중"으로 처리하고, 나머지 동네 정보는 그대로 보여 주면 된다.
+*/
+export async function getMlAnalysisForNeighborhood(id: number): Promise<MlNeighborhoodResponse> {
+    const response = await axiosInstance.get<MlNeighborhoodResponse>(`/neighborhoods/${id}/ml`);
+    return response.data;
+}

@@ -7,3 +7,9 @@ numpy==2.4.6
 scikit-learn==1.9.0
 joblib>=1.4,<2
 python-dotenv==1.2.2
+
+# AI 챗봇(Function Calling)에 필요한 패키지.
+# openai 버전은 수업 자료(llm_project/requirements.txt)와 맞췄다.
+# httpx는 챗봇이 도구를 실행할 때 Spring API를 되부르는 데 쓴다.
+openai==2.41.1
+httpx>=0.28,<1

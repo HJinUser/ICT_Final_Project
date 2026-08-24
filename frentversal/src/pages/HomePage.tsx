@@ -16,6 +16,7 @@ import type { User } from "../types/User";
 import type { NavItem } from "../types/Navigation";
 import { navigateOrNotice } from "../utils/navigateOrNotice";
 import NeighborhoodMap from './components/NeighborhoodMap';
+import WORDCLOUD_IMAGE from '../assets/neighborhoodWordcloud.png';
 import "../styles/HomePage.css";
 
 /*
@@ -39,6 +40,20 @@ import "../styles/HomePage.css";
 // 매물·동네 사진과 달리 서버에서 받아올 값이 아니라서 여기에 상수로 둔다.
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=70';
 const CTA_IMAGE = 'https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=1600&q=70';
+
+/*
+  한줄평 워드클라우드.
+
+  prentversal/training/make_neighborhood_wordcloud.py가 만든 PNG를 그대로 가져다 쓴다.
+  서버가 그때그때 그려 주는 것이 아니라 손으로 갱신하는 이미지라서, 텍스트마이닝을
+  다시 돌렸다면 아래 세 가지를 같이 고쳐야 화면과 그림이 어긋나지 않는다.
+
+    1. outputs/neighborhood_wordcloud.png 를 src/assets/neighborhoodWordcloud.png 로 덮어쓰기
+    2. WORDCLOUD_SOURCE_COUNT 를 스크립트가 찍어 준 "원본 한줄평 N건" 으로 수정
+    3. WORDCLOUD_TOP_WORDS 를 스크립트가 찍어 준 상위 단어로 수정 (그림을 못 보는 사용자를 위한 대체 텍스트다)
+*/
+const WORDCLOUD_SOURCE_COUNT = 53;
+const WORDCLOUD_TOP_WORDS = ['시설', '교통', '편의', '맛집', '생활'];
 
 // 바로가기 4장. 이동 대상이 아직 없는 화면이라 ready: false로 두고,
 // 페이지가 만들어지면 types/Navigation.ts와 같은 방식으로 true로 바꾸면 된다.
@@ -622,14 +637,17 @@ function App({ user }: Props) {
                         </div>
 
                         <div className="home-cloudbox">
-                            <span className="rv-xs rv-dim">{data.cloudNeighborhood}에서 자주 나온 말</span>
-                            <div className="home-cloud">
-                                {data.cloudWords.map((word) => (
-                                    <span key={word.text} className={`w${word.weight}`}>{word.text}</span>
-                                ))}
-                            </div>
+                            <span className="rv-xs rv-dim">서울 전체 한줄평에서 자주 나온 말</span>
+                            <img
+                                className="home-cloudimg"
+                                src={WORDCLOUD_IMAGE}
+                                alt={`한줄평에서 자주 나온 말 ${WORDCLOUD_TOP_WORDS.join(', ')} 등을 크기로 표현한 워드클라우드`}
+                                width={1200}
+                                height={900}
+                                loading="lazy"
+                            />
                             <p className="rv-xs rv-dim" style={{ marginTop: 22 }}>
-                                글자가 클수록 많이 나온 말입니다. 한줄평 {data.cloudSourceCount}건에서 골랐습니다.
+                                글자가 클수록 많이 나온 말입니다. 한줄평 {WORDCLOUD_SOURCE_COUNT}건에서 골랐습니다.
                             </p>
                         </div>
                     </div>
