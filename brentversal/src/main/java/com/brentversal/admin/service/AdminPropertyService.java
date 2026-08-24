@@ -77,9 +77,6 @@ public class AdminPropertyService {
 
         // 관리자가 선택한 가격평가 상태를 Property에 반영함
         property.setPriceEvaluation(evaluation);
-        notifyOwner(property,
-                "[전세역전] 매물 가격 평가가 등록되었습니다",
-                "\"" + property.getName() + "\" 매물의 AI 가격 평가가 \"" + evaluationLabel(evaluation) + "\"(으)로 등록되었습니다.");
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return AdminPropertyDto.of(property);
     }

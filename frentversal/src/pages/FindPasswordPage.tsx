@@ -271,6 +271,19 @@ function FindPasswordPage() {
                 {/* ── 2단계: 인증번호 ───────────────────────── */}
                 {step === 'code' && (
                     <form onSubmit={handleVerifySubmit}>
+                        {/* 1단계에서 입력한 이메일 박스를 그대로 보여 준다. 여기서는 값을 바꿀 수 없고,
+                            바꾸려면 아래 "이메일 다시 입력"으로 1단계로 돌아가야 한다. */}
+                        <div className="auth-field">
+                            <label htmlFor="findpw-code-email">이메일</label>
+                            <input
+                                id="findpw-code-email"
+                                type="email"
+                                value={email}
+                                disabled
+                                readOnly
+                            />
+                        </div>
+
                         <div className="auth-field">
                             <label htmlFor="findpw-code">
                                 인증번호 {CODE_LENGTH}자리
