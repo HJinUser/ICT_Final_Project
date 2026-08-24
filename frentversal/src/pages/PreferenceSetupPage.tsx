@@ -229,8 +229,8 @@ function PreferenceSetupPage({ onComplete }: Props) {
                         <div className="eyebrow">Personalize</div>
                         <h1>취향 초기 설정</h1>
                         <p>
-                            회원가입 이후 처음 한 번만 진행합니다. 선택한 값은 맞춤 추천의 기본 기준이 되며
-                            맞춤 추천 화면에서 언제든 바꿀 수 있습니다.
+                            회원가입 이후 처음 한 번만 진행합니다. 
+                            선택한 값은 맞춤 추천의 기본 기준이 되며 맞춤 추천 화면에서 언제든 바꿀 수 있습니다.
                         </p>
                     </div>
                 </div>
@@ -328,7 +328,7 @@ function PreferenceSetupPage({ onComplete }: Props) {
                                     <div>
                                         <h2>이 집 어떠세요?</h2>
                                         <p className="muted" style={{ marginTop: 7 }}>
-                                            한 장씩 보고 좋아요 또는 싫어요를 누르면 다음 매물로 넘어갑니다.
+                                            좋아요 또는 싫어요를 누르면 다음 매물로 넘어갑니다.
                                         </p>
                                     </div>
                                     <span className="status purple">2 / 3</span>
@@ -453,8 +453,8 @@ function PreferenceSetupPage({ onComplete }: Props) {
                                             회원님께 적절한 집을 성공적으로 선정했습니다
                                         </h2>
                                         <p className="muted" style={{ marginTop: 9 }}>
-                                            초기에는 데이터가 적어 규칙 기반 가중치로 시작하고, 이용하면서
-                                            점점 정교해집니다.
+                                            초기에는 데이터가 적어 규칙 기반 가중치로 시작하고, <br />
+                                            이용하면서 점점 정교해집니다.
                                         </p>
 
                                         <button

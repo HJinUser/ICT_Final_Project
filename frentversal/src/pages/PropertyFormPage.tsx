@@ -1054,8 +1054,8 @@ function PropertyFormPage() {
                             <section className="card">
                                 <h2>6. 관리자 승인 요청</h2>
                                 <p className="dim" style={{ marginTop: 6 }}>
-                                    승인 요청을 보내면 관리자 검토 후 승인되어야 매물 등록이 완료되고
-                                    메인·지도에 노출됩니다. 수정도 마찬가지로 다시 승인을 받아야 합니다.
+                                    승인 요청을 보내면 관리자 검토 후 승인되어야 매물 등록이 완료되고 메인, 지도에 노출됩니다. <br />
+                                    수정도 마찬가지로 다시 승인을 받아야 합니다.
                                 </p>
                             </section>
                         )}

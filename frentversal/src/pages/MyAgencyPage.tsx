@@ -186,7 +186,7 @@ function MyAgencyPage() {
                     <div>
                         <div className="eyebrow">내 중개사무소</div>
                         <h1>{agency.name}</h1>
-                        <p>등록한 매물과 상담 내역, 이용자 평가를 관리합니다.</p>
+                        <p>내가 등록한 매물과 상담 내역, 이용자 평가를 관리합니다.</p>
                     </div>
                     <div className="hero-stat">
                         <span className="mono dim">평균 평점</span>
@@ -198,7 +198,7 @@ function MyAgencyPage() {
 
             <section className="section">
                 <div className="wrap">
-                    {/* ── 탭 ─────────────────────────────────────── */}
+                    {/*  탭  */}
                     <div className="tabs">
                         {TABS.map((item) => (
                             <button
@@ -213,13 +213,13 @@ function MyAgencyPage() {
 
                     {message && <p className="xs" style={{ marginBottom: 16, color: 'var(--v)' }}>{message}</p>}
 
-                    {/* ── 요약 탭 ─────────────────────────────────── */}
+                    {/*  요약 탭  */}
                     {tab === 'summary' && (
                         <>
                             <div className="section-head">
                                 <div>
                                     <h2>등록 매물</h2>
-                                    <p>내가 등록한 매물입니다. 승인 대기·비공개 매물도 함께 보입니다.</p>
+                                    <p>내가 등록한 매물입니다. 승인 대기, 비공개 매물도 함께 보입니다.</p>
                                 </div>
                                 <Link className="outline-btn" to="/property/form">매물 등록</Link>
                             </div>
@@ -314,7 +314,7 @@ function MyAgencyPage() {
                         </>
                     )}
 
-                    {/* ── 사무소 정보 탭 ──────────────────────────── */}
+                    {/*  사무소 정보 탭  */}
                     {tab === 'info' && (
                         <section className="card">
                             <div className="row between">
@@ -446,7 +446,7 @@ function MyAgencyPage() {
                         </section>
                     )}
 
-                    {/* ── 리뷰 관리 탭 ────────────────────────────── */}
+                    {/*  리뷰 관리 탭  */}
                     {tab === 'reviews' && (
                         <>
                             <div className="grid-2">

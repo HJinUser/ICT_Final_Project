@@ -101,7 +101,7 @@ function SocialSignupPage() {
 
     return (
         <div className="auth-shell">
-            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
+            {/*  왼쪽: 사진 + 안내  */}
             <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
                 <span className="pill">Almost There</span>
                 <h2>마지막 한 단계만<br />더 진행해 주세요</h2>
@@ -114,7 +114,7 @@ function SocialSignupPage() {
                 </div>
             </section>
 
-            {/* ── 오른쪽: 입력 폼 ───────────────────────────── */}
+            {/*  오른쪽: 입력 폼  */}
             <section className="auth-area">
                 <div className="eyebrow">Join</div>
                 <h1>추가 정보 입력</h1>
