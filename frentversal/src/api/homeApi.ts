@@ -2,8 +2,11 @@
 //
 // "/home" 이라는 단일 엔드포인트는 백엔드에 없다. 그래서 이미 있는 매물 검색(/property/search)과
 // 동네 탐색(/neighborhoods) API 두 개를 조합해서 "이번 주 매물"·"동네부터 고르는 방법" 구역은
-// 실제 값으로 채운다. 나머지(맞춤 추천·매물 비교·한줄평·워드클라우드)는 대응하는 백엔드가 아직
+// 실제 값으로 채운다. 나머지(맞춤 추천·매물 비교·한줄평)는 대응하는 백엔드가 아직
 // 없어서 예시 데이터를 그대로 쓴다 — 화면 아래 MOCK_HOME_DATA 주석 참고.
+//
+// 워드클라우드는 여기서 내려보내지 않는다. 텍스트마이닝이 만든 PNG를 화면이 직접 불러 쓰므로
+// HomePage.tsx의 WORDCLOUD 상수를 참고할 것.
 
 import type { HomeData, WeeklyProperty, HomeNeighborhood } from '../types/Home';
 import { searchProperties } from './propertySearchApi';
@@ -100,25 +103,6 @@ const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'ne
             content: '새 건물이 많아서 관리는 깔끔한데 관리비가 생각보다 나갑니다. 남향이라 겨울에도 해는 잘 듭니다.',
             createdAt: '2026.06.02',
         },
-    ],
-
-    cloudNeighborhood: '반포동',
-    cloudSourceCount: 312,
-    cloudWords: [
-        { text: '조용함', weight: 1 },
-        { text: '배달 잘됨', weight: 2 },
-        { text: '주차난', weight: 3 },
-        { text: '역세권', weight: 2 },
-        { text: '언덕 없음', weight: 4 },
-        { text: '채광 좋음', weight: 3 },
-        { text: '벌레 없음', weight: 5 },
-        { text: '마트 가까움', weight: 4 },
-        { text: '관리비', weight: 3 },
-        { text: '층간소음', weight: 5 },
-        { text: '공원 산책', weight: 4 },
-        { text: '버스 자주', weight: 5 },
-        { text: '한강 가까움', weight: 4 },
-        { text: '편의점 많음', weight: 5 },
     ],
 };
 

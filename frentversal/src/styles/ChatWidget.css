@@ -1,0 +1,359 @@
+/*
+  AI 챗봇 (ui/ChatWidget.tsx)
+
+  어느 화면에서든 오른쪽 아래에 떠 있어야 하므로 position: fixed 로 화면에 붙인다.
+
+  클래스 이름은 전부 chatbot- 으로 시작한다. chat- 이 아니다.
+  common.css 와 responsive.css 에 프로토타입에서 옮겨온 .chat-fab / .chat-panel /
+  .chat-head / .chat-body / .chat-input 이 이미 들어 있기 때문이다.
+  특히 common.css 의 .chat-panel 은 opacity:0 · visibility:hidden 으로 시작해서
+  .open 이 붙어야 보이는 구조라, 그 이름을 그대로 쓰면 창을 열어도 화면에 나타나지 않는다.
+  (실제로 이 문제를 겪고 이름을 바꿨다)
+*/
+
+/* ============================================================
+   동그란 AI 버튼
+   ============================================================ */
+.chatbot-fab {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 0;
+
+    background: var(--v);
+    color: #fff;
+
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: background .25s var(--ease), transform .25s var(--ease);
+
+    /* 지도·모달 위에도 떠 있어야 한다 */
+    z-index: 1200;
+}
+
+.chatbot-fab:hover {
+    background: var(--v-deep);
+    transform: translateY(-2px);
+}
+
+.chatbot-fab:focus-visible {
+    outline: 2px solid var(--v);
+    outline-offset: 3px;
+}
+
+/* 열려 있을 때는 살짝 눌린 느낌으로 상태를 드러낸다 */
+.chatbot-fab.is-open {
+    background: var(--v-deep);
+}
+
+/* ============================================================
+   대화창
+   ============================================================ */
+.chatbot-panel {
+    position: fixed;
+    right: 24px;
+    bottom: 92px;
+
+    width: 380px;
+    max-height: min(560px, calc(100vh - 140px));
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--r-l);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+
+    z-index: 1200;
+}
+
+.chatbot-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--v-pale);
+}
+
+.chatbot-head strong {
+    display: block;
+    font-size: var(--fs-md);
+    color: var(--ink);
+}
+
+.chatbot-head-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+}
+
+.chatbot-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: var(--r-s);
+
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+}
+
+.chatbot-close:hover {
+    background: rgba(17, 17, 20, .07);
+}
+
+/* ============================================================
+   대화 내용
+   ============================================================ */
+.chatbot-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chatbot-empty p {
+    margin: 0 0 12px;
+    font-size: var(--fs-sm);
+    color: var(--ink-2);
+    line-height: 1.6;
+}
+
+.chatbot-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.chatbot-example {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+
+    background: var(--bg);
+    color: var(--ink-2);
+    font-size: var(--fs-mono);
+
+    cursor: pointer;
+    transition: border-color .2s var(--ease), color .2s var(--ease);
+}
+
+.chatbot-example:hover {
+    border-color: var(--v);
+    color: var(--v);
+}
+
+.chatbot-turn {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chatbot-turn.user {
+    align-items: flex-end;
+}
+
+.chatbot-turn.assistant {
+    align-items: flex-start;
+}
+
+.chatbot-bubble {
+    max-width: 85%;
+    padding: 9px 13px;
+    border-radius: var(--r-m);
+
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+
+    /* 줄바꿈을 그대로 살리고, 긴 주소가 창을 밀어내지 않게 한다 */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.chatbot-turn.user .chatbot-bubble {
+    background: var(--v);
+    color: #fff;
+}
+
+.chatbot-turn.assistant .chatbot-bubble {
+    background: var(--bg-2);
+    color: var(--ink);
+}
+
+.chatbot-thinking {
+    color: var(--ink-3);
+}
+
+.chatbot-error {
+    margin: 0;
+    font-size: var(--fs-mono);
+    color: var(--sig-high);
+}
+
+/* ============================================================
+   답변에 딸려 오는 매물 카드
+   ============================================================ */
+.chatbot-cards {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chatbot-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+
+    background: var(--bg);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .2s var(--ease), background .2s var(--ease);
+}
+
+.chatbot-card:hover {
+    border-color: var(--v);
+    background: var(--v-pale);
+}
+
+.chatbot-card-img {
+    flex: 0 0 auto;
+    width: 46px;
+    height: 46px;
+    border-radius: var(--r-s);
+    object-fit: cover;
+}
+
+.chatbot-card-noimg {
+    background: var(--line-2);
+}
+
+.chatbot-card-text {
+    /* 긴 주소가 카드를 늘리지 않도록 줄임표 처리의 기준을 만든다 */
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.chatbot-card-price {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.chatbot-card-sub {
+    font-size: var(--fs-mono);
+    color: var(--ink-3);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   입력창
+   ============================================================ */
+.chatbot-foot {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+
+    padding: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.chatbot-input {
+    flex: 1;
+    resize: none;
+    max-height: 96px;
+
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-m);
+
+    font: inherit;
+    font-size: var(--fs-sm);
+    color: var(--ink);
+}
+
+.chatbot-input:focus {
+    outline: none;
+    border-color: var(--v);
+}
+
+.chatbot-send {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+
+    background: var(--v);
+    color: #fff;
+    cursor: pointer;
+    transition: background .2s var(--ease);
+}
+
+.chatbot-send:hover:not(:disabled) {
+    background: var(--v-deep);
+}
+
+.chatbot-send:disabled {
+    background: var(--line);
+    color: var(--ink-3);
+    cursor: default;
+}
+
+/* ============================================================
+   좁은 화면
+   ============================================================ */
+@media (max-width: 560px) {
+    .chatbot-fab {
+        right: 16px;
+        bottom: 16px;
+        width: 50px;
+        height: 50px;
+        font-size: var(--fs-md);
+    }
+
+    /* 좌우 여백만 남기고 화면 폭을 다 쓴다. 380px 고정이면 작은 기기에서 넘친다. */
+    .chatbot-panel {
+        right: 12px;
+        left: 12px;
+        bottom: 76px;
+        width: auto;
+        max-height: calc(100vh - 120px);
+    }
+}

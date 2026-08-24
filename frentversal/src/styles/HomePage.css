@@ -921,29 +921,14 @@
     background: #fff;
 }
 
-/* 자주 나온 단어일수록 크게. weight 1이 가장 크다. */
-.home-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 9px 16px;
-    line-height: 1.2;
+/* 텍스트마이닝이 만든 워드클라우드 PNG. 배경이 투명이라 카드 흰 바탕 위에 그대로 얹힌다.
+   가로폭에 맞춰 줄어들되 원본 비율(1200x900)을 유지해야 글자가 찌그러지지 않는다. */
+.home-cloudimg {
+    display: block;
+    width: 100%;
+    height: auto;
     margin-top: 16px;
 }
-
-.home-cloud span {
-    color: var(--ink-3);
-    white-space: nowrap;
-    transition: color .25s;
-    cursor: default;
-}
-
-.home-cloud span:hover { color: var(--v); }
-.home-cloud .w1 { font-size: 30px; color: var(--v); }
-.home-cloud .w2 { font-size: 23px; color: var(--ink); }
-.home-cloud .w3 { font-size: 18px; color: var(--ink-2); }
-.home-cloud .w4 { font-size: 15px; }
-.home-cloud .w5 { font-size: 13px; }
 
 /* ============================================================
    이용 방법
@@ -1411,6 +1396,15 @@
     .home-hero h1 { font-size: 27px; }
     .home-hero .sub { font-size: var(--fs-md); }
     .home-hero .quick { gap: 6px; }
+
+    /* 워드클라우드는 폭이 좁아질수록 글자가 같은 비율로 작아져 읽기 어려워진다.
+       카드 좌우 여백만큼 음수 마진으로 되돌려 그림이 쓸 수 있는 폭을 넓힌다. */
+    .home-cloudimg {
+        width: calc(100% + 60px);
+        max-width: none;
+        margin-left: -30px;
+        margin-right: -30px;
+    }
 
     .home-shortcuts { grid-template-columns: 1fr; }
     .home-plist { grid-template-columns: 1fr; }
