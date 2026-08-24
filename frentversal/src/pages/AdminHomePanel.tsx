@@ -45,7 +45,7 @@ function AdminHomePanel() {
                         {pendingProperties ?? '–'}
                     </strong>
                     <p className="xs dim" style={{ marginTop: 6 }}>
-                        승인해야 지도와 중개사무소 화면에 노출됩니다.
+                        승인 후 지도와 중개사무소 화면에 노출됩니다.
                     </p>
                 </Link>
 
@@ -55,7 +55,7 @@ function AdminHomePanel() {
                         {pendingBrokers ?? '–'}
                     </strong>
                     <p className="xs dim" style={{ marginTop: 6 }}>
-                        승인하면 중개사무소에 인증 마크가 발급됩니다.
+                        승인 후 중개사무소에 인증 마크가 발급됩니다.
                     </p>
                 </Link>
             </div>
