@@ -8,6 +8,8 @@ import com.brentversal.member.entity.Broker;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
 import com.brentversal.member.repository.MemberRepository;
+import com.brentversal.member.entity.BrokerLicenseImage;
+import com.brentversal.member.repository.BrokerLicenseImageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +28,7 @@ public class BrokerService {
     private final BrokerRepository brokerRepository ;
     private final MemberRepository memberRepository ;
     private final FileService fileService ; // 자격증 사진 저장용 (Common/S3)
-
+    private final BrokerLicenseImageRepository brokerLicenseImageRepository ; // 자격증 사진 제출 이력 보관용
     // 사무소가 없는 중개인이 인증을 신청하면 신청 정보로 사무소를 만들어 주기 위해 쓴다
     private final AgencyService agencyService ;
 
@@ -70,14 +72,32 @@ public class BrokerService {
                     return created;
                 });
 
+        // 새로 만든 Broker는 아직 id가 없다. 이력 테이블에서 broker_id로 참조하려면
+        // 먼저 저장해서 id를 확정해 둬야 한다. (기존 Broker면 그냥 아무 변화 없음)
+        broker = brokerRepository.save(broker);
+
         // 이미 인증이 끝난 중개인은 다시 신청할 수 없다.
         if(broker.getVerifyStatus() == VerifyStatus.VERIFIED){
             throw new IllegalArgumentException("이미 인증이 완료된 중개사무소입니다.");
         }
 
-        // 자격증 사진 저장. 새 파일이 오면 교체하고, 없으면 기존 것을 유지한다.
+        // 자격증 사진 저장. 새 파일이 오면 이력으로 남기고 "현재 사진"을 교체하며, 없으면 기존 것을 유지한다.
+        // 예전 파일은 지우지 않는다 — 분쟁·재신청 이력 확인용으로 그대로 보관한다.
         if(licenseImage != null && !licenseImage.isEmpty()){
-            broker.setLicenseImageUrl(fileService.upload(licenseImage));
+            String uploadedUrl = fileService.upload(licenseImage);
+
+            // 기존에 "현재 사진"으로 표시돼 있던 이력이 있으면 과거 기록으로 내린다.
+            brokerLicenseImageRepository.findByBrokerIdAndIsCurrentTrue(broker.getId())
+                    .ifPresent(previous -> previous.setIsCurrent(false));
+
+            BrokerLicenseImage history = new BrokerLicenseImage();
+            history.setBroker(broker);
+            history.setUrl(uploadedUrl);
+            history.setSubmittedAt(LocalDateTime.now());
+            history.setIsCurrent(true);
+            brokerLicenseImageRepository.save(history);
+
+            broker.setLicenseImageUrl(uploadedUrl);
         } else if(broker.getLicenseImageUrl() == null){
             throw new IllegalArgumentException("자격증 사진을 첨부해 주세요.");
         }
