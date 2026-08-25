@@ -41,7 +41,7 @@ public class Property {
     private Agency agency;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "neighborhood_id", nullable = false)
+    @JoinColumn(name = "neighborhood_id", nullable = true)
     private Neighborhood neighborhood;
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
