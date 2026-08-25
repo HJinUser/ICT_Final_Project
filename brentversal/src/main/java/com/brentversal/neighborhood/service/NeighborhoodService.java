@@ -126,7 +126,7 @@ public class NeighborhoodService {
     }
 
     private NeighborhoodResponse toResponse(Neighborhood neighborhood) {
-        long propertyCount = propertyRepository.countByNeighborhoodIdAndStatusAndVisibleTrue(
+        long propertyCount = propertyRepository.countByNeighborhood_IdAndStatusAndVisibleTrue(
                 neighborhood.getId(),
                 PropertyStatus.ACTIVE
         );
@@ -138,7 +138,7 @@ public class NeighborhoodService {
         );
         long averageJeonsePrice = avgDeposit == null ? 0L : Math.round(avgDeposit);
 
-        long popularityScore = favoriteRepository.countByProperty_NeighborhoodId(neighborhood.getId());
+        long popularityScore = favoriteRepository.countByProperty_Neighborhood_Id(neighborhood.getId());
 
         return NeighborhoodResponse.of(neighborhood, propertyCount, averageJeonsePrice, popularityScore);
     }

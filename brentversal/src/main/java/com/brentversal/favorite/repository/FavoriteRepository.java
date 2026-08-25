@@ -17,5 +17,5 @@ public interface FavoriteRepository extends JpaRepository<Favorite, FavoriteId> 
     List<Favorite> findByMember(Member member);
 
     // 동네 탐색 카드의 "인기도" = 그 동네에 속한 매물들이 받은 찜(관심매물) 총합
-    long countByProperty_NeighborhoodId(Long neighborhoodId);
+    long countByProperty_Neighborhood_Id(Long neighborhoodId);
 }
