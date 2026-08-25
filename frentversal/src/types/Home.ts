@@ -94,12 +94,6 @@ export type HomeCompareItem = {
     neighborhood: string;
 };
 
-// 워드클라우드 단어 1개. weight가 클수록 크게 그린다(1~5).
-export type CloudWord = {
-    text: string;
-    weight: 1 | 2 | 3 | 4 | 5;
-};
-
 // 메인 화면이 한 번에 받아 오는 전체 데이터
 export type HomeData = {
     // 히어로 영역에 띄우는 "이번 주 저평가 매물 수"
@@ -111,8 +105,4 @@ export type HomeData = {
     compareExample: [HomeCompareItem, HomeCompareItem];
     neighborhoods: HomeNeighborhood[];
     voices: HomeVoice[];
-    // 워드클라우드 대상 동네 이름과 단어들
-    cloudNeighborhood: string;
-    cloudWords: CloudWord[];
-    cloudSourceCount: number;
 };

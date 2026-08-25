@@ -250,7 +250,7 @@ function AgencyDetailPage({ user }: Props) {
                 <section className="section">
                     <div className="wrap">
                         <div className="detail-grid">
-                            {/* ── 왼쪽 ───────────────────────────── */}
+                            {/*  왼쪽  */}
                             <div className="stack">
                                 {/* 사무소 대표 이미지 (갤러리) */}
                                 {agency.imageUrls.length > 0 && (
@@ -457,7 +457,7 @@ function AgencyDetailPage({ user }: Props) {
                                 </section>
                             </div>
 
-                            {/* ── 오른쪽 ──────────────────────────── */}
+                            {/*  오른쪽  */}
                             <aside className="detail-side stack">
                                 <section className="card shadow">
                                     <h3>상담 요청</h3>
@@ -506,7 +506,7 @@ function AgencyDetailPage({ user }: Props) {
                                             style={{ marginTop: 3 }}
                                         />
                                         <span>
-                                            상담 요청을 보내면 내 이름·연락처가 해당 중개사무소에 전달됩니다. 동의합니다.
+                                            상담 요청을 보내면 내 이름, 연락처가 해당 중개사무소에 전달됩니다. 동의합니다.
                                         </span>
                                     </label>
 

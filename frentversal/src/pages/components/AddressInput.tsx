@@ -24,7 +24,8 @@ interface Props {
     placeholder?: string;
     required?: boolean;
 
-    // 상세주소 칸을 감출 때 쓴다. 회원 주소처럼 "시·구"까지만 받으면 되는 곳이 있다.
+    // 상세주소 칸을 감출 때 쓴다. 지금은 모든 화면이 상세주소를 받고 있어 쓰는 곳이 없지만,
+    // 도로명까지만 필요한 화면이 생길 수 있어 남겨 둔다.
     withDetail?: boolean;
 }
 
@@ -84,10 +85,12 @@ function AddressInput({
                 </button>
             </div>
 
+            {/* 라벨은 검색 칸과 이 칸 위에 하나뿐이라, required 를 켜면 '*' 가 상세주소까지
+                덮는 것처럼 보인다. 상세주소는 어느 화면에서도 필수가 아니므로 칸 안에 직접 적어 둔다. */}
             {withDetail && (
                 <input
                     style={{ marginTop: 8 }}
-                    placeholder="상세주소 (동·호수)"
+                    placeholder="상세주소 (동·호수) · 선택"
                     value={detail}
                     onChange={(event) => onChange({ address: value, detail: event.target.value, selected: null })}
                     disabled={!value}

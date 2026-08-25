@@ -191,7 +191,7 @@ function AdminPropertyPage({ user }: Props) {
             <div className="section-head">
                 <div>
                     <h2>매물 관리</h2>
-                    <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. 오래 기다린 매물이 위에 옵니다.</p>
+                    <p>중개인이 등록한 매물을 승인하면 지도와 중개사무소 화면에 노출됩니다. <br />오래 기다린 매물이 위에 옵니다.</p>
                 </div>
                 <span className={`status ${pendingCount > 0 ? 'orange' : 'green'}`}>
                     승인 대기 {pendingCount}건

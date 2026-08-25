@@ -212,7 +212,7 @@ function BrokerVerificationPage() {
                             </button>
 
                             <p className="xs dim" style={{ marginTop: 12 }}>
-                                제출한 정보는 관리자가 디지털트윈국토에서 사무소 실존 여부를 확인하는 데 사용됩니다.
+                                제출한 정보는 관리자가 사무소 실존 여부를 확인하는 데 사용됩니다.
                             </p>
                         </form>
                     )}

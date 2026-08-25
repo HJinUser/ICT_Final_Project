@@ -1,6 +1,7 @@
 package com.brentversal.admin.dto;
 
 import com.brentversal.agency.dto.MyPropertyCardDto;
+import com.brentversal.property.constant.DealType;
 import com.brentversal.property.entity.Property;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
@@ -20,7 +21,7 @@ public class AdminPropertyDto {
     private Long id ;
     private String name ;        // 매물 이름
     private String typeLabel ;   // 매물 유형 한글
-    private String priceLabel ;  // "전세 4억 9,000"
+    private String priceLabel ;  // "전세 36,000만원" — 아래 AI 예상 시세와 단위를 맞추려고 억 대신 만원+콤마로 표시한다
 
     // 관리자 매물 DTO에 거래유형·AI 예측 시세·관리자 가격평가 값을 추가함
     private String dealType;
@@ -56,7 +57,9 @@ public class AdminPropertyDto {
         dto.setId(card.getId());
         dto.setName(card.getName());
         dto.setTypeLabel(card.getTypeLabel());
-        dto.setPriceLabel(card.getPriceLabel());
+        // 가격 문구는 다른 화면(priceLabel 공용 규칙)과 달리 억 단위로 끊지 않고
+        // AI 적정 시세 카드와 같은 만원+콤마 단위로 맞춰서 관리자 화면 안에서 단위를 통일한다
+        dto.setPriceLabel(toManwonPriceLabel(bean));
 
         // 현재 값/권한/상태가 조건을 만족하는지 확인함
         if (bean.getDealType() != null) {
@@ -90,5 +93,26 @@ public class AdminPropertyDto {
         }
 
         return dto;
+    }
+
+    // 거래유형에 따라 만원 단위 가격 문구를 만든다.
+    // 억 단위로 끊는 공용 규칙(AgencyPropertyDto.toMoney) 대신, 바로 아래 AI 적정 시세 카드와
+    // 같은 "만원 + 콤마" 단위를 써서 관리자 화면 안에서 두 금액을 바로 비교할 수 있게 한다.
+    private static String toManwonPriceLabel(Property bean){
+        DealType dealType = bean.getDealType();
+
+        if(dealType == null) return "";
+
+        return switch (dealType) {
+            case SALE -> "매매 " + toManwon(bean.getPrice());
+            case JEONSE -> "전세 " + toManwon(bean.getDeposit());
+            case MONTHLY -> "월세 " + toManwon(bean.getMonthlyDeposit())
+                    + " / " + toManwon(bean.getMonthlyRent());
+        };
+    }
+
+    private static String toManwon(Long manwon){
+        if(manwon == null) return "";
+        return String.format("%,d만원", manwon);
     }
 }

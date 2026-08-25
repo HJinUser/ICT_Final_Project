@@ -32,9 +32,9 @@ const getPrimaryPrice = (property: PropertyResponse): number => {
 // 화면에 보여줄 가격 문자열 (월세는 "보증금/월세" 형태)
 const formatPrice = (property: PropertyResponse): string => {
     if (property.dealType === "MONTHLY") {
-        return `${(property.monthlyDeposit ?? 0).toLocaleString()}/${(property.monthlyRent ?? 0).toLocaleString()}`;
+        return `${(property.monthlyDeposit ?? 0).toLocaleString()}만 원/${(property.monthlyRent ?? 0).toLocaleString()}만 원`;
     }
-    return getPrimaryPrice(property).toLocaleString();
+    return `${getPrimaryPrice(property).toLocaleString()}만 원`;
 };
 
 // 거래유형에 따라 AI 예상가 중 실제로 비교할 값 하나를 뽑아준다. 아직 예측 전이면 null

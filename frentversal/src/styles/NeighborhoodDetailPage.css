@@ -32,3 +32,40 @@
 @media (max-width: 620px) {
     .neighborhood-detail-stats{ grid-template-columns: 1fr; }
 }
+
+/* ── 행정동 AI 분석 (병합) ─────────────────────────────
+   클래스는 전부 neighborhood- 접두어를 쓴다. 같은 내용을 보여주는 MlNeighborhoodDetailPage.css의
+   mlhood- 클래스와 이름이 겹치면 그쪽 화면이 함께 바뀌므로, 두 페이지가 이 파일을 나눠 갖는다. */
+.neighborhood-cluster {
+    padding: 28px 30px 26px;
+}
+
+.neighborhood-cluster-name {
+    display: block;
+    margin-top: 10px;
+    font-size: var(--fs-h2);
+    letter-spacing: -.03em;
+    color: var(--v);
+}
+
+.neighborhood-cluster-desc {
+    max-width: 640px;
+    margin-top: 14px;
+    color: var(--ink-2);
+}
+
+.neighborhood-admin-code {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: var(--bg-2);
+    font: var(--fs-mono) / 1 'IBM Plex Mono', monospace;
+    color: var(--ink-3);
+}
+
+.neighborhood-ml-empty {
+    padding: 22px 26px;
+    color: var(--ink-3);
+    text-align: center;
+}

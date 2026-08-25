@@ -3,6 +3,7 @@ import customAxios from "../api/axiosInstance.tsx";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import AddressInput from "./components/AddressInput";
 import TermsAgreement from "./components/TermsAgreement";
 import type { AgreementState } from "../types/Terms";
 import { TERMS_VERSION, missingRequired } from "../types/Terms";
@@ -36,11 +37,20 @@ function SocialSignupPage() {
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState(searchParams.get('email') ?? '');
     const [address, setAddress] = useState('');
+    // 회원 주소 상세(동·호수). 사무소 주소와 마찬가지로 저장 칸이 하나뿐이라 제출할 때 뒤에 합쳐 보낸다.
+    const [addressDetail, setAddressDetail] = useState('');
+    // 주소 검색이 함께 준 지역 조각. 지도 검색의 기본 지역을 정할 때 서버가 쓴다.
+    const [sigungu, setSigungu] = useState('');
+    const [dong, setDong] = useState('');
 
     // 중개인 전용
     const [licenseNumber, setLicenseNumber] = useState('');
     const [agencyName, setAgencyName] = useState('');
     const [agencyAddress, setAgencyAddress] = useState('');
+    // 사무소 상세주소(동·호수). 주소를 한 덩어리로 저장하므로 제출할 때 뒤에 합쳐 보낸다.
+    const [agencyAddressDetail, setAgencyAddressDetail] = useState('');
+    const [agencySigungu, setAgencySigungu] = useState('');
+    const [agencyDong, setAgencyDong] = useState('');
     const [officePhone, setOfficePhone] = useState('');
 
     // 일반 회원가입과 같은 약관 항목을 받는다(가입 경로만 다를 뿐 동의해야 할 내용은 같다).
@@ -69,8 +79,12 @@ function SocialSignupPage() {
             // 일반 회원가입과 같은 엔드포인트를 쓴다. socialToken이 있으면
             // 서버(MemberService.insert)가 소셜 가입으로 처리하고 비밀번호는 요구하지 않는다.
             const parameters = {
-                signupType, name, phone, email, address,
-                licenseNumber, agencyName, agencyAddress, officePhone,
+                signupType, name, phone, email, sigungu, dong,
+                licenseNumber, agencyName, officePhone,
+                agencySigungu, agencyDong,
+                // 상세주소는 따로 저장할 칸이 없어서 도로명 주소 뒤에 붙여 보낸다
+                address: [address, addressDetail].filter(Boolean).join(' '),
+                agencyAddress: [agencyAddress, agencyAddressDetail].filter(Boolean).join(' '),
                 socialToken,
                 // 약관: 동의한 버전과 선택 항목만 보낸다(필수 항목은 위에서 이미 막았다)
                 termsVersion: TERMS_VERSION,
@@ -101,7 +115,7 @@ function SocialSignupPage() {
 
     return (
         <div className="auth-shell">
-            {/* ── 왼쪽: 사진 + 안내 ─────────────────────────── */}
+            {/*  왼쪽: 사진 + 안내  */}
             <section className="auth-visual" style={{ backgroundImage: VISUAL_IMAGE }}>
                 <span className="pill">Almost There</span>
                 <h2>마지막 한 단계만<br />더 진행해 주세요</h2>
@@ -114,7 +128,7 @@ function SocialSignupPage() {
                 </div>
             </section>
 
-            {/* ── 오른쪽: 입력 폼 ───────────────────────────── */}
+            {/*  오른쪽: 입력 폼  */}
             <section className="auth-area">
                 <div className="eyebrow">Join</div>
                 <h1>추가 정보 입력</h1>
@@ -190,16 +204,22 @@ function SocialSignupPage() {
                         {errors.email && <span className="msg">{errors.email}</span>}
                     </div>
 
+                    {/* 지도 검색의 기본 지역은 함께 받는 sigungu/dong 으로 정하고,
+                        상세주소(동·호수)는 선택 입력으로 주소 뒤에 붙여 저장한다. */}
                     {signupType === 'USER' && (
                         <div className="auth-field">
-                            <label htmlFor="social-signup-address">주소</label>
-                            <input
-                                id="social-signup-address"
-                                type="text"
-                                placeholder="주소를 입력해 주세요."
+                            <AddressInput
+                                label="주소 (필수)"
                                 value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                className={errors.address ? 'invalid' : ''}
+                                detail={addressDetail}
+                                onChange={({ address: selectedAddress, detail, selected }) => {
+                                    setAddress(selectedAddress);
+                                    setAddressDetail(detail);
+                                    if (selected) {
+                                        setSigungu(selected.sigungu);
+                                        setDong(selected.dong);
+                                    }
+                                }}
                             />
                             {errors.address && <span className="msg">{errors.address}</span>}
                         </div>
@@ -236,15 +256,19 @@ function SocialSignupPage() {
                             </div>
 
                             <div className="auth-field">
-                                <label htmlFor="social-signup-agency-address">사무소 주소</label>
-                                <input
-                                    id="social-signup-agency-address"
-                                    type="text"
-                                    placeholder="중개사무소 주소를 입력해 주세요."
-                                    value={agencyAddress}
-                                    onChange={(e) => setAgencyAddress(e.target.value)}
-                                    className={errors.agencyAddress ? 'invalid' : ''}
+                                <AddressInput
+                                    label="중개사무소 주소"
                                     required
+                                    value={agencyAddress}
+                                    detail={agencyAddressDetail}
+                                    onChange={({ address: selectedAddress, detail, selected }) => {
+                                        setAgencyAddress(selectedAddress);
+                                        setAgencyAddressDetail(detail);
+                                        if (selected) {
+                                            setAgencySigungu(selected.sigungu);
+                                            setAgencyDong(selected.dong);
+                                        }
+                                    }}
                                 />
                                 {errors.agencyAddress && <span className="msg">{errors.agencyAddress}</span>}
                             </div>
