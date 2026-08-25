@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import {
     canWriteReview,
@@ -63,7 +63,8 @@ function AgencyDetailPage({ user }: Props) {
     const [imageIndex, setImageIndex] = useState(0);
 
     // 상담 요청 입력값
-    const [propertyId, setPropertyId] = useState('');
+    const [searchParams] = useSearchParams();
+    const [propertyId, setPropertyId] = useState(() => searchParams.get('propertyId') ?? '');
     const [preferredDate, setPreferredDate] = useState('');
     const [inquiry, setInquiry] = useState('');
     const [agreed, setAgreed] = useState(false);
