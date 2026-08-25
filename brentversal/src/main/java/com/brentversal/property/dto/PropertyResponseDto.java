@@ -79,7 +79,9 @@ public class PropertyResponseDto {
         if (bean.getAgency() != null) {
             dto.setAgencyId(bean.getAgency().getId());
         }
-        dto.setNeighborhoodId(bean.getNeighborhoodId());
+        if (bean.getNeighborhood() != null) {
+            dto.setNeighborhoodId(bean.getNeighborhood().getId());
+        }
 
         dto.setName(bean.getName());
 

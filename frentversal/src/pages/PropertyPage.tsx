@@ -934,7 +934,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 justifyContent:
                                                     "center",
                                             }}
-                                            to="/inquiry"
+                                            to={`/agency/${property.agencyId}?propertyId=${property.id}`}
                                         >
                                             중개사 문의
                                         </Link>
