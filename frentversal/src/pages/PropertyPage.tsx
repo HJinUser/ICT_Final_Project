@@ -934,7 +934,9 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 justifyContent:
                                                     "center",
                                             }}
-                                            to="/inquiry"
+                                            to={`/inquiry?propertyId=${property.id}&propertyName=${encodeURIComponent(
+                                                property.name
+                                            )}&returnTo=${encodeURIComponent(`/property/${property.id}`)}`}
                                         >
                                             중개사 문의
                                         </Link>

@@ -120,6 +120,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/reports/me").hasAnyRole("USER", "BROKER")
                         // 신고 목록·상세 조회와 처리 권한은 관리자에게만 있다.
                         .requestMatchers("/reports", "/reports/**").hasRole("ADMIN")
+                        // 매물 상세의 "중개사 문의"는 일반 사용자만 보낼 수 있다.
+                        .requestMatchers(HttpMethod.POST, "/inquiry").hasRole("USER")
                         .requestMatchers(permitUrls).permitAll()
                         // 맞춤 추천과 취향 설정은 일반 사용자 전용 화면이다.
                         // 중개인과 관리자는 이 기능을 쓰지 않으므로 역할 자체로 막는다.
