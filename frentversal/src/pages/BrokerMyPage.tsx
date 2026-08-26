@@ -35,6 +35,10 @@ function BrokerMyPage({ user }: Props) {
 
     const [activeTab, setActiveTab] = useState<'info' | 'consultations'>('info');
 
+    const SOCIAL_LABEL: Record<Exclude<User['socialType'], 'NONE'>, string> = {
+        KAKAO: '카카오', GOOGLE: 'Google', NAVER: '네이버',
+    };
+
     // 회원 탈퇴 폼. 중개인은 패스워드리스가 가입 시 자동 등록되므로
     // 사용자 마이페이지와 달리 등록 여부 안내 없이 탈퇴 버튼만 둔다.
     const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -244,15 +248,22 @@ function BrokerMyPage({ user }: Props) {
                     {/*  내 정보 탭  */}
                     {activeTab === 'info' && (
                         <div className="grid-2" style={{ marginTop: 20 }}>
-                            <section className="card">
-                                <h2>계정</h2>
-                                <div className="stack" style={{ marginTop: 14 }}>
-                                    {/* TODO: 소셜 연동 상태는 로그인 응답(User)에 아직 socialType이 없어서 못 채운다.
-                                        중개인은 패스워드리스가 가입 시 자동 등록되므로, 사용자 마이페이지와 달리
-                                        여기서는 등록 여부 안내(패스워드리스 행) 자체를 넣지 않는다. */}
-                                    <p className="xs dim">계정 연동 정보는 준비 중입니다.</p>
-                                </div>
-                            </section>
+                            {user.socialType !== 'NONE' && (
+                                <section className="card">
+                                    <h2>계정</h2>
+                                    <div className="stack" style={{ marginTop: 14 }}>
+                                        <div className="row between">
+                                            <div>
+                                                <strong>연동 소셜 계정</strong>
+                                                <p className="xs dim">
+                                                    {SOCIAL_LABEL[user.socialType]} 계정과 연동되어 있습니다.
+                                                </p>
+                                            </div>
+                                            <span className="status green">연동됨</span>
+                                        </div>
+                                    </div>
+                                </section>
+                            )}
 
                             <section className="card">
                                 <h2>프로필</h2>

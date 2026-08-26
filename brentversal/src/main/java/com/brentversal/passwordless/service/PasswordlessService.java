@@ -3,6 +3,7 @@ package com.brentversal.passwordless.service;
 import com.brentversal.common.config.JwtTokenProvider;
 import com.brentversal.common.mail.MailService;
 import com.brentversal.member.constant.Role;
+import com.brentversal.member.constant.SocialType;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.member.service.MemberService;
@@ -70,6 +71,11 @@ public class PasswordlessService {
     @Transactional(readOnly = true)
     public RegisterInfoDto requestRegister(String email, String password, String signupToken){
         Member member = verifyForRegister(email, password, signupToken);
+
+        // 소셜 로그인으로 이미 연결된 계정은 패스워드리스를 중복으로 쓸 필요가 없으므로 막는다.
+        if (member.getSocialType() != SocialType.NONE) {
+            throw new IllegalStateException("소셜 로그인 계정은 패스워드리스를 등록할 수 없습니다.");
+        }
 
         if (client.isRegistered(email)) {
             throw new IllegalStateException("이미 패스워드리스에 등록된 계정입니다.");
@@ -154,11 +160,13 @@ public class PasswordlessService {
         verifyMember(email, password);
 
         boolean ok = client.withdrawal(email);
-        if (ok) {
-            Member member = memberRepository.findByEmail(email);
-            if (member != null) {
-                member.setPasswordlessRegistered(false);
-            }
+        if (!ok) {
+            throw new IllegalStateException("패스워드리스 해지에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        }
+
+        Member member = memberRepository.findByEmail(email);
+        if (member != null) {
+            member.setPasswordlessRegistered(false);
         }
     }
 

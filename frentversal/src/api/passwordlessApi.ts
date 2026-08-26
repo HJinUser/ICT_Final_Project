@@ -58,3 +58,8 @@ export async function exchangeResendLink(email: string, linkToken: string): Prom
     });
     return response.data;
 }
+
+// 해지 — 비밀번호가 있는 계정은 password로 본인 확인한다.
+export async function withdrawPasswordless(email: string, password: string): Promise<void> {
+    await customAxios.post('/passwordless/withdrawal', { email, password });
+}
