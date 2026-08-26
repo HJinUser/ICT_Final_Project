@@ -31,4 +31,7 @@ public interface AgencyReviewRepository extends JpaRepository<AgencyReview, Long
 
     // 미답변 리뷰 개수 (리뷰 관리 탭 상단의 "미답변 리뷰" 숫자)
     long countByAgencyIdAndReplyIsNull(Long agencyId);
+
+    // 이 회원이 쓴 후기 전체 (탈퇴 시 작성자 연결만 끊을 때 씀)
+    List<AgencyReview> findByMemberId(Long memberId);
 }

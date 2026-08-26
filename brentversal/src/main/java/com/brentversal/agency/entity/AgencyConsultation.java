@@ -27,7 +27,7 @@ public class AgencyConsultation {
 
     // 상담을 요청한 회원 (로그인한 사용자)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = true)
     @ToString.Exclude
     private Member member ;
 
