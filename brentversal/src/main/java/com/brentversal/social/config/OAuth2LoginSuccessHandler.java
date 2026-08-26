@@ -78,6 +78,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
                     .queryParam("role", member.getRole().name())
                     // 소셜 로그인도 일반 로그인과 동일하게, 프론트가 이 값으로 취향 초기 설정 리다이렉트 여부를 정한다.
                     .queryParam("preferenceCompleted", member.isPreferenceCompleted())
+                    .queryParam("socialType", member.getSocialType().name())
                     .build()
                     .encode(StandardCharsets.UTF_8)
                     .toUriString();
