@@ -80,3 +80,73 @@ export interface BrokerVerification {
     rejectReason: string | null;
     submittedAt: string | null;
 }
+
+// ── 중개인 홈 인사이트 (MyAgencyInsightsDto) ─────────────────
+//
+// 메인 화면 "처리할 내 매물" 아래 두 칸(매물 반응 추이 · 머신러닝 평가)이 함께 쓴다.
+// 두 칸 모두 "내 사무소" 라는 같은 기준으로 모으는 자료라 서버가 한 번에 내려 준다.
+
+/*
+  월별 반응 한 칸.
+
+  화면정의서에는 "월별 조회수"로 적혀 있지만 매물을 몇 번 열었는지는 서버가 남기지 않는다
+  (조회수 컬럼도, 열람 기록 테이블도 없다). 대신 사용자가 매물에 남긴 행동에는 시각이
+  함께 저장돼 있어서, 그 셋을 합쳐 "반응"으로 보여 준다.
+*/
+export interface MonthlyReaction {
+    month: string; // "2026-08"
+    label: string; // "8월"
+
+    favoriteCount: number;     // 관심 등록
+    feedbackCount: number;     // 추천 평가 (좋아요 + 싫어요)
+    consultationCount: number; // 상담 요청
+
+    total: number; // 위 셋의 합
+}
+
+// 싫어요 비중이 높은 매물 한 건 (FeedbackPropertyDto)
+export interface FeedbackProperty {
+    propertyId: number;
+    name: string;
+    dealType: string | null;
+    statusLabel: string | null;
+
+    likeCount: number;
+    dislikeCount: number;
+    totalCount: number;
+    dislikeRatio: number; // 싫어요 비중(%)
+
+    priceLabel: string;                  // 지금 호가
+    suggestedPriceLabel: string | null;  // AI 예상 시세(권장 호가). 예측 전이면 null
+
+    // 호가가 예상 시세보다 몇 % 높은지(양수) 또는 낮은지(음수). 비교할 수 없으면 null
+    gapPercent: number | null;
+}
+
+// 오래 남아 있는 매물 한 건 (StalePropertyDto)
+export interface StaleProperty {
+    propertyId: number;
+    name: string;
+    priceLabel: string;
+    statusLabel: string;
+
+    createdAt: string;    // "2026-07-02"
+    daysOnMarket: number; // 등록일로부터 며칠
+
+    favoriteCount: number;
+    dislikeCount: number;
+}
+
+export interface MyAgencyInsights {
+    trend: MonthlyReaction[];
+    trendTotal: number;
+    trendMonths: number;
+
+    likeCount: number;
+    dislikeCount: number;
+    feedbackTotal: number;
+    likeRatio: number; // 좋아요 비중(%)
+
+    dislikedProperties: FeedbackProperty[];
+    staleProperties: StaleProperty[];
+}

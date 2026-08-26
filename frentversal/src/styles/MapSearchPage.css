@@ -11,7 +11,7 @@
    프로토타입 기준 폭(280px)에서는 내용이 넘쳐 좌우 스크롤이 생겼다.
    공용 파일(common.css)은 다른 화면도 쓰므로 이 화면에서만 덮어쓴다. */
 .map-shell {
-    grid-template-columns: 330px minmax(420px, 1fr) 390px;
+    grid-template-columns: 330px minmax(420px, 1fr) 450px;
 }
 
 @media (max-width: 1200px) {
@@ -156,7 +156,6 @@
    화면 전체가 스크롤되면 지도와 필터가 같이 밀려 올라간다. */
 .list-panel {
     overflow-y: auto;
-}
 
 .filter-panel {
     overflow-y: auto;
@@ -224,4 +223,20 @@
 
 .map-adminfilter button:hover {
     text-decoration: underline;
+}
+
+/* 숨김(비공개) 매물 표식.
+   관리자 화면에만 섞여 나오는 매물이라, 사용자에게 안 보이는 상태라는 것이 표식에서도 드러나야 한다.
+   내 매물(.mine)·저평가(.deal) 표시보다 뒤에 두어 색을 덮어쓴다. */
+.map-canvas .marker.hidden-listing {
+    background: var(--bg-2);
+    border-color: var(--ink-3);
+    color: var(--ink-3);
+    border-style: dashed;
+}
+
+.map-canvas .marker.hidden-listing:hover,
+.map-canvas .marker.hidden-listing.on {
+    background: var(--ink-3);
+    color: #fff;
 }

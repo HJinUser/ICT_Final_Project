@@ -85,11 +85,8 @@ public class BrokerService {
         // 예전 파일은 지우지 않는다 — 분쟁·재신청 이력 확인용으로 그대로 보관한다.
         if(licenseImage != null && !licenseImage.isEmpty()){
             String uploadedUrl = fileService.upload(licenseImage);
-
-            // 기존에 "현재 사진"으로 표시돼 있던 이력이 있으면 과거 기록으로 내린다.
             brokerLicenseImageRepository.findByBrokerIdAndIsCurrentTrue(broker.getId())
                     .ifPresent(previous -> previous.setIsCurrent(false));
-
             BrokerLicenseImage history = new BrokerLicenseImage();
             history.setBroker(broker);
             history.setUrl(uploadedUrl);

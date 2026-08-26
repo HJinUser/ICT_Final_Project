@@ -60,6 +60,22 @@ public class MyAgencyController {
         }
     }
 
+    // 중개인 홈의 "매물 반응 추이" 와 "머신러닝 평가"
+    // GET /my-agency/insights
+    //
+    // 두 칸이 같은 화면에서 함께 그려지고 둘 다 "내 사무소" 라는 같은 기준으로 모으는 자료라
+    // 요청을 두 번 보내지 않도록 하나로 묶어 내려 준다.
+    @GetMapping("/insights")
+    public ResponseEntity<?> insights(Principal principal){
+        try {
+            return ResponseEntity.ok(myAgencyService.getInsights(principal.getName()));
+
+        } catch (IllegalArgumentException e) {
+            // 아직 사무소를 만들지 않은 중개인
+            return notFound(e);
+        }
+    }
+
     // 상단 요약(대시보드) 숫자
     // GET /my-agency/dashboard
     @GetMapping("/dashboard")
