@@ -39,9 +39,9 @@ const getPrimaryPrice = (property: PropertyResponse): number => {
 // 화면에 보여줄 가격 문자열 (월세는 "보증금/월세" 형태)
 const formatPrice = (property: PropertyResponse): string => {
     if (property.dealType === "MONTHLY") {
-        return `${(property.monthlyDeposit ?? 0).toLocaleString()}/${(property.monthlyRent ?? 0).toLocaleString()}`;
+        return `${(property.monthlyDeposit ?? 0).toLocaleString()}만 원/${(property.monthlyRent ?? 0).toLocaleString()}만 원`;
     }
-    return getPrimaryPrice(property).toLocaleString();
+    return `${getPrimaryPrice(property).toLocaleString()}만 원`;
 };
 
 // 관리자가 선택한 가격평가 상태별 화면 표시값
@@ -1150,7 +1150,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                                 justifyContent:
                                                     "center",
                                             }}
-                                            to="/inquiry"
+                                            to={`/agency/${property.agencyId}?propertyId=${property.id}`}
                                         >
                                             중개사 문의
                                         </Link>

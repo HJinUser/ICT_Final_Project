@@ -5,6 +5,7 @@ import com.brentversal.editrequest.service.PropertyEditRequestService;
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
+import com.brentversal.neighborhood.entity.Neighborhood;
 import jakarta.persistence.EntityNotFoundException;
 import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.common.ml.MlClient;
@@ -96,11 +97,9 @@ public class PropertyService {
 
     // 관리자가 아직 등록하지 않은 동네면 못 찾을 수 있다 — 그럴 땐 null로 두고, 나중에
     // 그 동네가 등록되면 다음 등록/수정 때 다시 연결되게 한다(과거 데이터를 소급 연결하진 않음).
-    private Long resolveNeighborhoodId(String district, String dong) {
+    private Neighborhood resolveNeighborhood(String district, String dong) {
         if (district == null || dong == null) return null;
-        return neighborhoodRepository.findByDistrictAndDong(district, dong)
-                .map(neighborhood -> neighborhood.getId())
-                .orElse(null);
+        return neighborhoodRepository.findByDistrictAndDong(district, dong).orElse(null);
     }
 
     // 방 개수 "3개 이상" 조건을 펼칠 때 쓰는 상한.
@@ -608,8 +607,7 @@ public class PropertyService {
         target.setAddress(source.getAddress());
         target.setSigungu(source.getSigungu());
         target.setDong(source.getDong());
-        target.setNeighborhoodId(
-                resolveNeighborhoodId(source.getSigungu(), source.getDong()));
+        target.setNeighborhood(resolveNeighborhood(source.getSigungu(), source.getDong()));
         target.setArea(source.getArea());
         target.setFloor(source.getFloor());
         target.setBuildYear(source.getBuildYear());
@@ -846,7 +844,7 @@ public class PropertyService {
         if (changes.getSigungu() != null) property.setSigungu(changes.getSigungu());
         if (changes.getDong() != null) property.setDong(changes.getDong());
 
-        property.setNeighborhoodId(resolveNeighborhoodId(property.getSigungu(), property.getDong()));
+        property.setNeighborhood(resolveNeighborhood(property.getSigungu(), property.getDong()));
         updateCoordinates(property, previousAddress);
         property.setArea(changes.getArea());
         property.setFloor(changes.getFloor());
@@ -1020,7 +1018,7 @@ public class PropertyService {
         // 요청 본문의 agency 값은 신뢰하지 않고 덮어쓴다 — 그대로 두면 남의 사무소 번호를
         // 넣어 그 사무소 명의로 매물을 등록할 수 있기 때문이다.
         bean.setAgency(myAgencyService.findMyAgency(email));
-        bean.setNeighborhoodId(resolveNeighborhoodId(bean.getSigungu(), bean.getDong()));
+        bean.setNeighborhood(resolveNeighborhood(bean.getSigungu(), bean.getDong()));
 
         kakaoGeocodingService.findCoordinates(bean.getAddress()).ifPresent(coordinates -> {
             bean.setLatitude(coordinates.latitude());

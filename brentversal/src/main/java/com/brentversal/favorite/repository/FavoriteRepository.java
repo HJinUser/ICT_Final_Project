@@ -20,7 +20,8 @@ public interface FavoriteRepository extends JpaRepository<Favorite, FavoriteId> 
     List<Favorite> findByMember(Member member);
 
     // 동네 탐색 카드의 "인기도" = 그 동네에 속한 매물들이 받은 찜(관심매물) 총합
-    long countByProperty_NeighborhoodId(Long neighborhoodId);
+    // Property.neighborhoodId(Long)가 Neighborhood 연관관계로 바뀌면서 경로가 한 단계 늘었다.
+    long countByProperty_Neighborhood_Id(Long neighborhoodId);
 
     /*
       중개인 홈의 "매물 반응 추이" — 내 사무소 매물이 월별로 몇 번 관심 등록됐는지.

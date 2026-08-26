@@ -1,6 +1,7 @@
 package com.brentversal.property.entity;
 
 import com.brentversal.agency.entity.Agency;
+import com.brentversal.neighborhood.entity.Neighborhood;
 import com.brentversal.property.constant.*;
 import com.brentversal.property_image.entity.PropertyImage;
 import com.brentversal.tag.entity.Tag;
@@ -34,17 +35,14 @@ public class Property {
     @Column(name = "property_id")
     private Long id;
 
-    @Column(name = "neighborhood_id")
-    private Long neighborhoodId;
-
     //     Agency와 Neighborhood 엔터티가 완성되면 위 Long agencyId와 Long neighborhoodId를 지우고 교체
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agency_id", nullable = false)
     private Agency agency;
 
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "neighborhood_id", nullable = false)
-//     private Neighborhood neighborhood;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "neighborhood_id", nullable = true)
+    private Neighborhood neighborhood;
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")

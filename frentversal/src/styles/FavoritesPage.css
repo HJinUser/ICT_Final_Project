@@ -12,19 +12,25 @@
 
 /* media-card 안에서 "상세 보기" 버튼을 카드 맨 아래로 붙이기 위해
    body를 세로 flex로 바꾼다. common.css의 .media-card .body는 기본적으로 flex가 아니다. */
+.favorite-card {
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.favorite-card .photo {
+    flex-shrink: 0;
+}
+
 .favorite-card .body {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
 }
 
 .favorite-detail-btn {
-    margin-top: auto;
+    margin-top: 0;
     width: 100%;
-}
-
-.favorite-card {
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .favorite-card--selected {

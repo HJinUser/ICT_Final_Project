@@ -7,6 +7,7 @@ import customAxios from './axiosInstance';
 import type {
     AdminBroker,
     AdminBrokerListResponse,
+    AdminMlStatus,
     AdminProperty,
     AdminPropertyListResponse,
 } from '../types/Admin';
@@ -128,6 +129,15 @@ export async function approveBroker(id: number): Promise<{ message: string; brok
 export async function rejectBroker(id: number, reason: string): Promise<{ message: string; broker: AdminBroker }> {
     const response = await customAxios.patch<{ message: string; broker: AdminBroker }>(
         `/admin/brokers/${id}/reject`, { reason });
+
+    return response.data;
+}
+
+// ── 모델 관리 ────────────────────────────────────────────────
+
+// 시세예측·추천·동네 군집·텍스트마이닝 모델의 현재 상태를 한 번에 받는다.
+export async function getAdminMlStatus(): Promise<AdminMlStatus> {
+    const response = await customAxios.get<AdminMlStatus>('/admin/ml/status');
 
     return response.data;
 }

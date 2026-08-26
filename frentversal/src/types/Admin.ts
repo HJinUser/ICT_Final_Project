@@ -83,3 +83,62 @@ export interface AdminBrokerListResponse {
     totalCount: number;
     pendingCount: number; // 심사 대기 건수
 }
+
+// ── 모델 관리 (AdminMlController) ────────────────────────────
+// FastAPI 가 price_metadata.json 을 그대로 내려 주는 부분(offline.price)은
+// 그쪽 저장 형식(snake_case)을 그대로 따른다. Spring 이 새로 만드는 부분은 camelCase 다.
+export interface MlPriceMetrics {
+    mae: number;
+    rmse: number;
+    r2: number;
+}
+
+export interface MlSalePriceStatus {
+    selected_model: string;
+    trained_at: string;
+    rows: number;
+    metrics: MlPriceMetrics;
+}
+
+export interface MlMonthlyPriceStatus {
+    selected_model: string;
+    trained_at: string;
+    rows: number;
+    metrics: {
+        deposit: MlPriceMetrics;
+        rent: MlPriceMetrics;
+        combined_mae: number;
+    };
+}
+
+export interface MlClusteringStatus {
+    analyzedAt: string | null;
+    neighborhoodCount: number;
+    selectedK: number | null;
+}
+
+export interface MlTextMiningStatus {
+    analyzedAt: string | null;
+    documentCount: number;
+    neighborhoodCount: number;
+}
+
+export interface MlRecommendationMetrics {
+    modelVersion: string;
+    likeCount: number;
+    dislikeCount: number;
+    fitRate: number | ''; // 평가가 하나도 없으면 서버가 빈 문자열을 준다
+}
+
+export interface AdminMlStatus {
+    offline: {
+        price: {
+            sale: MlSalePriceStatus;
+            jeonse: MlSalePriceStatus;
+            monthly: MlMonthlyPriceStatus;
+        };
+        clustering: MlClusteringStatus;
+        textMining: MlTextMiningStatus;
+    };
+    recommendation: MlRecommendationMetrics;
+}

@@ -187,12 +187,12 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                                                   Pageable pageable);
 
     // 동네 탐색 카드에 표시할 공개·게시중 매물 건수
-    long countByNeighborhoodIdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
+    long countByNeighborhood_IdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
 
     // 동네 탐색 카드의 "평균 전세가". 전세(JEONSE) 매물의 deposit 만 평균 낸다.
     // 해당 동네에 전세 매물이 하나도 없으면 avg 가 null 이 되므로, 서비스 쪽에서 0 으로 바꿔 준다.
     @Query("select avg(p.deposit) from Property p " +
-           " where p.neighborhoodId = :neighborhoodId and p.status = :status and p.visible = true " +
+           " where p.neighborhood.id = :neighborhoodId and p.status = :status and p.visible = true " +
            "   and p.dealType = com.brentversal.property.constant.DealType.JEONSE")
     Double findAverageJeonseDepositByNeighborhoodId(@Param("neighborhoodId") Long neighborhoodId,
                                                       @Param("status") PropertyStatus status);

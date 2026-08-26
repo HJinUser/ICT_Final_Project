@@ -90,10 +90,10 @@ public class AgencyPropertyDto {
         long eok = manwon / 10000;      // 억 단위
         long rest = manwon % 10000;     // 나머지 만원 단위
 
-        if(eok > 0 && rest > 0) return eok + "억 " + String.format("%,d", rest);
+        if(eok > 0 && rest > 0) return eok + "억 " + String.format("%,d", rest) + "만 원";
         if(eok > 0) return eok + "억";
 
-        return String.format("%,d", rest);
+        return String.format("%,d", rest) + "만 원";
     }
 
     // 주소에서 '동'으로 끝나는 조각을 찾아 동네 이름으로 쓴다. (예: "서울 서초구 반포동 12" -> "반포동")
