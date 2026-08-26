@@ -80,7 +80,7 @@ const DUMMY_PROPERTY: PropertyDetail = {
 // 역할 바꿔가며 확인하고 싶으면 이 값의 role만 "USER" | "BROKER" | "ADMIN"으로 바꿔서 새로고침
 // role을 "BROKER"로 바꾸면 id가 DUMMY_PROPERTY.ownerId(1)와 같아서 "내 매물" 전용 버튼도 보입니다.
 // undefined로 바꾸면(= 아예 user prop을 안 넘기면) 비회원 화면도 확인 가능합니다.
-const PREVIEW_USER = { id: 1, name: "김서초", email: "test@test.com", role: "ADMIN" as const, preferenceCompleted: true };
+const PREVIEW_USER = { id: 1, name: "김서초", email: "test@test.com", role: "ADMIN" as const, socialType: "NONE" as const, preferenceCompleted: true };
 
 function PropertyPreviewPage() {
     return <PropertyPage user={PREVIEW_USER} mockData={DUMMY_PROPERTY} />;
