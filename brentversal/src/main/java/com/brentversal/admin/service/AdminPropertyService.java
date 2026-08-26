@@ -119,6 +119,36 @@ public class AdminPropertyService {
         return AdminPropertyDto.of(property);
     }
 
+    /*
+      등록 취소 : 어떤 상태의 매물이든 관리자가 내린다.
+
+      반려(reject)는 '승인 대기' 매물만 대상으로 하는 심사 결과라서, 이미 게시 중인 매물을
+      내릴 때는 쓸 수 없다. 매물 상세에서 관리자가 누르는 "등록 취소" 는 이쪽이다.
+
+      되돌릴 수 없는 처리라서 이미 취소된 매물은 다시 손대지 않고 그대로 돌려준다.
+      (새로고침하지 않은 화면에서 두 번 눌러도 안내 메일이 두 번 나가지 않게 하기 위해서다)
+      임시저장은 중개인이 아직 작성 중인 매물이므로 관리자가 취소할 대상이 아니다.
+    */
+    @Transactional
+    public AdminPropertyDto cancel(Long id){
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 매물을 찾을 수 없습니다. id=" + id));
+
+        if(property.getStatus() == PropertyStatus.DRAFT){
+            throw new IllegalStateException("임시저장 매물은 관리자가 등록 취소할 수 없습니다.");
+        }
+
+        if(property.getStatus() == PropertyStatus.CANCELLED){
+            return AdminPropertyDto.of(property);
+        }
+
+        property.setStatus(PropertyStatus.CANCELLED);
+        notifyOwner(property,
+                "[전세역전] 매물 등록이 취소되었습니다",
+                "\"" + property.getName() + "\" 매물이 관리자에 의해 등록 취소되어 더 이상 노출되지 않습니다.");
+        return AdminPropertyDto.of(property);
+    }
+
     // 비공개 처리 : 공개 -> 비공개 (매물 자체는 남아있고 노출만 막음)
     @Transactional
     public AdminPropertyDto hide(Long id){
