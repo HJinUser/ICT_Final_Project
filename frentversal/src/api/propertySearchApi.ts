@@ -28,6 +28,8 @@ export async function searchProperties(params: PropertySearchParams = {}): Promi
             tagIds: params.tagIds?.length ? params.tagIds : undefined,
             mine: params.mine ? true : undefined,
             sort: params.sort || undefined,
+            // 공개 여부는 관리자만 고를 수 있다. 보내지 않으면 서버가 역할에 맞는 기본값을 쓴다.
+            visibility: params.visibility || undefined,
         },
 
         // 배열은 roomCounts=1&roomCounts=2 형태로 보낸다.
@@ -46,6 +48,8 @@ export async function fetchListings(params: PropertyListingsParams = {}): Promis
             sort: params.sort || undefined,
             page: params.page ?? 0,
             size: params.size ?? 6,
+            // 공개 여부는 관리자만 고를 수 있다. 보내지 않으면 서버가 역할에 맞는 기본값을 쓴다.
+            visibility: params.visibility || undefined,
         },
     });
 
@@ -53,6 +57,9 @@ export async function fetchListings(params: PropertyListingsParams = {}): Promis
 }
 
 // 매물유형에 실제로 존재하는 거래유형 목록 (/property/deal-types). 거래유형 칩을 채우는 데 쓴다.
+//
+// 로그인한 사람이 관리자면 서버가 숨김 매물까지 살펴 목록을 만든다.
+// 숨김 매물에만 있는 거래유형이 버튼에서 빠지면 그 매물을 걸러 볼 방법이 없기 때문이다.
 export async function fetchAvailableDealTypes(type?: string): Promise<string[]> {
     const response = await customAxios.get<string[]>('/property/deal-types', {
         params: { type: type && type !== 'ALL' ? type : undefined },

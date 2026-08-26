@@ -43,6 +43,10 @@ public class PropertySearchDto {
     private String status ;      // 거래 상태 코드
     private String statusLabel ; // 게시중 / 거래 진행중 ...
 
+    // 공개 여부. false 면 관리자가 내려 둔 숨김 매물이다.
+    // 목록에 숨김 매물이 섞여 나오는 것은 관리자 화면뿐이라, 카드에 표시를 붙이는 데 쓴다.
+    private Boolean visible ;
+
     // 이 매물을 올린 중개사무소. 중개인 화면에서 "내 매물"을 구분하는 데 쓴다.
     private Long agencyId ;
     private String agencyName ;
@@ -92,6 +96,7 @@ public class PropertySearchDto {
         dto.setAreaLabel(card.getArea());
         dto.setStatus(card.getStatus());
         dto.setStatusLabel(card.getStatusLabel());
+        dto.setVisible(bean.getVisible());
 
         dto.setPrice(primaryPrice(bean));
         dto.setComparablePrice(comparablePrice(bean));

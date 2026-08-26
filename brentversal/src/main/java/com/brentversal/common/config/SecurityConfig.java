@@ -98,8 +98,13 @@ public class SecurityConfig {
                         // 아래 "/property/**" 는 등록·수정을 중개인에게만 여는 규칙이라,
                         // 이 줄이 먼저 와야 한줄평이 그 규칙에 걸려 403 이 되지 않는다.
                         .requestMatchers(HttpMethod.POST, "/property/*/reviews").hasRole("USER")
+                        // 매물 수정은 등록한 중개인 말고 관리자도 할 수 있다.
+                        // (매물 상세의 관리자 전용 "매물 수정" 버튼이 같은 수정 화면을 연다)
+                        // 수정용 AI 예측 -> 저장(PUT) 순서로 진행되므로 두 경로를 함께 열어야 한다.
+                        // "누구의 매물인지" 는 PropertyService 가 역할에 맞게 다시 확인한다.
+                        .requestMatchers(HttpMethod.POST, "/property/*/edit-ai-price").hasAnyRole("BROKER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/property/**").hasRole("BROKER")
-                        .requestMatchers(HttpMethod.PUT, "/property/**").hasRole("BROKER")
+                        .requestMatchers(HttpMethod.PUT, "/property/**").hasAnyRole("BROKER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()

@@ -44,6 +44,15 @@ public class PropertySearchCondition {
     // 중개인이 "내 매물"만 볼 때 true. 로그인한 사람의 사무소 매물만 걸러 준다.
     private boolean mine ;
 
+    /*
+      공개 여부 필터 (ALL / VISIBLE / HIDDEN).
+
+      숨김 매물은 관리자가 내려 둔 매물이라 사용자 화면에 나오면 안 된다.
+      그래서 이 값은 관리자만 쓸 수 있고, 관리자가 아니면 서비스가 VISIBLE 로 되돌린다.
+      (주소에 ?visibility=ALL 을 직접 붙여도 통하지 않는다)
+    */
+    private String visibility ;
+
     // 정렬 기준. 화면정의서 3-1의 오른쪽 사이드바 정렬 메뉴와 짝을 이룬다.
     //   LATEST(기본) / PRICE_ASC / PRICE_DESC / AREA_DESC / AREA_ASC
     private String sort ;

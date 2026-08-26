@@ -1,0 +1,47 @@
+/*
+  관리자 매물 수정 요청 화면 전용 스타일 (pages/PropertyEditRequestPage.tsx)
+
+  공통 클래스(.card .stack .status .field 등)는 common.css 가 이미 전역으로 깔려 있으므로
+  여기서 다시 정의하지 않는다. 이 화면에만 필요한 것에는 editreq- 접두어를 붙여
+  다른 화면의 같은 이름과 부딪히지 않게 한다.
+*/
+
+/* 입력 글자 수 표시 */
+.editreq-count {
+    margin-top: 6px;
+    text-align: right;
+}
+
+/* 실패 안내 */
+.editreq-error {
+    margin-top: 10px;
+    color: var(--red);
+}
+
+/* 성공 안내 */
+.editreq-message {
+    margin-top: 10px;
+    color: var(--v);
+}
+
+/* 지난 요청 한 건 */
+.editreq-item {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    background: var(--bg-2);
+    display: grid;
+    gap: 8px;
+}
+
+/*
+  요청 사유는 관리자가 줄바꿈을 넣어 적는다.
+  pre-wrap 이 없으면 줄바꿈이 사라져 한 줄로 붙어 버린다.
+*/
+.editreq-reason {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}

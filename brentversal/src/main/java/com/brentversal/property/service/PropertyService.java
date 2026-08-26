@@ -1,6 +1,10 @@
 package com.brentversal.property.service;
 
 import com.brentversal.agency.service.MyAgencyService;
+import com.brentversal.editrequest.service.PropertyEditRequestService;
+import com.brentversal.member.constant.Role;
+import com.brentversal.member.entity.Member;
+import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.neighborhood.entity.Neighborhood;
 import jakarta.persistence.EntityNotFoundException;
 import com.brentversal.common.geocoding.KakaoGeocodingService;
@@ -15,8 +19,11 @@ import com.brentversal.property.constant.PropertyType;
 import com.brentversal.property.dto.AiPricePreviewResponseDto;
 import com.brentversal.property.dto.PropertyDraftSummaryDto;
 import com.brentversal.property.dto.PropertyResponseDto;
+import com.brentversal.property.dto.PricePointDto;
+import com.brentversal.property.dto.PropertyPriceTrendDto;
 import com.brentversal.property.dto.PropertySearchCondition;
 import com.brentversal.property.dto.PropertySearchDto;
+import com.brentversal.realestate.repository.RealEstateTransactionRepository;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
 import com.brentversal.agency.entity.Agency;
@@ -78,6 +85,16 @@ public class PropertyService {
     // 매물의 sigungu·dong으로 어느 동네(Neighborhood)에 속하는지 찾아 neighborhoodId를 채우는 데 쓴다.
     private final NeighborhoodRepository neighborhoodRepository;
 
+    // 요청한 사람이 관리자인지 확인할 때 쓴다.
+    // 관리자는 중개사무소가 없어서 "내 사무소 매물이 맞는지" 로는 판별할 수 없기 때문이다.
+    private final MemberRepository memberRepository;
+
+    // 매물을 수정하면 그 매물에 걸려 있던 관리자 수정 요청을 처리 완료로 닫는다.
+    private final PropertyEditRequestService propertyEditRequestService;
+
+    // 매물 상세의 시세 그래프에 쓸 국토부 아파트 매매 실거래가
+    private final RealEstateTransactionRepository realEstateTransactionRepository;
+
     // 관리자가 아직 등록하지 않은 동네면 못 찾을 수 있다 — 그럴 땐 null로 두고, 나중에
     // 그 동네가 등록되면 다음 등록/수정 때 다시 연결되게 한다(과거 데이터를 소급 연결하진 않음).
     private Neighborhood resolveNeighborhood(String district, String dong) {
@@ -88,6 +105,315 @@ public class PropertyService {
     // 방 개수 "3개 이상" 조건을 펼칠 때 쓰는 상한.
     // Property.roomCount 의 @Max(6) 과 같은 값이라, 그쪽이 바뀌면 여기도 함께 바꾼다.
     private static final int MAX_ROOM_COUNT = 6;
+
+    /*
+      매물 상세 "AI 시세예측" 그래프 자료.
+
+      1순위 : 국토부 아파트 매매 실거래가의 연도별 평균 (원래 목표한 시세 추이)
+      2순위 : 같은 동네·같은 조건 매물과의 시세 비교
+      둘 다 만들 수 없으면 근거가 없다고 알려 준다. 화면은 빈 상자 대신 안내 문구를 보여 준다.
+
+      실거래가를 늘 쓸 수 없는 이유는 국토부가 '아파트 매매'만 제공하기 때문이다.
+      전세·월세이거나 아파트가 아닌 매물은 애초에 맞출 자료가 없어서 2순위로 내려간다.
+    */
+    @Transactional(readOnly = true)
+    public PropertyPriceTrendDto getPriceTrend(Long id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("해당 매물을 찾을 수 없습니다."));
+
+        Long aiPrice = getPrimaryAiPrice(property);
+        Long currentPrice = getPrimaryPrice(property);
+
+        PropertyPriceTrendDto transaction = buildTransactionTrend(property);
+
+        if (transaction != null) {
+            transaction.setAiPrice(aiPrice);
+            transaction.setCurrentPrice(currentPrice);
+            return transaction;
+        }
+
+        PropertyPriceTrendDto neighborhood = buildNeighborhoodTrend(property, aiPrice, currentPrice);
+
+        if (neighborhood != null) {
+            return neighborhood;
+        }
+
+        return PropertyPriceTrendDto.none(
+                "이 매물과 비교할 실거래가와 같은 조건의 매물이 아직 없습니다.");
+    }
+
+    // 그래프에서 쓰는 대표 AI 예상 시세 (월세는 보증금 기준)
+    private Long getPrimaryAiPrice(Property property) {
+        if (property.getDealType() == null) return null;
+
+        return switch (property.getDealType()) {
+            case SALE -> property.getAiPrice();
+            case JEONSE -> property.getAiDeposit();
+            case MONTHLY -> property.getAiMonthlyDeposit();
+        };
+    }
+
+    /*
+      국토부 실거래가 기반 연도별 추이.
+
+      쓸 수 없는 조건이면 null 을 돌려주고, 부르는 쪽이 동네 비교로 넘어간다.
+        - 아파트 매매가 아님 (국토부가 그 자료만 준다)
+        - 행정동 코드가 없음 (시군구 코드를 뽑을 수 없다)
+        - 전용면적이 없음 (비슷한 크기끼리 비교할 수 없다)
+        - 모은 연도가 2개 미만 (한 점짜리는 '추이'가 아니다)
+    */
+    private PropertyPriceTrendDto buildTransactionTrend(Property property) {
+        if (property.getType() != PropertyType.APARTMENT
+                || property.getDealType() != DealType.SALE) {
+            return null;
+        }
+
+        String adminCode = property.getAdminCode();
+
+        // 국토부 지역코드는 법정동 시군구 5자리다. 행정동 코드 앞 5자리가 같은 값이다.
+        if (adminCode == null || adminCode.length() < 5) return null;
+
+        BigDecimal area = property.getArea();
+
+        if (area == null || area.signum() <= 0) return null;
+
+        String regionCode = adminCode.substring(0, 5);
+
+        BigDecimal minArea = area.multiply(BigDecimal.valueOf(1 - TRANSACTION_AREA_TOLERANCE));
+        BigDecimal maxArea = area.multiply(BigDecimal.valueOf(1 + TRANSACTION_AREA_TOLERANCE));
+
+        List<Object[]> rows =
+                realEstateTransactionRepository.findYearlyAverageByRegionAndArea(regionCode, minArea, maxArea);
+
+        if (rows.size() < MIN_TREND_POINTS) return null;
+
+        PropertyPriceTrendDto dto = new PropertyPriceTrendDto();
+
+        dto.setSource(PropertyPriceTrendDto.SOURCE_TRANSACTION);
+        dto.setTitle("실거래가 추이");
+        dto.setDescription(String.format(
+                "국토교통부 아파트 매매 실거래가 · %s 전용 %d㎡ 안팎(±%d%%) 연도별 평균입니다.",
+                property.getSigungu() == null ? "같은 지역" : property.getSigungu(),
+                area.intValue(),
+                (int) (TRANSACTION_AREA_TOLERANCE * 100)));
+
+        List<PricePointDto> points = new ArrayList<>();
+
+        for (Object[] row : rows) {
+            Long average = (row[1] instanceof Number number) ? Math.round(number.doubleValue()) : null;
+
+            if (average == null) continue;
+
+            points.add(PricePointDto.of(
+                    String.valueOf(toIntValue(row[0])),
+                    average,
+                    toIntValue(row[2]),
+                    false));
+        }
+
+        // 마지막에 이 매물의 호가를 한 칸 더 붙여, 실거래 흐름과 바로 견줄 수 있게 한다
+        Long currentPrice = getPrimaryPrice(property);
+
+        if (currentPrice != null) {
+            points.add(PricePointDto.of("이 매물", currentPrice, null, true));
+        }
+
+        dto.setPoints(points);
+
+        return dto;
+    }
+
+    /*
+      같은 조건 매물과의 시세 비교.
+
+      실거래가가 없는 매물(전세·월세, 아파트가 아닌 매물)에서 쓴다.
+      비교 대상을 좁은 것부터 찾아 내려가며, 실제로 매물이 있는 두 가지까지만 막대로 세운다.
+
+        1) 같은 동 · 같은 매물유형
+        2) 같은 구 · 같은 매물유형
+        3) 같은 구 (매물유형 무관)
+        4) 서울 전체 (매물유형 무관)
+
+      한 단계로 못 박지 않는 이유 : 서비스 초기에는 한 동네에 같은 유형 매물이 한 건뿐인 경우가
+      대부분이라, 좁은 조건만 보면 거의 모든 매물이 "비교할 자료 없음"이 된다.
+      대신 무엇을 평균 낸 값인지 막대 이름에 그대로 적어, 넓은 범위 평균을 좁은 범위처럼
+      읽는 일이 없게 한다("서초구 전세 평균" / "서울 전세 평균").
+    */
+    private PropertyPriceTrendDto buildNeighborhoodTrend(Property property, Long aiPrice, Long currentPrice) {
+        if (property.getDealType() == null || property.getType() == null) return null;
+
+        // 구·동 컬럼은 주소 검색을 붙인 뒤 등록한 매물에만 채워져 있다.
+        // 비어 있는 예전 자료는 지번 주소라 주소에서 뽑아 쓴다. 그러지 않으면 예전 매물이
+        // 전부 "비교할 자료 없음"이 되어 그래프가 계속 비어 보인다.
+        String gu = blankToNull(property.getSigungu());
+        if (gu == null) gu = guFromAddress(property.getAddress());
+
+        String dong = blankToNull(property.getDong());
+        if (dong == null) dong = dongFromAddress(property.getAddress());
+
+        String typeLabel = toTypeLabel(property.getType());
+        String dealLabel = toDealTypeLabel(property.getDealType());
+
+        // 좁은 조건부터. 앞의 것이 있으면 그것을 먼저 쓴다.
+        List<PricePointDto> candidates = new ArrayList<>();
+
+        if (gu != null && dong != null) {
+            addAveragePoint(candidates, property, property.getType(), gu, dong,
+                    dong + " " + typeLabel + " 평균");
+        }
+
+        if (gu != null) {
+            addAveragePoint(candidates, property, property.getType(), gu, null,
+                    gu + " " + typeLabel + " 평균");
+
+            addAveragePoint(candidates, property, null, gu, null,
+                    gu + " " + dealLabel + " 평균");
+        }
+
+        addAveragePoint(candidates, property, null, null, null,
+                "서울 " + dealLabel + " 평균");
+
+        if (candidates.isEmpty()) return null;
+
+        PropertyPriceTrendDto dto = new PropertyPriceTrendDto();
+
+        dto.setSource(PropertyPriceTrendDto.SOURCE_NEIGHBORHOOD);
+        dto.setTitle("동네 시세 비교");
+        dto.setDescription(
+                "이 지역 실거래가가 아직 수집되지 않아, 등록된 같은 조건 매물의 평균 호가와 견줍니다.");
+
+        List<PricePointDto> points = new ArrayList<>();
+
+        if (currentPrice != null) {
+            points.add(PricePointDto.of("이 매물", currentPrice, null, true));
+        }
+
+        if (aiPrice != null) {
+            points.add(PricePointDto.of("AI 예상", aiPrice, null, false));
+        }
+
+        // 막대가 너무 많으면 좁은 카드에서 서로 붙어 읽기 어렵다. 가장 좁은 두 가지만 쓴다.
+        points.addAll(candidates.stream().limit(NEIGHBORHOOD_POINT_LIMIT).toList());
+
+        dto.setPoints(points);
+        dto.setAiPrice(aiPrice);
+        dto.setCurrentPrice(currentPrice);
+
+        return dto;
+    }
+
+    /*
+      조건에 맞는 매물의 평균 호가를 구해 막대 하나로 담는다.
+
+      매물이 한 건도 없으면 아무것도 담지 않는다.
+      이름이 같은 막대(예: 같은 구에 같은 유형 매물밖에 없어 두 조건의 결과가 같은 경우)는
+      한 번만 담아, 같은 숫자가 두 번 서지 않게 한다.
+    */
+    private void addAveragePoint(List<PricePointDto> target, Property property,
+                                 PropertyType type, String gu, String dong, String label) {
+        long[] average = findAverage(property, type, gu, dong);
+
+        if (average[1] == 0) return;
+
+        for (PricePointDto point : target) {
+            if (point.getLabel().equals(label)) return;
+            // 대상 매물이 같으면 이름만 다른 같은 값이므로 한 번만 세운다
+            if (point.getPrice() != null && point.getPrice() == average[0]
+                    && point.getCount() != null && point.getCount() == (int) average[1]) {
+                return;
+            }
+        }
+
+        target.add(PricePointDto.of(label, average[0], (int) average[1], false));
+    }
+
+    // 같은 조건 매물의 평균 호가와 건수를 [평균, 건수] 로 돌려준다. 없으면 [0, 0] 이다.
+    private long[] findAverage(Property property, PropertyType type, String gu, String dong) {
+        List<Object[]> rows = propertyRepository.findAveragePrice(
+                PropertyStatus.ACTIVE,
+                property.getId(),
+                property.getDealType(),
+                type,
+                blankToNull(gu),
+                blankToNull(dong));
+
+        if (rows.isEmpty() || rows.get(0) == null) return new long[]{0L, 0L};
+
+        Object[] row = rows.get(0);
+
+        long count = (row[1] instanceof Number number) ? number.longValue() : 0L;
+
+        if (count == 0 || !(row[0] instanceof Number average)) return new long[]{0L, 0L};
+
+        return new long[]{ Math.round(average.doubleValue()), count };
+    }
+
+    // 막대 이름에 쓰는 한글 라벨 (다른 화면의 표기와 같게 맞춘다)
+    private String toTypeLabel(PropertyType type) {
+        if (type == null) return "매물";
+
+        return switch (type) {
+            case ONE_TWO_ROOM -> "원/투룸";
+            case APARTMENT -> "아파트";
+            case VILLA -> "주택/빌라";
+            case OFFICETEL -> "오피스텔";
+        };
+    }
+
+    private String toDealTypeLabel(DealType dealType) {
+        if (dealType == null) return "매물";
+
+        return switch (dealType) {
+            case SALE -> "매매";
+            case JEONSE -> "전세";
+            case MONTHLY -> "월세";
+        };
+    }
+
+    // 비교 막대는 두 개까지만 세운다 (이 매물 + AI 예상까지 하면 최대 네 개)
+    private static final int NEIGHBORHOOD_POINT_LIMIT = 2 ;
+
+    private int toIntValue(Object value) {
+        return (value instanceof Number number) ? number.intValue() : 0;
+    }
+
+    // 주소에서 구(또는 시·군) 조각을 찾는다. 지도 검색 카드(PropertySearchDto)와 같은 규칙이다.
+    private String guFromAddress(String address) {
+        if (address == null) return null;
+
+        String[] tokens = address.split(" ");
+
+        for (String token : tokens) {
+            if (token.endsWith("구")) return token;
+        }
+
+        for (String token : tokens) {
+            if (token.endsWith("특별시") || token.endsWith("광역시")) continue;
+            if (token.endsWith("시") || token.endsWith("군")) return token;
+        }
+
+        return null;
+    }
+
+    // 주소에서 동네 조각(동·가·읍·면)을 찾는다. 못 찾으면 null 이고 구 단위로만 비교한다.
+    private String dongFromAddress(String address) {
+        if (address == null) return null;
+
+        for (String token : address.split(" ")) {
+            if (token.endsWith("동") || token.endsWith("가") || token.endsWith("읍") || token.endsWith("면")) {
+                return token;
+            }
+        }
+
+        return null;
+    }
+
+    // 실거래가를 견줄 때 허용할 전용면적 차이 (±20%).
+    // 너무 좁히면 표본이 없고, 너무 넓히면 평수가 다른 거래가 섞여 평균이 의미를 잃는다.
+    private static final double TRANSACTION_AREA_TOLERANCE = 0.20 ;
+
+    // 점이 하나뿐이면 '추이'라고 할 수 없어서 최소 두 해는 있어야 쓴다.
+    private static final int MIN_TREND_POINTS = 2 ;
 
     /*
       매물 상세 지도에 찍을 주변시설을 가져온다.
@@ -170,6 +496,65 @@ public class PropertyService {
         }
 
         return property;
+    }
+
+    // 요청한 사람이 관리자인지 확인한다.
+    //
+    // 관리자는 중개사무소가 없어서 findMyPropertyOrThrow 의 "내 사무소 매물이 맞는지" 검사를
+    // 통과할 수 없다(사무소를 찾는 단계에서 예외가 난다). 그래서 소유자 검사 앞에 이 검사를 둔다.
+    private boolean isAdmin(String email) {
+        if (email == null) return false;
+
+        Member member = memberRepository.findByEmail(email);
+
+        return member != null && member.getRole() == Role.ADMIN;
+    }
+
+    /*
+      매물을 수정할 수 있는 사람인지 확인한 뒤 매물을 돌려준다.
+
+      중개인 : 자기 사무소의 매물만
+      관리자 : 모든 매물 (신고·오탈자 정정처럼 관리자가 직접 손봐야 하는 경우가 있다)
+
+      상태변경·취소·공개전환은 관리자용 경로(/admin/properties/**)가 따로 있으므로
+      이 검사는 매물 수정(PUT /property/{id}, 수정용 AI 예측)에서만 쓴다.
+    */
+    private Property findEditablePropertyOrThrow(Long id, String email) {
+        if (isAdmin(email)) {
+            return findPropertyOrThrow(id);
+        }
+
+        return findMyPropertyOrThrow(id, email);
+    }
+
+    /*
+      수정용 shadow DRAFT 가 지금 고치는 매물의 것이 맞는지 확인한다.
+
+      중개인은 자기 사무소, 관리자는 '원본 매물의 사무소' 를 기준으로 본다.
+      관리자에게는 자기 사무소가 없으므로 원본을 기준으로 삼아야, 엉뚱한 DRAFT 번호를
+      넣어 다른 매물의 예측 결과를 끌어다 쓰는 일을 막을 수 있다.
+    */
+    private Property findEditableDraftOrThrow(Long draftId, String email, Property original) {
+        if (!isAdmin(email)) {
+            return findMyDraftOrThrow(draftId, email);
+        }
+
+        Property draft = propertyRepository.findById(draftId)
+                .orElseThrow(() -> new IllegalArgumentException("임시 저장된 매물을 찾을 수 없습니다."));
+
+        Long ownerAgencyId = original.getAgency() == null ? null : original.getAgency().getId();
+
+        if (ownerAgencyId == null
+                || draft.getAgency() == null
+                || !draft.getAgency().getId().equals(ownerAgencyId)) {
+            throw new IllegalArgumentException("이 매물의 임시저장 자료가 아닙니다.");
+        }
+
+        if (draft.getStatus() != PropertyStatus.DRAFT) {
+            throw new IllegalStateException("이미 임시저장 상태가 아닌 매물입니다.");
+        }
+
+        return draft;
     }
 
     // 현재 로그인한 중개인의 DRAFT인지 확인한 뒤 해당 매물을 반환하는 메서드임
@@ -415,8 +800,11 @@ public class PropertyService {
             List<MultipartFile> newFiles,
             String email) {
 
-        Property property = findMyPropertyOrThrow(id, email);
-        Property aiDraft = findMyDraftOrThrow(aiDraftId, email);
+        // 관리자도 매물을 고칠 수 있다. 소유자 검사는 이 안에서 역할에 맞게 갈린다.
+        boolean editedByAdmin = isAdmin(email);
+
+        Property property = findEditablePropertyOrThrow(id, email);
+        Property aiDraft = findEditableDraftOrThrow(aiDraftId, email, property);
 
         // 현재 값/권한/상태가 조건을 만족하는지 확인함
         if (Boolean.TRUE.equals(aiDraft.getVisible())) {
@@ -441,6 +829,7 @@ public class PropertyService {
 
         // 지오코딩 재조회 여부를 판단하려면 바뀌기 전 주소가 필요하다
         String previousAddress = property.getAddress();
+        // .. 축약..
 
         property.setName(changes.getName());
         property.setType(changes.getType());
@@ -521,11 +910,21 @@ public class PropertyService {
         property.setAiMonthlyDeposit(aiDraft.getAiMonthlyDeposit());
         property.setAiMonthlyRent(aiDraft.getAiMonthlyRent());
 
-        // 기존 관리자 가격평가를 지워 수정 매물을 재평가하도록 초기화함
-        property.setPriceEvaluation(null);
+        /*
+          중개인이 고친 매물은 관리자 재승인을 다시 받아야 한다.
+          가격이 바뀌었을 수 있으므로 관리자 가격평가도 함께 지워 다시 매기게 한다.
 
-        // 기존 매물 수정 완료 후 관리자 재승인 대기 PENDING으로 변경함
-        property.setStatus(PropertyStatus.PENDING);
+          관리자가 직접 고친 경우에는 그대로 둔다. 심사하는 사람이 곧 고친 사람이라
+          승인 대기로 되돌릴 이유가 없고, 게시 중이던 매물이 관리자가 오탈자 하나 고쳤다고
+          화면에서 사라지는 편이 더 문제이기 때문이다.
+        */
+        if (!editedByAdmin) {
+            // 기존 관리자 가격평가를 지워 수정 매물을 재평가하도록 초기화함
+            property.setPriceEvaluation(null);
+
+            // 기존 매물 수정 완료 후 관리자 재승인 대기 PENDING으로 변경함
+            property.setStatus(PropertyStatus.PENDING);
+        }
 
         // Repository를 통해 필요한 DB 데이터를 조회/변경함
         Property saved = propertyRepository.save(property);
@@ -533,6 +932,19 @@ public class PropertyService {
         // 수정 작업이 끝났으므로 임시로 사용한 hidden shadow DRAFT를 삭제함
         // Repository를 통해 필요한 DB 데이터를 조회/변경함
         propertyRepository.delete(aiDraft);
+
+        /*
+          이 매물에 걸려 있던 관리자 수정 요청을 처리 완료로 닫는다.
+
+          중개인이 따로 "확인했습니다" 를 누르게 하면 실제로 고쳤는지와 어긋난다.
+          매물 수정 자체가 요청에 대한 응답이므로 이 시점에 닫는다.
+          요청을 닫다가 실패해도 매물 수정까지 되돌아가면 안 되므로 예외를 여기서 삼킨다.
+        */
+        try {
+            propertyEditRequestService.resolveOpenRequests(saved.getId());
+        } catch (Exception e) {
+            log.warn("매물 수정 요청 처리 완료 반영 실패. propertyId={}", saved.getId(), e);
+        }
 
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return PropertyResponseDto.of(saved);
@@ -667,6 +1079,8 @@ public class PropertyService {
 
         List<Property> found = propertyRepository.search(
                 PropertyStatus.ACTIVE,
+                // null 이면 공개·숨김을 가리지 않는다. 관리자가 아니면 항상 공개 매물만 본다.
+                toVisibleFlag(resolveVisibility(condition.getVisibility(), email)),
                 blankToNull(condition.getKeyword()),
                 blankToNull(condition.getRegion()),
                 blankToNull(condition.getDong()),
@@ -695,15 +1109,35 @@ public class PropertyService {
 
     // 매물 확인 화면 - 매물유형 탭을 고르면 그 유형에 실제 있는 거래유형만 버튼으로 보여준다.
     @Transactional(readOnly = true)
-    public List<String> findAvailableDealTypes(String type) {
-        return propertyRepository.findDistinctDealTypes(PropertyStatus.ACTIVE, toType(type))
-                .stream()
+    public List<String> findAvailableDealTypes(String type, String email) {
+        PropertyType typeEnum = toType(type);
+
+        // 관리자는 숨김 매물도 보므로, 거래유형 버튼도 숨김 매물까지 살펴 만든다.
+        // (숨김 매물에만 있는 거래유형이 버튼에서 빠지면 그 매물을 걸러 볼 방법이 없다)
+        List<DealType> found = isAdmin(email)
+                ? propertyRepository.findDistinctDealTypesIncludingHidden(PropertyStatus.ACTIVE, typeEnum)
+                : propertyRepository.findDistinctDealTypes(PropertyStatus.ACTIVE, typeEnum, true);
+
+        return found.stream()
                 .map(Enum::name)
                 .toList();
     }
 
+    /*
+      매물 확인 화면(/property/listings) 목록.
+
+      visibility 는 공개 여부 필터다.
+        VISIBLE : 공개 매물만 (일반 사용자·중개인·비회원은 항상 이 값으로 고정된다)
+        HIDDEN  : 숨김 매물만 (관리자 전용)
+        ALL     : 공개·숨김 모두 (관리자 전용, 관리자 기본값)
+
+      숨김 매물은 관리자가 내려 둔 매물이라 사용자 화면에 나오면 안 된다.
+      그래서 값이 무엇으로 들어오든 관리자가 아니면 VISIBLE 로 되돌린다.
+      (주소에 ?visibility=ALL 을 직접 붙여도 통하지 않는다)
+    */
     @Transactional(readOnly = true)
-    public Map<String, Object> browseListings(String type, String dealType, String sort, int page, int size) {
+    public Map<String, Object> browseListings(String type, String dealType, String sort,
+                                              int page, int size, String visibility, String email) {
         PropertyType typeEnum = toType(type);
         DealType dealTypeEnum = toDealType(dealType);
 
@@ -711,15 +1145,67 @@ public class PropertyService {
         boolean isPriceSort = "PRICE_ASC".equalsIgnoreCase(sort) || "PRICE_DESC".equalsIgnoreCase(sort);
         String effectiveSort = (!dealTypeChosen && isPriceSort) ? "LATEST" : sort;
 
+        String effectiveVisibility = resolveVisibility(visibility, email);
+
         Pageable pageable = PageRequest.of(page, size, toSort(effectiveSort));
-        Page<Property> result = propertyRepository.findForListings(PropertyStatus.ACTIVE, typeEnum, dealTypeEnum, pageable);
+
+        Boolean visibleFlag = toVisibleFlag(effectiveVisibility);
+
+        Page<Property> result = (visibleFlag == null)
+                ? propertyRepository.findForListingsIncludingHidden(
+                        PropertyStatus.ACTIVE, typeEnum, dealTypeEnum, pageable)
+                : propertyRepository.findForListings(
+                        PropertyStatus.ACTIVE, typeEnum, dealTypeEnum, visibleFlag, pageable);
 
         return Map.of(
                 "content", result.getContent().stream().map(PropertySearchDto::of).toList(),
                 "totalCount", result.getTotalElements(),
                 "totalPages", result.getTotalPages(),
-                "page", page
+                "page", page,
+                // 화면이 지금 어떤 조건으로 받았는지 알 수 있게 함께 내려 준다.
+                // 관리자가 아닌 사람이 ALL 을 보내도 VISIBLE 로 되돌아온다는 것이 응답에 드러난다.
+                "visibility", effectiveVisibility
         );
+    }
+
+    /*
+      공개 여부 필터 값을 질의에 넣을 값으로 바꾼다.
+
+        ALL     -> null  (조건을 걸지 않는다)
+        VISIBLE -> true
+        HIDDEN  -> false
+    */
+    private Boolean toVisibleFlag(String visibility) {
+        if (VISIBILITY_ALL.equals(visibility)) return null;
+
+        return VISIBILITY_VISIBLE.equals(visibility);
+    }
+
+    // 매물 확인 화면·지도 검색의 공개 여부 필터 값
+    private static final String VISIBILITY_VISIBLE = "VISIBLE";
+    private static final String VISIBILITY_HIDDEN = "HIDDEN";
+    private static final String VISIBILITY_ALL = "ALL";
+
+    // 요청한 사람이 실제로 쓸 수 있는 공개 여부 값으로 바꾼다.
+    // 관리자가 아니면 무엇을 보내든 공개 매물만 본다.
+    private String resolveVisibility(String visibility, String email) {
+        if (!isAdmin(email)) {
+            return VISIBILITY_VISIBLE;
+        }
+
+        // 관리자가 값을 고르지 않았으면 숨김 매물까지 함께 본다.
+        // 관리자가 이 화면에 오는 이유가 내려 둔 매물을 포함해 전체를 훑어보는 것이기 때문이다.
+        if (visibility == null || visibility.isBlank()) {
+            return VISIBILITY_ALL;
+        }
+
+        String upper = visibility.trim().toUpperCase();
+
+        return switch (upper) {
+            case VISIBILITY_VISIBLE, VISIBILITY_HIDDEN, VISIBILITY_ALL -> upper;
+            default -> throw new IllegalArgumentException(
+                    "공개 여부는 ALL, VISIBLE, HIDDEN 중 하나여야 합니다. 값 : " + visibility);
+        };
     }
 
     private Sort toSort(String sort) {
@@ -982,14 +1468,8 @@ public class PropertyService {
         String districtName = requireDistrictName(property);
 
         MlPriceRequest request = new MlPriceRequest(
-                property.getType().name(),
-                property.getDealType().name(),
-                districtName,
-                property.getArea().doubleValue(),
-                property.getFloor(),
-                property.getBuildYear(),
-                property.getLatitude(),
-                property.getLongitude()
+                property.getType().name(), property.getDealType().name(), districtName, property.getArea().doubleValue(),
+                property.getFloor(), property.getBuildYear(), property.getLatitude(), property.getLongitude()
         );
 
         MlPriceResponse response;
@@ -1097,28 +1577,26 @@ public class PropertyService {
 
     // 기존 공개 매물을 직접 건드리지 않고 hidden shadow DRAFT에서 수정용 AI 예측을 수행하는 메서드임
     @Transactional
-    public AiPricePreviewResponseDto predictEditAi(
-            Long originalId,
-            Long aiDraftId,
-            Property incoming,
-            String email) {
-
+    public AiPricePreviewResponseDto predictEditAi(Long originalId,Long aiDraftId, Property incoming,String email) {
         // 원본 소유권 확인. 원본은 이 시점에 수정하지 않음
-        findMyPropertyOrThrow(originalId, email);
+        // 관리자도 매물을 고칠 수 있으므로 역할에 맞는 검사를 쓴다.
+        Property original = findEditablePropertyOrThrow(originalId, email);
 
         Property aiDraft;
-
         // 현재 값/권한/상태가 조건을 만족하는지 확인함
         if (aiDraftId == null) {
             aiDraft = new Property();
-            aiDraft.setAgency(myAgencyService.findMyAgency(email));
+            // 관리자에게는 자기 사무소가 없다. shadow DRAFT 는 어차피 원본 매물을 고치기 위한
+            // 임시 자료이므로, 관리자가 부른 경우에는 원본 매물의 사무소를 그대로 붙인다.
+            aiDraft.setAgency(isAdmin(email)
+                    ? original.getAgency()
+                    : myAgencyService.findMyAgency(email));
             // 기존 매물 수정용 shadow Property를 DRAFT 상태로 지정함
             aiDraft.setStatus(PropertyStatus.DRAFT);
             // 수정용 shadow DRAFT가 사용자 임시저장 목록에 섞이지 않도록 visible=false로 지정함
             aiDraft.setVisible(false);
         } else {
-            aiDraft = findMyDraftOrThrow(aiDraftId, email);
-
+            aiDraft = findEditableDraftOrThrow(aiDraftId, email, original);
             // 현재 값/권한/상태가 조건을 만족하는지 확인함
             if (Boolean.TRUE.equals(aiDraft.getVisible())) {
                 // 조건을 만족하지 않으면 이후 처리를 중단하도록 예외 발생시킴

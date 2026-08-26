@@ -6,6 +6,8 @@ import com.brentversal.agency.repository.AgencyConsultationRepository;
 import com.brentversal.agency.repository.AgencyReviewRepository;
 import com.brentversal.agency.service.MemberConsultationService;
 import com.brentversal.agency.service.MyAgencyService;
+import com.brentversal.editrequest.entity.PropertyEditRequest;
+import com.brentversal.editrequest.service.PropertyEditRequestService;
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.constant.VerifyStatus;
 import com.brentversal.member.entity.Member;
@@ -32,6 +34,7 @@ import java.util.List;
 //   공통   : 최근 공지사항                      -> "[공지] 제목" 을 누르면 공지 상세로 간다
 //   공통   : 내가 보낸 상담에 답변이 도착        -> "내 상담" 화면으로 간다
 //   중개인 : 미답변 상담 요청, 미답변 리뷰      -> 답변 화면으로 간다
+//   중개인 : 관리자가 보낸 매물 수정 요청       -> 매물 수정 화면으로 간다
 //   관리자 : 승인 대기 매물, 심사 대기 인증 신청 -> 각 관리 화면으로 간다
 //
 // 알림은 이 도메인에서만 만든다.
@@ -50,6 +53,9 @@ public class NotificationService {
     private final MyAgencyService myAgencyService ;
     private final AgencyConsultationRepository agencyConsultationRepository ;
     private final AgencyReviewRepository agencyReviewRepository ;
+
+    // 중개인 알림 : 관리자가 보낸 매물 수정 요청 중 아직 처리하지 않은 것
+    private final PropertyEditRequestService propertyEditRequestService ;
 
     // 관리자 알림 : 승인·심사를 기다리는 자료를 본다
     private final PropertyRepository propertyRepository ;
@@ -163,6 +169,18 @@ public class NotificationService {
                         summarize(bean.getContent()),
                         "/broker/agency?tab=reviews", // 리뷰 관리 탭
                         bean.getCreatedAt())));
+
+        // 관리자가 보낸 매물 수정 요청.
+        // 그 매물을 고치면 요청이 자동으로 처리 완료가 되므로 여기서도 함께 사라진다.
+        for(PropertyEditRequest bean : propertyEditRequestService.findOpenByAgency(agency.getId())){
+            notifications.add(NotificationDto.of(
+                    NotificationType.MODIFY_REQUEST,
+                    bean.getProperty().getId(),
+                    "\"" + bean.getProperty().getName() + "\" 매물에 수정 요청이 도착했습니다.",
+                    summarize(bean.getReason()),
+                    "/property/form/" + bean.getProperty().getId(), // 매물 수정 화면
+                    bean.getCreatedAt()));
+        }
     }
 
     // 관리자 알림 : 승인 대기 매물과 심사 대기 인증 신청

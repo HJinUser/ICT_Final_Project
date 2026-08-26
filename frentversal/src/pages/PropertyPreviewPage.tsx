@@ -70,12 +70,6 @@ const DUMMY_PROPERTY: PropertyDetail = {
         agentName: "박지훈",
         available: true,
     },
-    priceHistory: [
-        { year: "2023", price: 42000 },
-        { year: "2024", price: 45000 },
-        { year: "2025", price: 49000 },
-        { year: "2026", price: 54200 },
-    ],
     reviews: [
         { id: 1, rating: 5, content: "밤에 조용하고 교통이 편합니다. 다만 저녁에는 주차 자리가 빨리 찹니다.", createdAt: "2026.07.12" },
         { id: 2, rating: 4, content: "한강 산책과 장보기가 편해서 생활 만족도가 높았습니다.", createdAt: "2026.06.23" },
