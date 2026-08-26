@@ -14,6 +14,7 @@ export interface User {
     // 서버(Member.constant.Role)가 내려주는 값과 똑같이 맞춰야 한다.
     // 중개인은 "AGENT" 가 아니라 "BROKER" 다. (회원가입 화면도 BROKER 로 보내고 있다)
     role: "USER" | "BROKER" | "ADMIN";
+    socialType: "NONE" | "KAKAO" | "GOOGLE" | "NAVER";
 
     // 회원가입 때 적은 주소와 거기서 뽑아 둔 구.
     //   address : "서울시 영등포구 당산로 222" — 지도 시작 위치를 이 주소로 맞춘다

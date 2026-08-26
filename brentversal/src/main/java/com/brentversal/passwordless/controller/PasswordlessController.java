@@ -68,19 +68,18 @@ public class PasswordlessController {
         }
 
         Member member = memberRepository.findByEmail(email);
-        return ResponseEntity.ok(Map.of(
-                "status", "Y",
-                "accessToken", result.getAccessToken(),
-                "refreshToken", result.getRefreshToken(),
-                "id", member.getId(),
-                "name", member.getName(),
-                "email", member.getEmail(),
-                "role", member.getRole().toString(),
-                // 비밀번호 로그인(MemberController)과 같은 값을 담는다.
-                // 지도 검색이 이 주소로 시작 위치와 기본 지역을 정하므로, 로그인 방식에 따라 달라지면 안 된다.
-                "address", member.getAddress() == null ? "" : member.getAddress(),
-                "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
-                "preferenceCompleted", member.isPreferenceCompleted()
+        return ResponseEntity.ok(Map.ofEntries(
+                Map.entry("status", "Y"),
+                Map.entry("accessToken", result.getAccessToken()),
+                Map.entry("refreshToken", result.getRefreshToken()),
+                Map.entry("id", member.getId()),
+                Map.entry("name", member.getName()),
+                Map.entry("email", member.getEmail()),
+                Map.entry("role", member.getRole().toString()),
+                Map.entry("address", member.getAddress() == null ? "" : member.getAddress()),
+                Map.entry("sigungu", member.getSigungu() == null ? "" : member.getSigungu()),
+                Map.entry("preferenceCompleted", member.isPreferenceCompleted()),
+                Map.entry("socialType", member.getSocialType().toString())
         ));
     }
 
@@ -99,9 +98,10 @@ public class PasswordlessController {
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
         }
     }
-
     // 중도에 등록을 포기한 중개인을 위한 등록 링크 재발급.
     // 이메일만 받아서, 본인 확인은 URL 접근 자체가 아니라 그 이메일함에 실제로 접근할 수 있는지로 대신한다.
     // (BROKER이고 아직 미등록인 계정인지는 서비스 쪽에서 확인함)

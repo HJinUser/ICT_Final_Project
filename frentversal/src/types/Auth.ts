@@ -96,6 +96,7 @@ export type PasswordlessLoginResult = {
     name?: string;
     email?: string;
     role?: "USER" | "BROKER" | "ADMIN";
+    socialType?: "NONE" | "KAKAO" | "GOOGLE" | "NAVER";
     // 지도 검색이 시작 위치와 기본 지역을 정할 때 쓴다 (비밀번호 로그인 응답과 같은 값)
     address?: string;
     sigungu?: string;

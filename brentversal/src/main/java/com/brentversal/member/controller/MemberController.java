@@ -91,7 +91,8 @@ public class MemberController {
                     "address", member.getAddress() == null ? "" : member.getAddress(),
                     "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
                     // 프론트가 일반 사용자(USER) + 미완료일 때만 취향 초기 설정 화면으로 보내는 데 쓴다.
-                    "preferenceCompleted", member.isPreferenceCompleted())) ;
+                    "preferenceCompleted", member.isPreferenceCompleted(),
+                    "socialType", member.getSocialType().toString())) ;
         }
 
 
