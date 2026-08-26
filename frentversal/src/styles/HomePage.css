@@ -1420,3 +1420,119 @@
     width: 100%;
     height: 100%;
 }
+/* ── 중개인 홈 : 매물 반응 추이 (관심·평가·상담 월별 누적 막대) ──
+   조회수 기록이 없어 사용자가 실제로 남긴 행동 셋을 쌓아 보여 준다.
+   막대 높이는 컴포넌트가 px 로 계산해 넣는다(TREND_BAR_HEIGHT 와 아래 높이를 함께 맞출 것). */
+.home-trend {
+    margin-top: 16px;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: end;
+}
+
+.home-trend-col {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+}
+
+.home-trend-total {
+    font: 500 11.5px/1 'IBM Plex Mono', monospace;
+    color: var(--ink-3);
+}
+
+/* 아래에서 위로 쌓이도록 column-reverse 를 쓴다 */
+.home-trend-bar {
+    width: 100%;
+    max-width: 34px;
+    height: 96px;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    border-radius: 6px;
+    background: var(--bg-2);
+    overflow: hidden;
+}
+
+.home-trend-bar .seg { display: block; width: 100%; }
+.home-trend-bar .seg.favorite { background: var(--v); }
+.home-trend-bar .seg.feedback { background: #9b7dc0; }
+.home-trend-bar .seg.consultation { background: #cbb8de; }
+
+.home-trend-label {
+    font-size: 11.5px;
+    color: var(--ink-3);
+}
+
+.home-trend-legend {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+}
+
+.home-trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.home-trend-legend strong { color: var(--ink); }
+
+.home-trend-legend i {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.home-trend-legend i.favorite { background: var(--v); }
+.home-trend-legend i.feedback { background: #9b7dc0; }
+.home-trend-legend i.consultation { background: #cbb8de; }
+
+/* ── 중개인 홈 : 머신러닝 평가 (좋아요 비중 막대) ────────── */
+.home-ratio {
+    margin-top: 16px;
+    height: 10px;
+    border-radius: 100px;
+    background: #e8dfe1;   /* 남는 부분이 싫어요 비중이다 */
+    overflow: hidden;
+}
+
+.home-ratio .like {
+    display: block;
+    height: 100%;
+    background: var(--v);
+}
+
+.home-ratio-legend {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--ink-2);
+}
+
+.home-ratio-legend strong { color: var(--ink); }
+
+/* 카드 안의 작은 소제목 (호가를 다시 볼 매물 / 오래 남아 있는 매물) */
+.home-sub-title {
+    margin-top: 18px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-2);
+}
+
+/* 매물 이름 아래 한 줄로 붙는 보조 설명 (호가 → 권장 호가 등) */
+.home-price-hint {
+    display: block;
+    margin-top: 3px;
+    font-style: normal;
+    font-size: 11.5px;
+    color: var(--ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 보조 설명이 붙으면 한 줄 목록의 세로 가운데 정렬이 어색해서 위쪽에 맞춘다 */
+.home-minilist .ttl:has(.home-price-hint) { white-space: normal; }

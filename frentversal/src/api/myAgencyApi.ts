@@ -9,9 +9,11 @@ import type {
     Consultation,
     ConsultationStatus,
     MyAgencyDashboard,
+    MyAgencyInsights,
     MyPropertyCard,
     PagedResponse,
 } from '../types/MyAgency';
+import type { PropertyEditRequest } from '../types/PropertyEditRequest';
 
 // 내 중개사무소 정보 (중개사무소 상세와 같은 내용)
 export async function getMyAgency(): Promise<AgencyDetail> {
@@ -93,3 +95,24 @@ export async function replyToReview(id: number, reply: string): Promise<string> 
 }
 
 // 헤더 종 아이콘의 알림은 역할 공용이라 api/notificationApi.ts 로 옮겼다.
+
+// 내 사무소가 받은 관리자 수정 요청.
+//
+// openOnly 기본값이 true 인 이유 : 중개인이 실제로 확인해야 하는 것은 아직 처리하지 않은 요청이다.
+// 그 매물을 수정하면 서버가 요청을 처리 완료로 바꾸므로 목록에서 저절로 빠진다.
+export async function getMyEditRequests(openOnly = true): Promise<PropertyEditRequest[]> {
+    const response = await customAxios.get<PropertyEditRequest[]>('/my-agency/edit-requests', {
+        params: { openOnly },
+    });
+
+    return response.data;
+}
+
+// 중개인 홈의 "매물 반응 추이" 와 "머신러닝 평가".
+//
+// 두 칸이 같은 화면에서 함께 그려지고 둘 다 "내 사무소" 기준이라 요청을 하나로 묶어 받는다.
+export async function getInsights(): Promise<MyAgencyInsights> {
+    const response = await customAxios.get<MyAgencyInsights>('/my-agency/insights');
+
+    return response.data;
+}

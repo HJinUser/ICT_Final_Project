@@ -25,6 +25,10 @@ export interface PropertySearchItem {
     status: string;
     statusLabel: string;
 
+    // 공개 여부. false 면 관리자가 내려 둔 숨김 매물이다.
+    // 숨김 매물이 목록에 섞여 나오는 것은 관리자 화면뿐이라, 카드에 표시를 붙이는 데 쓴다.
+    visible: boolean;
+
     agencyId: number | null;
     agencyName: string | null;
 
@@ -67,6 +71,9 @@ export interface PropertySearchParams {
     tagIds?: number[];     // 특수 조건 (고른 것을 모두 가진 매물만)
     mine?: boolean;        // 중개인이 "내 매물"만 볼 때
     sort?: PropertySort;
+
+    // 공개 여부 필터. 관리자만 쓸 수 있고, 관리자가 아니면 서버가 VISIBLE 로 되돌린다.
+    visibility?: PropertyVisibility;
 }
 
 // 매물 유형 버튼 (기획서: 하나만 선택, 기본값 전체)
@@ -141,11 +148,36 @@ export interface PropertyListingsParams {
     sort?: PropertySort;
     page?: number; // 0부터 시작
     size?: number;
+
+    // 공개 여부 필터. 관리자만 쓸 수 있고, 관리자가 아니면 서버가 VISIBLE 로 되돌린다.
+    visibility?: PropertyVisibility;
 }
+
+/*
+  매물 확인 화면의 공개 여부 필터.
+
+    ALL     : 공개 + 숨김 (관리자 기본값)
+    VISIBLE : 공개 매물만 (관리자가 아닌 사람은 항상 이 값이다)
+    HIDDEN  : 숨김 매물만
+
+  숨김 매물은 관리자가 내려 둔 매물이라 사용자 화면에 나오면 안 된다.
+  그래서 이 값은 화면에서만 숨기는 것이 아니라 서버에서도 관리자인지 다시 확인한다.
+*/
+export type PropertyVisibility = 'ALL' | 'VISIBLE' | 'HIDDEN';
+
+// 관리자에게만 보이는 공개 여부 버튼
+export const PROPERTY_VISIBILITIES: { value: PropertyVisibility; label: string }[] = [
+    { value: 'ALL', label: '전체' },
+    { value: 'VISIBLE', label: '공개 매물' },
+    { value: 'HIDDEN', label: '숨김 매물' },
+];
 
 export interface PropertyListingsResponse {
     content: PropertySearchItem[];
     totalCount: number;
     totalPages: number;
     page: number;
+
+    // 서버가 실제로 적용한 공개 여부. 관리자가 아닌 요청은 항상 'VISIBLE' 로 돌아온다.
+    visibility: PropertyVisibility;
 }

@@ -2,12 +2,6 @@ import type { PropertyResponse, PropertyStatusCode } from "./Property";
 import type { Agency } from "./Agency";
 import type { Review } from "./Review";
 
-// AI 시세예측 그래프에 쓰이는 연도별 한 점. 백엔드에 아직 없는 기능(시장 통계, ML 쪽)이라 화면 전용 목데이터.
-export interface PriceHistoryPoint {
-    year: string;
-    price: number;
-}
-
 // 매물 상세 페이지 전체 데이터 형태.
 // 백엔드 GET /property/{id}가 실제로 돌려주는 PropertyResponse를 그대로 물려받고,
 // 아직 백엔드가 못 챙겨주는 화면 전용 필드만 추가한다.
@@ -20,8 +14,9 @@ export interface PropertyDetail extends PropertyResponse {
     // 상세 페이지에서 GET /agency/{agencyId}를 한 번 더 호출해서 채운다.
     agencyDetail: Agency;
 
-    // TODO: 동네/유형별 시세 추이(시장 통계) 기능. ML 쪽과 엮인 범위라 지금은 화면 확인용 목데이터
-    priceHistory: PriceHistoryPoint[];
+    // 시세 그래프는 이 타입에 담지 않는다.
+    // GET /property/{id}/price-trend 로 따로 받아 화면에서만 들고 있는다
+    // (types/PropertyPriceTrend.ts 참고).
 
     // 이 매물의 한줄평 목록. GET /property/{id}/reviews 로 따로 받아 채운다.
     // (매물 상세 응답에는 들어 있지 않다)
