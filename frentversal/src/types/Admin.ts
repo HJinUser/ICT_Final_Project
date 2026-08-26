@@ -142,3 +142,32 @@ export interface AdminMlStatus {
     };
     recommendation: MlRecommendationMetrics;
 }
+
+// ── 관리자 홈 회원 통계 (MemberStatsDto) ──────────────────────
+//
+// 화면정의서에는 "정지 회원"도 적혀 있지만, 회원 엔터티에 정지 여부 컬럼 자체가 없어
+// 지금은 만들 수 없다. 있는 자료(전체 회원 수·신규 가입·역할 비중·월별 가입 추이)만 담는다.
+
+export type MemberRole = 'USER' | 'BROKER' | 'ADMIN';
+
+export interface MemberRoleCount {
+    role: MemberRole;
+    roleLabel: string; // 일반 사용자 / 중개인 / 관리자
+    count: number;
+}
+
+export interface MemberMonthlySignup {
+    month: string; // "2026-08"
+    label: string; // "8월"
+    count: number;
+}
+
+export interface MemberStats {
+    totalCount: number;
+    newThisMonth: number;
+
+    roleCounts: MemberRoleCount[];
+
+    trend: MemberMonthlySignup[];
+    trendMonths: number;
+}

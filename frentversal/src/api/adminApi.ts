@@ -10,6 +10,7 @@ import type {
     AdminMlStatus,
     AdminProperty,
     AdminPropertyListResponse,
+    MemberStats,
 } from '../types/Admin';
 import type { PropertyEditRequest } from '../types/PropertyEditRequest';
 
@@ -138,6 +139,15 @@ export async function rejectBroker(id: number, reason: string): Promise<{ messag
 // 시세예측·추천·동네 군집·텍스트마이닝 모델의 현재 상태를 한 번에 받는다.
 export async function getAdminMlStatus(): Promise<AdminMlStatus> {
     const response = await customAxios.get<AdminMlStatus>('/admin/ml/status');
+
+    return response.data;
+}
+
+// ── 회원 통계 (관리자 홈) ────────────────────────────────────
+
+// 전체 회원 수 · 이번 달 신규 가입 · 역할 비중 · 월별 가입 추이
+export async function getMemberStats(): Promise<MemberStats> {
+    const response = await customAxios.get<MemberStats>('/admin/members/stats');
 
     return response.data;
 }
