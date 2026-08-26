@@ -232,11 +232,6 @@ function HomeBrokerDetail() {
                                     <span><i className="feedback" />추천 평가 <strong>{feedbackSum}</strong></span>
                                     <span><i className="consultation" />상담 요청 <strong>{consultationSum}</strong></span>
                                 </div>
-
-                                <p className="xs dim" style={{ marginTop: 10 }}>
-                                    매물 상세를 몇 번 열었는지는 따로 기록하지 않아, 사용자가 실제로 남긴
-                                    관심·평가·상담을 합쳐 보여 드립니다.
-                                </p>
                             </>
                         )}
                     </div>
