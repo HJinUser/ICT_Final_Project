@@ -5,12 +5,18 @@ import customAxios from '../api/axiosInstance';
 import { getMyAgency } from '../api/myAgencyApi';
 import { searchProperties } from '../api/propertySearchApi';
 import PropertyMap from './components/PropertyMap';
-import type { PropertySearchItem, PropertySearchParams, PropertySort } from '../types/PropertySearch';
+import type {
+    PropertySearchItem,
+    PropertySearchParams,
+    PropertySort,
+    PropertyVisibility,
+} from '../types/PropertySearch';
 import {
     AREA_OPTIONS,
     DEAL_TYPES,
     PRICE_PRESETS,
     PROPERTY_TYPES,
+    PROPERTY_VISIBILITIES,
     ROOM_COUNTS,
     SORT_OPTIONS,
 } from '../types/PropertySearch';
@@ -120,6 +126,15 @@ function MapSearchPage({ user }: Props) {
     const [mine, setMine] = useState(false);
     const [myAgencyId, setMyAgencyId] = useState<number | null>(null);
 
+    /*
+      관리자 전용 : 공개 여부.
+
+      관리자가 내려 둔 숨김 매물을 지도에서도 찾을 수 있어야 해서, 관리자는 숨김 매물까지
+      함께 보는 '전체'로 시작한다. 관리자가 아니면 이 값을 바꿀 수단이 화면에 없고,
+      보내더라도 서버(PropertyService.search)가 공개 매물만 내려 준다.
+    */
+    const [visibility, setVisibility] = useState<PropertyVisibility>('ALL');
+
     const [properties, setProperties] = useState<PropertySearchItem[]>([]);
     const [tags, setTags] = useState<TagResponse[]>([]);
 
@@ -138,6 +153,7 @@ function MapSearchPage({ user }: Props) {
     const [message, setMessage] = useState('');
 
     const isBroker = user?.role === 'BROKER';
+    const isAdmin = user?.role === 'ADMIN';
 
     // 특수 조건 버튼에 쓸 태그 목록
     useEffect(() => {
@@ -165,7 +181,13 @@ function MapSearchPage({ user }: Props) {
         setLoading(true);
 
         try {
-            const data = await searchProperties({ ...applied, sort, mine });
+            // 공개 여부는 관리자만 고를 수 있다. 관리자가 아니면 아예 보내지 않고 서버 기본값에 맡긴다.
+            const data = await searchProperties({
+                ...applied,
+                sort,
+                mine,
+                visibility: isAdmin ? visibility : undefined,
+            });
 
             setProperties(data.content);
             setPinnedId(null); // 조건이 바뀌면 지도에서 고른 매물은 풀어 준다
@@ -177,7 +199,7 @@ function MapSearchPage({ user }: Props) {
         } finally {
             setLoading(false);
         }
-    }, [applied, sort, mine]);
+    }, [applied, sort, mine, visibility, isAdmin]);
 
     useEffect(() => {
         load();
@@ -289,6 +311,7 @@ function MapSearchPage({ user }: Props) {
         setTagIds([]);
         setAdminCode('');
         setAdminName('');
+        setVisibility('ALL');
         setApplied({ keyword });
         setPage(0);
     };
@@ -514,6 +537,29 @@ function MapSearchPage({ user }: Props) {
                         </div>
                     )}
 
+                    {/* 관리자 전용 : 공개 여부.
+                        숨김 매물은 관리자가 내려 둔 매물이라 사용자 화면에 나오면 안 되고,
+                        서버도 관리자가 아니면 공개 매물만 내려 준다. */}
+                    {isAdmin && (
+                        <div className="filter-block">
+                            <h4>공개 여부</h4>
+                            <div className="chip-group">
+                                {PROPERTY_VISIBILITIES.map((item) => (
+                                    <button
+                                        className={`filter-chip${visibility === item.value ? ' on' : ''}`}
+                                        onClick={() => { setVisibility(item.value); setPage(0); }}
+                                        key={item.value}
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="xs dim" style={{ marginTop: 8 }}>
+                                숨김 매물은 관리자에게만 보이며 지도에서 회색 표식으로 표시됩니다.
+                            </p>
+                        </div>
+                    )}
+
                     {/* 중개인 전용 : 내가 등록한 매물 */}
                     {isBroker && (
                         <div className="filter-block">
@@ -666,9 +712,17 @@ function MapSearchPage({ user }: Props) {
                                             <span className="status gray">시세 평가 없음</span>
                                         )}
 
-                                        {myAgencyId != null && property.agencyId === myAgencyId && (
-                                            <span className="status purple">내 매물</span>
-                                        )}
+                                        <span className="row gap8">
+                                            {/* 숨김 매물은 관리자 목록에만 섞여 나온다.
+                                                어느 것이 내려 둔 매물인지 바로 보이게 표시한다. */}
+                                            {property.visible === false && (
+                                                <span className="status red">숨김</span>
+                                            )}
+
+                                            {myAgencyId != null && property.agencyId === myAgencyId && (
+                                                <span className="status purple">내 매물</span>
+                                            )}
+                                        </span>
                                     </div>
 
                                     <h3>{property.priceLabel}</h3>

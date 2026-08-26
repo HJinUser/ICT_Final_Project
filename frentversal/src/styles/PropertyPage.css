@@ -117,3 +117,100 @@
     font-size: var(--fs-sm);
     color: var(--sig-high);
 }
+
+/* ── 중개인·관리자 전용 버튼의 처리 결과 안내 ───────────────
+   예전에는 예외 처리가 없어서 권한·상태 때문에 실패해도 화면이 아무 반응을 하지 않았다. */
+.property-action-error {
+    margin: 4px 0 0;
+    color: var(--sig-high);
+}
+
+.property-action-message {
+    margin: 4px 0 0;
+    color: var(--v);
+}
+
+/* ── 관리자가 보낸 매물 수정 요청 (매물을 등록한 중개인에게만 보임) ── */
+.property-editreq {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-s);
+    background: var(--bg-2);
+}
+
+/* 요청 사유는 관리자가 줄바꿈을 넣어 적는다.
+   pre-wrap 이 없으면 줄바꿈이 사라져 한 줄로 붙어 버린다. */
+.property-editreq-reason {
+    margin: 0 0 4px;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ── AI 시세예측 그래프 ─────────────────────────────────
+   막대는 실거래가 연도별 평균(TRANSACTION) 또는 같은 조건 매물 평균(NEIGHBORHOOD)이다.
+   무엇을 근거로 만든 값인지 그래프 위에 제목과 설명으로 함께 적는다. */
+.property-trend-head {
+    margin-top: 18px;
+    display: grid;
+    gap: 4px;
+}
+
+.property-trend-head strong {
+    font-size: var(--fs-sm);
+    color: var(--ink);
+}
+
+/* 막대 한 칸 (값 · 막대 · 이름) */
+.property-trend-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 5px;
+}
+
+.property-trend-value {
+    font: 500 11px/1 'IBM Plex Mono', 'Pretendard Variable', monospace;
+    color: var(--ink-3);
+}
+
+/*
+  common.css 의 .bar 는 flex:1 이라 칸을 가득 채운다.
+  여기서는 칸(.property-trend-col)이 이미 너비를 나눠 가지므로 막대 폭만 따로 잡는다.
+  common.css 가 나중에 로드되지만 이 선택자가 더 구체적이라 이쪽이 이긴다.
+*/
+.property-bar-chart .property-trend-col .bar {
+    flex: none;
+    width: 100%;
+    max-width: 38px;
+    min-height: 3px;
+}
+
+/* 지금 보고 있는 매물의 막대. 비교 대상과 색을 나눈다. */
+.property-bar-chart .property-trend-col .bar.current {
+    background: linear-gradient(180deg, #f0c98a, #b8792a);
+}
+
+.property-trend-label {
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.25;
+    word-break: keep-all;
+}
+
+/* 근거로 쓸 자료가 없을 때. 예전에는 빈 상자만 남아 그래프가 깨진 것처럼 보였다. */
+.property-trend-empty {
+    margin-top: 18px;
+    padding: 22px 16px;
+    border: 1px dashed var(--line);
+    border-radius: var(--r-s);
+    background: var(--bg-2);
+    text-align: center;
+}

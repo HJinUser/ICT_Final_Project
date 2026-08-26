@@ -10,6 +10,7 @@ import type {
     AdminProperty,
     AdminPropertyListResponse,
 } from '../types/Admin';
+import type { PropertyEditRequest } from '../types/PropertyEditRequest';
 
 export type PriceEvaluationStatus =
     | "UNDERVALUED"
@@ -55,6 +56,39 @@ export async function approveProperty(id: number): Promise<{ message: string; pr
 export async function rejectProperty(id: number): Promise<{ message: string; property: AdminProperty }> {
     const response = await customAxios.patch<{ message: string; property: AdminProperty }>(
         `/admin/properties/${id}/reject`);
+
+    return response.data;
+}
+
+// 등록 취소 (게시중이든 승인 대기든 관리자가 매물을 내린다). 되돌릴 수 없다.
+//
+// 반려(rejectProperty)와 결과는 같지만 대상이 다르다.
+//   반려     : 승인 대기 매물을 게시하지 않기로 하는 심사 결과
+//   등록 취소 : 이미 게시 중인 매물까지 포함해 관리자가 내리는 것
+export async function cancelProperty(id: number): Promise<{ message: string; property: AdminProperty }> {
+    const response = await customAxios.patch<{ message: string; property: AdminProperty }>(
+        `/admin/properties/${id}/cancel`);
+
+    return response.data;
+}
+
+// ── 매물 수정 요청 (관리자 -> 중개인) ───────────────────────────
+
+// 수정 요청 보내기. 사유는 중개인 화면과 안내 메일에 그대로 보인다.
+export async function createPropertyEditRequest(
+    id: number,
+    reason: string,
+): Promise<{ message: string; editRequest: PropertyEditRequest }> {
+    const response = await customAxios.post<{ message: string; editRequest: PropertyEditRequest }>(
+        `/admin/properties/${id}/edit-request`, { reason });
+
+    return response.data;
+}
+
+// 그 매물에 지금까지 보낸 수정 요청 이력 (최신순)
+export async function getPropertyEditRequests(id: number): Promise<PropertyEditRequest[]> {
+    const response = await customAxios.get<PropertyEditRequest[]>(
+        `/admin/properties/${id}/edit-requests`);
 
     return response.data;
 }

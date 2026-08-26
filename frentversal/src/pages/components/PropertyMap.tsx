@@ -275,6 +275,11 @@ function PropertyMap({
 
                 // 내가 등록한 매물과 지금 고른 매물을 구분한다
                 if (myAgencyId != null && property.agencyId === myAgencyId) pin.classList.add('mine');
+
+                // 숨김(비공개) 매물은 관리자 화면에만 섞여 나온다.
+                // 사용자에게 보이지 않는 매물이라는 것을 표식에서도 알 수 있어야 한다.
+                if (property.visible === false) pin.classList.add('hidden-listing');
+
                 if (selectedId === property.id) pin.classList.add('on');
 
                 pin.onclick = () => onSelect?.(property.id);
