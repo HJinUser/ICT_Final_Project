@@ -156,6 +156,7 @@
    화면 전체가 스크롤되면 지도와 필터가 같이 밀려 올라간다. */
 .list-panel {
     overflow-y: auto;
+}
 
 .filter-panel {
     overflow-y: auto;
