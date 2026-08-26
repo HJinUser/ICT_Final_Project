@@ -284,8 +284,16 @@ function App({ user }: Props) {
             <HomeSectionNav items={sectionNavItems} />
 
             {/*  역할별 요약 스트립 
-                숫자만 보여 주는 자리. 목록 형태는 아래 상세 블록에서 다룬다. */}
-            {user?.role === 'BROKER' && <HomeBrokerSummary user={user} />}
+                숫자만 보여 주는 자리. 목록 형태는 바로 아래 상세 블록에서 다룬다.
+                중개인은 요약(오늘 매물 현황) 다음에 바로 처리할 목록(HomeBrokerDetail)이
+                이어지도록 여기 붙여 둔다. 예전에는 이 상세 블록이 페이지 맨 아래에 있어서,
+                공통 콘텐츠(공지·추천·동네 등)를 다 지나야 나왔다. */}
+            {user?.role === 'BROKER' && (
+                <>
+                    <HomeBrokerSummary user={user} />
+                    <HomeBrokerDetail />
+                </>
+            )}
             {user?.role === 'ADMIN' && <HomeAdminSummary id="s-admin-summary" />}
 
             {/*  공지사항 
@@ -686,8 +694,9 @@ function App({ user }: Props) {
             </section>
 
             {/*  역할별 상세 블록 
-                공통 콘텐츠를 다 본 뒤 "그래서 무엇을 처리하나"로 이어지는 자리. */}
-            {user?.role === 'BROKER' && <HomeBrokerDetail />}
+                공통 콘텐츠를 다 본 뒤 "그래서 무엇을 처리하나"로 이어지는 자리.
+                중개인의 "처리할 내 매물"은 여기 없다 — 오늘 매물 현황(HomeBrokerSummary) 바로
+                아래로 옮겼다. 둘 다 "내가 지금 뭘 해야 하나"를 다루는 같은 맥락이라 붙여 둔다. */}
             {user?.role === 'ADMIN' && <HomeAdminDetail />}
 
             {/*  마무리 안내  */}

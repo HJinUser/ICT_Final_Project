@@ -68,8 +68,14 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     //
     // 특수 조건(태그)은 고른 것을 "모두" 가진 매물만 남긴다.
     // 매물이 가진 태그 중 고른 태그와 겹치는 개수를 세어, 고른 개수와 같은지 확인한다.
+    //
+    // 공개 여부(:visible)는 값을 주면 그 상태만, null 이면 공개·숨김을 가리지 않는다.
+    // 매물 확인 화면(findForListings)은 질의가 짧아 조건별로 메소드를 나눴지만,
+    // 이쪽은 조건이 길어서 통째로 복사하면 한쪽만 고치는 사고가 나기 쉬워 파라미터로 받는다.
+    // 숨김 매물을 볼 수 있는지는 서비스(PropertyService.search)에서 판단한다.
     @Query("select p from Property p " +
-           " where p.status = :status and p.visible = true " +
+           " where p.status = :status " +
+           "   and (:visible is null or p.visible = :visible) " +
            // 상단 검색창의 자유 검색어. 지역만 찾는 게 아니라 매물 이름까지 함께 훑는다.
            // "반포동"으로도, "반포 리버뷰"로도 찾을 수 있어야 하기 때문이다.
            // 대소문자를 가리지 않도록 양쪽을 lower 로 맞춘다.
@@ -106,6 +112,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
            "        (select count(t) from p.tags t where t.id in :tagIds) = :tagCount) " +
            " order by p.createdAt desc")
     List<Property> search(@Param("status") PropertyStatus status,
+                          @Param("visible") Boolean visible,
                           @Param("keyword") String keyword,
                           @Param("region") String region,
                           @Param("dong") String dong,
@@ -130,23 +137,54 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
            " order by p.id asc")
     List<Property> findMissingAdminCode();
 
+    /*
+      매물 확인 화면(/property/listings)에서 쓰는 조회.
+
+      공개 여부를 조건에 넣는 것과 아예 빼는 것을 메소드로 나눠 두었다.
+      한 메소드에 :visible 을 받아 "(:visible is null or ...)" 로 처리할 수도 있지만,
+      JPQL 에서 null 비교와 값 비교를 한 파라미터로 겸하면 타입 추론이 걸리는 경우가 있어
+      조건이 다른 질의는 처음부터 나눠 둔다.
+
+      숨김(visible = false) 매물은 관리자만 볼 수 있다. 그 판단은 서비스에서 하고,
+      여기서는 어떤 질의를 부를지만 정한다.
+    */
+
     // 매물 확인 화면 - 매물유형별로 실제 존재하는 거래유형만 뽑는다 (type이 null이면 전체 대상).
     @Query("select distinct p.dealType from Property p " +
-            " where p.status = :status and p.visible = true " +
+            " where p.status = :status and p.visible = :visible " +
             "   and (:type is null or p.type = :type)")
     List<DealType> findDistinctDealTypes(@Param("status") PropertyStatus status,
-                                         @Param("type") PropertyType type);
+                                         @Param("type") PropertyType type,
+                                         @Param("visible") boolean visible);
+
+    // 위와 같지만 공개·숨김을 가리지 않는다 (관리자 전용).
+    @Query("select distinct p.dealType from Property p " +
+            " where p.status = :status " +
+            "   and (:type is null or p.type = :type)")
+    List<DealType> findDistinctDealTypesIncludingHidden(@Param("status") PropertyStatus status,
+                                                        @Param("type") PropertyType type);
 
     // 매물 확인 화면
     // 정렬은 Pageable의 Sort에 맡긴다 (Service의 toSort() 참고).
     @Query("select p from Property p " +
-            " where p.status = :status and p.visible = true " +
+            " where p.status = :status and p.visible = :visible " +
             "   and (:type is null or p.type = :type) " +
             "   and (:dealType is null or p.dealType = :dealType)")
     Page<Property> findForListings(@Param("status") PropertyStatus status,
                                    @Param("type") PropertyType type,
                                    @Param("dealType") DealType dealType,
+                                   @Param("visible") boolean visible,
                                    Pageable pageable);
+
+    // 위와 같지만 공개·숨김을 가리지 않는다 (관리자 전용).
+    @Query("select p from Property p " +
+            " where p.status = :status " +
+            "   and (:type is null or p.type = :type) " +
+            "   and (:dealType is null or p.dealType = :dealType)")
+    Page<Property> findForListingsIncludingHidden(@Param("status") PropertyStatus status,
+                                                  @Param("type") PropertyType type,
+                                                  @Param("dealType") DealType dealType,
+                                                  Pageable pageable);
 
     // 동네 탐색 카드에 표시할 공개·게시중 매물 건수
     long countByNeighborhood_IdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
@@ -166,6 +204,49 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
             PropertyStatus status
     );
 
+    /*
+      매물 상세의 "동네 시세 비교" — 같은 조건 매물의 평균 호가.
+
+      실거래가가 아직 수집되지 않은 매물(전세·월세, 아파트가 아닌 매물)에서 쓴다.
+      거래유형만 필수이고 매물유형·구·동은 넘기지 않으면(null) 그 조건을 건너뛴다.
+      서비스가 좁은 조건부터 넓혀 가며 이 메소드를 부른다(같은 동 -> 같은 구 -> 서울 전체).
+
+      대표 금액은 매물 상세에 표시하는 값과 같은 기준으로 뽑는다
+      (매매=price, 전세=deposit, 월세=monthly_deposit). Property.comparablePrice 는
+      월세를 보증금+월세×100 으로 환산하는 정렬용 값이라, 화면에 적힌 호가와 어긋난다.
+
+      자기 자신은 평균에서 뺀다. 한 건뿐인 동네에서 자기 호가가 곧 평균이 되면 비교가 되지 않는다.
+      반환값은 [평균 호가(만원), 건수] 순서의 Object[] 한 줄이다.
+    */
+    @Query("select avg(coalesce(p.price, p.deposit, p.monthlyDeposit)), count(p) " +
+           "  from Property p " +
+           " where p.status = :status and p.visible = true " +
+           "   and p.id <> :excludeId " +
+           "   and p.dealType = :dealType " +
+           "   and (:type is null or p.type = :type) " +
+           // 구·동 컬럼은 주소 검색을 붙인 뒤 등록한 매물에만 채워져 있다.
+           // 비어 있는 예전 자료는 대개 지번 주소라 주소 문자열에서 찾아 함께 걸러 준다.
+           // (지도 검색 질의와 같은 규칙이다)
+           "   and (:sigungu is null " +
+           "        or p.sigungu = :sigungu " +
+           "        or (p.sigungu is null and p.address like concat('%', :sigungu, '%'))) " +
+           "   and (:dong is null " +
+           "        or p.dong = :dong " +
+           "        or (p.dong is null and p.address like concat('%', :dong, '%'))) " +
+           "   and coalesce(p.price, p.deposit, p.monthlyDeposit) is not null")
+    List<Object[]> findAveragePrice(@Param("status") PropertyStatus status,
+                                    @Param("excludeId") Long excludeId,
+                                    @Param("dealType") DealType dealType,
+                                    @Param("type") PropertyType type,
+                                    @Param("sigungu") String sigungu,
+                                    @Param("dong") String dong);
+
+    // 중개인 홈 "머신러닝 평가" 의 오래 남아 있는 매물.
+    // 게시중인데 등록한 지 오래된 것부터 가져온다 (Pageable 로 몇 건만 끊어 읽는다).
+    Page<Property> findByAgencyIdAndStatusOrderByCreatedAtAsc(Long agencyId,
+                                                              PropertyStatus status,
+                                                              Pageable pageable);
+
     // 기존 "내 매물"에서는 DRAFT를 제외함
     Page<Property> findByAgencyIdAndStatusNotOrderByCreatedAtDesc(
             Long agencyId,
@@ -184,4 +265,6 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
             PropertyStatus status,
             Pageable pageable
     );
+
+    List<Property> findByAgencyId(Long agencyId);
 }

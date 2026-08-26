@@ -3,7 +3,10 @@ package com.brentversal.agency.repository;
 import com.brentversal.agency.constant.ConsultationStatus;
 import com.brentversal.agency.entity.AgencyConsultation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AgencyConsultationRepository extends JpaRepository<AgencyConsultation, Long> {
@@ -28,4 +31,14 @@ public interface AgencyConsultationRepository extends JpaRepository<AgencyConsul
 
     // 답변이 왔는데 아직 확인하지 않은 상담. 헤더 알림에 쓴다.
     List<AgencyConsultation> findByMemberIdAndReplyIsNotNullAndReplyCheckedAtIsNullOrderByRepliedAtDesc(Long memberId);
+
+    // 중개인 홈의 "매물 반응 추이" — 내 사무소로 월별 상담 요청이 몇 건 들어왔는지.
+    // 반환값은 [연, 월, 건수] 순서의 Object[] 목록이다.
+    @Query("select year(c.createdAt), month(c.createdAt), count(c) " +
+           "  from AgencyConsultation c " +
+           " where c.agency.id = :agencyId " +
+           "   and c.createdAt >= :from " +
+           " group by year(c.createdAt), month(c.createdAt)")
+    List<Object[]> countMonthlyByAgencyId(@Param("agencyId") Long agencyId,
+                                          @Param("from") LocalDateTime from);
 }

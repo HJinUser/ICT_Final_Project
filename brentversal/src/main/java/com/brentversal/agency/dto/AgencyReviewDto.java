@@ -43,7 +43,7 @@ public class AgencyReviewDto {
     // 후기는 누구나 볼 수 있는 정보라서 작성자 이름을 그대로 노출하지 않고 가운데를 가린다.
     // 예) 홍길동 -> 홍*동, 김철 -> 김*
     private static String mask(String name){
-        if(name == null || name.isBlank()) return "이용자";
+        if(name == null || name.isBlank()) return "탈퇴한 회원";
         if(name.length() == 1) return name;
         if(name.length() == 2) return name.charAt(0) + "*";
 

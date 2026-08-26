@@ -52,10 +52,11 @@ public class ReportResponse {
 
     public static ReportResponse from(ReportEntity report) {
         Member processor = report.getProcessor();
+        Member reporter = report.getReporter();
         return new ReportResponse(
                 report.getId(),
-                report.getReporter().getId(),
-                report.getReporter().getName(),
+                reporter == null ? null : reporter.getId(),
+                reporter == null ? "탈퇴한 회원" : reporter.getName(),
                 report.getTargetType(),
                 report.getTargetId(),
                 report.getTitle(),

@@ -63,6 +63,8 @@ public class ConsultationResponseDto {
             dto.setMemberName(bean.getMember().getName());
             dto.setMemberPhone(bean.getMember().getPhone());
             dto.setMemberEmail(bean.getMember().getEmail());
+        } else {
+            dto.setMemberName("탈퇴한 회원");
         }
 
         return dto;

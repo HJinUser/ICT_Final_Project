@@ -160,6 +160,25 @@ public class PropertyController {
         }
     }
 
+    /*
+      매물 상세 "AI 시세예측" 그래프 자료
+      GET /property/{id}/price-trend
+
+      국토부 아파트 매매 실거래가가 있으면 연도별 추이를, 없으면 같은 지역·같은 조건
+      매물과의 시세 비교를 돌려준다. 무엇을 근거로 만든 값인지는 응답의 source 로 구분한다.
+
+      비회원도 보는 화면이라 로그인을 요구하지 않는다(GET /property/** 는 permitAll).
+    */
+    @GetMapping("/{id}/price-trend")
+    public ResponseEntity<?> priceTrend(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(propertyService.getPriceTrend(id));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // 매물 상세 지도에 찍을 주변시설 (지하철·버스·병원·편의점)
     // GET /property/{id}/nearby
     //
@@ -181,29 +200,57 @@ public class PropertyController {
     // 비회원도 쓸 수 있는 화면이라 로그인을 요구하지 않는다(GET /property/** 는 permitAll).
     // 다만 중개인이 "내 매물"만 볼 때는 누구인지 알아야 해서, 로그인했으면 이메일을 함께 넘긴다.
     @GetMapping("/search")
-    public ResponseEntity<Map<String, Object>> search(PropertySearchCondition condition, Principal principal) {
+    public ResponseEntity<?> search(PropertySearchCondition condition, Principal principal) {
         String email = (principal == null) ? null : principal.getName();
 
-        List<PropertySearchDto> found = propertyService.search(condition, email);
+        try {
+            List<PropertySearchDto> found = propertyService.search(condition, email);
 
-        return ResponseEntity.ok(Map.of("content", found, "totalCount", found.size()));
+            return ResponseEntity.ok(Map.of("content", found, "totalCount", found.size()));
+        } catch (IllegalArgumentException e) {
+            // 알 수 없는 매물유형·거래유형·공개여부 값
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // 매물 확인 화면 - 매물유형을 고르면 그 유형에 실제 존재하는 거래유형만 돌려준다 (버튼 목록 갱신용)
+    //
+    // 비회원도 쓰는 화면이라 로그인을 요구하지 않는다(GET /property/** 는 permitAll).
+    // 다만 관리자에게는 숨김 매물까지 포함해 버튼을 만들어 줘야 해서, 로그인했으면 이메일을 넘긴다.
     @GetMapping("/deal-types")
-    public ResponseEntity<List<String>> dealTypes(@RequestParam(required = false) String type) {
-        return ResponseEntity.ok(propertyService.findAvailableDealTypes(type));
+    public ResponseEntity<List<String>> dealTypes(@RequestParam(required = false) String type,
+                                                  Principal principal) {
+        String email = (principal == null) ? null : principal.getName();
+
+        return ResponseEntity.ok(propertyService.findAvailableDealTypes(type, email));
     }
 
-    // 매물 확인 화면 전용 조회. 페이징 사용
+    /*
+      매물 확인 화면 전용 조회. 페이징 사용
+
+      visibility 는 공개 여부 필터(ALL / VISIBLE / HIDDEN)다.
+      숨김 매물은 관리자가 내려 둔 매물이라 관리자만 볼 수 있고, 관리자가 아니면
+      어떤 값을 보내든 서비스가 VISIBLE 로 되돌린다.
+    */
     @GetMapping("/listings")
-    public ResponseEntity<Map<String, Object>> listings(
+    public ResponseEntity<?> listings(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String dealType,
             @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String visibility,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size) {
-        return ResponseEntity.ok(propertyService.browseListings(type, dealType, sort, page, size));
+            @RequestParam(defaultValue = "6") int size,
+            Principal principal) {
+
+        String email = (principal == null) ? null : principal.getName();
+
+        try {
+            return ResponseEntity.ok(
+                    propertyService.browseListings(type, dealType, sort, page, size, visibility, email));
+        } catch (IllegalArgumentException e) {
+            // 알 수 없는 매물유형·거래유형·공개여부 값
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // 매물 비교 (쉼표로 구분된 id들을 받아서 여러 건 조회)

@@ -16,6 +16,13 @@ import PropertyLocationMap from "./components/PropertyLocationMap";
 import PhotoLightbox from "./components/PhotoLightbox";
 import StarRatingInput from "./components/StarRatingInput";
 import { getPropertyReviews, savePropertyReview } from "../api/propertyReviewApi";
+// 관리자는 자기 중개사무소가 없어서 중개인용 /property/** 경로를 통과할 수 없다.
+// 그래서 공개 전환·등록 취소는 관리자 전용 경로(/admin/properties/**)로 부른다.
+import { cancelProperty, hideProperty, unhideProperty } from "../api/adminApi";
+import { getMyEditRequests } from "../api/myAgencyApi";
+import type { PropertyEditRequest } from "../types/PropertyEditRequest";
+import { getPropertyPriceTrend } from "../api/propertyPriceTrendApi";
+import type { PropertyPriceTrend } from "../types/PropertyPriceTrend";
 
 interface PropertyPageProps {
     user: User | null;
@@ -35,13 +42,6 @@ const formatPrice = (property: PropertyResponse): string => {
         return `${(property.monthlyDeposit ?? 0).toLocaleString()}만 원/${(property.monthlyRent ?? 0).toLocaleString()}만 원`;
     }
     return `${getPrimaryPrice(property).toLocaleString()}만 원`;
-};
-
-// 거래유형에 따라 AI 예상가 중 실제로 비교할 값 하나를 뽑아준다. 아직 예측 전이면 null
-const getPrimaryAiPrice = (property: PropertyResponse): number | null => {
-    if (property.dealType === "SALE") return property.aiPrice;
-    if (property.dealType === "JEONSE") return property.aiDeposit;
-    return property.aiMonthlyDeposit;
 };
 
 // 관리자가 선택한 가격평가 상태별 화면 표시값
@@ -86,6 +86,25 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
     const [loading, setLoading] = useState(!mockData);
 
     const [showLoginModal, setShowLoginModal] = useState(false);
+
+    // 중개인·관리자 전용 버튼(상태 변경, 공개 전환, 등록 취소)의 처리 결과.
+    // 예전에는 예외 처리가 없어서 권한·상태 때문에 실패해도 화면이 아무 반응을 하지 않았다.
+    const [actionMessage, setActionMessage] = useState("");
+    const [actionError, setActionError] = useState("");
+
+    // 이 매물에 걸려 있는 관리자 수정 요청 (매물을 등록한 중개인에게만 보인다).
+    // 중개인이 매물을 수정하면 서버가 처리 완료로 바꾸므로 목록에서 저절로 빠진다.
+    const [editRequests, setEditRequests] = useState<PropertyEditRequest[]>([]);
+
+    /*
+      AI 시세예측 그래프 자료.
+
+      국토부 아파트 매매 실거래가가 있으면 연도별 추이를, 없으면 같은 조건 매물과의
+      시세 비교를 서버가 골라서 내려 준다. 무엇을 근거로 만든 값인지는 응답의 source 로 온다.
+      미리보기(mockData)는 아직 저장되지 않은 매물이라 부를 대상이 없다.
+    */
+    const [priceTrend, setPriceTrend] = useState<PropertyPriceTrend | null>(null);
+    const [trendLoading, setTrendLoading] = useState(!mockData);
 
     const [isWritingReview, setIsWritingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
@@ -144,7 +163,6 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                         agentName: agencyResponse.data.brokerName,
                         available: agencyResponse.data.status === "AVAILABLE",
                     },
-                    priceHistory: [],
                     reviews,
                     isFavorited,
                 });
@@ -184,6 +202,71 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
             JSON.stringify(withoutCurrent.slice(0, 10))
         );
     }, [user, viewedPropertyId]);
+
+    /*
+      시세 그래프 자료를 가져온다.
+
+      실패해도 매물 상세는 그려져야 하므로 여기서 예외를 삼키고 빈 상태로 둔다.
+      그래프 자리는 안내 문구가 대신 채운다.
+    */
+    useEffect(() => {
+        if (!viewedPropertyId) return;
+
+        let alive = true;
+
+        setTrendLoading(true);
+
+        getPropertyPriceTrend(viewedPropertyId)
+            .then((data) => {
+                if (alive) setPriceTrend(data);
+            })
+            .catch((error) => {
+                console.error("시세 그래프 자료 조회 실패:", error);
+                if (alive) setPriceTrend(null);
+            })
+            .finally(() => {
+                if (alive) setTrendLoading(false);
+            });
+
+        // 다른 매물로 옮겨 갈 때 늦게 도착한 응답이 화면을 덮어쓰지 않도록 막는다
+        return () => {
+            alive = false;
+        };
+    }, [viewedPropertyId]);
+
+    /*
+      이 매물에 걸려 있는 관리자 수정 요청을 가져온다.
+
+      매물을 등록한 중개인에게만 보인다. 요청 사유는 관리자가 내부용으로 적는 글이라
+      조회 경로도 중개인 전용(/my-agency/**)이다.
+      실패해도 매물 상세는 그려져야 하므로 여기서 예외를 삼키고 빈 목록으로 둔다.
+    */
+    const ownerId = property?.ownerId;
+
+    useEffect(() => {
+        // 매물이 바뀔 때만 다시 읽는다. property 객체 전체를 의존성에 넣으면
+        // 공개 전환 같은 버튼을 누를 때마다(setProperty) 불필요하게 다시 조회한다.
+        if (!user || user.role !== "BROKER" || !viewedPropertyId || user.id !== ownerId) {
+            return;
+        }
+
+        let alive = true;
+
+        getMyEditRequests(true)
+            .then((list) => {
+                if (!alive) return;
+                setEditRequests(list.filter((item) => item.propertyId === viewedPropertyId));
+            })
+            .catch((error) => {
+                console.error("매물 수정 요청 조회 실패:", error);
+                if (alive) setEditRequests([]);
+            });
+
+        // 다른 매물로 옮겨 갈 때 늦게 도착한 응답이 화면을 덮어쓰지 않도록 막는다
+        return () => {
+            alive = false;
+        };
+    }, [user, viewedPropertyId, ownerId]);
 
     const requireLogin = () => {
         setShowLoginModal(true);
@@ -290,8 +373,22 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         }
     };
 
+    // 서버가 준 오류 메시지를 그대로 보여 준다.
+    // 메시지가 없으면(네트워크 오류 등) 넘겨받은 기본 문구를 쓴다.
+    const showActionError = (error: unknown, fallback: string) => {
+        console.error(fallback, error);
+
+        const message = (error as {
+            response?: { data?: { message?: string } };
+        })?.response?.data?.message;
+
+        setActionMessage("");
+        setActionError(message ?? fallback);
+    };
+
     // 거래 상태 변경 (게시중/거래진행중/거래완료). 거래완료·등록취소는 되돌릴 수 없음.
     // 백엔드가 갱신된 매물 전체를 돌려주므로, 그 응답으로 상태를 맞춘다.
+    // 이 기능은 매물을 등록한 중개인 전용이라 관리자 화면에는 나오지 않는다.
     const handleStatusChange = async (
         newStatus: PropertyStatusCode
     ) => {
@@ -303,33 +400,81 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
             return;
         }
 
-        const response = await customAxios.patch<PropertyResponse>(
-            `/property/${property.id}/status`,
-            { status: newStatus }
-        );
+        try {
+            const response = await customAxios.patch<PropertyResponse>(
+                `/property/${property.id}/status`,
+                { status: newStatus }
+            );
 
-        setProperty({
-            ...property,
-            status: response.data.status,
-        });
+            setProperty({
+                ...property,
+                status: response.data.status,
+            });
+
+            setActionError("");
+            setActionMessage("매물 상태를 변경했습니다.");
+        } catch (error) {
+            showActionError(error, "매물 상태를 변경하지 못했습니다.");
+        }
     };
 
-    // 공개/비공개 전환. 백엔드가 현재 값을 반전시켜서 돌려주므로 body 없이 호출한다.
+    /*
+      공개/비공개 전환.
+
+      부르는 경로가 역할에 따라 다르다.
+        중개인 : PATCH /property/{id}/visibility    — 서버가 현재 값을 반전시켜 돌려준다
+        관리자 : PATCH /admin/properties/{id}/hide | /unhide
+
+      관리자에게는 중개사무소가 없어서 중개인용 경로의 "내 사무소 매물이 맞는지" 검사를
+      통과할 수 없다(SecurityConfig 도 PATCH /property/** 를 중개인에게만 연다).
+      그래서 관리자는 관리자 전용 경로를 쓴다.
+    */
     const togglePublic = async () => {
         if (!property) return;
 
-        const response =
-            await customAxios.patch<PropertyResponse>(
+        try {
+            if (user?.role === "ADMIN") {
+                const result = property.visible
+                    ? await hideProperty(property.id)
+                    : await unhideProperty(property.id);
+
+                setProperty({
+                    ...property,
+                    visible: result.property.visible,
+                });
+
+                setActionError("");
+                setActionMessage(result.message);
+                return;
+            }
+
+            const response = await customAxios.patch<PropertyResponse>(
                 `/property/${property.id}/visibility`
             );
 
-        setProperty({
-            ...property,
-            visible: response.data.visible,
-        });
+            setProperty({
+                ...property,
+                visible: response.data.visible,
+            });
+
+            setActionError("");
+            setActionMessage(
+                response.data.visible
+                    ? "매물을 다시 공개했습니다."
+                    : "매물을 비공개로 전환했습니다."
+            );
+        } catch (error) {
+            showActionError(error, "공개 여부를 변경하지 못했습니다.");
+        }
     };
 
-    // 등록 취소 (되돌릴 수 없어서 한 번 더 확인). 전용 /cancel 엔드포인트를 쓴다 (body 없음).
+    /*
+      등록 취소 (되돌릴 수 없어서 한 번 더 확인).
+
+      공개 전환과 같은 이유로 경로가 역할에 따라 갈린다.
+        중개인 : PATCH /property/{id}/cancel
+        관리자 : PATCH /admin/properties/{id}/cancel
+    */
     const cancelListing = async () => {
         if (!property || property.status === "CANCELLED") return;
 
@@ -341,15 +486,34 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
             return;
         }
 
-        const response =
-            await customAxios.patch<PropertyResponse>(
+        try {
+            if (user?.role === "ADMIN") {
+                const result = await cancelProperty(property.id);
+
+                setProperty({
+                    ...property,
+                    status: result.property.status as PropertyStatusCode,
+                });
+
+                setActionError("");
+                setActionMessage(result.message);
+                return;
+            }
+
+            const response = await customAxios.patch<PropertyResponse>(
                 `/property/${property.id}/cancel`
             );
 
-        setProperty({
-            ...property,
-            status: response.data.status,
-        });
+            setProperty({
+                ...property,
+                status: response.data.status,
+            });
+
+            setActionError("");
+            setActionMessage("매물 등록을 취소했습니다.");
+        } catch (error) {
+            showActionError(error, "매물 등록을 취소하지 못했습니다.");
+        }
     };
 
     if (loading) {
@@ -376,7 +540,29 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
         user?.role === "BROKER" &&
         user.id === property.ownerId; // 이 매물을 등록한 중개인 본인인지
 
-    const aiPrice = getPrimaryAiPrice(property);
+    /*
+      화면에 그릴 관리자 수정 요청.
+
+      editRequests 에는 직전에 보던 매물의 것이 잠깐 남아 있을 수 있으므로,
+      지금 매물의 것만 골라 쓴다. 소유자가 아니면 아예 보여 주지 않는다.
+    */
+    const myEditRequests = isOwner
+        ? editRequests.filter((item) => item.propertyId === property.id)
+        : [];
+
+    // 막대 높이를 정할 기준값. 값이 하나도 없어도 0 으로 나누지 않도록 최소 1 로 둔다.
+    const trendMax = Math.max(1, ...(priceTrend?.points.map((point) => point.price) ?? [0]));
+
+    // 만원 단위 숫자를 "4억 9,000" 형태의 짧은 문구로 바꾼다 (막대 위에 얹는 값).
+    const toShortMoney = (manwon: number): string => {
+        const eok = Math.floor(manwon / 10000);
+        const rest = manwon % 10000;
+
+        if (eok > 0 && rest > 0) return `${eok}억 ${rest.toLocaleString()}`;
+        if (eok > 0) return `${eok}억`;
+
+        return rest.toLocaleString();
+    };
 
     return (
         <main>
@@ -608,37 +794,75 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                     </div>
                                 </div>
 
-                                <div className="bar-chart property-bar-chart">
-                                    {property.priceHistory.map(
-                                        (point, i) => (
-                                            <div
-                                                key={i}
-                                                style={{
-                                                    textAlign:
-                                                        "center",
-                                                }}
-                                            >
-                                                <div
-                                                    className="bar"
-                                                    style={{
-                                                        // 차트 높이를 줄였으므로 막대 기준값도 함께 줄인다.
-                                                        // 그대로 두면 AI 예상가보다 비싼 해의 막대가 차트를 넘친다.
-                                                        height: `${(point.price /
-                                                                (aiPrice ||
-                                                                    1)) *
-                                                            78
-                                                            }px`,
-                                                    }}
-                                                />
-                                                <span className="xs">
-                                                    {
-                                                        point.year
-                                                    }
+                                {/*
+                                  그래프.
+
+                                  막대 높이는 가장 큰 값을 기준으로 잡는다. 예전에는 AI 예상가를
+                                  기준으로 나눠서, 예상가보다 비싼 값이 들어오면 차트를 넘쳤다.
+                                */}
+                                {trendLoading && (
+                                    <p className="xs dim property-trend-empty">
+                                        시세 자료를 불러오는 중입니다…
+                                    </p>
+                                )}
+
+                                {!trendLoading && (!priceTrend || priceTrend.source === "NONE") && (
+                                    <p className="xs dim property-trend-empty">
+                                        {priceTrend?.description
+                                            ?? "이 매물과 비교할 시세 자료가 아직 없습니다."}
+                                    </p>
+                                )}
+
+                                {!trendLoading && priceTrend && priceTrend.source !== "NONE" && (
+                                    <>
+                                        <div className="property-trend-head">
+                                            <strong>{priceTrend.title}</strong>
+                                            {priceTrend.description && (
+                                                <span className="xs dim">
+                                                    {priceTrend.description}
                                                 </span>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
+                                            )}
+                                        </div>
+
+                                        {/*
+                                          .property-trend-plot 은 칸마다 높이가 똑같이 고정된 상자다.
+                                          막대는 그 상자 안에서만 바닥에 붙으므로, 아래 이름표가
+                                          두 줄이 되어 길어져도 막대 시작점(바닥선)은 흔들리지 않는다.
+                                          이름표는 상자 바깥, 일반 흐름에 놓여 아래로만 늘어난다.
+                                        */}
+                                        <div className="bar-chart property-bar-chart">
+                                            {priceTrend.points.map((point, i) => (
+                                                <div
+                                                    className="property-trend-col"
+                                                    key={`${point.label}-${i}`}
+                                                >
+                                                    <div className="property-trend-plot">
+                                                        <span className="property-trend-value">
+                                                            {toShortMoney(point.price)}
+                                                        </span>
+
+                                                        <div
+                                                            className={`bar${point.current ? " current" : ""}`}
+                                                            style={{
+                                                                height: `${(point.price / trendMax) * 78}px`,
+                                                            }}
+                                                            title={
+                                                                point.count
+                                                                    ? `${point.label} · ${point.price.toLocaleString()}만 원 · ${point.count}건`
+                                                                    : `${point.label} · ${point.price.toLocaleString()}만 원`
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <span className="xs property-trend-label">
+                                                        {point.label}
+                                                        {point.count ? ` (${point.count})` : ""}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </section>
 
                             <section className="card">
@@ -957,6 +1181,31 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                         className="stack"
                                         style={{ gap: 9 }}
                                     >
+                                        {/* 관리자가 보낸 수정 요청. 이 매물을 수정하면 서버가 처리 완료로 바꾼다. */}
+                                        {myEditRequests.length > 0 && (
+                                            <div className="property-editreq">
+                                                <span className="status orange">
+                                                    관리자 수정 요청 {myEditRequests.length}건
+                                                </span>
+
+                                                {myEditRequests.map((item) => (
+                                                    <div key={item.id}>
+                                                        <p className="property-editreq-reason">
+                                                            {item.reason}
+                                                        </p>
+
+                                                        <p className="xs dim">
+                                                            {item.requesterName} · {item.createdAt}
+                                                        </p>
+                                                    </div>
+                                                ))}
+
+                                                <p className="xs dim">
+                                                    아래 매물 수정에서 내용을 고치면 요청이 처리 완료됩니다.
+                                                </p>
+                                            </div>
+                                        )}
+
                                         <Link
                                             className="solid-btn"
                                             style={{
@@ -1030,6 +1279,18 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                         >
                                             등록 취소
                                         </button>
+
+                                        {actionError && (
+                                            <p className="xs property-action-error">
+                                                {actionError}
+                                            </p>
+                                        )}
+
+                                        {actionMessage && (
+                                            <p className="xs property-action-message">
+                                                {actionMessage}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
@@ -1038,6 +1299,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                         className="stack"
                                         style={{ gap: 9 }}
                                     >
+                                        {/* 관리자가 직접 고친다. 중개인 수정과 달리 승인 대기로 되돌아가지 않는다. */}
                                         <Link
                                             className="solid-btn"
                                             style={{
@@ -1049,6 +1311,7 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                             매물 수정
                                         </Link>
 
+                                        {/* 매물은 그대로 두고 중개인에게 고칠 점만 알린다 */}
                                         <Link
                                             className="outline-btn"
                                             style={{
@@ -1067,8 +1330,8 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                             }
                                         >
                                             {property.visible
-                                                ? "비공개"
-                                                : "공개"}
+                                                ? "비공개 처리"
+                                                : "공개로 전환"}
                                         </button>
 
                                         <button
@@ -1083,6 +1346,18 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                         >
                                             등록 취소
                                         </button>
+
+                                        {actionError && (
+                                            <p className="xs property-action-error">
+                                                {actionError}
+                                            </p>
+                                        )}
+
+                                        {actionMessage && (
+                                            <p className="xs property-action-message">
+                                                {actionMessage}
+                                            </p>
+                                        )}
                                     </div>
                                 )}
                             </section>

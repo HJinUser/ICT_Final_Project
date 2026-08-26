@@ -61,7 +61,8 @@ export const HEADER_NAV: NavItem[] = [
 // ── 로그인한 사용자의 우측 드롭다운 메뉴 ──────────────────────
 export const USER_MENU: NavItem[] = [
     // 마이페이지 안의 "내 활동 > 알림내역"에서 상담 답변(/my-consultations)을 확인한다.
-    { label: '마이페이지', path: '/mypage', ready: true, roles: ['USER', 'ADMIN'] },
+    // 관리자는 이 화면에서 할 일이 없어서(관심매물·상담 모두 일반 사용자 기능) 관리자 콘솔로만 안내한다.
+    { label: '마이페이지', path: '/mypage', ready: true, roles: ['USER'] },
     { label: '마이페이지', path: '/broker/mypage', ready: true, roles: ['BROKER'] },
     { label: '내 매물 관리', path: '/broker/properties', ready: true, roles: ['BROKER'] },
     { label: '관심 목록', path: '/favorites', ready: true, roles: ['USER'] },

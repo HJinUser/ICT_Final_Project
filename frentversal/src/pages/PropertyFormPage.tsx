@@ -12,6 +12,7 @@ import type {
     PropertyDraftSummary,
 } from "../types/Property";
 import type { TagResponse } from "../types/Tag";
+import type { User } from "../types/User";
 import "../styles/PropertyFormPage.css"; // 부트스트랩이 못 커버하는 부분만 남긴 커스텀 css
 
 const STEPS = ["기본 정보", "가격·계약", "사진", "태그 선택", "AI 시세 확인", "관리자 승인 요청"];
@@ -127,11 +128,26 @@ const makePredictionInputKey = (value: PropertyFormState, detail = "") => JSON.s
     value.buildYear,
 ]);
 
-function PropertyFormPage() {
+/*
+  매물 등록·수정 화면.
+
+  등록은 중개인만 하지만, 수정은 매물을 올린 중개인 외에 관리자도 할 수 있다
+  (매물 상세의 관리자 전용 "매물 수정" 버튼이 이 화면을 연다).
+  누가 열었는지에 따라 안내 문구와 저장 후 결과가 달라져서 로그인 정보를 받는다.
+*/
+interface PropertyFormPageProps {
+    user: User | null;
+}
+
+function PropertyFormPage({ user }: PropertyFormPageProps) {
     const navigate = useNavigate();
     // 주소에 :id가 있으면 수정 화면, 없으면 등록 화면이다 (라우트: /property/form, /property/form/:id)
     const { id } = useParams<{ id: string }>();
     const isEditMode = Boolean(id);
+
+    // 관리자가 연 수정 화면인지. 관리자가 고친 매물은 관리자 재승인을 다시 받지 않는다
+    // (심사하는 사람이 곧 고친 사람이라 승인 대기로 되돌릴 이유가 없다 — PropertyService.update 참고).
+    const isAdminEdit = isEditMode && user?.role === "ADMIN";
 
     const [step, setStep] = useState(0);
 
@@ -234,20 +250,6 @@ function PropertyFormPage() {
         void loadDrafts();
     }, [loadDrafts]);
 
-    // 의존값이 바뀔 때만 계산해서 불필요한 재계산을 줄임
-    const predictionInputKey = useMemo(
-        () => makePredictionInputKey(property, addressDetail),
-        [
-            property.type,
-            property.dealType,
-            property.address,
-            property.area,
-            property.floor,
-            property.buildYear,
-            addressDetail,
-        ]
-    );
-
     const [predictedInputKey, setPredictedInputKey] = useState<string | null>(null);
 
     // 현재 Wizard 단계의 필수 입력이 충족됐는지 단계별로 확인하는 함수임
@@ -317,6 +319,21 @@ function PropertyFormPage() {
         setStep((prev) => Math.max(prev - 1, 0));
     };
 
+
+    // 의존값이 바뀔 때만 계산해서 불필요한 재계산을 줄임
+    const predictionInputKey = useMemo(
+        () => makePredictionInputKey(property, addressDetail),
+        [
+            property.type,
+            property.dealType,
+            property.address,
+            property.area,
+            property.floor,
+            property.buildYear,
+            addressDetail,
+        ]
+    );
+    
     // AI 입력을 바꾸면 화면에 보관 중인 이전 예측 결과를 즉시 무효화함
     useEffect(() => {
         if (predictedInputKey !== null
@@ -605,7 +622,9 @@ function PropertyFormPage() {
                     params: { draftId },
                 });
 
-                alert("매물 정보를 수정했습니다. 관리자 재승인을 기다려 주세요.");
+                alert(isAdminEdit
+                    ? "매물 정보를 수정했습니다."
+                    : "매물 정보를 수정했습니다. 관리자 재승인을 기다려 주세요.");
                 navigate(`/property/${id}`);
                 return;
             }
@@ -670,7 +689,9 @@ function PropertyFormPage() {
                 <div>
                     <div className="eyebrow">Property Form</div>
                     <h1>{isEditMode ? "매물 수정" : "매물 등록"}</h1>
-                    <p>중개인이 입력한 매물은 저장 후 관리자 승인 대기 상태가 되며 승인된 뒤 메인과 지도에 노출됩니다.</p>
+                    <p>{isAdminEdit
+                        ? "관리자가 고친 내용은 저장 즉시 반영되며 매물 상태는 그대로 유지됩니다."
+                        : "중개인이 입력한 매물은 저장 후 관리자 승인 대기 상태가 되며 승인된 뒤 메인과 지도에 노출됩니다."}</p>
                 </div>
                 <div className="hero-stat">
                     <span className="mono dim">등록 단계</span>

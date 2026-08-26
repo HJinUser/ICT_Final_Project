@@ -12,6 +12,7 @@ public enum NotificationType {
     // 중개인이 받는 알림
     CONSULTATION("상담 요청"),
     REVIEW("리뷰"),
+    MODIFY_REQUEST("매물 수정 요청"),
 
     // 관리자가 받는 알림
     PROPERTY_APPROVAL("매물 승인"),

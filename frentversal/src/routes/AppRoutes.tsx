@@ -4,6 +4,7 @@ import SignupPage from './../pages/SignupPage';
 import LoginPage from './../pages/LoginPage';
 import HomePage from './../pages/HomePage';
 import PropertyFormPage from './../pages/PropertyFormPage';
+import PropertyEditRequestPage from './../pages/PropertyEditRequestPage';
 import PasswordlessRegisterPage from '../pages/PasswordlessRegisterPage';
 import FindPasswordPage from '../pages/FindPasswordPage';
 import type { User } from "../types/User";
@@ -76,15 +77,20 @@ function App({ user, handleLoginSuccess, handlePreferenceComplete }: AppProps) {
       />
       {/* 맞춤 추천. 일반 사용자 전용이라 비로그인 사용자는 화면에서 로그인으로 보낸다. */}
       <Route path='/recommend' element={<RecommendPage user={user} />} />
-      <Route path='/property/form' element={<PropertyFormPage />} />
-      <Route path='/property/form/:id' element={<PropertyFormPage />} />
+      <Route path='/property/form' element={<PropertyFormPage user={user} />} />
+      {/* 수정은 매물을 올린 중개인 외에 관리자도 할 수 있다. 서버가 역할에 맞게 다시 확인한다. */}
+      <Route path='/property/form/:id' element={<PropertyFormPage user={user} />} />
+      {/* 관리자가 매물을 내리지 않고 중개인에게 고칠 점만 알리는 화면.
+          /admin 콘솔 바깥이라 화면과 서버(/admin/**) 양쪽에서 관리자만 통과시킨다. */}
+      <Route path='/property/edit-request/:id' element={<PropertyEditRequestPage user={user} />} />
       <Route path="/broker/properties" element={<MyPropertiesPage />} />
       <Route path="/property/:id" element={<PropertyPage user={user} />} />
       <Route path="/property/compare" element={<ComparePage />} />
       <Route path="/favorites" element={<FavoritesPage />} />
       {/* 지도 검색. 비회원도 볼 수 있고, 중개인에게는 "내 매물" 탭이 더 보인다. */}
       <Route path="/map" element={<MapSearchPage user={user} />} />
-      <Route path="/listings" element={<ListingsPage />} />
+      {/* 매물 확인. 관리자에게는 공개 여부 필터가 하나 더 보이고 숨김 매물까지 함께 나온다. */}
+      <Route path="/listings" element={<ListingsPage user={user} />} />
 
       {/* 약관 전문. 코드 없이 들어오면 서비스 이용약관을 보여준다. */}
       <Route path="/terms" element={<TermsPage />} />
