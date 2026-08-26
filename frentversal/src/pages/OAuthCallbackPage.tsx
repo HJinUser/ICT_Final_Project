@@ -24,8 +24,9 @@ function App({ onLogin }: Props) {
         const email = searchParams.get('email');
         const role = searchParams.get('role');
         const preferenceCompleted = searchParams.get('preferenceCompleted');
+        const socialType = searchParams.get('socialType');
 
-        if (!accessToken || !refreshToken || !id || !name || !email || !role || preferenceCompleted === null) {
+        if (!accessToken || !refreshToken || !id || !name || !email || !role || !socialType || preferenceCompleted === null) {
             alert('소셜 로그인 처리 중 오류가 발생했습니다.');
             navigate('/member/login');
             return;
@@ -36,6 +37,7 @@ function App({ onLogin }: Props) {
             name,
             email,
             role: role as User['role'],
+            socialType: socialType as User['socialType'],
             preferenceCompleted: preferenceCompleted === 'true',
         };
 

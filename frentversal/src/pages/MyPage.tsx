@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import customAxios from '../api/axiosInstance';
 import { getMyConsultations } from '../api/myConsultationApi';
-import { isPasswordlessRegistered } from '../api/passwordlessApi';
+import { isPasswordlessRegistered, withdrawPasswordless } from '../api/passwordlessApi';
 import { withdrawMember } from '../api/withdrawalApi';
 import type { MyConsultation } from '../types/Consultation';
 import type { PropertyResponse } from '../types/Property';
@@ -33,9 +33,18 @@ function MyPage({ user }: Props) {
     const [recentViewedCount, setRecentViewedCount] = useState(0);
     const [favoritesCount, setFavoritesCount] = useState(0);
     const [loading, setLoading] = useState(true);
+    const SOCIAL_LABEL: Record<Exclude<User['socialType'], 'NONE'>, string> = {
+        KAKAO: '카카오', GOOGLE: 'Google', NAVER: '네이버',
+    };
 
     // 패스워드리스 등록 여부. 일반 사용자에게만 보여 준다(중개인은 자동 등록이라 이 항목 자체가 없다).
     const [passwordlessRegistered, setPasswordlessRegistered] = useState(false);
+
+    // 패스워드리스 해지 폼
+    const [pwlessWithdrawOpen, setPwlessWithdrawOpen] = useState(false);
+    const [pwlessWithdrawPassword, setPwlessWithdrawPassword] = useState('');
+    const [pwlessWithdrawError, setPwlessWithdrawError] = useState('');
+    const [pwlessWithdrawing, setPwlessWithdrawing] = useState(false);
 
     // 회원 탈퇴 폼
     const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -104,6 +113,21 @@ function MyPage({ user }: Props) {
         } catch (error: any) {
             setWithdrawError(error?.response?.data?.message ?? '탈퇴 처리 중 오류가 발생했습니다.');
             setWithdrawing(false);
+        }
+    };
+
+    const handlePasswordlessWithdraw = async () => {
+        setPwlessWithdrawing(true);
+        setPwlessWithdrawError('');
+        try {
+            await withdrawPasswordless(user.email, pwlessWithdrawPassword);
+            setPasswordlessRegistered(false);
+            setPwlessWithdrawOpen(false);
+            setPwlessWithdrawPassword('');
+        } catch (error: any) {
+            setPwlessWithdrawError(error?.response?.data?.message ?? '해지 처리 중 오류가 발생했습니다.');
+        } finally {
+            setPwlessWithdrawing(false);
         }
     };
 
@@ -185,21 +209,65 @@ function MyPage({ user }: Props) {
                             <section className="card">
                                 <h2>계정</h2>
                                 <div className="stack" style={{ marginTop: 14 }}>
-                                    {/* TODO: 소셜 연동 상태는 로그인 응답(User)에 아직 socialType이 없어서 못 채운다.
-                                        백엔드가 내려주면 여기에 "연동됨"/"연동 안 됨" 배지를 추가한다. */}
-                                    <div className="row between">
-                                        <div>
-                                            <strong>패스워드리스</strong>
-                                            <p className="xs dim">
-                                                {passwordlessRegistered
-                                                    ? '패스워드리스로 등록된 계정입니다.'
-                                                    : '패스워드리스 미등록 사용자입니다.'}
-                                            </p>
+                                    {user.socialType !== 'NONE' && (
+                                        <div className="row between">
+                                            <div>
+                                                <strong>연동 소셜 계정</strong>
+                                                <p className="xs dim">
+                                                    {SOCIAL_LABEL[user.socialType]} 계정과 연동되어 있습니다.
+                                                </p>
+                                            </div>
+                                            <span className="status green">연동됨</span>
                                         </div>
-                                        {!passwordlessRegistered && (
-                                            <Link className="outline-btn" to="/member/passwordless">등록하기</Link>
-                                        )}
-                                    </div>
+                                    )}
+
+                                    {user.socialType === 'NONE' && (
+                                        <div className="stack">
+                                            <div className="row between">
+                                                <div>
+                                                    <strong>패스워드리스</strong>
+                                                    <p className="xs dim">
+                                                        {passwordlessRegistered
+                                                            ? '패스워드리스로 등록된 계정입니다.'
+                                                            : '패스워드리스 미등록 사용자입니다.'}
+                                                    </p>
+                                                </div>
+                                                {!passwordlessRegistered && (
+                                                    <Link className="outline-btn" to="/member/passwordless">등록하기</Link>
+                                                )}
+                                                {passwordlessRegistered && !pwlessWithdrawOpen && (
+                                                    <button className="outline-btn" onClick={() => setPwlessWithdrawOpen(true)}>
+                                                        해지하기
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {passwordlessRegistered && pwlessWithdrawOpen && (
+                                                <div className="stack" style={{ marginTop: 8 }}>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="비밀번호"
+                                                        value={pwlessWithdrawPassword}
+                                                        onChange={(event) => setPwlessWithdrawPassword(event.target.value)}
+                                                    />
+                                                    {pwlessWithdrawError && (
+                                                        <p className="xs" style={{ color: '#d33' }}>{pwlessWithdrawError}</p>
+                                                    )}
+                                                    <div className="row" style={{ gap: 8 }}>
+                                                        <button className="outline-btn" onClick={handlePasswordlessWithdraw} disabled={pwlessWithdrawing}>
+                                                            {pwlessWithdrawing ? '처리 중…' : '해지 확인'}
+                                                        </button>
+                                                        <button
+                                                            className="outline-btn"
+                                                            onClick={() => { setPwlessWithdrawOpen(false); setPwlessWithdrawError(''); setPwlessWithdrawPassword(''); }}
+                                                        >
+                                                            취소
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </section>
 
