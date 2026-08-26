@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface NeighborhoodReviewRepository extends JpaRepository<NeighborhoodReview, Long> {
     Optional<NeighborhoodReview> findByMemberIdAndAdminCode(Long memberId, String adminCode);
     List<NeighborhoodReview> findTop50ByAdminCodeOrderByUpdatedAtDesc(String adminCode);
+
+    List<NeighborhoodReview> findByMemberId(Long memberId);
 }

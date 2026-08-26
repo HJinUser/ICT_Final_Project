@@ -29,7 +29,7 @@ public class AgencyReview {
 
     // 후기를 쓴 회원
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = true)
     @ToString.Exclude
     private Member member ;
 

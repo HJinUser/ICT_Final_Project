@@ -14,8 +14,11 @@ public interface PropertyReviewRepository extends JpaRepository<PropertyReview, 
 
     // 매물 한줄평 목록. 작성자 이름을 함께 보여 주므로 Member 를 같이 읽어 N+1 을 막는다.
     @Query("select r from PropertyReview r " +
-           "  join fetch r.member " +
+           "  left join fetch r.member " +
            " where r.property.id = :propertyId " +
            " order by r.updatedAt desc")
     List<PropertyReview> findByPropertyId(Long propertyId);
+
+    // 이 회원이 쓴 한줄평 전체 (탈퇴 시 작성자 연결만 끊을 때 씀)
+    List<PropertyReview> findByMemberId(Long memberId);
 }

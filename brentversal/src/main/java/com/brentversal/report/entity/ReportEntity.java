@@ -33,8 +33,8 @@ public class ReportEntity {
     @Column(name = "report_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reporter_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporter_id", nullable = true)
     private Member reporter;
 
     @Enumerated(EnumType.STRING)
@@ -165,5 +165,10 @@ public class ReportEntity {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    // 신고자가 탈퇴했을 때 신고 내용은 남기고 작성자 연결만 끊는다.
+    public void detachReporter() {
+        this.reporter = null;
     }
 }

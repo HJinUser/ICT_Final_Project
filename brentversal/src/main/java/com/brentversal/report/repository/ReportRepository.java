@@ -37,4 +37,6 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
             ReportStatus status,
             ReportTargetType targetType
     );
+
+    List<ReportEntity> findByReporter_Id(Long reporterId);
 }

@@ -184,4 +184,6 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
             PropertyStatus status,
             Pageable pageable
     );
+
+    List<Property> findByAgencyId(Long agencyId);
 }
