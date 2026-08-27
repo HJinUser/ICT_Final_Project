@@ -293,7 +293,10 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
 
         // 4) 패스워드리스에 등록돼 있었다면 해지한다
         if (member.isPasswordlessRegistered()) {
-            passwordlessClient.withdrawal(member.getEmail());
+            boolean ok = passwordlessClient.withdrawal(member.getEmail());
+            if (!ok) {
+                throw new IllegalStateException("패스워드리스 해지에 실패해 탈퇴를 진행할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+            }
         }
 
         // 5) Member 행 자체를 삭제한다.
