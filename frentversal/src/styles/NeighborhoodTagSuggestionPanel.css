@@ -1,0 +1,34 @@
+/*
+  NeighborhoodTagSuggestionPanel.css
+
+  관리자 콘솔의 "AI 태그 추천" 영역 전용 스타일이다.
+  공통 클래스(.card .section-head .solid-btn)는 common.css 것을 그대로 쓰고,
+  여기서는 hoodtag- 접두어를 붙인 이 화면만의 규칙만 둔다.
+*/
+.hoodtag { margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line-2); }
+
+.hoodtag-notice { display: flex; align-items: center; gap: 8px; margin: 0 0 16px; padding: 11px 14px; border-radius: var(--r-s); font-size: 13px; }
+.hoodtag-notice[data-kind="done"] { background: #eef7f1; color: #1f6b41; }
+.hoodtag-notice[data-kind="error"] { background: #fdeeee; color: var(--red); }
+.hoodtag-notice span { font-weight: 700; }
+
+.hoodtag-card h3 { font-size: 16px; }
+
+/* 한줄평이 얕은 동네에 띄우는 주의 문구. 반영 전에 눈에 걸려야 해서 배경을 준다. */
+.hoodtag-warn { margin: 10px 0 0; padding: 9px 12px; border-radius: var(--r-s); background: #fdf6e7; color: #8a6100; font-size: 12.5px; }
+
+.hoodtag-list { display: grid; gap: 8px; margin-top: 14px; }
+.hoodtag-item { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--r-s); background: #fff; cursor: pointer; }
+.hoodtag-item:hover { border-color: var(--v); background: var(--v-pale); }
+.hoodtag-item input { margin: 0; }
+
+.hoodtag-name { font-weight: 600; font-size: 13.5px; }
+.hoodtag-applied { margin-left: 7px; padding: 2px 7px; border-radius: 100px; background: var(--v-pale); color: var(--v); font-size: 10.5px; font-style: normal; }
+
+/* 근거 낱말. 관리자가 판단하는 실제 재료라 흐리게 두되 읽을 수는 있게 한다. */
+.hoodtag-evidence { color: var(--ink-3); font-size: 12px; text-align: right; }
+
+@media (max-width: 620px) {
+    .hoodtag-item { grid-template-columns: auto 1fr; }
+    .hoodtag-evidence { grid-column: 1 / -1; text-align: left; }
+}

@@ -109,6 +109,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/property/**").hasRole("BROKER")
                         .requestMatchers(HttpMethod.GET, "/tag/**").permitAll()
                         // 동네 탐색·상세는 공개하고, 등록·숨김 전환은 관리자만 허용한다.
+                        // 태그 추천은 관리자 검토용이라 아래 permitAll 보다 먼저 막는다.
+                        // (매처는 먼저 걸리는 규칙이 이기므로 순서를 바꾸면 그대로 공개된다)
+                        .requestMatchers(HttpMethod.GET, "/neighborhoods/tag-suggestions").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/neighborhoods", "/neighborhoods/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/neighborhoods").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/neighborhoods/**").hasRole("ADMIN")
