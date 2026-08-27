@@ -108,6 +108,11 @@ function BrokerMyPage({ user }: Props) {
     }
 
     const handleWithdraw = async () => {
+        // 되돌릴 수 없는 작업이라 실행 직전에 한 번 더 확인받는다.
+        if (!window.confirm('정말로 탈퇴하시겠습니까?')) {
+            return;
+        }
+
         setWithdrawing(true);
         setWithdrawError('');
         try {
