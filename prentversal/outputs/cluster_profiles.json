@@ -1,5 +1,5 @@
 {
-  "analyzed_at": "2026-08-18T15:21:25",
+  "analyzed_at": "2026-08-27T11:52:28",
   "neighborhood_count": 425,
   "selected_k": 3,
   "silhouette_scores": {
@@ -12,7 +12,7 @@
   },
   "cluster_profiles": {
     "0": {
-      "name": "녹지·교통 중심형",
+      "name": "녹지, 교통 중심형",
       "scores": {
         "transport_score": 0.6973820960034524,
         "living_score": 0.05515266343723092,
@@ -22,7 +22,7 @@
       }
     },
     "1": {
-      "name": "생활편의·의료 중심형",
+      "name": "생활편의, 의료 중심형",
       "scores": {
         "transport_score": 0.44567513306367723,
         "living_score": 0.7632235218632749,
@@ -32,7 +32,7 @@
       }
     },
     "2": {
-      "name": "녹지·교육 중심형",
+      "name": "한적한 주거형",
       "scores": {
         "transport_score": -0.5837543278817208,
         "living_score": -0.7368113917916986,
