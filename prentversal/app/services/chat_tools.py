@@ -96,6 +96,13 @@ SEARCH_PROPERTIES_TOOL = {
                     "enum": SORT_TYPES,
                     "description": "정렬 기준. 싼 것부터면 PRICE_ASC, 넓은 것부터면 AREA_DESC.",
                 },
+                "limit": {
+                    "type": "integer",
+                    "description": (
+                        "사용자가 원하는 결과 개수. '하나만'이면 1, '3개만'이면 3. "
+                        "지정하지 않으면 여러 건을 보여준다."
+                    ),
+                },
             },
             "required": [],
         },
@@ -182,8 +189,30 @@ def _summarize_search(item: dict) -> dict:
     }
 
 
+# 사용자가 요청한 개수를 검증해서, 안전한 범위 안으로 맞추는 함수임
+def _clamp_limit(requested: object) -> int:
+    # LLM이 보낸 값이라 정수가 아니거나(bool도 int라 따로 걸러야 함) 범위를 벗어날 수 있다.
+    if not isinstance(requested, int) or isinstance(requested, bool) or requested < 1:
+        return SEARCH_RESULT_LIMIT
+
+    return min(requested, SEARCH_RESULT_LIMIT)
+
+
 # 매물 검색 도구를 실제로 실행하고 LLM용 요약과 화면 카드를 함께 돌려주는 함수임
 def _run_search(arguments: dict, access_token: str | None) -> tuple[str, list[dict]]:
+    # 개수 지정은 화면 카드 자르는 용도일 뿐이라 Spring에 보낼 조건에서는 미리 빼 둔다.
+    limit = _clamp_limit(arguments.pop("limit", None))
+
+    # 매매(price)·전세(deposit)·월세(monthlyDeposit)는 대표 금액의 의미 자체가 다르다.
+    # 거래 유형 없이 가격순으로 섞으면 월세 보증금이 전세·매매보다 무조건 싸게 잡히는 왜곡이 생긴다.
+    sort = arguments.get("sort")
+    if sort in ("PRICE_ASC", "PRICE_DESC") and not arguments.get("dealType"):
+        return (
+            "매매·전세·월세는 가격의 기준이 달라 거래 유형을 먼저 정해야 가격순으로 비교할 수 있습니다. "
+            "어떤 거래 유형으로 찾는지 사용자에게 다시 물어보세요.",
+            [],
+        )
+
     # LLM이 값을 비워서 보내는 경우가 있어, None인 항목은 아예 빼고 보낸다.
     params = {key: value for key, value in arguments.items() if value not in (None, "", [])}
 
@@ -191,7 +220,7 @@ def _run_search(arguments: dict, access_token: str | None) -> tuple[str, list[di
 
     items = data.get("content", []) or []
     total = data.get("totalCount", len(items))
-    shown = items[:SEARCH_RESULT_LIMIT]
+    shown = items[:limit]
 
     payload = {
         "totalCount": total,
