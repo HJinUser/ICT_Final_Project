@@ -19,6 +19,10 @@ public interface FavoriteRepository extends JpaRepository<Favorite, FavoriteId> 
     // 로그인한 회원의 관심매물 목록 (관심목록 화면용)
     List<Favorite> findByMember(Member member);
 
+    // 중개인 탈퇴로 매물을 통째로 지울 때, 그 매물을 찜해 둔 회원들의 관심매물 행을 먼저 지우는 데 쓴다.
+    // (Favorite -> Property 외래키가 남아 있으면 매물 삭제가 막히거나 고아 행이 남는다)
+    List<Favorite> findByProperty_Id(Long propertyId);
+
     // 동네 탐색 카드의 "인기도" = 그 동네에 속한 매물들이 받은 찜(관심매물) 총합
     // Property.neighborhoodId(Long)가 Neighborhood 연관관계로 바뀌면서 경로가 한 단계 늘었다.
     long countByProperty_Neighborhood_Id(Long neighborhoodId);

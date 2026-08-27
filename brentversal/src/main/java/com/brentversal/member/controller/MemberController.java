@@ -91,7 +91,8 @@ public class MemberController {
                     "address", member.getAddress() == null ? "" : member.getAddress(),
                     "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
                     // 프론트가 일반 사용자(USER) + 미완료일 때만 취향 초기 설정 화면으로 보내는 데 쓴다.
-                    "preferenceCompleted", member.isPreferenceCompleted())) ;
+                    "preferenceCompleted", member.isPreferenceCompleted(),
+                    "socialType", member.getSocialType().toString())) ;
         }
 
 
@@ -147,6 +148,28 @@ public class MemberController {
         String email = authentication.getName(); // JwtAuthenticationFilter 가 principal 로 넣어둔 이메일
         memberService.clearRefreshToken(email);
         return ResponseEntity.ok(Map.of("message", "로그아웃 되었습니다."));
+    }
+
+    // 회원 탈퇴: 로그인한 본인만 자기 계정을 탈퇴할 수 있다.
+// 비밀번호가 있는 계정이면 body의 password로 재확인하고 (없으면 MemberService가 그냥 건너뜀),
+// 실제 삭제/연결 끊기 로직은 MemberService.withdrawal()에 다 있다.
+    @PostMapping("/withdrawal")
+    public ResponseEntity<?> withdrawal(Authentication authentication, @RequestBody Map<String, String> body){
+        String email = authentication.getName(); // JwtAuthenticationFilter가 principal로 넣어둔 이메일
+        Member member = memberService.findByEmail(email);
+        if (member == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "회원 정보를 찾을 수 없습니다."));
+        }
+
+        try {
+            memberService.withdrawal(member.getId(), body.get("password"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage()));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "탈퇴가 완료되었습니다."));
     }
 
     // @RequestBody : 넘어온 request정보가 JSON형식인데 그것을 Java 형식으로 바꿔주는 것

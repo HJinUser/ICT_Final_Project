@@ -1,8 +1,12 @@
 package com.brentversal.member.service;
 
 import com.brentversal.agency.entity.Agency;
+import com.brentversal.agency.repository.AgencyConsultationRepository;
+import com.brentversal.agency.repository.AgencyRepository;
+import com.brentversal.agency.repository.AgencyReviewRepository;
 import com.brentversal.agency.service.AgencyService;
 import com.brentversal.common.config.JwtTokenProvider;
+import com.brentversal.favorite.repository.FavoriteRepository;
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.constant.SocialType;
 import com.brentversal.member.dto.SignupDto;
@@ -11,6 +15,17 @@ import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.BrokerRepository;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.member.validation.PasswordPolicy;
+import com.brentversal.neighborhoodreview.repository.NeighborhoodReviewRepository;
+import com.brentversal.passwordless.client.PasswordlessClient;
+import com.brentversal.property.entity.Property;
+import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.propertyreview.repository.PropertyReviewRepository;
+import com.brentversal.recommendation.repository.RecentSearchRepository;
+import com.brentversal.recommendation.repository.RecommendationBestRepository;
+import com.brentversal.recommendation.repository.RecommendationFeedbackRepository;
+import com.brentversal.recommendation.repository.UserPreferenceRepository;
+import com.brentversal.report.entity.ReportEntity;
+import com.brentversal.report.repository.ReportRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,6 +50,19 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
     private final AgencyService agencyService;
     private final JwtTokenProvider jwtTokenProvider; // 소셜 가입 토큰(socialToken) 검증용
 
+    private final AgencyReviewRepository agencyReviewRepository;
+    private final AgencyConsultationRepository agencyConsultationRepository;
+    private final PropertyReviewRepository propertyReviewRepository;
+    private final NeighborhoodReviewRepository neighborhoodReviewRepository;
+    private final ReportRepository reportRepository;
+    private final FavoriteRepository favoriteRepository;
+    private final AgencyRepository agencyRepository;
+    private final PropertyRepository propertyRepository;
+    private final PasswordlessClient passwordlessClient; // PasswordlessService를 직접 주입하면 순환참조가 생겨서, 얘가 이미 쓰는 client를 그대로 가져옴
+    private final RecentSearchRepository recentSearchRepository;
+    private final RecommendationFeedbackRepository recommendationFeedbackRepository;
+    private final RecommendationBestRepository recommendationBestRepository;
+    private final UserPreferenceRepository userPreferenceRepository;
     public Member findByEmail(String email){
         return memberRepository.findByEmail(email);
     }
@@ -221,5 +250,90 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
             throw new EntityNotFoundException("회원 정보를 찾을 수 없습니다.");
         }
         member.setPreferenceCompleted(true);
+    }
+
+    // ===== 탈퇴 =====
+    @Transactional
+    public void withdrawal(Long memberId, String password){
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("회원 정보를 찾을 수 없습니다."));
+
+        if (member.getRole() == Role.ADMIN) {
+            throw new IllegalArgumentException("관리자 계정은 이 기능으로 탈퇴할 수 없습니다.");
+        }
+
+        // 비밀번호가 있는 계정만 재확인한다. 소셜/중개인처럼 비밀번호가 없는 계정은
+        // 이미 JWT로 본인 확인이 끝난 상태라 건너뛴다.
+        if (member.getPassword() != null) {
+            if (password == null || !passwordEncoder.matches(password, member.getPassword())) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
+        }
+
+        // 1) 콘텐츠는 남기고 작성자 연결만 끊는다 (리뷰·상담·신고)
+        detachAuthoredContent(member.getId());
+
+        // 2) 순수 개인화 데이터는 그냥 같이 삭제한다
+        favoriteRepository.deleteAll(favoriteRepository.findByMember(member));
+        member.getPreferredTags().clear(); // @ManyToMany 소유 쪽이라 clear()만 해도 member_tag 조인 행이 지워짐
+
+        recentSearchRepository.deleteAll(recentSearchRepository.findByMemberId(member.getId()));
+        recommendationFeedbackRepository.deleteAll(recommendationFeedbackRepository.findByMemberId(member.getId()));
+        userPreferenceRepository.findByMemberId(member.getId()).ifPresent(userPreferenceRepository::delete);
+
+    // RecommendationBest는 member_id 자체가 기본키(@MapsId)라, 있으면 그 id로 바로 지운다.
+        if (recommendationBestRepository.existsById(member.getId())) {
+            recommendationBestRepository.deleteById(member.getId());
+        }
+
+        // 3) 중개인이면 등록한 매물·사무소까지 정리한다
+        if (member.getRole() == Role.BROKER) {
+            withdrawBrokerAssets(member);
+        }
+
+        // 4) 패스워드리스에 등록돼 있었다면 해지한다
+        if (member.isPasswordlessRegistered()) {
+            passwordlessClient.withdrawal(member.getEmail());
+        }
+
+        // 5) Member 행 자체를 삭제한다.
+        // Broker는 Member.broker가 cascade=ALL + orphanRemoval=true라 여기서 자동으로 같이 지워진다.
+        memberRepository.delete(member);
+    }
+
+    // 리뷰/상담/신고는 내용을 남기고 작성자 연결만 끊는다 (화면에서 "탈퇴한 회원"으로 표시됨)
+    private void detachAuthoredContent(Long memberId){
+        agencyReviewRepository.findByMemberId(memberId)
+                .forEach(review -> review.setMember(null));
+        agencyConsultationRepository.findByMemberIdOrderByCreatedAtDesc(memberId)
+                .forEach(consultation -> consultation.setMember(null));
+        propertyReviewRepository.findByMemberId(memberId)
+                .forEach(review -> review.setMember(null));
+        neighborhoodReviewRepository.findByMemberId(memberId)
+                .forEach(review -> review.setMember(null));
+        reportRepository.findByReporter_Id(memberId)
+                .forEach(ReportEntity::detachReporter);
+    }
+
+    // 중개인 탈퇴: 등록한 매물과 사무소는 콘텐츠를 남길 대상 자체가 사라지므로 통째로 지운다
+    private void withdrawBrokerAssets(Member member){
+        agencyRepository.findByMemberId(member.getId()).ifPresent(agency -> {
+            List<Property> properties = propertyRepository.findByAgencyId(agency.getId());
+            for (Property property : properties) {
+                favoriteRepository.deleteAll(favoriteRepository.findByProperty_Id(property.getId()));
+                propertyReviewRepository.findByPropertyId(property.getId())
+                        .forEach(propertyReviewRepository::delete);
+                // property.images는 cascade=ALL+orphanRemoval이라 Property 삭제 시 자동으로 같이 지워지고
+                // property.tags는 @ManyToMany 조인 테이블이라 별도 처리 없이 자동 정리된다.
+            }
+            propertyRepository.deleteAll(properties);
+
+            agencyReviewRepository.findByAgencyIdOrderByIdDesc(agency.getId())
+                    .forEach(agencyReviewRepository::delete);
+            agencyConsultationRepository.findByAgencyIdOrderByCreatedAtDesc(agency.getId())
+                    .forEach(agencyConsultationRepository::delete);
+
+            agencyRepository.delete(agency);
+        });
     }
 }

@@ -26,7 +26,6 @@ const ADMIN_MENU: NavItem[] = [
     { label: '매물 관리', path: '/admin/properties', ready: true },
     { label: '동네 관리', path: '/admin/neighborhoods', ready: true },
     { label: '신고/한줄평 관리', path: '/admin/reports', ready: true },
-    { label: '데이터 수집·배치 모니터링', path: '/admin/batch', ready: false },
     { label: '모델 관리', path: '/admin/models', ready: true },
     // 공지사항은 사용자도 보는 화면이라 콘솔 밖(/notice)에 있다.
     // 관리자에게는 그 화면에서 작성·수정 버튼이 함께 보인다.

@@ -2,9 +2,12 @@ package com.brentversal.neighborhood.controller;
 
 import com.brentversal.common.ml.MlClient;
 import com.brentversal.neighborhood.dto.NeighborhoodCreateRequest;
+import com.brentversal.neighborhood.dto.NeighborhoodExploreResponse;
 import com.brentversal.neighborhood.dto.NeighborhoodListResponse;
 import com.brentversal.neighborhood.dto.NeighborhoodResponse;
 import com.brentversal.neighborhood.dto.NeighborhoodSearchRequest;
+import com.brentversal.neighborhood.dto.NeighborhoodTagReviewDto;
+import com.brentversal.neighborhood.dto.NeighborhoodTagUpdateRequest;
 import com.brentversal.neighborhood.service.NeighborhoodService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +21,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -39,6 +44,23 @@ public class NeighborhoodController {
         return neighborhoodService.search(request, isAdmin(authentication));
     }
 
+    /*
+      동네 탐색을 서울 전체 행정동(425개) 기준으로 보여준다.
+
+      위의 list()는 관리자가 등록한 법정동만 보여주고(현재 6개), 이건 파이썬 K-Means 결과 전체를
+      기본으로 삼아 군집·자치구로 실제 탐색이 되게 한다. 등록된 법정동과 대응되면 그 설명·사진·태그를
+      함께 붙여 준다(NeighborhoodService.explore 참고).
+      경로가 "/explore" 정적 문자열이라 아래 "/{id}" 와 겹치지 않는다.
+    */
+    @GetMapping("/explore")
+    public NeighborhoodExploreResponse explore(
+            @RequestParam(required = false) String clusterName,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) List<String> tagNames
+    ) {
+        return neighborhoodService.explore(clusterName, district, tagNames);
+    }
+
     @GetMapping("/{id}")
     public NeighborhoodResponse detail(
             @PathVariable Long id,
@@ -50,6 +72,37 @@ public class NeighborhoodController {
     @PatchMapping("/{id}/visibility")
     public NeighborhoodResponse toggleVisibility(@PathVariable Long id) {
         return neighborhoodService.toggleVisibility(id);
+    }
+
+    /*
+      한줄평 키워드에서 뽑은 동네별 태그 후보를 돌려준다. 관리자 검토 화면이 쓴다.
+
+      이 조회만으로는 태그가 붙지 않는다. 관리자가 고른 뒤 아래 PATCH 로 확정해야 붙는다.
+      경로가 "/tag-suggestions" 정적 문자열이라 아래 "/{id}" 와 겹치지 않는다.
+
+      GET /neighborhoods/** 는 공개라, SecurityConfig 에서 이 경로만 따로 앞에 두어 관리자로 막았다.
+      이 프로젝트는 @EnableMethodSecurity 를 켜지 않아 @PreAuthorize 가 동작하지 않으므로,
+      인가는 반드시 SecurityConfig 매처로 건다.
+    */
+    @GetMapping("/tag-suggestions")
+    public List<NeighborhoodTagReviewDto> tagSuggestions() {
+        return neighborhoodService.tagSuggestions();
+    }
+
+    /*
+      관리자가 확정한 태그로 이 동네의 태그를 통째로 바꾼다.
+
+      보낸 목록이 최종 상태다. 추천을 받아들이는 것과 붙어 있던 태그를 떼는 것을 함께 처리한다.
+      SecurityConfig 에서 PATCH /neighborhoods/** 를 관리자만 통과시킨다.
+    */
+    @PatchMapping("/{id}/tags")
+    public ResponseEntity<?> updateTags(@PathVariable Long id,
+                                        @RequestBody NeighborhoodTagUpdateRequest request) {
+        try {
+            return ResponseEntity.ok(neighborhoodService.replaceTags(id, request.getTagIds()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // 관리자 "동네 등록". SecurityConfig에서 ADMIN만 호출 가능하도록 막아 둔다.

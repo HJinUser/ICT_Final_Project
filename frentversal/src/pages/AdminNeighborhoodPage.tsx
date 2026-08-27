@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createNeighborhood, getNeighborhoodTags, getNeighborhoods } from '../api/neighborhoodApi';
 import type { NeighborhoodResponse } from '../types/Neighborhood';
 import type { TagResponse } from '../types/Tag';
+import NeighborhoodTagSuggestionPanel from './components/NeighborhoodTagSuggestionPanel';
 import '../styles/AdminNeighborhoodPage.css';
 
 // 관리자 "동네 등록" 화면
@@ -223,6 +224,9 @@ function AdminNeighborhoodPage() {
                     </div>
                 ))}
             </div>
+
+            {/* 한줄평 분석이 뽑은 태그 후보. 반영하면 위 목록의 태그도 달라지므로 함께 다시 읽는다. */}
+            <NeighborhoodTagSuggestionPanel onApplied={loadNeighborhoods} />
         </>
     );
 }

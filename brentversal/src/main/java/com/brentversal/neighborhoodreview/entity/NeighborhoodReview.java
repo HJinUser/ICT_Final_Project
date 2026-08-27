@@ -24,7 +24,7 @@ public class NeighborhoodReview {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id", nullable = true)
     private Member member;
 
     @Column(name = "admin_code", length = 20, nullable = false)

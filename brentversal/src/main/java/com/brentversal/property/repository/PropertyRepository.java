@@ -189,6 +189,22 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     // 동네 탐색 카드에 표시할 공개·게시중 매물 건수
     long countByNeighborhood_IdAndStatusAndVisibleTrue(Long neighborhoodId, PropertyStatus status);
 
+    /*
+      동네 탐색(행정동 425개 전체보기)의 매물 건수·평균 전세가를 행정동별로 한 번에 집계한다.
+
+      행정동마다 따로 조회하면 425번 질의가 나가므로, admin_code 로 group by 해서
+      한 번의 질의로 전체 행정동의 집계를 가져온다.
+      반환값은 [adminCode, 건수, 평균 전세보증금] 순서의 Object[] 목록이다.
+      전세 매물이 없는 행정동은 평균이 null 로 온다 — 서비스 쪽에서 0으로 바꿔 준다.
+    */
+    @Query("select p.adminCode, count(p), " +
+           "       avg(case when p.dealType = com.brentversal.property.constant.DealType.JEONSE " +
+           "                then p.deposit else null end) " +
+           "  from Property p " +
+           " where p.status = :status and p.visible = true and p.adminCode is not null " +
+           " group by p.adminCode")
+    List<Object[]> countAndAverageJeonseByAdminCode(@Param("status") PropertyStatus status);
+
     // 동네 탐색 카드의 "평균 전세가". 전세(JEONSE) 매물의 deposit 만 평균 낸다.
     // 해당 동네에 전세 매물이 하나도 없으면 avg 가 null 이 되므로, 서비스 쪽에서 0 으로 바꿔 준다.
     @Query("select avg(p.deposit) from Property p " +
@@ -265,4 +281,6 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
             PropertyStatus status,
             Pageable pageable
     );
+
+    List<Property> findByAgencyId(Long agencyId);
 }

@@ -103,7 +103,7 @@ function MlNeighborhoodDetailPage() {
                     <span className="eyebrow">K-Means 동네 군집 분석</span>
                     <h1>{analysis.districtName} {analysis.adminName}</h1>
                     <p>
-                        교통·생활·의료·교육·녹지 다섯 가지를 한꺼번에 보고,
+                        교통, 생활, 의료, 교육, 녹지 다섯 가지를 한꺼번에 보고,
                         성격이 비슷한 동네끼리 묶었습니다.
                         추천 목록에 이 동네가 올라온 이유를 여기서 확인할 수 있습니다.
                     </p>

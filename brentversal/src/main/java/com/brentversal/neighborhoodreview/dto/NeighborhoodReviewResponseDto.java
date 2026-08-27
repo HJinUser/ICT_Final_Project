@@ -23,7 +23,7 @@ public class NeighborhoodReviewResponseDto {
     public static NeighborhoodReviewResponseDto of(NeighborhoodReview review) {
         NeighborhoodReviewResponseDto dto = new NeighborhoodReviewResponseDto();
         dto.setId(review.getId());
-        dto.setMemberName(review.getMember().getName());
+        dto.setMemberName(review.getMember() == null ? "탈퇴한 회원" : review.getMember().getName());
         dto.setAdminCode(review.getAdminCode());
         dto.setAdminName(review.getAdminName());
         dto.setDistrictName(review.getDistrictName());

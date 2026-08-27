@@ -1,43 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import {
-    getNeighborhoods,
-    getNeighborhoodTags,
-    toggleNeighborhoodVisibility,
-} from '../api/neighborhoodApi';
+import { getNeighborhoodExplore } from '../api/neighborhoodApi';
 import type {
-    NeighborhoodListResponse,
-    NeighborhoodSearchParams,
-    NeighborhoodSortCode,
-} from '../types/Neighborhood';
-import type { TagCategoryCode, TagResponse } from '../types/Tag';
+    NeighborhoodExploreItem,
+    NeighborhoodExploreResponse,
+    NeighborhoodExploreSearchParams,
+} from '../types/NeighborhoodExplore';
 import type { User } from '../types/User';
 import NeighborhoodMap from './components/NeighborhoodMap';
-import { SEOUL_DISTRICTS, dongOptionsOf } from '../utils/seoulDistricts';
 import '../styles/NeighborhoodPage.css';
 
 interface NeighborhoodPageProps {
     user: User | null;
 }
 
-const EMPTY_RESPONSE: NeighborhoodListResponse = {
+const EMPTY_RESPONSE: NeighborhoodExploreResponse = {
     content: [],
-    totalCount: 0,
-    cities: [],
-    districtsByCity: {},
-    dongsByDistrict: {},
+    clusterNames: [],
+    districts: [],
+    tagGroups: {},
 };
 
-const CATEGORY_LABELS: Record<TagCategoryCode, string> = {
-    ATMOSPHERE: '분위기',
-    LIVING_ENVIRONMENT: '생활환경',
-    TRANSPORTATION: '교통 편의',
-    NATURAL_ENVIRONMENT: '자연환경',
-};
-
-const CATEGORIES = Object.keys(CATEGORY_LABELS) as TagCategoryCode[];
 const PAGE_SIZE = 6;
+
+// 페이지 번호를 한 줄에 몇 개씩 끊어 보여 줄지.
+// 행정동이 425개라 전체 페이지가 71쪽이고, 번호를 다 늘어놓으면 화면을 넘어간다.
+// 10개씩 끊고 << >> 로 묶음을 옮긴다.
+const PAGE_BLOCK_SIZE = 10;
 
 // 이 서비스는 서울만 다룬다. 시/도를 고를 필요가 없어서 항상 이 값으로 고정한다.
 const FIXED_CITY = '서울시';
@@ -52,32 +42,11 @@ function formatJeonsePrice(price: number) {
 }
 
 function NeighborhoodPage({ user }: NeighborhoodPageProps) {
-    const [result, setResult] = useState<NeighborhoodListResponse>(EMPTY_RESPONSE);
-    const [tags, setTags] = useState<TagResponse[]>([]);
-    const [activeCategory, setActiveCategory] = useState<TagCategoryCode>('ATMOSPHERE');
-    const [search, setSearch] = useState<Required<Pick<NeighborhoodSearchParams, 'tagIds' | 'sort' | 'includeHidden'>> & NeighborhoodSearchParams>({
-        city: FIXED_CITY, district: '', dong: '', tagIds: [], sort: 'POPULAR', includeHidden: false,
-    });
-    const [draftDistrict, setDraftDistrict] = useState('');
-    const [draftDong, setDraftDong] = useState('');
+    const [result, setResult] = useState<NeighborhoodExploreResponse>(EMPTY_RESPONSE);
+    const [search, setSearch] = useState<NeighborhoodExploreSearchParams>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [page, setPage] = useState(1);
-
-    useEffect(() => {
-        let active = true;
-        const loadTags = async () => {
-            try {
-                const data = await getNeighborhoodTags();
-                if (active) setTags(data);
-            } catch (requestError) {
-                console.error('동네 태그 조회 실패', requestError);
-                if (active) setError('동네 태그를 불러오지 못했습니다.');
-            }
-        };
-        loadTags();
-        return () => { active = false; };
-    }, []);
 
     useEffect(() => {
         let active = true;
@@ -85,7 +54,7 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
             setLoading(true);
             setError('');
             try {
-                const data = await getNeighborhoods(search);
+                const data = await getNeighborhoodExplore(search);
                 if (active) {
                     setResult(data);
                     setPage(1);
@@ -101,48 +70,66 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
         return () => { active = false; };
     }, [search]);
 
-    const categoryTags = useMemo(
-        () => tags.filter((tag) => tag.category === activeCategory),
-        [tags, activeCategory],
-    );
-    const selectedTags = useMemo(
-        () => tags.filter((tag) => search.tagIds.includes(tag.id)),
-        [tags, search.tagIds],
-    );
-    // 구·동 목록은 서버가 준 값(= 이미 등록된 동네가 있는 지역)이 아니라 서울시 전체를 보여 준다.
-    // 등록된 동네만 고를 수 있으면 "아직 등록 안 된 동네"를 찾아볼 방법이 없고,
-    // 화면마다 고를 수 있는 지역이 달라 보이기 때문이다(utils/seoulDistricts 를 함께 쓴다).
-    const districts = SEOUL_DISTRICTS;
-    const dongs = dongOptionsOf(draftDistrict);
     const pageCount = Math.max(1, Math.ceil(result.content.length / PAGE_SIZE));
     const pagedNeighborhoods = result.content.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    const toggleTag = (tagId: number) => {
-        setSearch((previous) => ({
-            ...previous,
-            tagIds: previous.tagIds.includes(tagId)
-                ? previous.tagIds.filter((id) => id !== tagId)
-                : [...previous.tagIds, tagId],
-        }));
+    // 지금 페이지가 속한 10개 묶음의 첫 쪽과 끝 쪽. 번호 버튼은 이 범위만 그린다.
+    const blockStart = Math.floor((page - 1) / PAGE_BLOCK_SIZE) * PAGE_BLOCK_SIZE + 1;
+    const blockEnd = Math.min(blockStart + PAGE_BLOCK_SIZE - 1, pageCount);
+    const blockPages = Array.from(
+        { length: blockEnd - blockStart + 1 },
+        (_, index) => blockStart + index,
+    );
+
+    // << >> 는 앞뒤 묶음의 첫 쪽으로 보낸다. 마지막 묶음이 10쪽보다 짧아도 범위를 넘지 않게 막는다.
+    const goPrevBlock = () => setPage(Math.max(1, blockStart - PAGE_BLOCK_SIZE));
+    const goNextBlock = () => setPage(Math.min(pageCount, blockStart + PAGE_BLOCK_SIZE));
+
+    /*
+      유형을 바꾸면 그 유형에 없는 태그 선택은 함께 푼다.
+
+      칩이 유형별로 갈려 있어서, 그대로 두면 칩은 숨었는데 조건만 남는다.
+      결과가 0곳으로 줄어도 화면에서는 이유를 알 수 없다.
+    */
+    const selectCluster = (clusterName: string | undefined) => {
+        setSearch((previous) => {
+            const current = previous.tagNames ?? [];
+            const allowed = clusterName ? result.tagGroups[clusterName] ?? [] : null;
+            const next = allowed === null ? current : current.filter((name) => allowed.includes(name));
+
+            return { ...previous, clusterName, tagNames: next.length > 0 ? next : undefined };
+        });
     };
 
-    const applyLocation = () => {
-        setSearch((previous) => ({
-            ...previous,
-            city: FIXED_CITY,
-            district: draftDistrict,
-            dong: draftDong,
-        }));
+    const selectDistrict = (district: string) => {
+        setSearch((previous) => ({ ...previous, district: district || undefined }));
     };
 
-    const handleVisibility = async (id: number) => {
-        try {
-            await toggleNeighborhoodVisibility(id);
-            setSearch((previous) => ({ ...previous }));
-        } catch (requestError) {
-            console.error('동네 공개 상태 변경 실패', requestError);
-            setError('동네 공개 상태를 변경하지 못했습니다.');
-        }
+    /*
+      유형 탭 아래에 그릴 태그 칩.
+
+      유형을 고르면 그 유형의 태그만, 전체일 때는 모든 유형의 태그를 순서대로 펼쳐 보여 준다.
+      유형별 소제목을 따로 달지 않고 탭 선택으로 갈라 놓는 이유는, 소제목이 세 줄로 늘어지면
+      필터 영역이 화면을 너무 많이 차지하기 때문이다.
+    */
+    const tagOptions = useMemo(() => {
+        const groups = search.clusterName
+            ? [result.tagGroups[search.clusterName] ?? []]
+            : Object.values(result.tagGroups);
+
+        return [...new Set(groups.flat())];
+    }, [result.tagGroups, search.clusterName]);
+
+    const selectedTagNames = search.tagNames ?? [];
+
+    const toggleTag = (tagName: string) => {
+        setSearch((previous) => {
+            const current = previous.tagNames ?? [];
+            const next = current.includes(tagName)
+                ? current.filter((name) => name !== tagName)
+                : [...current, tagName];
+            return { ...previous, tagNames: next.length > 0 ? next : undefined };
+        });
     };
 
     return (
@@ -151,12 +138,12 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
                 <div>
                     <div className="eyebrow">Neighborhood explorer</div>
                     <h1>동네 탐색</h1>
-                    <p>지역과 생활 태그를 조합해 나에게 맞는 동네를 찾아보세요.</p>
+                    <p>서울 전체 동네를 생활환경 유형별로 둘러보세요. 유형은 K-Means 군집 분석 결과입니다.</p>
                 </div>
                 <div className="hero-stat">
                     <span className="mono dim">검색 결과</span>
-                    <strong>{result.totalCount}곳</strong>
-                    <span className="xs dim">DB 연동 기준</span>
+                    <strong>{result.content.length}곳</strong>
+                    <span className="xs dim">행정동 기준</span>
                 </div>
             </div></section>
 
@@ -164,98 +151,149 @@ function NeighborhoodPage({ user }: NeighborhoodPageProps) {
                 <section className="neighborhood-filter-card">
                     <div className="neighborhood-location-fields">
                         <label>시·도<input type="text" value={FIXED_CITY} disabled /></label>
-                        <label>시·군·구<select value={draftDistrict} onChange={(event) => { setDraftDistrict(event.target.value); setDraftDong(''); }}>
+                        <label>자치구<select value={search.district ?? ''} onChange={(event) => selectDistrict(event.target.value)}>
                             <option value="">전체</option>
-                            {districts.map((district) => <option key={district} value={district}>{district}</option>)}
+                            {result.districts.map((district) => <option key={district} value={district}>{district}</option>)}
                         </select></label>
-                        <label>읍·면·동<select value={draftDong} onChange={(event) => setDraftDong(event.target.value)} disabled={!draftDistrict}>
-                            <option value="">전체</option>
-                            {dongs.map((dong) => <option key={dong.value} value={dong.value}>{dong.label}</option>)}
-                        </select></label>
-                        <button className="solid-btn" type="button" onClick={applyLocation}>필터 적용</button>
                     </div>
 
+                    {/*
+                      생활 태그 필터.
+
+                      위 탭은 K-Means 동네 유형이고, 아래 칩은 그 유형에 배분된 태그다.
+                      유형을 고르면 목록이 그 유형으로 좁혀지는 동시에 칩도 그 유형의 것만 남는다.
+                      전체일 때는 모든 유형의 태그를 펼쳐 보여 준다.
+
+                      칩은 확정 태그와 한줄평 분석이 제안한 태그를 함께 본다. 확정 태그는 등록된 동네
+                      7곳에만 있어서 그것만 쓰면 필터가 거의 동작하지 않기 때문이다.
+                      여러 개를 고르면 하나라도 맞는 동네를 보여주고 많이 맞는 순으로 세운다.
+                    */}
                     <div className="neighborhood-tag-area">
+                        <span className="neighborhood-filter-label">생활 태그</span>
+
                         <div className="tabs neighborhood-tabs">
-                            {CATEGORIES.map((category) => (
-                                <button className={`tab-btn${activeCategory === category ? ' on' : ''}`} type="button" onClick={() => setActiveCategory(category)} key={category}>
-                                    {CATEGORY_LABELS[category]}
+                            <button
+                                className={`tab-btn${!search.clusterName ? ' on' : ''}`}
+                                type="button"
+                                onClick={() => selectCluster(undefined)}
+                            >
+                                전체
+                            </button>
+                            {result.clusterNames.map((clusterName) => (
+                                <button
+                                    className={`tab-btn${search.clusterName === clusterName ? ' on' : ''}`}
+                                    type="button"
+                                    onClick={() => selectCluster(clusterName)}
+                                    key={clusterName}
+                                >
+                                    {clusterName}
                                 </button>
                             ))}
                         </div>
+
                         <div className="neighborhood-tag-buttons">
-                            {categoryTags.map((tag) => (
-                                <button className={`filter-chip${search.tagIds.includes(tag.id) ? ' on' : ''}`} type="button" onClick={() => toggleTag(tag.id)} key={tag.id}>
-                                    {tag.name}
+                            {tagOptions.map((tagName) => (
+                                <button
+                                    className={`filter-chip${selectedTagNames.includes(tagName) ? ' on' : ''}`}
+                                    type="button"
+                                    onClick={() => toggleTag(tagName)}
+                                    key={tagName}
+                                >
+                                    {tagName}
                                 </button>
                             ))}
                         </div>
-                        {selectedTags.length > 0 && <div className="neighborhood-selected-tags">
-                            <span>선택한 태그</span>
-                            {selectedTags.map((tag) => <button type="button" onClick={() => toggleTag(tag.id)} key={tag.id}>{tag.name} ×</button>)}
-                        </div>}
+
+                        {selectedTagNames.length > 0 && (
+                            <div className="neighborhood-selected-tags">
+                                <span>선택한 태그</span>
+                                {selectedTagNames.map((tagName) => (
+                                    <button type="button" onClick={() => toggleTag(tagName)} key={tagName}>
+                                        {tagName} ×
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </section>
-
-                <div className="neighborhood-toolbar">
-                    <p className="muted">조건에 맞는 동네 {result.totalCount}곳</p>
-                    <div className="row gap12">
-                        {user?.role === 'ADMIN' && <label className="neighborhood-hidden-toggle">
-                            <input type="checkbox" checked={search.includeHidden} onChange={(event) => setSearch((previous) => ({ ...previous, includeHidden: event.target.checked }))} /> 숨김 포함
-                        </label>}
-                        <select className="search-box" value={search.sort} onChange={(event) => setSearch((previous) => ({ ...previous, sort: event.target.value as NeighborhoodSortCode }))}>
-                            <option value="POPULAR">인기 순</option>
-                            <option value="LISTINGS">매물 많은 순</option>
-                            <option value="NAME">가나다순</option>
-                        </select>
-                    </div>
-                </div>
 
                 {loading && <div className="neighborhood-state">동네 정보를 불러오는 중입니다.</div>}
                 {!loading && error && <div className="neighborhood-state error">{error}</div>}
                 {!loading && !error && result.content.length === 0 && <div className="neighborhood-state">선택한 조건에 맞는 동네가 없습니다.</div>}
                 {!loading && !error && <div className="neighborhood-grid">
-                    {pagedNeighborhoods.map((neighborhood) => (
-                        <article className={`neighborhood-card${neighborhood.visible ? '' : ' hidden-card'}`} key={neighborhood.id}>
-                            <Link to={`/neighborhood/${neighborhood.id}`}>
+                    {pagedNeighborhoods.map((neighborhood: NeighborhoodExploreItem) => (
+                        <article className="neighborhood-card" key={neighborhood.adminCode}>
+                            <Link to={`/neighborhood/ml/${encodeURIComponent(neighborhood.adminCode)}`}>
                                 <div className="neighborhood-visual">
-                                    {/* 이 화면은 "그 동네가 어디인지" 보는 곳이라 대표 사진이 있어도 지도를 보여 준다.
-                                        사진은 메인 화면의 큰 카드에서 쓴다(HomePage 참고). */}
                                     <NeighborhoodMap
-                                        city={neighborhood.city}
-                                        district={neighborhood.district}
-                                        dong={neighborhood.dong}
+                                        city={FIXED_CITY}
+                                        district={neighborhood.districtName}
+                                        dong={neighborhood.adminName}
                                     />
-                                    {!neighborhood.visible && <span className="status gray">숨김</span>}
                                 </div>
                                 <div className="neighborhood-card-body">
                                     <div className="row between">
-                                        <div><span className="xs dim">{neighborhood.city} {neighborhood.district}</span><h2>{neighborhood.dong}</h2></div>
+                                        <div>
+                                            <span className="xs dim">{neighborhood.districtName}, {neighborhood.clusterName}</span>
+                                            <h2>{neighborhood.adminName}</h2>
+                                        </div>
+                                        {/* 여러 태그를 골랐을 때만 표시한다. 하나만 골랐으면 전부 1개라 알려 줄 것이 없다. */}
+                                        {selectedTagNames.length > 1 && neighborhood.matchedTagCount > 0 && (
+                                            <span className="neighborhood-match">
+                                                태그 {neighborhood.matchedTagCount}개 일치
+                                            </span>
+                                        )}
                                     </div>
                                     <p>{neighborhood.description || '등록된 동네 소개가 없습니다.'}</p>
-                                    <div className="neighborhood-card-tags">
-                                        {neighborhood.tags.slice(0, 3).map((tag) => <span key={tag.id}>#{tag.name}</span>)}
-                                    </div>
+
+                                    {/*
+                                      확정 태그 -> AI 추천 태그 -> 한줄평 키워드 순으로 있는 것 하나만 그린다.
+                                      등록된 동네가 425개 중 7개뿐이라 대부분의 카드는 뒤쪽 두 가지로 채워진다.
+                                      확정된 태그가 아니라는 것이 드러나야 해서 라벨을 달고 모양도 다르게 둔다.
+                                    */}
+                                    {neighborhood.tags.length > 0 ? (
+                                        <div className="neighborhood-card-tags">
+                                            {neighborhood.tags.slice(0, 3).map((tag) => <span key={tag.id}>#{tag.name}</span>)}
+                                        </div>
+                                    ) : neighborhood.suggestedTags.length > 0 ? (
+                                        <div className="neighborhood-card-keywords">
+                                            <span className="neighborhood-keyword-label">AI 추천 태그</span>
+                                            {neighborhood.suggestedTags.slice(0, 3).map((tag) => (
+                                                <span className="neighborhood-keyword" key={tag.id}>{tag.name}</span>
+                                            ))}
+                                        </div>
+                                    ) : neighborhood.keywords.length > 0 && (
+                                        <div className="neighborhood-card-keywords">
+                                            <span className="neighborhood-keyword-label">한줄평 키워드</span>
+                                            {neighborhood.keywords.slice(0, 4).map((keyword) => (
+                                                <span className="neighborhood-keyword" key={keyword}>{keyword}</span>
+                                            ))}
+                                        </div>
+                                    )}
                                     <dl className="neighborhood-stats">
                                         <div><dt>평균 전세</dt><dd>{formatJeonsePrice(neighborhood.averageJeonsePrice)}</dd></div>
                                         <div><dt>매물</dt><dd>{neighborhood.propertyCount}건</dd></div>
                                     </dl>
                                 </div>
                             </Link>
-                            {user?.role === 'ADMIN' && <div className="neighborhood-admin-actions">
-                                <button className="danger-btn" type="button" onClick={() => handleVisibility(neighborhood.id)}>{neighborhood.visible ? '숨김' : '공개'}</button>
-                                <Link className="outline-btn" to={`/neighborhood/${neighborhood.id}`}>수정 화면</Link>
-                            </div>}
                         </article>
                     ))}
                 </div>}
                 {!loading && !error && pageCount > 1 && <nav className="neighborhood-pagination" aria-label="동네 목록 페이지">
+                    <button type="button" aria-label="이전 10페이지" title="이전 10페이지" disabled={blockStart === 1} onClick={goPrevBlock}>&laquo;</button>
                     <button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)}>이전</button>
-                    {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+                    {blockPages.map((pageNumber) => (
                         <button className={page === pageNumber ? 'active' : ''} type="button" onClick={() => setPage(pageNumber)} key={pageNumber}>{pageNumber}</button>
                     ))}
                     <button type="button" disabled={page === pageCount} onClick={() => setPage((current) => current + 1)}>다음</button>
+                    <button type="button" aria-label="다음 10페이지" title="다음 10페이지" disabled={blockEnd === pageCount} onClick={goNextBlock}>&raquo;</button>
                 </nav>}
+
+                {user?.role === 'ADMIN' && (
+                    <p className="xs dim" style={{ marginTop: 24 }}>
+                        동네 설명, 사진, 태그 등록/수정은 <Link to="/admin/neighborhoods">관리자 콘솔의 동네 관리</Link>에서 할 수 있습니다.
+                    </p>
+                )}
             </div></section>
         </main>
     );

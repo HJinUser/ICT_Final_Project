@@ -824,27 +824,35 @@ function PropertyPage({ user, mockData }: PropertyPageProps) {
                                             )}
                                         </div>
 
+                                        {/*
+                                          .property-trend-plot 은 칸마다 높이가 똑같이 고정된 상자다.
+                                          막대는 그 상자 안에서만 바닥에 붙으므로, 아래 이름표가
+                                          두 줄이 되어 길어져도 막대 시작점(바닥선)은 흔들리지 않는다.
+                                          이름표는 상자 바깥, 일반 흐름에 놓여 아래로만 늘어난다.
+                                        */}
                                         <div className="bar-chart property-bar-chart">
                                             {priceTrend.points.map((point, i) => (
                                                 <div
                                                     className="property-trend-col"
                                                     key={`${point.label}-${i}`}
                                                 >
-                                                    <span className="property-trend-value">
-                                                        {toShortMoney(point.price)}
-                                                    </span>
+                                                    <div className="property-trend-plot">
+                                                        <span className="property-trend-value">
+                                                            {toShortMoney(point.price)}
+                                                        </span>
 
-                                                    <div
-                                                        className={`bar${point.current ? " current" : ""}`}
-                                                        style={{
-                                                            height: `${(point.price / trendMax) * 78}px`,
-                                                        }}
-                                                        title={
-                                                            point.count
-                                                                ? `${point.label} · ${point.price.toLocaleString()}만 원 · ${point.count}건`
-                                                                : `${point.label} · ${point.price.toLocaleString()}만 원`
-                                                        }
-                                                    />
+                                                        <div
+                                                            className={`bar${point.current ? " current" : ""}`}
+                                                            style={{
+                                                                height: `${(point.price / trendMax) * 78}px`,
+                                                            }}
+                                                            title={
+                                                                point.count
+                                                                    ? `${point.label} · ${point.price.toLocaleString()}만 원 · ${point.count}건`
+                                                                    : `${point.label} · ${point.price.toLocaleString()}만 원`
+                                                            }
+                                                        />
+                                                    </div>
 
                                                     <span className="xs property-trend-label">
                                                         {point.label}

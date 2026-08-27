@@ -17,7 +17,7 @@ export type MlNeighborhoodResponse = {
     adminName: string;
     districtName: string;
 
-    // 이 동네가 속한 군집 번호와 사람이 읽는 군집 이름(예: "녹지·교육 중심형")
+    // 이 동네가 속한 군집 번호와 사람이 읽는 군집 이름(예: "녹지·교통 중심형", "한적한 주거형")
     clusterId: number;
     clusterName: string;
 
