@@ -167,6 +167,9 @@ public class MemberController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", e.getMessage()));
         }
 
         return ResponseEntity.ok(Map.of("message", "탈퇴가 완료되었습니다."));
