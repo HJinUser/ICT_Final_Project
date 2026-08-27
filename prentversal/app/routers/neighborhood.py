@@ -5,10 +5,37 @@ from fastapi import APIRouter, HTTPException
 
 from app.services.admin_dong_service import resolve_admin_dong
 from app.services.legal_admin_mapping_service import resolve_legal_dong
-from app.services.neighborhood_service import find_neighborhood
+from app.services.neighborhood_service import (
+    find_all_neighborhoods,
+    find_cluster_tag_groups,
+    find_neighborhood,
+    find_tag_suggestions,
+)
 
 # 이 기능의 공통 URL prefix와 문서 태그를 FastAPI Router에 설정함.
 router = APIRouter(prefix="/ml/neighborhood", tags=["ML Neighborhood"])
+
+
+# 서울 전체 행정동 목록에 군집명을 붙여 반환하는 API 함수임.
+# 동네 탐색이 425개 행정동을 한 번에 그릴 때 이 API 하나만 부른다(행정동마다 따로 부르지 않는다).
+@router.get("")
+def list_all():
+    return find_all_neighborhoods()
+
+
+# 동네 유형별 태그 배분표를 반환하는 API 함수임. 화면의 태그 필터가 이 묶음대로 칩을 그린다.
+# 아래 /{admin_code} 보다 먼저 선언해야 "cluster-tag-groups"가 행정동 코드로 잡히지 않음
+@router.get("/cluster-tag-groups")
+def cluster_tag_groups():
+    return find_cluster_tag_groups()
+
+
+# 한줄평 키워드에서 뽑은 행정동별 태그 추천 결과를 반환하는 API 함수임.
+# 관리자가 검토해서 붙이는 후보이고, 이 API가 직접 태그를 붙이지는 않는다.
+# 아래 /{admin_code} 보다 먼저 선언해야 "tag-suggestions"가 행정동 코드로 잡히지 않음
+@router.get("/tag-suggestions")
+def tag_suggestions():
+    return find_tag_suggestions()
 
 
 # 위경도 좌표가 속한 행정동을 판정해 반환하는 API 함수임

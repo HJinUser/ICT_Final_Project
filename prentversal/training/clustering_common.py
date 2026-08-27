@@ -44,12 +44,67 @@ def build_dimensions(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# 군집에서 상대적으로 강한 생활영역 두 개를 사람이 읽을 군집명으로 만듦
+"""
+군집명을 붙일 때 "이 영역이 평균보다 뚜렷하게 강하다"고 볼 기준.
+
+점수는 StandardScaler를 거친 표준화값이라 0이 서울 평균이다.
+0.3은 표준편차의 약 1/3로, 이 정도는 넘어야 그 영역을 군집의 특징이라고 부를 수 있다.
+"""
+STRONG_SCORE = 0.3
+
+# 모든 생활영역이 평균 이하인 군집에 붙이는 이름.
+# 인프라가 특별히 강한 곳이 없는 저밀도 주거지라는 뜻이다.
+QUIET_CLUSTER_NAME = "한적한 주거형"
+
+
+# 군집에서 평균보다 뚜렷하게 강한 생활영역을 골라 사람이 읽을 군집명으로 만듦
 def make_cluster_name(profile: pd.Series) -> str:
-    top = profile.sort_values(ascending=False).index[:2]
-    names = [KOREAN_NAME[x] for x in top]
+    strong = profile[profile >= STRONG_SCORE].sort_values(ascending=False)
+
+    """
+    강한 영역이 하나도 없으면 "덜 나쁜 것"으로 이름을 짓지 않는다.
+
+    예전에는 점수를 정렬해 무조건 상위 두 개를 썼는데, 전 영역이 음수인 군집에서도
+    가장 덜 낮은 두 개가 뽑혀 "녹지·교육 중심형"처럼 실제와 정반대인 이름이 나왔다.
+    (그 군집의 녹지 -0.31, 교육 -0.46으로 둘 다 평균 이하였다)
+    """
+    # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
+    if strong.empty:
+        # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
+        return QUIET_CLUSTER_NAME
+
+    names = [KOREAN_NAME[x] for x in strong.index[:2]]
     # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
-    return "·".join(names) + " 중심형"
+    return ", ".join(names) + " 중심형"
+
+
+# 군집별 이름을 만들되 같은 이름이 겹치지 않도록 정리해서 반환함
+def make_cluster_names(profiles: pd.DataFrame) -> dict[int, str]:
+    names = {
+        int(cluster_id): make_cluster_name(row)
+        for cluster_id, row in profiles.iterrows()
+    }
+
+    """
+    이름이 겹치면 화면에서 두 군집을 구분할 수 없다.
+
+    K가 커지면 평균 이하인 군집이 여러 개 나와 모두 "한적한 주거형"이 될 수 있어서,
+    그때는 상대적으로 덜 약한 영역을 덧붙여 갈라 놓는다.
+    """
+    duplicated = {
+        name for name in names.values()
+        if list(names.values()).count(name) > 1
+    }
+
+    # 대상 데이터를 하나씩 순회하면서 각 항목에 동일한 처리 규칙을 적용함.
+    for cluster_id, name in list(names.items()):
+        # 현재 값이나 상태가 해당 조건에 맞는지 확인한 뒤 필요한 분기 처리를 수행함.
+        if name in duplicated:
+            best = profiles.loc[cluster_id].sort_values(ascending=False).index[0]
+            names[cluster_id] = f"{name}({KOREAN_NAME[best]} 우세)"
+
+    # 계산이 끝난 결과를 호출한 쪽에서 이어서 사용할 수 있도록 반환함.
+    return names
 
 
 # K=3~8을 비교해 최적 K-Means 결과와 silhouette/profiles를 동일하게 재현함
@@ -89,10 +144,7 @@ def fit_best_kmeans() -> tuple[
     scaled_df["cluster_id"] = df["cluster_id"].to_numpy()
     profiles = scaled_df.groupby("cluster_id")[DIMENSIONS].mean()
 
-    cluster_names = {
-        int(cluster_id): make_cluster_name(row)
-        for cluster_id, row in profiles.iterrows()
-    }
+    cluster_names = make_cluster_names(profiles)
     # 각 행의 값을 미리 정한 변환 규칙에 따라 새로운 값으로 매핑함.
     df["cluster_name"] = df["cluster_id"].map(cluster_names)
 

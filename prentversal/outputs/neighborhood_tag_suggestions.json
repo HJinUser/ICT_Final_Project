@@ -1,0 +1,1338 @@
+{
+  "analyzed_at": "2026-08-27T10:26:12",
+  "source_analyzed_at": "2026-08-18T17:54:21",
+  "neighborhood_count": 70,
+  "suggestion_count": 117,
+  "neighborhoods": {
+    "11170555": {
+      "adminName": "청파동",
+      "districtName": "용산구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "대학가",
+            "숙대",
+            "카페"
+          ],
+          "matchCount": 3
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "1호선",
+            "4호선"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11200650": {
+      "adminName": "성수1가1동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페",
+            "활기차"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11200660": {
+      "adminName": "성수1가2동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페",
+            "활기차"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11200670": {
+      "adminName": "성수2가1동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페",
+            "활기차"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11200690": {
+      "adminName": "성수2가3동",
+      "districtName": "성동구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페",
+            "활기차"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11215820": {
+      "adminName": "자양1동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "한강뷰",
+          "evidence": [
+            "한강"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11215830": {
+      "adminName": "자양2동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "한강뷰",
+          "evidence": [
+            "한강"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11215840": {
+      "adminName": "자양3동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "한강뷰",
+          "evidence": [
+            "한강"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11215847": {
+      "adminName": "자양4동",
+      "districtName": "광진구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "한강뷰",
+          "evidence": [
+            "한강"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11305534": {
+      "adminName": "삼양동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "마트"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11305535": {
+      "adminName": "미아동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "마트"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11305545": {
+      "adminName": "송중동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "마트"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11305555": {
+      "adminName": "송천동",
+      "districtName": "강북구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "마트"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11305575": {
+      "adminName": "삼각산동",
+      "districtName": "강북구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "마트"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11320511": {
+      "adminName": "창1동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "병원 근처",
+          "evidence": [
+            "병원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "조용한 분위기",
+          "evidence": [
+            "주거"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11320512": {
+      "adminName": "창2동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "병원 근처",
+          "evidence": [
+            "병원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "조용한 분위기",
+          "evidence": [
+            "주거"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11320513": {
+      "adminName": "창3동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "병원 근처",
+          "evidence": [
+            "병원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "조용한 분위기",
+          "evidence": [
+            "주거"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11320514": {
+      "adminName": "창4동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "병원 근처",
+          "evidence": [
+            "병원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "조용한 분위기",
+          "evidence": [
+            "주거"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11320515": {
+      "adminName": "창5동",
+      "districtName": "도봉구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "병원 근처",
+          "evidence": [
+            "병원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "조용한 분위기",
+          "evidence": [
+            "주거"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11410615": {
+      "adminName": "연희동",
+      "districtName": "서대문구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "쇼핑몰"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11440590": {
+      "adminName": "용강동",
+      "districtName": "마포구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "숲길"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "경의선"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11440600": {
+      "adminName": "대흥동",
+      "districtName": "마포구",
+      "documentCount": 5,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "대학가",
+            "대학교",
+            "번화가"
+          ],
+          "matchCount": 3
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "경의선"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11440630": {
+      "adminName": "신수동",
+      "districtName": "마포구",
+      "documentCount": 5,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "대학가",
+            "대학교",
+            "번화가"
+          ],
+          "matchCount": 3
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "경의선"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11440690": {
+      "adminName": "망원1동",
+      "districtName": "마포구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "산책"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "시장"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "활기차"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "한강뷰",
+          "evidence": [
+            "한강"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11440700": {
+      "adminName": "망원2동",
+      "districtName": "마포구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "산책"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "마트 근처",
+          "evidence": [
+            "시장"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "활기차"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "한강뷰",
+          "evidence": [
+            "한강"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11440710": {
+      "adminName": "연남동",
+      "districtName": "마포구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "카페"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470510": {
+      "adminName": "목1동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470520": {
+      "adminName": "목2동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470530": {
+      "adminName": "목3동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470540": {
+      "adminName": "목4동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470550": {
+      "adminName": "목5동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470560": {
+      "adminName": "신월1동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470570": {
+      "adminName": "신월2동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470580": {
+      "adminName": "신월3동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470590": {
+      "adminName": "신월4동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470600": {
+      "adminName": "신월5동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470610": {
+      "adminName": "신월6동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11470611": {
+      "adminName": "신월7동",
+      "districtName": "양천구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "번화가"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11560560": {
+      "adminName": "당산2동",
+      "districtName": "영등포구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "2호선",
+            "9호선"
+          ],
+          "matchCount": 2
+        },
+        {
+          "tagName": "높은 치안",
+          "evidence": [
+            "안전"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620525": {
+      "adminName": "보라매동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620545": {
+      "adminName": "청림동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620565": {
+      "adminName": "성현동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620575": {
+      "adminName": "행운동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620585": {
+      "adminName": "낙성대동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620595": {
+      "adminName": "청룡동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620605": {
+      "adminName": "은천동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620615": {
+      "adminName": "중앙동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620625": {
+      "adminName": "인헌동",
+      "districtName": "관악구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620645": {
+      "adminName": "서원동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620655": {
+      "adminName": "신원동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620665": {
+      "adminName": "서림동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620685": {
+      "adminName": "신사동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620695": {
+      "adminName": "신림동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620715": {
+      "adminName": "난향동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620725": {
+      "adminName": "조원동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620735": {
+      "adminName": "대학동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620745": {
+      "adminName": "삼성동",
+      "districtName": "관악구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620765": {
+      "adminName": "미성동",
+      "districtName": "관악구",
+      "documentCount": 4,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11620775": {
+      "adminName": "난곡동",
+      "districtName": "관악구",
+      "documentCount": 4,
+      "suggestions": [
+        {
+          "tagName": "젊은층 선호",
+          "evidence": [
+            "서울대"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "서울대입구역"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11680600": {
+      "adminName": "대치1동",
+      "districtName": "강남구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11680610": {
+      "adminName": "대치2동",
+      "districtName": "강남구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11680630": {
+      "adminName": "대치4동",
+      "districtName": "강남구",
+      "documentCount": 2,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11680640": {
+      "adminName": "역삼1동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "버스정류장 인근",
+          "evidence": [
+            "버스"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11680650": {
+      "adminName": "역삼2동",
+      "districtName": "강남구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "버스정류장 인근",
+          "evidence": [
+            "버스"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11680740": {
+      "adminName": "일원2동",
+      "districtName": "강남구",
+      "documentCount": 3,
+      "suggestions": [
+        {
+          "tagName": "교육열 높음",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        },
+        {
+          "tagName": "학원가",
+          "evidence": [
+            "학원",
+            "학원가"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11710600": {
+      "adminName": "석촌동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "산책",
+            "호수"
+          ],
+          "matchCount": 2
+        }
+      ]
+    },
+    "11710650": {
+      "adminName": "잠실본동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "공원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11710670": {
+      "adminName": "잠실2동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "공원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11710680": {
+      "adminName": "잠실3동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "공원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철"
+          ],
+          "matchCount": 1
+        }
+      ]
+    },
+    "11710720": {
+      "adminName": "잠실7동",
+      "districtName": "송파구",
+      "documentCount": 1,
+      "suggestions": [
+        {
+          "tagName": "공원 인근",
+          "evidence": [
+            "공원"
+          ],
+          "matchCount": 1
+        },
+        {
+          "tagName": "지하철역 도보 5분",
+          "evidence": [
+            "지하철"
+          ],
+          "matchCount": 1
+        }
+      ]
+    }
+  }
+}

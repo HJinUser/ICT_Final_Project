@@ -8,7 +8,7 @@
 .neighborhood-hero { background: linear-gradient(135deg, #f7f2fa 0%, #eef5f1 100%); }
 .neighborhood-wrap { max-width: 1180px; }
 .neighborhood-filter-card { padding: 26px; border: 1px solid var(--line); border-radius: var(--r-l); background: #fff; box-shadow: var(--shadow); }
-.neighborhood-location-fields { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 12px; align-items: end; }
+.neighborhood-location-fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: end; }
 .neighborhood-location-fields label { display: grid; gap: 7px; color: var(--ink-3); font-size: 12px; }
 /* 시·도 칸은 값이 "서울시"로 고정된 input 이고 나머지는 select 다.
    같은 줄에 나란히 서므로 높이·여백·테두리를 한 규칙으로 함께 맞춘다. */
@@ -17,8 +17,12 @@
 .neighborhood-location-fields select:disabled,
 .neighborhood-location-fields input:disabled { background: var(--bg-2); color: var(--ink-3); }
 .neighborhood-tag-area { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line-2); }
+/* 위 지역 선택과 구분되도록 이 영역이 무엇을 고르는 자리인지 이름을 붙인다. */
+.neighborhood-filter-label { display: block; margin-bottom: 12px; color: var(--ink-2); font-size: 12.5px; font-weight: 650; }
 .neighborhood-tabs { margin-bottom: 16px; }
 .neighborhood-tag-buttons { display: flex; flex-wrap: wrap; gap: 9px; }
+/* 고른 태그와 몇 개나 맞는지. 목록이 이 순서로 정렬되므로 카드에도 같은 값을 보여 준다. */
+.neighborhood-match { flex-shrink: 0; padding: 4px 9px; border-radius: 100px; background: var(--v-pale); color: var(--v); font-size: 11px; font-weight: 600; }
 .neighborhood-selected-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 16px; padding: 12px 14px; border-radius: var(--r-s); background: var(--bg-2); }
 .neighborhood-selected-tags > span { margin-right: 4px; color: var(--ink-3); font-size: 12px; }
 .neighborhood-selected-tags button { padding: 5px 10px; border-radius: 100px; background: #fff; color: var(--v); font-size: 12px; }
@@ -38,6 +42,12 @@
 .neighborhood-card-body > p { min-height: 46px; margin-top: 13px; color: var(--ink-2); line-height: 1.65; }
 .neighborhood-card-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
 .neighborhood-card-tags span { padding: 5px 9px; border-radius: 100px; background: var(--v-pale); color: var(--v); font-size: 11.5px; }
+
+/* 관리자가 등록한 태그가 없는 동네에 대신 그리는 한줄평 키워드.
+   확정된 태그(위 .neighborhood-card-tags)와 헷갈리면 안 되므로 색을 빼고 테두리만 둔다. */
+.neighborhood-card-keywords { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.neighborhood-keyword-label { color: var(--ink-3); font-size: 10.5px; letter-spacing: .02em; }
+.neighborhood-keyword { padding: 4px 9px; border: 1px solid var(--line); border-radius: 100px; color: var(--ink-2); font-size: 11.5px; }
 .neighborhood-stats { display: grid; grid-template-columns: 1fr auto; gap: 16px; margin: 20px 0 0; padding-top: 17px; border-top: 1px solid var(--line-2); }
 .neighborhood-stats div { display: grid; gap: 3px; }
 .neighborhood-stats dt { color: var(--ink-3); font-size: 11px; }

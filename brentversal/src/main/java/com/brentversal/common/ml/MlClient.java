@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.Map;
 
 // Spring에서 FastAPI의 시세예측·추천·관리자 ML API를 HTTP로 호출하는 공통 Client 클래스임
@@ -37,6 +38,48 @@ public class MlClient {
         return restClient.post()
                 .uri("/ml/recommendation/recommend")
                 .body(request)
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
+    /*
+      서울 전체 행정동(425개) 목록에 군집명을 붙인 결과를 한 번에 받아오는 메서드임.
+
+      동네 탐색이 행정동마다 이 서버를 따로 부르면 425번 호출이 나가므로,
+      FastAPI가 전체를 한 번에 계산해 둔 것을 이 메서드 하나로 받는다.
+    */
+    public List<Map<String, Object>> neighborhoodList() {
+        // 행정동 전체 목록 GET 요청을 /ml/neighborhood로 보내고 목록 응답으로 변환함
+        return restClient.get()
+                .uri("/ml/neighborhood")
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+    }
+
+    /*
+      동네 유형(K-Means 군집)별 태그 배분표를 받아오는 메서드임.
+
+      화면의 태그 필터가 이 묶음대로 칩을 그린다. 배분표에 없는 태그(엘리베이터·풀옵션처럼
+      집 한 채의 속성인 것)는 동네를 고르는 기준이 될 수 없어 화면에 내보내지 않는다.
+    */
+    public Map<String, Object> clusterTagGroups() {
+        // 태그 배분표 GET 요청을 /ml/neighborhood/cluster-tag-groups로 보내고 Map 응답으로 변환함
+        return restClient.get()
+                .uri("/ml/neighborhood/cluster-tag-groups")
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+    }
+
+    /*
+      한줄평 키워드에서 뽑은 행정동별 태그 추천 결과를 한 번에 받아오는 메서드임.
+
+      관리자가 검토해서 붙이는 후보이고, 이것만으로 태그가 붙지는 않는다.
+      등록된 동네마다 따로 묻지 않고 전체를 한 번 받아 adminCode 로 찾아 쓴다.
+    */
+    public Map<String, Object> neighborhoodTagSuggestions() {
+        // 태그 추천 GET 요청을 /ml/neighborhood/tag-suggestions로 보내고 Map 응답으로 변환함
+        return restClient.get()
+                .uri("/ml/neighborhood/tag-suggestions")
                 .retrieve()
                 .body(new ParameterizedTypeReference<Map<String, Object>>() {});
     }

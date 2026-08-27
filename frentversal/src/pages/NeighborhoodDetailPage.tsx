@@ -146,7 +146,7 @@ function NeighborhoodDetailPage() {
                         <strong className="neighborhood-cluster-name">{ml.clusterName}</strong>
                         <p className="neighborhood-cluster-desc">
                             같은 유형으로 묶인 동네들은 생활 환경의 짜임새가 서로 비슷합니다.
-                            교통·생활·의료·교육·녹지 다섯 가지를 함께 본 결과이며,
+                            교통, 생활, 의료, 교육, 녹지 다섯 가지를 함께 본 결과이며,
                             맞춤 추천에서 이 동네가 추천된 이유이기도 합니다.
                         </p>
                         <span className="neighborhood-admin-code">행정동 코드 {ml.adminCode}</span>
