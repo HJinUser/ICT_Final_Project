@@ -169,7 +169,6 @@ const CATEGORY_LABELS: Record<string, string> = {
     area: "면적",
     station: "교통 편의",
     fee: "관리비",
-    aiScore: "AI 추천 점수",
 };
 
 function ComparePage() {
@@ -333,10 +332,6 @@ function ComparePage() {
     const stationDistances = properties.map(
         (property) => property.stationDistance
     );
-    const aiRecommendScores = properties.map(
-        (property) => property.aiRecommendScore
-    );
-
     // 월세는 보증금과 월세 두 숫자가 있으므로
     // 하나의 금액만 보고 승자를 만들지 않는다.
     const priceWinner =
@@ -352,7 +347,6 @@ function ComparePage() {
     const areaWinner = pickWinnerIndex(areas, "higher");
     const feeWinner = pickWinnerIndex(maintenanceFees, "lower");
     const stationWinner = pickWinnerIndex(stationDistances, "lower");
-    const aiScoreWinner = pickWinnerIndex(aiRecommendScores, "higher");
 
     // AI 비교 요약: 이미 계산한 승자 인덱스들을 모아서 "이 매물이 어떤 항목에서 유리한지" 문장으로 묶는다.
     // 새로운 API 호출 없이 화면에 이미 있는 계산 결과만 재사용한다.
@@ -362,7 +356,6 @@ function ComparePage() {
         { key: "area", winner: areaWinner },
         { key: "station", winner: stationWinner },
         { key: "fee", winner: feeWinner },
-        { key: "aiScore", winner: aiScoreWinner },
     ];
 
     const winningLabelsByIndex: string[][] = [[], []];
@@ -551,24 +544,6 @@ function ComparePage() {
                                         ) : (
                                             "정보 없음"
                                         )}
-                                    </td>
-                                ))}
-                            </tr>
-
-                            <tr>
-                                <td>AI 추천 점수</td>
-
-                                {properties.map((property, index) => (
-                                    <td
-                                        key={property.id}
-                                        className={
-                                            index === aiScoreWinner ? "winner num" : "num"
-                                        }
-                                    >
-                                        {property.aiRecommendScore !== null
-                                            ? `${property.aiRecommendScore.toLocaleString()}점`
-                                            : "분석 준비 중"}
-                                        {index === aiScoreWinner && " ✓"}
                                     </td>
                                 ))}
                             </tr>
