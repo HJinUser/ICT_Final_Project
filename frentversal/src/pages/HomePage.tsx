@@ -230,7 +230,7 @@ function App({ user }: Props) {
                 <div className="inner">
                     <span className="pill">
                         <span className="dot" />
-                        서초구 · 강남구 실거래가 반영 · 매주 갱신
+                        서울시 실거래가 반영 · 매주 갱신
                     </span>
 
                     <h1>호가 말고,<br /><em>시세</em>로 고르세요</h1>
