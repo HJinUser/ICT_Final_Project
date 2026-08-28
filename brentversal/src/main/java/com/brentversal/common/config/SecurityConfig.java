@@ -141,9 +141,12 @@ public class SecurityConfig {
                         .requestMatchers("/my-agency/**").hasRole("BROKER")
                         // 관리자 전용 화면(매물 승인 등)은 관리자만 쓸 수 있다.
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // 동네 한줄평은 조회는 공개, 작성은 USER 전용
+                        // 동네 한줄평은 조회는 공개, 작성·수정·삭제는 USER 전용
+                        // (수정·삭제가 본인 글인지는 NeighborhoodReviewService 가 한 번 더 확인한다)
                         .requestMatchers(HttpMethod.GET, "/neighborhood/reviews").permitAll()
                         .requestMatchers(HttpMethod.POST, "/neighborhood/reviews").hasRole("USER")
+                        .requestMatchers(HttpMethod.PUT, "/neighborhood/reviews/*").hasRole("USER")
+                        .requestMatchers(HttpMethod.DELETE, "/neighborhood/reviews/*").hasRole("USER")
                         .anyRequest().authenticated()
                 )
                 // 카카오 로그인 성공 후 처리를 OAuth2LoginSuccessHandler가 대신 맡는다.
