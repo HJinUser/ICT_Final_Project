@@ -19,11 +19,27 @@ public class NeighborhoodReviewResponseDto {
     private String content;
     private LocalDateTime updatedAt;
 
-    // NeighborhoodReview Entity와 작성자 정보를 한줄평 응답 DTO로 변환하는 정적 메서드임
-    public static NeighborhoodReviewResponseDto of(NeighborhoodReview review) {
+    // 일반 사용자와 중개인에게 보여 줄 작성자 표기.
+    // 동네에 대한 솔직한 평을 남기게 하려면 누가 썼는지 드러나지 않아야 한다.
+    private static final String ANONYMOUS = "익명";
+
+    // 작성자가 탈퇴해 회원 정보가 남아 있지 않을 때 관리자 화면에 보여 줄 표기
+    private static final String WITHDRAWN = "탈퇴한 회원";
+
+    /*
+      NeighborhoodReview Entity를 응답 DTO로 변환하는 정적 메서드임.
+
+      revealAuthor 가 true 일 때만 실제 이름을 담는다. 관리자 화면에서 부적절한 글을 남긴 회원을
+      찾아야 하므로 관리자에게만 열어 주고, 그 외에는 이름 대신 "익명"을 내려준다.
+
+      이름을 담을지 말지를 화면이 아니라 서버에서 정하는 이유가 있다.
+      전부 내려보내고 화면에서 가리면 응답 본문에 실명이 그대로 실려서,
+      개발자 도구나 API 직접 호출만으로 누구나 볼 수 있게 된다.
+    */
+    public static NeighborhoodReviewResponseDto of(NeighborhoodReview review, boolean revealAuthor) {
         NeighborhoodReviewResponseDto dto = new NeighborhoodReviewResponseDto();
         dto.setId(review.getId());
-        dto.setMemberName(review.getMember() == null ? "탈퇴한 회원" : review.getMember().getName());
+        dto.setMemberName(authorName(review, revealAuthor));
         dto.setAdminCode(review.getAdminCode());
         dto.setAdminName(review.getAdminName());
         dto.setDistrictName(review.getDistrictName());
@@ -31,5 +47,21 @@ public class NeighborhoodReviewResponseDto {
         dto.setUpdatedAt(review.getUpdatedAt());
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return dto;
+    }
+
+    // 볼 수 있는 사람인지에 따라 실제 이름 또는 익명 표기를 고른다.
+    private static String authorName(NeighborhoodReview review, boolean revealAuthor) {
+        // 권한이 없는 요청에는 회원 정보를 아예 꺼내지 않는다
+        if (!revealAuthor) {
+            return ANONYMOUS;
+        }
+
+        // null 체크는 다른 조건 검사보다 먼저 수행한다
+        if (review.getMember() == null || review.getMember().getName() == null
+                || review.getMember().getName().isBlank()) {
+            return WITHDRAWN;
+        }
+
+        return review.getMember().getName();
     }
 }
