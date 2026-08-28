@@ -14,6 +14,8 @@ export const MAX_REVIEW_LENGTH = 300;
 
 export type NeighborhoodReview = {
     id: number;
+    // 작성자 표기. 서버가 보는 사람에 따라 다른 값을 채워 준다.
+    // 일반 사용자·중개인·비로그인은 "익명", 관리자만 실제 이름을 받는다.
     memberName: string;
     adminCode: string;
     adminName: string;
@@ -23,7 +25,7 @@ export type NeighborhoodReview = {
     updatedAt: string;
 };
 
-// 한줄평을 남길 때 보내는 값. 한 사람이 같은 동네에 다시 쓰면 서버가 기존 글을 고친다.
+// 한줄평을 남길 때 보내는 값. 같은 동네에 다시 써도 덮어쓰지 않고 새 글로 쌓인다.
 export type NeighborhoodReviewRequest = {
     adminCode: string;
     adminName: string;
