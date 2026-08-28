@@ -154,7 +154,7 @@ function AgencyPage() {
                         <div className="hero-stat">
                             <span className="mono dim">인증 중개사무소</span>
                             <strong>{verifiedCount}곳</strong>
-                            <span className="xs dim">서초, 강남 지역</span>
+                            <span className="xs dim"></span>
                         </div>
                     </div>
                 </section>
