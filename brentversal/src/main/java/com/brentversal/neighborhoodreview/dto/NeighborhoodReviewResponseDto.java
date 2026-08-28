@@ -19,6 +19,9 @@ public class NeighborhoodReviewResponseDto {
     private String content;
     private LocalDateTime updatedAt;
 
+    // 로그인한 사람이 쓴 글인지. 화면에서 "내가 쓴 한줄평"에만 수정·삭제 버튼을 보여 줄 때 쓴다.
+    private boolean mine;
+
     // 일반 사용자와 중개인에게 보여 줄 작성자 표기.
     // 동네에 대한 솔직한 평을 남기게 하려면 누가 썼는지 드러나지 않아야 한다.
     private static final String ANONYMOUS = "익명";
@@ -37,6 +40,11 @@ public class NeighborhoodReviewResponseDto {
       개발자 도구나 API 직접 호출만으로 누구나 볼 수 있게 된다.
     */
     public static NeighborhoodReviewResponseDto of(NeighborhoodReview review, boolean revealAuthor) {
+        return of(review, revealAuthor, null);
+    }
+
+    // viewerMemberId 는 지금 요청을 보낸 로그인 회원의 id 다. 비로그인이면 null 이라 mine 은 항상 false 다.
+    public static NeighborhoodReviewResponseDto of(NeighborhoodReview review, boolean revealAuthor, Long viewerMemberId) {
         NeighborhoodReviewResponseDto dto = new NeighborhoodReviewResponseDto();
         dto.setId(review.getId());
         dto.setMemberName(authorName(review, revealAuthor));
@@ -45,6 +53,8 @@ public class NeighborhoodReviewResponseDto {
         dto.setDistrictName(review.getDistrictName());
         dto.setContent(review.getContent());
         dto.setUpdatedAt(review.getUpdatedAt());
+        dto.setMine(viewerMemberId != null && review.getMember() != null
+                && viewerMemberId.equals(review.getMember().getId()));
         // 처리 완료된 결과를 호출한 쪽으로 반환함
         return dto;
     }
