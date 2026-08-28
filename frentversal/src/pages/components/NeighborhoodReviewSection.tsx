@@ -54,6 +54,11 @@ function NeighborhoodReviewSection({
     const [listError, setListError] = useState('');
     const [formMessage, setFormMessage] = useState('');
 
+    // 지금 고치고 있는 한줄평. null 이면 아무것도 수정 중이 아니다.
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editContent, setEditContent] = useState('');
+    const [editSaving, setEditSaving] = useState(false);
+
     // 토큰이 있으면 작성 칸을, 없으면 로그인 안내를 보여 준다.
     // 토큰이 만료된 경우는 저장할 때 401 로 걸러진다.
     const loggedIn = Boolean(localStorage.getItem('accessToken'));
@@ -136,6 +141,57 @@ function NeighborhoodReviewSection({
         }
     };
 
+    const startEdit = (review: NeighborhoodReview) => {
+        setEditingId(review.id);
+        setEditContent(review.content);
+        setFormMessage('');
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditContent('');
+    };
+
+    const submitEdit = async (review: NeighborhoodReview) => {
+        const trimmed = editContent.trim();
+        if (!trimmed) {
+            setFormMessage('한줄평 내용을 입력해 주세요.');
+            return;
+        }
+
+        setEditSaving(true);
+        setFormMessage('');
+
+        try {
+            await axiosInstance.put(`/neighborhood/reviews/${review.id}`, {
+                adminCode: review.adminCode,
+                adminName: review.adminName,
+                districtName: review.districtName,
+                content: trimmed,
+            });
+            setEditingId(null);
+            setEditContent('');
+            await reload();
+        } catch (requestError) {
+            console.error('동네 한줄평 수정 실패', requestError);
+            setFormMessage('한줄평을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            setEditSaving(false);
+        }
+    };
+
+    const remove = async (review: NeighborhoodReview) => {
+        if (!window.confirm('이 한줄평을 삭제하시겠습니까?')) return;
+
+        try {
+            await axiosInstance.delete(`/neighborhood/reviews/${review.id}`);
+            await reload();
+        } catch (requestError) {
+            console.error('동네 한줄평 삭제 실패', requestError);
+            setFormMessage('한줄평을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+    };
+
     return (
         <section className="hoodrev">
             <div className="hoodrev-head">
@@ -190,8 +246,57 @@ function NeighborhoodReviewSection({
                             <div className="hoodrev-item-head">
                                 <strong>{review.memberName}</strong>
                                 <span>{formatDate(review.updatedAt)}</span>
+                                {review.mine && editingId !== review.id && (
+                                    <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                                        <button
+                                            type="button"
+                                            style={{ fontSize: 12.5, color: 'var(--v)' }}
+                                            onClick={() => startEdit(review)}
+                                        >
+                                            수정
+                                        </button>
+                                        <button
+                                            type="button"
+                                            style={{ fontSize: 12.5, color: 'var(--red)' }}
+                                            onClick={() => remove(review)}
+                                        >
+                                            삭제
+                                        </button>
+                                    </span>
+                                )}
                             </div>
-                            <p>{review.content}</p>
+
+                            {editingId === review.id ? (
+                                <div className="hoodrev-input" style={{ marginTop: 8 }}>
+                                    <input
+                                        type="text"
+                                        maxLength={MAX_REVIEW_LENGTH}
+                                        value={editContent}
+                                        onChange={(event) => setEditContent(event.target.value)}
+                                        disabled={editSaving}
+                                    />
+                                    <div className="row" style={{ gap: 8, marginTop: 8 }}>
+                                        <button
+                                            type="button"
+                                            className="solid-btn"
+                                            onClick={() => submitEdit(review)}
+                                            disabled={editSaving}
+                                        >
+                                            {editSaving ? '저장 중' : '저장'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="outline-btn"
+                                            onClick={cancelEdit}
+                                            disabled={editSaving}
+                                        >
+                                            취소
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p>{review.content}</p>
+                            )}
                         </li>
                     ))}
                 </ul>

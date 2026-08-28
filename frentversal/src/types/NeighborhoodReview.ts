@@ -23,6 +23,8 @@ export type NeighborhoodReview = {
     content: string;
     // 서버가 보내는 LocalDateTime 문자열 (예: "2026-08-20T11:44:00")
     updatedAt: string;
+    // 로그인한 내가 쓴 글인지. true 인 항목에만 수정·삭제 버튼을 보여 준다.
+    mine: boolean;
 };
 
 // 한줄평을 남길 때 보내는 값. 같은 동네에 다시 써도 덮어쓰지 않고 새 글로 쌓인다.
