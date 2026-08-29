@@ -1,0 +1,20 @@
+terraform/
+├─ .gitignore                         # State·tfvars·PEM 등 민감파일 Git 제외
+├─ .terraform.lock.hcl                # terraform init 후 자동 생성·Provider 버전 고정
+├─ versions.tf                        # Terraform·Provider 버전 정의
+├─ providers.tf                       # AWS Provider·운영 Ubuntu AMI 조회
+├─ variables.tf                       # Region·AMI·Instance Type·DB/S3 입력값 정의
+├─ locals.tf                          # 파생 도메인·동적 Password 생성
+├─ network.tf                         # VPC·Subnet·IGW·Route Table 구성
+├─ security.tf                        # ALB·Main·ML·Passwordless 접근 규칙 구성
+├─ keypair.tf                         # EC2 SSH Key Pair 생성
+├─ compute.tf                         # Main·ML·Passwordless EC2·EIP 구성
+├─ alb.tf                             # ALB·Target Group·HTTP/HTTPS Listener 구성
+├─ dns.tf                             # Route 53 Record·ACM DNS 인증 구성
+├─ s3.tf                              # S3 Bucket·IAM User·Access Key 구성
+├─ outputs.tf                         # CI/CD 연결용 IP·DB·S3 결과값 정의
+├─ terraform.tfvars.example           # 실제 변수값 작성 형식 예시
+└─ scripts/
+   ├─ main-init.sh.tftpl              # Main EC2 Docker·Swap·MySQL 초기화
+   ├─ ml-init.sh.tftpl                # ML EC2 Docker·Swap 초기화
+   └─ passwordless-init.sh.tftpl      # Passwordless·SSL 초기화

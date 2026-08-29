@@ -1,3 +1,5 @@
+# State·tfvars·PEM 등 민감파일 Git 제외
+
 # Terraform 작업 디렉터리 (Provider 플러그인 등이 저장되며 다시 생성 가능)
 .terraform/
 
