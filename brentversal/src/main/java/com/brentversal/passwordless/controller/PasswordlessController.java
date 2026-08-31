@@ -7,8 +7,12 @@ import com.brentversal.passwordless.frontDto.AuthStartDto;
 import com.brentversal.passwordless.frontDto.RegisterInfoDto;
 import com.brentversal.passwordless.service.PasswordlessService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +26,12 @@ public class PasswordlessController {
     private final PasswordlessService passwordlessService;
     // 로그인 성공 시 일반 로그인(MemberController.login)과 동일한 모양으로 회원 정보를 같이 내려주기 위해 필요하다.
     private final MemberRepository memberRepository;
+
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    @Value("${app.cookie-secure}")
+    private boolean cookieSecure;
 
     // 등록 정보(QR) 요청 — 로그인 페이지에서 이메일+비밀번호로 본인 확인 후 호출
     // 비밀번호가 있는 계정은 password로, 중개인처럼 비밀번호가 없는 계정은 회원가입 때 받은 signupToken으로 본인 확인한다 (PasswordlessService.verifyForRegister 참고).
@@ -59,7 +69,7 @@ public class PasswordlessController {
 
     // 로그인 2단계: 승인 결과 폴링. 승인(Y)이면 일반 로그인과 동일한 모양(accessToken/refreshToken/회원정보)으로 응답한다.
     @PostMapping("/login/result")
-    public ResponseEntity<?> loginResult(@RequestBody Map<String, String> body){
+    public ResponseEntity<?> loginResult(@RequestBody Map<String, String> body, HttpServletResponse response){
         String email = body.get("email");
         AuthResultDto result = passwordlessService.checkLogin(email, body.get("sessionId"));
 
@@ -67,11 +77,16 @@ public class PasswordlessController {
             return ResponseEntity.ok(Map.of("status", result.getStatus()));
         }
 
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", result.getRefreshToken())
+                .httpOnly(true).secure(cookieSecure).sameSite("Lax").path("/")
+                .maxAge(refreshExpiration / 1000).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+
         Member member = memberRepository.findByEmail(email);
         return ResponseEntity.ok(Map.ofEntries(
                 Map.entry("status", "Y"),
                 Map.entry("accessToken", result.getAccessToken()),
-                Map.entry("refreshToken", result.getRefreshToken()),
                 Map.entry("id", member.getId()),
                 Map.entry("name", member.getName()),
                 Map.entry("email", member.getEmail()),

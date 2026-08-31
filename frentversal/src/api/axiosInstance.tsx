@@ -8,9 +8,12 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/config";
 
+import { getAccessToken, setAccessToken } from "./tokenStore";
+
 // withCredentials: true 항목은 세션 방식 설정이므로 jwt를 사용하면 삭제하도록 합니다.
 const axiosInstance = axios.create({
-    baseURL: API_BASE_URL
+    baseURL: API_BASE_URL,
+    withCredentials: true, // refreshToken 쿠키를 요청에 자동으로 실어 보내기 위함
 });
 
 // 인터셉터(interceptor) : 요청(Request)이나 응답(Response)을 가로 채서 공통 로직을 처리하는 기능입니다.
@@ -20,9 +23,7 @@ const axiosInstance = axios.create({
 // 토큰을 확인하는 과정
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("accessToken"); // 로컬 저장소에 accessToken이라는 이름으로 만들어 놓음
-        // 이제 로컬 개발용인 콘솔에 토크 확인하는 코드는 주석처리
-        // console.log("interceptors.request 토큰 확인 : ", token);
+        const token = getAccessToken(); // localStorage 대신 메모리에서 꺼낸다
 
         if (token) { // token가 undefined일 수 있으므로...
             config.headers = config.headers || {};
@@ -52,30 +53,18 @@ axiosInstance.interceptors.response.use(
         if (status === 401 && !isAuthRequest && !originalRequest?._retry) { // [refresh]
             originalRequest._retry = true; // [refresh] 같은 요청을 두 번 이상 재발급-재시도하지 않도록 표시한다
 
-            const refreshToken = localStorage.getItem("refreshToken"); // [refresh] 저장해 둔 refresh token 을 꺼낸다
-
-            // [refresh] refresh token 이 아예 없으면 재발급이 불가능하므로 바로 로그아웃 처리한다
-            if (!refreshToken) { // [refresh]
-                localStorage.removeItem("accessToken"); // [refresh] access token 제거
-                localStorage.removeItem("user"); // [refresh] 저장된 사용자 정보 제거
-                window.location.replace("/member/login"); // [refresh] 로그인 페이지로 이동
-                return Promise.reject(error); // [refresh] 원래 에러를 그대로 돌려준다
-            }
-
             try {
                 // [refresh] 재발급 요청은 인터셉터를 거치지 않도록 기본 axios 로 보낸다(만료된 access token 이 붙거나 다시 401 처리되는 재귀 방지).
-                const res = await axios.post(`${API_BASE_URL}/member/refresh`, { refreshToken }); // [refresh] 서버 /member/refresh 로 refresh token 전송
+                const res = await axios.post(`${API_BASE_URL}/member/refresh`, {}, { withCredentials: true }); // [refresh] 서버 /member/refresh 로 refresh token 전송
 
                 const newAccessToken: string = res.data.accessToken; // [refresh] 응답에서 새 access token 을 꺼낸다
-                localStorage.setItem("accessToken", newAccessToken); // [refresh] 새 access token 을 저장한다
 
                 originalRequest.headers = originalRequest.headers || {}; // [refresh] 원래 요청의 헤더 객체가 없으면 만든다
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`; // [refresh] 새 토큰으로 Authorization 헤더를 교체한다
                 return axiosInstance(originalRequest); // [refresh] 새 토큰을 붙여 실패했던 원래 요청을 다시 보낸다(재시도)
 
             } catch (refreshError) { // [refresh] 재발급 자체가 실패 = refresh token 도 만료/무효
-                localStorage.removeItem("accessToken"); // [refresh] access token 제거
-                localStorage.removeItem("refreshToken"); // [refresh] refresh token 제거
+                setAccessToken(null);
                 localStorage.removeItem("user"); // [refresh] 사용자 정보 제거
                 window.location.replace("/member/login"); // [refresh] 로그인 페이지로 강제 이동
                 return Promise.reject(refreshError); // [refresh] 재발급 에러를 돌려준다

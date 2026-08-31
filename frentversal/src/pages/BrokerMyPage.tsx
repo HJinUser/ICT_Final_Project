@@ -7,6 +7,7 @@ import { withdrawMember } from '../api/withdrawalApi';
 import type { Consultation, MyAgencyDashboard, BrokerVerification } from '../types/MyAgency';
 import type { User } from '../types/User';
 import { CONSULTATION_FILTERS, CONSULTATION_STATUS_COLORS } from '../utils/consultationStatus';
+import { setAccessToken } from '../api/tokenStore';
 
 // 중개인으로 로그인했을 때 보이는 마이페이지
 //
@@ -119,8 +120,7 @@ function BrokerMyPage({ user }: Props) {
             await withdrawMember(withdrawPassword);
             // 탈퇴하면 등록한 매물·사무소·패스워드리스 등록까지 서버가 한 번에 정리한다(MemberService.withdrawal 참고).
             localStorage.removeItem('user');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
+            setAccessToken(null);
             window.location.href = '/member/login';
         } catch (error: any) {
             setWithdrawError(error?.response?.data?.message ?? '탈퇴 처리 중 오류가 발생했습니다.');

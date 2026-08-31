@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import type { User } from "../types/User";
 import type { RecentLoginMethod } from "../types/RecentLogin";
 import { saveRecentLogin, takePendingSocial } from "../utils/recentLogin";
+import { setAccessToken } from "../api/tokenStore";
 
 interface Props {
     // onLogin 프롭스는 User 형식으로 매개 변수를 받고, 반환 타입이 없습니다.
@@ -18,7 +19,6 @@ function App({ onLogin }: Props) {
 
     useEffect(() => {
         const accessToken = searchParams.get('accessToken');
-        const refreshToken = searchParams.get('refreshToken');
         const id = searchParams.get('id');
         const name = searchParams.get('name');
         const email = searchParams.get('email');
@@ -26,7 +26,7 @@ function App({ onLogin }: Props) {
         const preferenceCompleted = searchParams.get('preferenceCompleted');
         const socialType = searchParams.get('socialType');
 
-        if (!accessToken || !refreshToken || !id || !name || !email || !role || !socialType || preferenceCompleted === null) {
+        if (!accessToken || !id || !name || !email || !role || !socialType || preferenceCompleted === null) {
             alert('소셜 로그인 처리 중 오류가 발생했습니다.');
             navigate('/member/login');
             return;
@@ -41,8 +41,7 @@ function App({ onLogin }: Props) {
             preferenceCompleted: preferenceCompleted === 'true',
         };
 
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        setAccessToken(accessToken);
         localStorage.setItem('user', JSON.stringify(userData));
 
         // 로그인 화면에서 눌렀던 소셜 제공자를 꺼내 "최근 로그인"으로 남긴다.

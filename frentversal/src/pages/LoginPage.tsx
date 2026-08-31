@@ -13,6 +13,7 @@ import type { RecentLogin, RecentLoginMethod } from "../types/RecentLogin";
 import type { User } from "../types/User";
 import { loadRecentLogin, markPendingSocial, saveRecentLogin } from "../utils/recentLogin";
 import '../styles/LoginPage.css';
+import { setAccessToken } from "../api/tokenStore";
 
 interface Props {
     // onLogin 프롭스는 User 형식으로 매개 변수를 받고, 반환 타입이 없습니다.
@@ -99,8 +100,8 @@ function App({ onLogin }: Props) {
         refreshToken: string,
         method: RecentLoginMethod,
     ) => {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
+        setAccessToken(accessToken); // localStorage.setItem("accessToken", ...) 대신
+        // localStorage.setItem("refreshToken", ...) 삭제 — 서버가 쿠키로 이미 심어 줬다
         localStorage.setItem("user", JSON.stringify(userData));
 
         // 다음에 로그인 화면에 들어왔을 때 "지난번엔 이 방법"이라고 알려 주기 위해 남긴다.
@@ -167,7 +168,7 @@ function App({ onLogin }: Props) {
             try {
                 const result: PasswordlessLoginResult = await checkPasswordlessLogin(email, pwlessSessionId);
 
-                if (result.status === 'Y' && result.accessToken && result.refreshToken && result.id != null) {
+                if (result.status === 'Y' && result.accessToken && result.id != null) {
                     window.clearInterval(timer);
                     setPwlessStage('idle');
                     handleLoginSuccess(

@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -43,6 +45,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;
 
+    @Value("${app.cookie-secure}")
+    private boolean cookieSecure;
+
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                          Authentication authentication) throws IOException, ServletException {
@@ -69,9 +77,13 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             String refreshToken = jwtTokenProvider.createRefreshToken(member);
             memberService.updateRefreshToken(member.getEmail(), refreshToken);
 
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true).secure(cookieSecure).sameSite("Lax").path("/")
+                    .maxAge(refreshExpiration / 1000).build();
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
             redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl + "/oauth/callback")
                     .queryParam("accessToken", accessToken)
-                    .queryParam("refreshToken", refreshToken)
                     .queryParam("id", member.getId())
                     .queryParam("name", member.getName())
                     .queryParam("email", member.getEmail())

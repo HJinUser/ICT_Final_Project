@@ -6,9 +6,13 @@ import com.brentversal.member.dto.SignupDto;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.service.MemberService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,11 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,10 +34,27 @@ public class MemberController {
     private final AuthenticationManager authenticationManager ;
     private final JwtTokenProvider jwtTokenProvider ;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
+    @Value("${app.cookie-secure}")
+    private boolean cookieSecure;
+
+    // refreshToken을 httpOnly 쿠키로 내려주는 공통 메소드.
+    private ResponseCookie buildRefreshCookie(String refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(refreshExpiration / 1000) // ms → sec
+                .build();
+    }
+
     @PostMapping("/login")
     // LoginDto의 데이터를 객체에 담으려고 @RequestBody 작성
     // Long타입과 String타입을 동시에 만족하는 타입은 Object타입이여서 Object타입도 적음
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto dto){
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto dto, HttpServletResponse response){
         // 인증 처리
         // 비밀번호가 틀리면 AuthenticationException 이 발생하는데, 잡지 않으면 500 으로 빠져나가
         // 클라이언트가 원인을 알 수 없다. 여기서 잡아 401 과 메시지로 돌려준다.
@@ -77,11 +94,10 @@ public class MemberController {
             //  서버가 저장해 두어야 나중에 재발급 요청이 들어왔을 때 "우리가 발급한 게 맞는지" 대조할 수 있다.
             memberService.updateRefreshToken(member.getEmail(), refreshToken); //  이메일 기준으로 해당 회원에 refresh token 저장
 
+            response.addHeader(HttpHeaders.SET_COOKIE, buildRefreshCookie(refreshToken).toString());
+
             // 응답
-            // refreshToken 포함
-            // 프론트는 이 값을 localStorage 에 저장해 둔다.
             return ResponseEntity.ok(Map.of("accessToken", token,
-                    "refreshToken", refreshToken, //  프론트가 저장할 refresh token
                     "id", member.getId(),
                     "name", member.getName(), "email", member.getEmail(),
                     "role", member.getRole().toString(),
@@ -101,8 +117,7 @@ public class MemberController {
     // access token 이 만료되면 프론트(axiosInstance)가 저장해 둔 refresh token 을 이 엔드포인트로 보낸다.
     // 여기서 refresh token 의 유효성과 DB 저장값 일치를 확인한 뒤, 새 access token 을 발급해 돌려준다.
     @PostMapping("/refresh") // POST /member/refresh 요청을 처리한다
-    public ResponseEntity<?> refresh(@RequestBody Map<String, String> request){ //  요청 본문에서 { "refreshToken": "..." } 를 받는다
-        String refreshToken = request.get("refreshToken"); // 본문에서 refreshToken 값을 꺼낸다
+    public ResponseEntity<?> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken){ //  요청 본문에서 { "refreshToken": "..." } 를 받는다
 
         // 1) 값이 아예 없거나 빈 문자열이면 재발급 불가 → 401 반환
         if(refreshToken == null || refreshToken.isBlank()){ // null 체크를 다른 검사보다 먼저 수행한다
@@ -144,10 +159,16 @@ public class MemberController {
     // 스프링이 자동으로 이 파라미터에 주입해 준다. (SecurityConfig 의 permitUrls 에 이 경로를 넣지 않아야
     // 필터가 인증을 거치고, 이 파라미터가 null 이 아니게 된다.)
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(Authentication authentication){
-        String email = authentication.getName(); // JwtAuthenticationFilter 가 principal 로 넣어둔 이메일
+    public ResponseEntity<?> logout(Authentication authentication, HttpServletResponse response){
+        String email = authentication.getName();
         memberService.clearRefreshToken(email);
+
+        ResponseCookie expired = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true).secure(cookieSecure).sameSite("Lax").path("/").maxAge(0).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, expired.toString());
+
         return ResponseEntity.ok(Map.of("message", "로그아웃 되었습니다."));
+
     }
 
     // 회원 탈퇴: 로그인한 본인만 자기 계정을 탈퇴할 수 있다.
