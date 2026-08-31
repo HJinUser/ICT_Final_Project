@@ -97,7 +97,6 @@ function App({ onLogin }: Props) {
     const handleLoginSuccess = (
         userData: User,
         accessToken: string,
-        refreshToken: string,
         method: RecentLoginMethod,
     ) => {
         setAccessToken(accessToken); // localStorage.setItem("accessToken", ...) 대신
@@ -126,8 +125,8 @@ function App({ onLogin }: Props) {
 
             // 서버의 응답을 전개 연산자로 처리합니다.
             // accessToken는 JWT, userData는 User.ts로 구성된 객체
-            const { accessToken, refreshToken, ...userData } = data;
-            handleLoginSuccess(userData, accessToken, refreshToken, 'NORMAL');
+            const { accessToken, ...userData } = data;
+            handleLoginSuccess(userData, accessToken, 'NORMAL');
 
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.data) {
@@ -184,7 +183,6 @@ function App({ onLogin }: Props) {
                             preferenceCompleted: result.preferenceCompleted ?? false,
                         },
                         result.accessToken,
-                        result.refreshToken,
                         'PASSWORDLESS'
                     );
                 } else if (result.status === 'N') {
