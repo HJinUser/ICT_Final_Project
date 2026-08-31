@@ -8,6 +8,7 @@ import { withdrawMember } from '../api/withdrawalApi';
 import type { MyConsultation } from '../types/Consultation';
 import type { PropertyResponse } from '../types/Property';
 import type { User } from '../types/User';
+import { setAccessToken } from '../api/tokenStore';
 
 // 사용자 마이페이지
 //
@@ -112,8 +113,7 @@ function MyPage({ user }: Props) {
             // App.tsx의 user state까지 지우려면 새 prop을 하나 더 뚫어야 하는데,
             // 계정 자체가 없어진 뒤라 새로고침으로 완전히 초기화하는 편이 더 확실하다.
             localStorage.removeItem('user');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
+            setAccessToken(null);
             window.location.href = '/member/login';
         } catch (error: any) {
             setWithdrawError(error?.response?.data?.message ?? '탈퇴 처리 중 오류가 발생했습니다.');
