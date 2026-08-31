@@ -16,6 +16,7 @@ import axiosInstance from '../../api/axiosInstance';
 import type { NeighborhoodReview } from '../../types/NeighborhoodReview';
 import { MAX_REVIEW_LENGTH } from '../../types/NeighborhoodReview';
 import '../../styles/NeighborhoodReviewSection.css';
+import { getAccessToken } from '../../api/tokenStore';
 
 interface Props {
     adminCode: string;
@@ -53,7 +54,7 @@ function NeighborhoodReviewSection({
 
     // 토큰이 있으면 작성 칸을, 없으면 로그인 안내를 보여 준다.
     // 토큰이 만료된 경우는 저장할 때 401 로 걸러진다.
-    const loggedIn = Boolean(localStorage.getItem('accessToken'));
+    const loggedIn = Boolean(getAccessToken());
 
     useEffect(() => {
         let active = true;
