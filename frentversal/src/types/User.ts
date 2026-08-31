@@ -32,5 +32,10 @@ export interface User {
 // 로그인한 사용자에게 토큰을 부여하는 것
 export interface LoginResponse extends User {
     accessToken: string;
-    refreshToken: string; // [refresh] 서버가 로그인 응답에 함께 담아 내려주는 refresh token. access token 만료 시 재발급에 사용한다.
+    // refreshToken은 이제 body가 아니라 httpOnly 쿠키로만 온다
+}
+
+/* 서버가 /member/refresh 시 내려주는 응답. LoginResponse와 달리 refreshToken은 없다(쿠키로만 온다). */
+export interface RefreshResponse extends User {
+    accessToken: string;
 }

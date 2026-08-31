@@ -101,7 +101,6 @@ function App({ onLogin }: Props) {
     ) => {
         setAccessToken(accessToken); // localStorage.setItem("accessToken", ...) 대신
         // localStorage.setItem("refreshToken", ...) 삭제 — 서버가 쿠키로 이미 심어 줬다
-        localStorage.setItem("user", JSON.stringify(userData));
 
         // 다음에 로그인 화면에 들어왔을 때 "지난번엔 이 방법"이라고 알려 주기 위해 남긴다.
         saveRecentLogin(method, userData.email);
