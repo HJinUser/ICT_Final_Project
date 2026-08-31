@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# 중간 명령 실패·미정의 변수·Pipeline 오류를 즉시 중단
+set -euo pipefail
+
+# apt 설치 과정의 대화형 입력 방지
+export DEBIAN_FRONTEND=noninteractive
+
+# ML EC2 메모리 부족 완화를 위한 3GB Swap 구성
+swapoff /swapfile 2>/dev/null || true
+rm -f /swapfile
+fallocate -l 3G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+# Docker 설치용 패키지 및 공식 Repository 등록
+apt-get update
+apt-get install -y ca-certificates curl gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+apt-get update
+
+# FastAPI Docker Image 실행을 위한 Docker Engine 설치 및 자동 시작
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+systemctl enable --now docker
+usermod -aG docker ubuntu
+
+# 설치 완료 여부 확인용 Version 출력
+docker --version

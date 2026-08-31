@@ -1,0 +1,23 @@
+# 실제 변수값 작성 형식 예시
+
+# Git에 함께 올리는 입력값 예시 파일
+# 실제 민감값이 필요한 경우 terraform.tfvars를 별도로 만들고 Git에는 올리지 않음
+
+aws_region     = "ap-northeast-2"
+service_domain = "rentversal.site"
+
+# 운영 Snapshot과 동일한 Ubuntu 26.04 이미지 이름
+ubuntu_ami_name = "ubuntu/images/hvm-ssd-gp3/ubuntu-resolute-26.04-amd64-server-20260604"
+
+# 운영 EC2 사양
+main_instance_type         = "t3.micro"
+ml_instance_type           = "t3.small"
+passwordless_instance_type = "t3.small"
+
+# Main EC2 MySQL / 운영 S3 Bucket 이름
+mysql_database = "rentversal"
+s3_bucket_name = "home-rentversal-bucket"
+
+# Passwordless Lets Encrypt 알림 이메일
+# 실제 사용할 이메일은 terraform.tfvars에 작성
+letsencrypt_email = "your-email@example.com"
