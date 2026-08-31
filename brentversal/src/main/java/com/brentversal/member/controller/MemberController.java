@@ -151,7 +151,14 @@ public class MemberController {
 
         // 5) 모든 검증 통과 → 새 access token 을 발급해서 돌려준다 (refresh token 은 그대로 재사용)
         String newAccessToken = jwtTokenProvider.createToken(member); // 회원 정보로 새 access token 생성
-        return ResponseEntity.ok(Map.of("accessToken", newAccessToken)); // 새 access token 을 응답 본문에 담아 200 반환
+        return ResponseEntity.ok(Map.of("accessToken", newAccessToken,
+                "id", member.getId(),
+                "name", member.getName(), "email", member.getEmail(),
+                "role", member.getRole().toString(),
+                "address", member.getAddress() == null ? "" : member.getAddress(),
+                "sigungu", member.getSigungu() == null ? "" : member.getSigungu(),
+                "preferenceCompleted", member.isPreferenceCompleted(),
+                "socialType", member.getSocialType().toString())); // 새 access token 을 응답 본문에 담아 200 반환
     }
 
     // 로그아웃: 로그인한 사용자의 refresh token 을 서버에서 지워 이후 재발급을 막는다.

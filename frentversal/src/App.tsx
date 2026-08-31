@@ -5,7 +5,7 @@ import SiteFooter from './ui/SiteFooter';
 import ChatWidget from './ui/ChatWidget';
 import AppRoutes from './routes/AppRoutes';
 import React, { useEffect, useState } from 'react';
-import type { User } from './types/User';
+import type { User, RefreshResponse } from './types/User';
 import { useLocation, useNavigate } from 'react-router-dom';
 import customAxios from './api/axiosInstance.tsx';
 import { setAccessToken } from './api/tokenStore';
@@ -37,37 +37,21 @@ function App() {
 
   // 매개변수 2개 (동작 2개), []는 한번만 하는 것을 의미
   useEffect(() => {
-    const loginUser = localStorage.getItem('user');
-    if (typeof loginUser !== 'string') return;
-
-    let parsed: User;
-    try {
-      parsed = JSON.parse(loginUser);
-    } catch (error) {
-      console.error('저장된 로그인 정보를 읽지 못했습니다.', error);
-      localStorage.removeItem('user');
-      return;
-    }
-
-    // accessToken은 메모리에만 있어 새로고침하면 사라진다.
-    // refreshToken 쿠키로 새 accessToken을 받아 온 뒤에야 실제로 로그인 상태라고 볼 수 있다.
-    customAxios.post('/member/refresh', {}, { withCredentials: true })
+    customAxios.post<RefreshResponse>('/member/refresh', {}, { withCredentials: true })
         .then((res) => {
-          setAccessToken(res.data.accessToken);
-          setUser(parsed);
+          const { accessToken, ...userData } = res.data;
+          setAccessToken(accessToken);
+          setUser(userData);
         })
         .catch(() => {
-          // 쿠키가 없거나 만료됨 → 실제로는 로그아웃 상태
-          localStorage.removeItem('user');
+          // 쿠키가 없거나 만료됨 → 로그아웃 상태로 둔다
         });
   }, []);
-
 
 
   // 로그인 성공시 처리해야 할 동작을 명시하는 함수
   const handleLoginSuccess = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
     console.log('로그인 성공');
   };
 
@@ -80,15 +64,8 @@ function App() {
   */
   const handlePreferenceComplete = () => {
     setUser((previous) => {
-      if (!previous) {
-        return previous;
-      }
-
-      const updated: User = { ...previous, preferenceCompleted: true };
-
-      localStorage.setItem('user', JSON.stringify(updated));
-
-      return updated;
+      if (!previous) return previous;
+      return { ...previous, preferenceCompleted: true };
     });
   };
 
@@ -128,7 +105,6 @@ function App() {
     }
 
     setUser(null);
-    localStorage.removeItem('user');
     setAccessToken(null);
     console.log('로그 아웃 성공');
     navigate('/member/login');

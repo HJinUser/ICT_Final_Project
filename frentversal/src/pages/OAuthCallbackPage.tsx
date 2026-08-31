@@ -42,7 +42,6 @@ function App({ onLogin }: Props) {
         };
 
         setAccessToken(accessToken);
-        localStorage.setItem('user', JSON.stringify(userData));
 
         // 로그인 화면에서 눌렀던 소셜 제공자를 꺼내 "최근 로그인"으로 남긴다.
         // 제공자를 알 수 없는 경우(주소로 직접 들어온 경우 등)에는 남기지 않는다.
