@@ -1,0 +1,40 @@
+# State·tfvars·PEM 등 민감파일 Git 제외
+
+# Terraform 작업 디렉터리 (Provider 플러그인 등이 저장되며 다시 생성 가능)
+.terraform/
+
+# Terraform State에는 비밀번호, Private Key, Access Key 등 민감정보가 포함될 수 있으므로 제외
+*.tfstate
+*.tfstate.*
+
+# 실제 환경값이 들어가는 tfvars 파일은 로컬에서만 관리
+*.tfvars
+*.tfvars.json
+
+# 예시용 tfvars 파일만 Git에 포함
+!terraform.tfvars.example
+
+# Terraform이 생성한 EC2 SSH Private Key 제외
+*.pem
+
+# 저장한 Plan 파일 및 Crash Log 제외
+tfplan
+tfplan.*
+tfdestroyplan
+tfdestroyplan.*
+*.tfplan
+crash.log
+crash.*.log
+
+# 로컬 Terraform CLI 설정에는 인증정보가 포함될 수 있으므로 제외
+.terraformrc
+terraform.rc
+
+# Override 파일은 로컬 전용 설정으로 사용하므로 제외
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# 중요: .terraform.lock.hcl은 제외하지 않음
+# terraform init 이후 Provider 버전 재현을 위해 Git에 함께 Commit
