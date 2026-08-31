@@ -112,7 +112,6 @@ function MyPage({ user }: Props) {
             // 탈퇴 성공: 로컬에 남은 로그인 정보를 지우고 로그인 화면으로 보낸다.
             // App.tsx의 user state까지 지우려면 새 prop을 하나 더 뚫어야 하는데,
             // 계정 자체가 없어진 뒤라 새로고침으로 완전히 초기화하는 편이 더 확실하다.
-            localStorage.removeItem('user');
             setAccessToken(null);
             window.location.href = '/member/login';
         } catch (error: any) {

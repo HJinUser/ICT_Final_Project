@@ -119,7 +119,6 @@ function BrokerMyPage({ user }: Props) {
         try {
             await withdrawMember(withdrawPassword);
             // 탈퇴하면 등록한 매물·사무소·패스워드리스 등록까지 서버가 한 번에 정리한다(MemberService.withdrawal 참고).
-            localStorage.removeItem('user');
             setAccessToken(null);
             window.location.href = '/member/login';
         } catch (error: any) {

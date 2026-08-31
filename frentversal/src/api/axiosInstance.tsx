@@ -58,14 +58,13 @@ axiosInstance.interceptors.response.use(
                 const res = await axios.post(`${API_BASE_URL}/member/refresh`, {}, { withCredentials: true }); // [refresh] 서버 /member/refresh 로 refresh token 전송
 
                 const newAccessToken: string = res.data.accessToken; // [refresh] 응답에서 새 access token 을 꺼낸다
-
+                setAccessToken(newAccessToken);
                 originalRequest.headers = originalRequest.headers || {}; // [refresh] 원래 요청의 헤더 객체가 없으면 만든다
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`; // [refresh] 새 토큰으로 Authorization 헤더를 교체한다
                 return axiosInstance(originalRequest); // [refresh] 새 토큰을 붙여 실패했던 원래 요청을 다시 보낸다(재시도)
 
             } catch (refreshError) { // [refresh] 재발급 자체가 실패 = refresh token 도 만료/무효
                 setAccessToken(null);
-                localStorage.removeItem("user"); // [refresh] 사용자 정보 제거
                 window.location.replace("/member/login"); // [refresh] 로그인 페이지로 강제 이동
                 return Promise.reject(refreshError); // [refresh] 재발급 에러를 돌려준다
             }
