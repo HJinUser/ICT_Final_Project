@@ -1,15 +1,16 @@
-// 메인 홈페이지 데이터를 가져오는 API 레이어.
-//
-// "/home" 이라는 단일 엔드포인트는 백엔드에 없다. 그래서 이미 있는 매물 검색(/property/search)과
-// 동네 탐색(/neighborhoods) API 두 개를 조합해서 "이번 주 매물"·"동네부터 고르는 방법" 구역은
-// 실제 값으로 채운다. 나머지(맞춤 추천·매물 비교·한줄평)는 대응하는 백엔드가 아직
-// 없어서 예시 데이터를 그대로 쓴다 — 화면 아래 MOCK_HOME_DATA 주석 참고.
-//
-// 워드클라우드는 여기서 내려보내지 않는다. 텍스트마이닝이 만든 PNG를 화면이 직접 불러 쓰므로
-// HomePage.tsx의 WORDCLOUD 상수를 참고할 것.
+/*메인 홈페이지 데이터를 가져오는 API 레이어.
+
+"/home" 이라는 단일 엔드포인트는 백엔드에 없다. 그래서 이미 있는 매물 검색(/property/search)·
+매물 비교(/property/home-compare)·동네 탐색(/neighborhoods) API를 조합해서 "이번 주 매물"·
+"두 집, 나란히 비교해보세요"·"동네부터 고르는 방법" 구역은 실제 값으로 채운다.
+나머지(맞춤 추천·한줄평)는 대응하는 백엔드가 아직 없어서 예시 데이터를 그대로 쓴다
+— 화면 아래 MOCK_HOME_DATA 주석 참고.
+
+워드클라우드는 여기서 내려보내지 않는다. 텍스트마이닝이 만든 PNG를 화면이 직접 불러 쓰므로
+HomePage.tsx의 WORDCLOUD 상수를 참고할 것.*/
 
 import type { HomeData, WeeklyProperty, HomeNeighborhood } from '../types/Home';
-import { searchProperties } from './propertySearchApi';
+import { searchProperties, getHomeCompareHighlights } from './propertySearchApi';
 import { getNeighborhoods } from './neighborhoodApi';
 import { formatManwon } from '../utils/propertyPrice';
 import type { PropertySearchItem } from '../types/PropertySearch';
@@ -21,7 +22,7 @@ const PHOTO = (id: string, w = 800) =>
 
 // weeklyLowCount·weeklyProperties·neighborhoods 는 실제 API(searchProperties·getNeighborhoods)로 채우므로
 // 목업에는 없다. 아래는 아직 대응하는 백엔드가 없는 구역만 남긴 예시 데이터다.
-const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'neighborhoods'> = {
+const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'neighborhoods' | 'compare'> = {
     // 맞춤 추천 미리보기.
     // 추천 모델이 붙기 전이라 취향 태그를 만족한 매물을 손으로 골라 둔 예시다.
     recommendations: [
@@ -48,39 +49,6 @@ const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'ne
             summary: '서초구 반포동 · 42㎡ · 7층',
             reason: '반려동물 가능 · 마트 도보 6분 · 낮은 관리비',
             fitScore: 81,
-        },
-    ],
-
-    // 매물 비교해보기 예시. 이번 주 매물 중 가격 편차가 가장 큰 두 건을 그대로 가져다 썼다.
-    // 금액·AI 시세·관리비는 만원 단위 정수다. 승자 강조는 화면에서 이 숫자로 직접 계산한다.
-    compareExample: [
-        {
-            id: 1,
-            name: '반포 리버뷰',
-            imageUrl: PHOTO('1502672260266-1c1ef2d93688', 600),
-            dealTypeLabel: '전세',
-            price: 49_000,
-            aiPrice: 54_000,
-            maintenanceCost: 12,
-            area: 84,
-            stationMinutes: 4,
-            tags: ['한강 도보권', '역세권', '남향 채광', '주차 여유', '대형마트 6분'],
-            aiScore: 92,
-            neighborhood: '반포동',
-        },
-        {
-            id: 2,
-            name: '서초 센트럴',
-            imageUrl: PHOTO('1484154218962-a197022b5858', 600),
-            dealTypeLabel: '전세',
-            price: 44_000,
-            aiPrice: 46_900,
-            maintenanceCost: 9,
-            area: 66,
-            stationMinutes: 5,
-            tags: ['학원가', '공원 인접', '조용함', '편의점 다수'],
-            aiScore: 86,
-            neighborhood: '서초동',
         },
     ],
 
@@ -150,9 +118,10 @@ function toHomeNeighborhood(neighborhood: NeighborhoodResponse): HomeNeighborhoo
 // weeklyLowCount·weeklyProperties·neighborhoods 는 실제 API를 조합해서 채우고,
 // 나머지(맞춤 추천·매물 비교·한줄평·워드클라우드)는 대응하는 백엔드가 생기기 전까지 예시 데이터를 쓴다.
 export async function getHomeData(): Promise<HomeData> {
-    const [propertyResult, neighborhoodResult] = await Promise.all([
+    const [propertyResult, neighborhoodResult, compareResult] = await Promise.all([
         searchProperties({ sort: 'LATEST' }),
         getNeighborhoods({ sort: 'POPULAR' }),
+        getHomeCompareHighlights(),
     ]);
 
     // "시세보다 싸게 나온 집" = 관리자가 저평가(UNDERVALUED)로 평가한 매물.
@@ -165,5 +134,6 @@ export async function getHomeData(): Promise<HomeData> {
         weeklyLowCount: lowItems.length,
         weeklyProperties: lowItems.slice(0, WEEKLY_CARD_LIMIT).map(toWeeklyProperty),
         neighborhoods: neighborhoodResult.content.slice(0, HOME_NEIGHBORHOOD_LIMIT).map(toHomeNeighborhood),
+        compare: compareResult,
     };
 }

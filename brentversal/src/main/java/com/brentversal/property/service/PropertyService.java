@@ -6,6 +6,7 @@ import com.brentversal.member.constant.Role;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.neighborhood.entity.Neighborhood;
+import com.brentversal.property.dto.*;
 import jakarta.persistence.EntityNotFoundException;
 import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.common.ml.MlClient;
@@ -16,13 +17,6 @@ import com.brentversal.property.constant.DealType;
 import com.brentversal.property.constant.PriceChangeStatus;
 import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.constant.PropertyType;
-import com.brentversal.property.dto.AiPricePreviewResponseDto;
-import com.brentversal.property.dto.PropertyDraftSummaryDto;
-import com.brentversal.property.dto.PropertyResponseDto;
-import com.brentversal.property.dto.PricePointDto;
-import com.brentversal.property.dto.PropertyPriceTrendDto;
-import com.brentversal.property.dto.PropertySearchCondition;
-import com.brentversal.property.dto.PropertySearchDto;
 import com.brentversal.realestate.repository.RealEstateTransactionRepository;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
@@ -55,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -790,6 +786,142 @@ public class PropertyService {
                 PropertyResponseDto.of(first),
                 PropertyResponseDto.of(second)
         );
+    }
+
+    /*
+  홈페이지 "두 집, 나란히 비교해보세요"에 실제 데이터를 내려주기 위한 메소드.
+
+  거래유형(매매/전세/월세)별로 게시 중(ACTIVE)이고 공개(visible)인 매물을 모아
+  각 거래유형 안에서만 순위를 매긴다. 서로 다른 거래유형끼리는 대표 금액 필드가
+  달라 비교가 안 되므로(compareProperties() 참고), 절대 섞지 않는다.
+*/
+    @Transactional(readOnly = true)
+    public HomeCompareHighlightsDto getHomeCompareHighlights() {
+        // 맞춤 추천(findTop200...)과 같은 이유로 캡을 둔다: 매물이 늘어날수록
+        // 전부 순위를 매기는 데 걸리는 시간이 함께 늘어나기 때문이다.
+        List<Property> pool = propertyRepository
+                .findTop200ByStatusAndVisibleTrueOrderByCreatedAtDesc(PropertyStatus.ACTIVE);
+
+        Map<DealType, List<Property>> byDealType = pool.stream()
+                .filter(property -> property.getDealType() != null)
+                .collect(Collectors.groupingBy(Property::getDealType));
+
+        HomeCompareHighlightsDto dto = new HomeCompareHighlightsDto();
+
+        dto.setSale(pickHighlightPair(
+                byDealType.getOrDefault(DealType.SALE, List.of()), DealType.SALE));
+        dto.setJeonse(pickHighlightPair(
+                byDealType.getOrDefault(DealType.JEONSE, List.of()), DealType.JEONSE));
+        dto.setMonthly(pickHighlightPair(
+                byDealType.getOrDefault(DealType.MONTHLY, List.of()), DealType.MONTHLY));
+
+        return dto;
+    }
+
+    /*
+      한 거래유형 후보군에서 "합산 순위가 가장 좋은 매물"과 "가장 안 좋은 매물" 한 쌍을 뽑는다.
+
+      순위를 매기려면 기준값이 다 채워져 있어야 하므로, 하나라도 비어 있는 매물은
+      순위 계산 대상(eligible)에서 뺀다. 그래도 매물 자체가 있다는 사실은 화면에
+      보여줘야 하므로("매물이 한 개라도 있으면 왼쪽에 채운다"), eligible이 부족하면
+      원래 후보군에서라도 하나를 채워 돌려준다.
+    */
+    private List<PropertyResponseDto> pickHighlightPair(List<Property> candidates, DealType dealType) {
+        if (candidates.isEmpty()) {
+            return List.of();
+        }
+
+        List<Property> eligible = candidates.stream()
+                .filter(property -> isRankable(property, dealType))
+                .toList();
+
+        if (eligible.size() < 2) {
+            Property fallback = eligible.isEmpty() ? candidates.get(0) : eligible.get(0);
+            return List.of(PropertyResponseDto.of(fallback));
+        }
+
+        // 매물 id별 순위 합산 점수. 숫자가 작을수록 여러 기준에서 골고루 좋은 매물이라는 뜻.
+        Map<Long, Integer> scoreByPropertyId = new HashMap<>();
+
+        switch (dealType) {
+            case SALE -> {
+                addRankScores(eligible, scoreByPropertyId, Property::getComparablePrice, true); // 금액
+                addRankScores(eligible, scoreByPropertyId,
+                        p -> p.getPrice() - p.getAiPrice(), true); // 시세차이(호가-AI가)
+            }
+            case JEONSE -> {
+                addRankScores(eligible, scoreByPropertyId, Property::getComparablePrice, true); // 금액
+                addRankScores(eligible, scoreByPropertyId,
+                        p -> p.getDeposit() - p.getAiDeposit(), true); // 시세차이
+            }
+            case MONTHLY -> {
+                // 월세는 보증금과 월세를 하나로 합치지 않고 각각 별도 기준으로 순위를 매긴다.
+                addRankScores(eligible, scoreByPropertyId, Property::getMonthlyDeposit, true); // 보증금
+                addRankScores(eligible, scoreByPropertyId, Property::getMonthlyRent, true);     // 월세
+                addRankScores(eligible, scoreByPropertyId,
+                        p -> p.getMonthlyDeposit() - p.getAiMonthlyDeposit(), true); // 보증금 시세차이
+                addRankScores(eligible, scoreByPropertyId,
+                        p -> p.getMonthlyRent() - p.getAiMonthlyRent(), true);       // 월세 시세차이
+            }
+        }
+
+        addRankScores(eligible, scoreByPropertyId,
+                p -> p.getArea().doubleValue(), false); // 면적: 넓을수록 좋음
+        addRankScores(eligible, scoreByPropertyId, Property::getStationDistance, true); // 역거리: 가까울수록 좋음
+        addRankScores(eligible, scoreByPropertyId, Property::getMaintenanceFee, true);  // 관리비: 낮을수록 좋음
+
+        Property best = eligible.stream()
+                .min(Comparator.comparingInt(p -> scoreByPropertyId.get(p.getId())))
+                .orElseThrow();
+        Property worst = eligible.stream()
+                .max(Comparator.comparingInt(p -> scoreByPropertyId.get(p.getId())))
+                .orElseThrow();
+
+
+        // 모든 기준이 완전히 동점이면 min/max가 같은 매물을 돌려준다.
+        if (best.getId().equals(worst.getId())) {
+            return List.of(PropertyResponseDto.of(best));
+        }
+
+        return List.of(PropertyResponseDto.of(best), PropertyResponseDto.of(worst));
+    }
+
+    // 거래유형별로 순위 계산에 필요한 값이 다 채워져 있는지 확인한다.
+    private boolean isRankable(Property property, DealType dealType) {
+        if (property.getArea() == null
+                || property.getMaintenanceFee() == null
+                || property.getStationDistance() == null) {
+            return false;
+        }
+
+        return switch (dealType) {
+            case SALE -> property.getPrice() != null && property.getAiPrice() != null;
+            case JEONSE -> property.getDeposit() != null && property.getAiDeposit() != null;
+            case MONTHLY -> property.getMonthlyDeposit() != null && property.getMonthlyRent() != null
+                    && property.getAiMonthlyDeposit() != null && property.getAiMonthlyRent() != null;
+        };
+    }
+
+    // 후보군 전체를 한 기준으로 줄 세워서, 순위(1등=가장 좋음)를 매물별 합산 점수에 더한다.
+    private void addRankScores(
+            List<Property> candidates,
+            Map<Long, Integer> scoreByPropertyId,
+            ToDoubleFunction<Property> valueFn,
+            boolean lowerIsBetter) {
+
+        List<Property> sorted = new ArrayList<>(candidates);
+        Comparator<Property> comparator = Comparator.comparingDouble(valueFn::applyAsDouble);
+
+        if (!lowerIsBetter) {
+            comparator = comparator.reversed();
+        }
+
+        sorted.sort(comparator);
+
+        for (int rank = 0; rank < sorted.size(); rank++) {
+            long propertyId = sorted.get(rank).getId();
+            scoreByPropertyId.merge(propertyId, rank + 1, Integer::sum);
+        }
     }
 
     // shadow DRAFT의 AI 입력·예측결과를 검증한 뒤 원본 매물을 수정하고 PENDING으로 전환하는 Service 메서드임

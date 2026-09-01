@@ -46,6 +46,10 @@ public class PropertyResponseDto {
     private Long monthlyRent;    // 월세 금액(만원)
     private Integer maintenanceFee; // 관리비(만원)
 
+    // 정렬·비교용으로 이미 계산돼 있는 대표 금액 (매매=price, 전세=deposit, 월세=보증금+월세×법정 전환율).
+    // ComparePage에서 월세끼리 하나의 금액으로 합쳐 비교할 때 이 값을 그대로 쓴다.
+    private Long comparablePrice;
+
     private Long aiPrice;
     private Long aiDeposit;
     private Long aiMonthlyDeposit;
@@ -109,6 +113,7 @@ public class PropertyResponseDto {
         dto.setMonthlyDeposit(bean.getMonthlyDeposit());
         dto.setMonthlyRent(bean.getMonthlyRent());
         dto.setMaintenanceFee(bean.getMaintenanceFee());
+        dto.setComparablePrice(bean.getComparablePrice());
 
         dto.setAiPrice(bean.getAiPrice());
         dto.setAiDeposit(bean.getAiDeposit());

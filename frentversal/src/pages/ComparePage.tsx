@@ -166,6 +166,7 @@ function formatPriceDifference(property: PropertyResponse): string {
 const CATEGORY_LABELS: Record<string, string> = {
     price: "금액",
     priceDiff: "시세 대비 합리적인 가격",
+    convertedAmount: "환산 금액",
     area: "면적",
     station: "교통 편의",
     fee: "관리비",
@@ -332,8 +333,8 @@ function ComparePage() {
     const stationDistances = properties.map(
         (property) => property.stationDistance
     );
-    // 월세는 보증금과 월세 두 숫자가 있으므로
-    // 하나의 금액만 보고 승자를 만들지 않는다.
+    // "금액" 행 자체는 월세의 경우 보증금/월세 두 숫자를 나란히 보여주기만 하고 승자를 만들지 않는다.
+    // 대신 아래 "환산 금액" 행에서 comparablePrice(법정 전환율로 환산한 값)로 따로 승자를 매긴다.
     const priceWinner =
         dealType === "MONTHLY"
             ? null
@@ -344,6 +345,13 @@ function ComparePage() {
             ? null
             : pickWinnerIndex(priceDiffs, "lower");
 
+    // 월세만 해당: comparablePrice는 보증금+월세를 법정 전환율 기준으로 합친 값이라
+    // (Property.comparablePrice와 동일) 이 값으로는 월세끼리도 종합 승자를 매길 수 있다.
+    // 매매·전세는 이미 "금액" 행이 comparablePrice와 같은 값이라 중복 표시하지 않는다.
+    const convertedAmounts = properties.map((property) => property.comparablePrice);
+    const convertedAmountWinner =
+        dealType === "MONTHLY" ? pickWinnerIndex(convertedAmounts, "lower") : null;
+
     const areaWinner = pickWinnerIndex(areas, "higher");
     const feeWinner = pickWinnerIndex(maintenanceFees, "lower");
     const stationWinner = pickWinnerIndex(stationDistances, "lower");
@@ -353,6 +361,7 @@ function ComparePage() {
     const categoryWinners: { key: string; winner: number | null }[] = [
         { key: "price", winner: priceWinner },
         { key: "priceDiff", winner: priceDiffWinner },
+        { key: "convertedAmount", winner: convertedAmountWinner },
         { key: "area", winner: areaWinner },
         { key: "station", winner: stationWinner },
         { key: "fee", winner: feeWinner },
@@ -477,6 +486,28 @@ function ComparePage() {
                                     </td>
                                 ))}
                             </tr>
+
+                            {dealType === "MONTHLY" && (
+                                <tr>
+                                    <td>
+                                        환산 금액 <span className="xs dim">(법정 전환율 5% 기준)</span>
+                                    </td>
+
+                                    {properties.map((property, index) => (
+                                        <td
+                                            key={property.id}
+                                            className={index === convertedAmountWinner ? "winner" : ""}
+                                        >
+                                            <span className="num">
+                                                {property.comparablePrice !== null
+                                                    ? formatMoney(property.comparablePrice)
+                                                    : "정보 없음"}
+                                            </span>
+                                            {index === convertedAmountWinner && " ✓"}
+                                        </td>
+                                    ))}
+                                </tr>
+                            )}
 
                             <tr>
                                 <td>면적</td>
