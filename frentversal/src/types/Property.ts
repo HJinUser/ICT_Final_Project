@@ -106,6 +106,7 @@ export interface PropertyResponse {
     monthlyDeposit: number | null;
     monthlyRent: number | null;
     maintenanceFee: number;
+    comparablePrice: number | null; // 백엔드 Property.comparablePrice 그대로 (매매=price, 전세=deposit, 월세=보증금+월세×법정 전환율)
 
     description: string;
     detailDescription: string;

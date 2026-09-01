@@ -1,11 +1,13 @@
 /*
   메인 홈페이지가 보여 주는 데이터의 타입.
 
-  지금은 서버에 해당 API가 없어서 homeApi.ts가 예시 데이터를 돌려주지만,
-  화면(HomePage.tsx)은 처음부터 이 타입만 보고 그리도록 만들어 두었다.
-  나중에 서버가 붙으면 homeApi.ts 안의 함수 본문만 실제 호출로 바꾸면 되고
-  화면 코드는 손대지 않아도 된다.
+  맞춤 추천·한줄평은 아직 대응하는 백엔드가 없어서 homeApi.ts가 예시 데이터를 돌려주지만,
+  "두 집, 나란히 비교해보세요"(compare)는 이제 실제 데이터다 — PropertyService.getHomeCompareHighlights()
+  참고. 화면(HomePage.tsx)은 이 타입만 보고 그리도록 만들어 두었으니, 나머지도 서버가 붙으면
+  homeApi.ts 안의 함수 본문만 실제 호출로 바꾸면 되고 화면 코드는 손대지 않아도 된다.
 */
+
+import type { PropertyResponse } from './Property';
 
 // 시세 대비 평가. 관리자가 매물마다 수동으로 저평가/적정/고평가 중 하나를 고른 값이다.
 // 백엔드 PropertyStatus가 아니라 "시세 비교 결과"라서 별도 값이다.
@@ -65,33 +67,23 @@ export type HomeRecommendation = {
     fitScore: number;
 };
 
-// 메인의 "두 집, 나란히 비교해보세요" 표에 들어가는 매물 1건.
-// 실제 비교 페이지(/property/compare)처럼 사용자가 고른 매물이 아니라,
-// 같은 동네에서 가격 차이가 큰 두 매물을 예시로 보여 주는 용도라 항상 2건 고정이다.
-//
-// 표시용 문자열이 아니라 "숫자 원본"을 그대로 받는다.
-// 미리보기라도 어느 쪽이 더 나은지를 실제로 계산해서 표시해야 하기 때문이다.
-// (문자열로 받으면 비교가 불가능해 승자를 손으로 지정할 수밖에 없다)
-export type HomeCompareItem = {
-    id: number;
-    // 매물 이름. 표 헤더에 쓰고, 칸을 누르면 이 id로 상세 페이지에 간다.
-    name: string;
-    imageUrl: string;
-    // "전세" / "월세" / "매매"
-    dealTypeLabel: string;
-    // 금액·AI 시세·관리비는 모두 만원 단위 정수다 (예: 49000 = 4억 9,000만 원)
-    price: number;
-    aiPrice: number;
-    maintenanceCost: number;
-    // 전용 면적(㎡)
-    area: number;
-    // 역까지 도보 분
-    stationMinutes: number;
-    // 주변 환경 태그. 화면에는 최대 5개까지만 보여 준다.
-    tags: string[];
-    // AI 추천 점수(0~100)
-    aiScore: number;
-    neighborhood: string;
+/*
+  메인의 "두 집, 나란히 비교해보세요" 표에 쓰는 실제 데이터.
+
+  GET /property/home-compare (PropertyService.getHomeCompareHighlights) 가 그대로 내려주는 모양이다.
+  거래유형(매매/전세/월세)끼리는 대표 금액 필드가 달라 서로 비교할 수 없어서
+  (ComparePage.tsx의 compareProperties()도 같은 이유로 같은 거래유형끼리만 비교를 허용한다),
+  화면은 거래유형별로 탭을 나눠 각 탭 안에서만 두 매물을 비교한다.
+
+  배열 길이가 그대로 화면 상태를 알려준다:
+    0건 : 이 거래유형 매물이 아예 없음 → 화면 전체 블러 처리 + 안내 문구
+    1건 : 비교 상대가 없음 → 있는 매물 하나만 흐리게 보여 주고 안내 문구도 함께 띄운다
+    2건 : 정상 비교 (0번 = 합산 순위가 더 좋은 매물, 1번 = 더 안 좋은 매물)
+*/
+export type HomeCompareData = {
+    sale: PropertyResponse[];
+    jeonse: PropertyResponse[];
+    monthly: PropertyResponse[];
 };
 
 // 메인 화면이 한 번에 받아 오는 전체 데이터
@@ -101,8 +93,7 @@ export type HomeData = {
     weeklyProperties: WeeklyProperty[];
     // 맞춤 추천 미리보기. 비회원에게도 내려오지만 화면에서는 잠금 처리해 보여 준다.
     recommendations: HomeRecommendation[];
-    // "매물 비교해보기" 예시 두 건. 항상 길이 2로 내려온다.
-    compareExample: [HomeCompareItem, HomeCompareItem];
+    compare: HomeCompareData;
     neighborhoods: HomeNeighborhood[];
     voices: HomeVoice[];
 };

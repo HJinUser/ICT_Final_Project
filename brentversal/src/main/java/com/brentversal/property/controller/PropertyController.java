@@ -2,11 +2,7 @@ package com.brentversal.property.controller;
 
 import com.brentversal.favorite.service.FavoriteService;
 import com.brentversal.property.constant.PropertyStatus;
-import com.brentversal.property.dto.AiPricePreviewResponseDto;
-import com.brentversal.property.dto.PropertyDraftSummaryDto;
-import com.brentversal.property.dto.PropertyResponseDto;
-import com.brentversal.property.dto.PropertySearchCondition;
-import com.brentversal.property.dto.PropertySearchDto;
+import com.brentversal.property.dto.*;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.service.PropertyService;
 import com.brentversal.property.validation.PropertyFinalValidation;
@@ -273,6 +269,12 @@ public class PropertyController {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", e.getMessage()));
         }
+    }
+
+    // 홈페이지 "두 집, 나란히 비교해보세요"에 쓸 실제 데이터 (거래유형별 최고점/최저점 매물 쌍)
+    @GetMapping("/home-compare")
+    public ResponseEntity<HomeCompareHighlightsDto> homeCompare() {
+        return ResponseEntity.ok(propertyService.getHomeCompareHighlights());
     }
 
     // 관심매물 토글 (로그인 필요 — SecurityConfig에서 이 경로는 인증 요구)

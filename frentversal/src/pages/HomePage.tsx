@@ -10,7 +10,9 @@ import HomeBrokerSummary from "./components/HomeBrokerSummary";
 import HomeRecommend from "./components/HomeRecommend";
 import HomeSectionNav, { type SectionNavItem } from "./components/HomeSectionNav";
 import { buildCompareRows } from "../types/HomeCompareMapper";
-import type { HomeData, PriceEvaluation } from "../types/Home";
+import type { HomeData, HomeCompareData, PriceEvaluation } from "../types/Home";
+import type { PropertyResponse, DealTypeCode } from "../types/Property";
+import { DEAL_TYPE_LABELS } from "../utils/propertyPrice";
 import type { Notice } from "../types/Notice";
 import type { User } from "../types/User";
 import type { NavItem } from "../types/Navigation";
@@ -71,6 +73,15 @@ const HOME_NOTICE_COUNT = 5;
 
 // 비교표의 "주변 환경" 칸에 보여 줄 태그 개수. 화면정의서에 최대 5개로 정해져 있다.
 const COMPARE_TAG_LIMIT = 5;
+
+// 비교 탭(대문자 DealTypeCode) → 실제 응답 필드명(소문자) 매핑
+const COMPARE_TAB_KEYS: Record<DealTypeCode, keyof HomeCompareData> = {
+    SALE: 'sale',
+    JEONSE: 'jeonse',
+    MONTHLY: 'monthly',
+};
+
+const COMPARE_TABS: DealTypeCode[] = ['SALE', 'JEONSE', 'MONTHLY'];
 
 // 시세 평가 값을 배지 색 클래스/문구로 바꾼다. 다른 화면(ListingsPage 등)과 같은 저평가/적정/고평가 표현이다.
 const PRICE_EVALUATION_CLASS: Record<PriceEvaluation, string> = {
@@ -161,6 +172,9 @@ function App({ user }: Props) {
     // 공지사항. 비회원도 볼 수 있어서 로그인 여부와 상관없이 불러온다.
     const [notices, setNotices] = useState<Notice[]>([]);
 
+    // 매물 비교 탭. 기본은 매매.
+    const [compareTab, setCompareTab] = useState<DealTypeCode>('SALE');
+
     useEffect(() => {
         getHomeData()
             .then((result) => setData(result))
@@ -208,8 +222,13 @@ function App({ user }: Props) {
 
     const cta = user ? ROLE_CTA[user.role] : GUEST_CTA;
 
-    // 비교표에서 글자로 표시되는 행들. 행마다 어느 쪽이 나은지도 여기서 함께 계산된다.
-    const compareRows = buildCompareRows(data.compareExample);
+    // 선택한 탭(매매/전세/월세)의 후보 매물. 길이 0~2가 그대로 화면 상태다.
+    const compareItems = data.compare[COMPARE_TAB_KEYS[compareTab]];
+    const hasFullComparePair = compareItems.length === 2;
+    // 화면은 항상 2칸을 그리고, 없는 자리는 null로 채운다.
+    const comparePair: (PropertyResponse | null)[] = [compareItems[0] ?? null, compareItems[1] ?? null];
+    // 비교표에서 글자로 표시되는 행들. 2건이 다 있을 때만 계산한다.
+    const compareRows = hasFullComparePair ? buildCompareRows(compareItems) : [];
 
     // 관리자로 로그인했을 때는 "오늘 처리할 일" 요약도 목차에 넣는다.
     // 목차는 화면에 나오는 순서와 같아야 한다. 이 구역은 목차 바 바로 다음에 렌더되는
@@ -416,9 +435,10 @@ function App({ user }: Props) {
             </section>
 
             {/*  02b 매물 비교해보기 
-                화면정의서(매물 비교 페이지)의 표 구성을 그대로 따른 미리보기다.
-                값은 예시지만 어느 쪽이 나은지는 실제로 계산해서 강조한다(HomeCompareMapper).
-                직접 고른 매물로 비교하려면 관심 목록이 있어야 해서 로그인이 필요하다. */}
+                거래유형(매매/전세/월세)별로 실제로 합산 순위가 가장 좋은 매물과 가장 안 좋은
+                매물 한 쌍을 보여준다(GET /property/home-compare). 어느 쪽이 나은지는 실제로
+                계산해서 강조한다(HomeCompareMapper). 후보가 2건이 안 되면 표를 흐리게 가리고
+                안내 문구를 띄운다. 직접 고른 매물로 비교하려면 관심 목록이 있어야 해서 로그인이 필요하다. */}
             <section className={`home-sec ${toneOf('s-compare')}`} id="s-compare">
                 <div className="rv-wrap">
                     <div className="home-shead">
@@ -428,7 +448,7 @@ function App({ user }: Props) {
                                 <span className="home-loginbadge">로그인 후 이용 가능</span>
                             </h2>
                             <p>
-                                같은 동네에서 가격 차이가 큰 두 매물을 예시로 보여드립니다.
+                                거래유형별로 여러 조건을 종합해 가장 나은 매물과 덜 나은 매물을 골라 보여드립니다.
                                 내가 고른 매물로 비교하려면 로그인 후 관심 목록에서 두 개를 선택하세요.
                             </p>
                         </div>
@@ -440,70 +460,98 @@ function App({ user }: Props) {
                         </button>
                     </div>
 
+                    <div className="home-comparetabs">
+                        {COMPARE_TABS.map((tab) => (
+                            <button
+                                key={tab}
+                                type="button"
+                                className={`home-comparetab ${tab === compareTab ? 'active' : ''}`}
+                                onClick={() => setCompareTab(tab)}
+                            >
+                                {DEAL_TYPE_LABELS[tab]}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="home-comparewrap">
-                        <table className="home-comparetable">
+                        {!hasFullComparePair && (
+                            <div className="home-cmplock-notice">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
+                                    <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
+                                    <circle cx="12" cy="12" r="9" />
+                                </svg>
+                                <strong>비교할 매물이 부족합니다</strong>
+                                <p>{DEAL_TYPE_LABELS[compareTab]} 매물이 더 등록되면 자동으로 채워집니다.</p>
+                            </div>
+                        )}
+
+                        <table
+                            className={`home-comparetable ${!hasFullComparePair ? 'home-cmplock-blur' : ''}`}
+                            aria-hidden={!hasFullComparePair}
+                        >
                             <thead>
-                                <tr>
-                                    <th>비교 항목</th>
-                                    {data.compareExample.map((item) => (
-                                        <th key={item.id}>
-                                            {item.name}
-                                            <span className="hood">{item.neighborhood}</span>
-                                        </th>
-                                    ))}
-                                </tr>
+                            <tr>
+                                <th>비교 항목</th>
+                                {comparePair.map((item, index) => (
+                                    <th key={item?.id ?? `empty-${index}`}>
+                                        {item ? item.name : '매물 없음'}
+                                        <span className="hood">
+                                                {item ? [item.sigungu, item.dong].filter(Boolean).join(' ') : ''}
+                                            </span>
+                                    </th>
+                                ))}
+                            </tr>
                             </thead>
                             <tbody>
-                                {/* 사진: 4:3 비율로 보여 준다 */}
-                                <tr>
-                                    <th scope="row">사진</th>
-                                    {data.compareExample.map((item) => (
-                                        <td key={item.id}>
-                                            <button
-                                                type="button"
-                                                className="home-comparephoto"
-                                                style={{ backgroundImage: `url('${item.imageUrl}')` }}
-                                                aria-label={`${item.name} 상세 보기`}
-                                                onClick={() => navigate(`/property/${item.id}`)}
-                                            />
-                                        </td>
-                                    ))}
-                                </tr>
-
-                                {/* 글자로 표시되는 행들. 더 나은 쪽에 강조 + 체크 표시 */}
-                                {compareRows.map((row) => (
-                                    <tr key={row.label}>
-                                        <th scope="row">{row.label}</th>
-                                        {row.values.map((value, index) => (
-                                            <td
-                                                key={data.compareExample[index].id}
-                                                className={index === row.winnerIndex ? 'hl' : undefined}
-                                            >
-                                                {value}
-                                                {index === row.winnerIndex && <span className="check">✓</span>}
-                                            </td>
-                                        ))}
-                                    </tr>
+                            <tr>
+                                <th scope="row">사진</th>
+                                {comparePair.map((item, index) => (
+                                    <td key={item?.id ?? `empty-${index}`}>
+                                        <button
+                                            type="button"
+                                            className="home-comparephoto"
+                                            style={{ backgroundImage: item ? `url('${item.images[0]?.url ?? ''}')` : undefined }}
+                                            aria-label={item ? `${item.name} 상세 보기` : '매물 없음'}
+                                            disabled={!item}
+                                            onClick={() => item && navigate(`/property/${item.id}`)}
+                                        />
+                                    </td>
                                 ))}
+                            </tr>
 
-                                {/* 주변 환경: 최대 5개 태그 */}
-                                <tr>
-                                    <th scope="row">주변 환경</th>
-                                    {data.compareExample.map((item) => (
-                                        <td key={item.id}>
-                                            <div className="home-comparetags">
-                                                {item.tags.slice(0, COMPARE_TAG_LIMIT).map((tag) => (
-                                                    <span key={tag}>{tag}</span>
-                                                ))}
-                                            </div>
+                            {compareRows.map((row) => (
+                                <tr key={row.label}>
+                                    <th scope="row">{row.label}</th>
+                                    {row.values.map((value, index) => (
+                                        <td
+                                            key={comparePair[index]?.id ?? `empty-${index}`}
+                                            className={index === row.winnerIndex ? 'hl' : undefined}
+                                        >
+                                            {value}
+                                            {index === row.winnerIndex && <span className="check">✓</span>}
                                         </td>
                                     ))}
                                 </tr>
+                            ))}
 
-                                <tr>
-                                    <th scope="row" />
-                                    {data.compareExample.map((item) => (
-                                        <td key={item.id}>
+                            <tr>
+                                <th scope="row">주변 환경</th>
+                                {comparePair.map((item, index) => (
+                                    <td key={item?.id ?? `empty-${index}`}>
+                                        <div className="home-comparetags">
+                                            {item?.tags.slice(0, COMPARE_TAG_LIMIT).map((tag) => (
+                                                <span key={tag.id}>{tag.name}</span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                ))}
+                            </tr>
+
+                            <tr>
+                                <th scope="row" />
+                                {comparePair.map((item, index) => (
+                                    <td key={item?.id ?? `empty-${index}`}>
+                                        {item && (
                                             <button
                                                 type="button"
                                                 className="home-comparelink"
@@ -511,9 +559,10 @@ function App({ user }: Props) {
                                             >
                                                 상세 보기
                                             </button>
-                                        </td>
-                                    ))}
-                                </tr>
+                                        )}
+                                    </td>
+                                ))}
+                            </tr>
                             </tbody>
                         </table>
                     </div>

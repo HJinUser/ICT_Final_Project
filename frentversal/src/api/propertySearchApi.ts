@@ -9,6 +9,7 @@ import type {
     PropertySearchParams,
     PropertySearchResponse
 } from '../types/PropertySearch';
+import type { HomeCompareData } from '../types/Home';
 
 export async function searchProperties(params: PropertySearchParams = {}): Promise<PropertySearchResponse> {
     const response = await customAxios.get<PropertySearchResponse>('/property/search', {
@@ -65,5 +66,13 @@ export async function fetchAvailableDealTypes(type?: string): Promise<string[]> 
         params: { type: type && type !== 'ALL' ? type : undefined },
     });
 
+    return response.data;
+}
+
+// 홈페이지 "두 집, 나란히 비교해보세요"용 실제 데이터.
+// 거래유형(매매/전세/월세)별로 합산 순위가 가장 좋은 매물과 가장 안 좋은 매물 한 쌍(0~2건)을 받는다.
+// (PropertyService.getHomeCompareHighlights 참고)
+export async function getHomeCompareHighlights(): Promise<HomeCompareData> {
+    const response = await customAxios.get<HomeCompareData>('/property/home-compare');
     return response.data;
 }

@@ -386,6 +386,7 @@
    02b 매물 비교해보기
    ============================================================ */
 .home-comparewrap {
+    position: relative;
     border: 1px solid var(--line);
     border-radius: var(--r-l);
     overflow: hidden;
@@ -522,6 +523,68 @@
     font-weight: 500;
     letter-spacing: 0;
     white-space: nowrap;
+}
+
+
+/* 비교 탭(매매/전세/월세) */
+.home-comparetabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.home-comparetab {
+    padding: 8px 16px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    background: #fff;
+    color: var(--ink-2);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+    transition: .18s;
+}
+
+.home-comparetab.active {
+    border-color: var(--v);
+    background: var(--v-pale);
+    color: var(--v);
+    font-weight: 600;
+}
+
+/*
+  후보 매물이 2건 미만일 때: 표를 흐리게 가리고 위에 안내를 얹는다.
+  RecommendLockedPreview.css와 같은 기법(blur + pointer-events:none)이지만,
+  그쪽 CSS가 바뀌어도 이 화면이 함께 깨지지 않도록 이름은 따로(home-cmplock-) 둔다.
+*/
+.home-comparetable.home-cmplock-blur {
+    filter: blur(5px);
+    opacity: .5;
+    pointer-events: none;
+    user-select: none;
+}
+
+.home-cmplock-notice {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    padding: 0 20px;
+    color: var(--ink);
+}
+
+.home-cmplock-notice svg { color: var(--v); }
+
+.home-cmplock-notice strong { font-size: var(--fs-lg); }
+
+.home-cmplock-notice p {
+    max-width: 360px;
+    font-size: var(--fs-xs);
+    color: var(--ink-3);
 }
 
 /* 시세 평가 배지 */
