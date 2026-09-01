@@ -162,7 +162,7 @@ export function buildCompareRows(items: PropertyResponse[]): HomeCompareRow[] {
         },
         {
             label: '시세 차이',
-            values: items.map((item, index) => diffLabel(actualPrices[index], aiPrices[index])),
+            values: items.map((_, index) => diffLabel(actualPrices[index], aiPrices[index])),
             winnerIndex: pickWinnerIndex(
                 actualPrices.map((actual, index) => diffValue(actual, aiPrices[index])),
                 'lower'
