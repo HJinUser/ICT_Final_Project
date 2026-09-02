@@ -64,3 +64,12 @@
     color: #9c9c9c;
     font-size: 12px;
 }
+
+.compare-table .thumb {
+    height: auto;
+    aspect-ratio: 4 / 3;
+}
+
+.compare-table tbody tr:hover {
+    background: none;
+}

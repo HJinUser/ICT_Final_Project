@@ -586,9 +586,7 @@ function ComparePage() {
                                     <td key={property.id}>
                                         <Link
                                             to={`/property/${property.id}`}
-                                            className={
-                                                index === 0 ? "solid-btn" : "outline-btn"
-                                            }
+                                            className= "outline-btn"
                                         >
                                             상세 보기
                                         </Link>
