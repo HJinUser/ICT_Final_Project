@@ -176,7 +176,7 @@ function App({ user }: Props) {
     const [compareTab, setCompareTab] = useState<DealTypeCode>('SALE');
 
     useEffect(() => {
-        getHomeData()
+        getHomeData(user)
             .then((result) => setData(result))
             .catch((err) => {
                 console.error('메인 화면 데이터를 불러오지 못했습니다.', err);
@@ -439,7 +439,8 @@ function App({ user }: Props) {
                 매물 한 쌍을 보여준다(GET /property/home-compare). 어느 쪽이 나은지는 실제로
                 계산해서 강조한다(HomeCompareMapper). 후보가 2건이 안 되면 표를 흐리게 가리고
                 안내 문구를 띄운다. 직접 고른 매물로 비교하려면 관심 목록이 있어야 해서 로그인이 필요하다. */}
-            <section className={`home-sec ${toneOf('s-compare')}`} id="s-compare">
+            {(!user || user.role === 'USER') && (
+                <section className={`home-sec ${toneOf('s-compare')}`} id="s-compare">
                 <div className="rv-wrap">
                     <div className="home-shead">
                         <div>
@@ -568,6 +569,7 @@ function App({ user }: Props) {
                     </div>
                 </div>
             </section>
+            )}
 
             {/*  03 동네 둘러보기  */}
             <section className={`home-sec ${toneOf('s-neighborhood')}`} id="s-neighborhood">
