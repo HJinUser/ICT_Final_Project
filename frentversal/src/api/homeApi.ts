@@ -19,10 +19,6 @@ import type { NeighborhoodResponse } from '../types/Neighborhood';
 import type { RecommendationItem } from '../types/Recommendation';
 import type { User } from '../types/User';
 
-// 예시 이미지. 실제 매물 사진이 붙기 전까지 화면 확인용으로만 쓴다.
-const PHOTO = (id: string, w = 800) =>
-    `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=70`;
-
 // weeklyLowCount·weeklyProperties·neighborhoods 는 실제 API(searchProperties·getNeighborhoods)로 채우므로
 // 목업에는 없다. 아래는 아직 대응하는 백엔드가 없는 구역만 남긴 예시 데이터다.
 const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'neighborhoods' | 'compare'| 'recommendations'> = {
