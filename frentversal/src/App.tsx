@@ -34,6 +34,7 @@ function App() {
   const appName = "ICT Final Project";
 
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   // 매개변수 2개 (동작 2개), []는 한번만 하는 것을 의미
   useEffect(() => {
@@ -45,6 +46,9 @@ function App() {
         })
         .catch(() => {
           // 쿠키가 없거나 만료됨 → 로그아웃 상태로 둔다
+        })
+        .finally(() => {
+            setAuthLoading(false);
         });
   }, []);
 
@@ -118,6 +122,10 @@ function App() {
     로그아웃은 메뉴가 아니라 이 화면 안에 두지 않았으므로, 계정을 바꾸려면 로그인 화면 주소로 간다.
   */
   const inPreferenceSetup = location.pathname.startsWith(PREFERENCE_SETUP_PATH);
+
+    if (authLoading) {
+        return null;
+    }
 
   return (
     <>
