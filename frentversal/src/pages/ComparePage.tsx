@@ -608,9 +608,6 @@ function ComparePage() {
                         <Link to="/favorites" className="ghost-btn">
                             관심목록으로 돌아가기
                         </Link>
-                        <Link to="/map" className="solid-btn">
-                            다른 매물 추가
-                        </Link>
                     </div>
                 </div>
             </section>
