@@ -582,7 +582,7 @@ function ComparePage() {
                             <tr>
                                 <td></td>
 
-                                {properties.map((property, index) => (
+                                {properties.map((property) => (
                                     <td key={property.id}>
                                         <Link
                                             to={`/property/${property.id}`}
