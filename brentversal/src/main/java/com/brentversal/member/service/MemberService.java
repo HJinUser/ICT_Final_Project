@@ -19,6 +19,7 @@ import com.brentversal.neighborhoodreview.repository.NeighborhoodReviewRepositor
 import com.brentversal.passwordless.client.PasswordlessClient;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.property.service.PropertyService;
 import com.brentversal.propertyreview.repository.PropertyReviewRepository;
 import com.brentversal.recommendation.repository.RecentSearchRepository;
 import com.brentversal.recommendation.repository.RecommendationBestRepository;
@@ -58,6 +59,7 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
     private final FavoriteRepository favoriteRepository;
     private final AgencyRepository agencyRepository;
     private final PropertyRepository propertyRepository;
+    private final PropertyService propertyService;
     private final PasswordlessClient passwordlessClient; // PasswordlessService를 직접 주입하면 순환참조가 생겨서, 얘가 이미 쓰는 client를 그대로 가져옴
     private final RecentSearchRepository recentSearchRepository;
     private final RecommendationFeedbackRepository recommendationFeedbackRepository;
@@ -319,17 +321,19 @@ public class MemberService { // MemberService가 MemberRepository를 의존하�
     }
 
     // 중개인 탈퇴: 등록한 매물과 사무소는 콘텐츠를 남길 대상 자체가 사라지므로 통째로 지운다
+    // 중개인 탈퇴: 등록한 매물과 사무소는 콘텐츠를 남길 대상 자체가 사라지므로 통째로 지운다
     private void withdrawBrokerAssets(Member member){
         agencyRepository.findByMemberId(member.getId()).ifPresent(agency -> {
             List<Property> properties = propertyRepository.findByAgencyId(agency.getId());
+
+            // 매물을 지울 때 FK로 걸린 다른 도메인(상담·즐겨찾기·리뷰 등)까지 함께 정리해야 한다.
+            // 이 정리 로직은 등록취소(PropertyService.deleteWithRelatedData)와 완전히 같아야 하므로
+            // 직접 반복해서 지우지 않고 그 메소드를 그대로 재사용한다.
+            // (예전에는 여기서 favorite/review만 지우고 propertyRepository.deleteAll()로 바로 지웠는데,
+            //  agency_consultations.property_id가 진짜 FK로 바뀐 뒤로는 그 상태로 삭제가 막힌다.)
             for (Property property : properties) {
-                favoriteRepository.deleteAll(favoriteRepository.findByProperty_Id(property.getId()));
-                propertyReviewRepository.findByPropertyId(property.getId())
-                        .forEach(propertyReviewRepository::delete);
-                // property.images는 cascade=ALL+orphanRemoval이라 Property 삭제 시 자동으로 같이 지워지고
-                // property.tags는 @ManyToMany 조인 테이블이라 별도 처리 없이 자동 정리된다.
+                propertyService.deleteWithRelatedData(property);
             }
-            propertyRepository.deleteAll(properties);
 
             agencyReviewRepository.findByAgencyIdOrderByIdDesc(agency.getId())
                     .forEach(agencyReviewRepository::delete);
