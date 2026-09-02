@@ -8,6 +8,7 @@ import com.brentversal.property.constant.PropertyStatus;
 import com.brentversal.property.constant.PriceEvaluationStatus;
 import com.brentversal.property.entity.Property;
 import com.brentversal.property.repository.PropertyRepository;
+import com.brentversal.property.service.PropertyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public class AdminPropertyService {
     private final PropertyRepository propertyRepository ;
     private final MlClient mlClient ;
     private final MailService mailService ;
+    private final PropertyService propertyService;
 
     // 한 페이지에 10건씩 보여 준다
     private static final int PAGE_SIZE = 10 ;
@@ -116,7 +118,10 @@ public class AdminPropertyService {
         notifyOwner(property,
                 "[전세역전] 매물이 반려되었습니다",
                 "\"" + property.getName() + "\" 매물이 반려되어 등록이 취소되었습니다. 다시 등록하시려면 매물을 새로 등록해 주세요.");
-        return AdminPropertyDto.of(property);
+
+        AdminPropertyDto response = AdminPropertyDto.of(property);
+        propertyService.deleteWithRelatedData(property); // 반려 = 등록 취소와 동일하게 매물을 완전히 삭제한다
+        return response;
     }
 
     /*
@@ -146,7 +151,10 @@ public class AdminPropertyService {
         notifyOwner(property,
                 "[전세역전] 매물 등록이 취소되었습니다",
                 "\"" + property.getName() + "\" 매물이 관리자에 의해 등록 취소되어 더 이상 노출되지 않습니다.");
-        return AdminPropertyDto.of(property);
+
+        AdminPropertyDto response = AdminPropertyDto.of(property);
+        propertyService.deleteWithRelatedData(property); // 매물을 완전히 삭제한다 (FK로 걸린 연관 데이터도 함께 정리)
+        return response;
     }
 
     // 비공개 처리 : 공개 -> 비공개 (매물 자체는 남아있고 노출만 막음)

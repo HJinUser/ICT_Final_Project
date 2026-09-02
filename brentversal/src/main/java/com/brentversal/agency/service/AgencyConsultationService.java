@@ -8,6 +8,8 @@ import com.brentversal.agency.repository.AgencyRepository;
 import com.brentversal.common.mail.MailService;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
+import com.brentversal.property.entity.Property;
+import com.brentversal.property.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class AgencyConsultationService {
     private final AgencyRepository agencyRepository ;
     private final MemberRepository memberRepository ;
     private final MailService mailService ;
+    private final PropertyRepository propertyRepository ;
 
     // 상담 요청을 저장한다.
     // email 은 로그인한 사용자의 이메일로, 컨트롤러가 JWT 에서 꺼내어 넘겨준다.
@@ -51,7 +54,12 @@ public class AgencyConsultationService {
 
         bean.setAgency(agency);
         bean.setMember(member);
-        bean.setPropertyId(dto.getPropertyId());
+        Property property = null;
+        if (dto.getPropertyId() != null) {
+            property = propertyRepository.findById(dto.getPropertyId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당 매물을 찾을 수 없습니다."));
+        }
+        bean.setProperty(property);
         bean.setPreferredDate(dto.getPreferredDate());
         bean.setContent(dto.getContent());
         bean.setAgreed(true);
