@@ -1,12 +1,18 @@
 package com.brentversal.property.service;
 
+import com.brentversal.agency.repository.AgencyConsultationRepository;
 import com.brentversal.agency.service.MyAgencyService;
+import com.brentversal.editrequest.repository.PropertyEditRequestRepository;
 import com.brentversal.editrequest.service.PropertyEditRequestService;
+import com.brentversal.favorite.repository.FavoriteRepository;
 import com.brentversal.member.constant.Role;
 import com.brentversal.member.entity.Member;
 import com.brentversal.member.repository.MemberRepository;
 import com.brentversal.neighborhood.entity.Neighborhood;
 import com.brentversal.property.dto.*;
+import com.brentversal.propertyreview.repository.PropertyReviewRepository;
+import com.brentversal.recommendation.repository.RecommendationBestRepository;
+import com.brentversal.recommendation.repository.RecommendationFeedbackRepository;
 import jakarta.persistence.EntityNotFoundException;
 import com.brentversal.common.geocoding.KakaoGeocodingService;
 import com.brentversal.common.ml.MlClient;
@@ -90,6 +96,14 @@ public class PropertyService {
 
     // 매물 상세의 시세 그래프에 쓸 국토부 아파트 매매 실거래가
     private final RealEstateTransactionRepository realEstateTransactionRepository;
+
+    // 등록 취소로 매물을 완전히 지울 때, FK로 걸려 있는 연관 데이터를 먼저 정리하는 데 쓴다.
+    private final FavoriteRepository favoriteRepository;
+    private final PropertyReviewRepository propertyReviewRepository;
+    private final PropertyEditRequestRepository propertyEditRequestRepository;
+    private final RecommendationBestRepository recommendationBestRepository;
+    private final RecommendationFeedbackRepository recommendationFeedbackRepository;
+    private final AgencyConsultationRepository agencyConsultationRepository;
 
     // 관리자가 아직 등록하지 않은 동네면 못 찾을 수 있다 — 그럴 땐 null로 두고, 나중에
     // 그 동네가 등록되면 다음 등록/수정 때 다시 연결되게 한다(과거 데이터를 소급 연결하진 않음).
@@ -1112,7 +1126,48 @@ public class PropertyService {
         return PropertyResponseDto.of(propertyRepository.save(property));
     }
 
+    /*
+  매물을 완전히 삭제한다 (중개인 등록취소·관리자 등록취소·반려에서 공용으로 쓴다).
+
+  property_id 를 nullable=false 로 참조하는 다른 도메인 테이블(관심목록·한줄평·
+  관리자 수정요청·추천 BEST·추천 피드백)이 남아 있으면 FK 제약 때문에 매물 삭제가
+  막히므로, 매물 자체를 지우기 전에 그 행들을 먼저 지운다.
+  (중개인 탈퇴 시 매물을 통째로 지우는 MemberService.withdrawBrokerAssets() 와 같은 순서다)
+
+  property.images 는 cascade=ALL+orphanRemoval 이라 자동으로 같이 지워지고,
+  property.tags 는 @ManyToMany 조인 테이블이라 별도 처리 없이 자동 정리된다.
+*/
+    @Transactional
+    public void deleteWithRelatedData(Property property) {
+        Long propertyId = property.getId();
+
+        favoriteRepository.deleteAll(favoriteRepository.findByProperty_Id(propertyId));
+        propertyReviewRepository.findByPropertyId(propertyId)
+                .forEach(propertyReviewRepository::delete);
+        propertyEditRequestRepository.findByPropertyId(propertyId)
+                .forEach(propertyEditRequestRepository::delete);
+        recommendationBestRepository.findByPropertyId(propertyId)
+                .forEach(recommendationBestRepository::delete);
+        recommendationFeedbackRepository.findByPropertyId(propertyId)
+                .forEach(recommendationFeedbackRepository::delete);
+
+        // 상담 기록은 내용을 남기고, 지워지는 매물에 대한 참조만 끊는다 (탈퇴 회원 처리와 같은 방식)
+        agencyConsultationRepository.findByProperty_Id(propertyId)
+                .forEach(consultation -> consultation.setProperty(null));
+
+        // DB에서 지워지기 전에 S3에 올라간 실제 사진 파일도 지운다.
+        // property.images의 orphanRemoval은 DB 행만 지우지, S3 파일까지는 안 지운다.
+        for (PropertyImage image : property.getImages()) {
+            propertyImageService.deleteFile(image.getUrl());
+        }
+
+        propertyRepository.delete(property);
+    }
+
     // 등록 취소. 되돌릴 수 없어서, 이미 취소된 매물이면 그냥 그대로 반환(중복 처리 방지)
+    // 취소 = 매물을 완전히 삭제한다(deleteWithRelatedData 참고). 응답에는 CANCELLED로 보이도록
+    // 지우기 직전에 상태만 맞춰서 DTO를 만든다 — 실제로 그 상태로 저장하지는 않는다.
+    @Transactional
     public PropertyResponseDto cancel(Long id, String email) {
         Property property = findMyPropertyOrThrow(id, email);
 
@@ -1128,7 +1183,11 @@ public class PropertyService {
         }
 
         property.setStatus(PropertyStatus.CANCELLED);
-        return PropertyResponseDto.of(propertyRepository.save(property));
+        PropertyResponseDto response = PropertyResponseDto.of(property);
+
+        deleteWithRelatedData(property);
+
+        return response;
     }
 
     public PropertyResponseDto toggleVisibility(Long id, String email) {

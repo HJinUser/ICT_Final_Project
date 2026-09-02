@@ -46,7 +46,7 @@ public class ConsultationResponseDto {
         ConsultationResponseDto dto = new ConsultationResponseDto();
 
         dto.setId(bean.getId());
-        dto.setPropertyId(bean.getPropertyId());
+        dto.setPropertyId(bean.getProperty() != null ? bean.getProperty().getId() : null);
         dto.setContent(bean.getContent());
         dto.setPreferredDate(bean.getPreferredDate());
         dto.setCreatedAt(bean.getCreatedAt());

@@ -2,6 +2,7 @@ package com.brentversal.agency.entity;
 
 import com.brentversal.agency.constant.ConsultationStatus;
 import com.brentversal.member.entity.Member;
+import com.brentversal.property.entity.Property;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,10 +33,10 @@ public class AgencyConsultation {
     private Member member ;
 
     // 상담을 원하는 매물. 매물을 고르지 않고 일반 문의만 보낼 수도 있어서 비워 둘 수 있다.
-    // property 테이블은 다른 팀원이 만드는 중이라 아직 연관관계 대신 id 만 저장한다.
-    // (property/entity/Property.java 도 같은 방식으로 agency_id 를 Long 으로 갖고 있다)
-    @Column(name = "property_id")
-    private Long propertyId ;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "property_id", nullable = true)
+    @ToString.Exclude
+    private Property property ;
 
     @Column(name = "preferred_date")
     private LocalDate preferredDate ; // 상담 희망일

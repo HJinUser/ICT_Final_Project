@@ -18,6 +18,9 @@ public interface RecommendationFeedbackRepository extends JpaRepository<Recommen
     // 매물마다 따로 조회하면 후보 수만큼 조회가 반복되므로 목록으로 받아 와서 메모리에서 나눈다.
     List<RecommendationFeedback> findByMemberId(Long memberId);
 
+    // 매물이 삭제될 때, 그 매물에 남은 좋아요/싫어요 평가를 모두 지우는 데 쓴다.
+    List<RecommendationFeedback> findByPropertyId(Long propertyId);
+
     // 같은 매물을 다시 평가하면 새로 만들지 않고 기존 기록을 고쳐 쓴다.
     Optional<RecommendationFeedback> findByMemberIdAndPropertyId(Long memberId, Long propertyId);
 
