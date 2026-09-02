@@ -73,3 +73,7 @@
 .compare-table tbody tr:hover {
     background: none;
 }
+
+.compare-table {
+    table-layout: fixed;
+}
