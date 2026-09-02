@@ -167,7 +167,7 @@ const CATEGORY_LABELS: Record<string, string> = {
     price: "금액",
     priceDiff: "시세 대비 합리적인 가격",
     convertedAmount: "환산 금액",
-    area: "면적",
+    area: "전용 면적",
     station: "교통 편의",
     fee: "관리비",
 };
@@ -390,7 +390,7 @@ function ComparePage() {
                         <div className="eyebrow">Compare</div>
                         <h1>매물 비교</h1>
                         <p>
-                            관심 있는 매물 2개를 나란히 놓고 가격, 면적, 교통, 환경,
+                            관심 있는 매물 2개를 나란히 놓고 가격, 전용 면적, 교통, 환경,
                             AI 시세를 비교합니다.
                         </p>
                     </div>
@@ -510,7 +510,7 @@ function ComparePage() {
                             )}
 
                             <tr>
-                                <td>면적</td>
+                                <td>전용 면적</td>
 
                                 {properties.map((property, index) => (
                                     <td

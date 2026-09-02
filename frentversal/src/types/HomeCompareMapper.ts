@@ -95,7 +95,7 @@ export function buildCompareRows(items: PropertyResponse[]): HomeCompareRow[] {
 
     const commonRows: HomeCompareRow[] = [
         {
-            label: '면적',
+            label: '전용 면적',
             values: areas.map((area) => `${area}㎡`),
             winnerIndex: pickWinnerIndex(areas, 'higher'),
         },

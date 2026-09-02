@@ -12,6 +12,7 @@ import type { HomeRecommendation } from '../../types/Home';
 import type { NavItem } from '../../types/Navigation';
 import type { User } from '../../types/User';
 import { navigateOrNotice } from '../../utils/navigateOrNotice';
+import RecommendLockedPreview from './RecommendLockedPreview';
 
 const RECOMMEND_ITEM: NavItem = { label: '맞춤 추천', path: '/recommend', ready: true };
 
@@ -27,9 +28,27 @@ interface Props {
 function HomeRecommend({ id, tone, user, items }: Props) {
     const navigate = useNavigate();
 
-    const locked = !user;
+    if (!user) {
+        return (
+            <section className={`home-sec ${tone}`} id={id}>
+                <div className="rv-wrap">
+                    <div className="home-shead">
+                        <div>
+                            <h2>회원님 취향에 맞춘 집</h2>
+                            <p>
+                                취향 초기 설정, 최근 검색, 관심 매물, 평가 기록을 종합해 골랐습니다.
+                                취향을 바꾸면 결과도 바로 달라집니다.
+                            </p>
+                        </div>
+                    </div>
 
-    if (items.length === 0) {
+                    <RecommendLockedPreview />
+                </div>
+            </section>
+        );
+    }
+
+    if (user.role !== 'USER') {
         return null;
     }
 
@@ -45,30 +64,27 @@ function HomeRecommend({ id, tone, user, items }: Props) {
                         </p>
                     </div>
 
-                    {!locked && (
-                        <button className="home-more" onClick={() => navigateOrNotice(RECOMMEND_ITEM, navigate)}>
-                            추천 전체 보기
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                                <path d="M5 12h13M12 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    )}
+                    <button className="home-more" onClick={() => navigateOrNotice(RECOMMEND_ITEM, navigate)}>
+                        추천 전체 보기
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M5 12h13M12 5l7 7-7 7" />
+                        </svg>
+                    </button>
                 </div>
 
-                <div className="home-lockwrap">
-                    {/* 비회원에게는 흐리게 처리하고 클릭도 막는다 */}
-                    <div className={`home-reclist${locked ? ' blurred' : ''}`} aria-hidden={locked}>
+                {items.length === 0 ? (
+                    // /recommend 화면의 "조건에 맞는 추천 매물이 아직 없습니다" 안내와 같은 취지.
+                    // 여긴 취향 사이드바가 없으니 전체 화면으로 보내 취향을 넓히도록 안내한다.
+                    <p className="rv-xs rv-dim" style={{ marginTop: 16 }}>
+                        조건에 맞는 추천 매물이 아직 없습니다. 추천 전체 보기에서 취향을 넓게 잡고 다시 저장해 보세요.
+                    </p>
+                ) : (
+                    <div className="home-reclist">
                         {items.map((item) => (
                             <button
                                 key={item.id}
                                 className="home-reccard"
-                                tabIndex={locked ? -1 : 0}
-                                onClick={() => {
-                                    if (locked) {
-                                        return;
-                                    }
-                                    navigate(`/property/${item.id}`);
-                                }}
+                                onClick={() => navigate(`/property/${item.id}`)}
                             >
                                 <div className="ph" style={{ backgroundImage: `url('${item.imageUrl}')` }} />
 
@@ -88,28 +104,7 @@ function HomeRecommend({ id, tone, user, items }: Props) {
                             </button>
                         ))}
                     </div>
-
-                    {locked && (
-                        <div className="home-lock">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-                                <rect x="4" y="10" width="16" height="10" rx="2" />
-                                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                            </svg>
-                            <strong>로그인 후 이용 가능한 서비스입니다.</strong>
-                            <p>
-                                로그인하고 집 몇 개만 평가해 두면, 그 기준으로 골라 보여드립니다.
-                            </p>
-                            <div className="btns">
-                                <button className="solid-btn" onClick={() => navigate('/member/login')}>
-                                    로그인
-                                </button>
-                                <button className="ghost-btn" onClick={() => navigate('/member/signup')}>
-                                    회원가입
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                )}
             </div>
         </section>
     );
