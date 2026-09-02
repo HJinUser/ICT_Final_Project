@@ -206,6 +206,7 @@ function App({ user }: Props) {
     const startCompare = () => {
         if (!user) {
             window.alert('로그인 후 이용 가능한 서비스입니다.');
+            navigate('/member/login');
             return;
         }
 
@@ -446,7 +447,7 @@ function App({ user }: Props) {
                         <div>
                             <h2>
                                 두 집, 나란히 비교해보세요
-                                <span className="home-loginbadge">로그인 후 이용 가능</span>
+                                {!user && <span className="home-loginbadge">로그인 후 이용 가능</span>}
                             </h2>
                             <p>
                                 거래유형별로 여러 조건을 종합해 가장 나은 매물과 덜 나은 매물을 골라 보여드립니다.

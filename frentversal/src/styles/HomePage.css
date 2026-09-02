@@ -1679,3 +1679,7 @@
     border-radius: 2px;
     flex-shrink: 0;
 }
+
+.home-comparetable tbody tr:hover {
+    background: none;
+}
