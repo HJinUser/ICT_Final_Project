@@ -41,4 +41,6 @@ public interface AgencyConsultationRepository extends JpaRepository<AgencyConsul
            " group by year(c.createdAt), month(c.createdAt)")
     List<Object[]> countMonthlyByAgencyId(@Param("agencyId") Long agencyId,
                                           @Param("from") LocalDateTime from);
+    // 매물이 삭제될 때, 그 매물을 참조하던 상담은 내용을 남기고 참조만 끊는 데 쓴다.
+    List<AgencyConsultation> findByProperty_Id(Long propertyId);
 }
