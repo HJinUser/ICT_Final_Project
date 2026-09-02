@@ -3,18 +3,21 @@
 "/home" 이라는 단일 엔드포인트는 백엔드에 없다. 그래서 이미 있는 매물 검색(/property/search)·
 매물 비교(/property/home-compare)·동네 탐색(/neighborhoods) API를 조합해서 "이번 주 매물"·
 "두 집, 나란히 비교해보세요"·"동네부터 고르는 방법" 구역은 실제 값으로 채운다.
-나머지(맞춤 추천·한줄평)는 대응하는 백엔드가 아직 없어서 예시 데이터를 그대로 쓴다
+한줄평은 대응하는 백엔드가 아직 없어서 예시 데이터를 그대로 쓴다
 — 화면 아래 MOCK_HOME_DATA 주석 참고.
 
 워드클라우드는 여기서 내려보내지 않는다. 텍스트마이닝이 만든 PNG를 화면이 직접 불러 쓰므로
 HomePage.tsx의 WORDCLOUD 상수를 참고할 것.*/
 
-import type { HomeData, WeeklyProperty, HomeNeighborhood } from '../types/Home';
+import type { HomeData, WeeklyProperty, HomeNeighborhood, HomeRecommendation } from '../types/Home';
 import { searchProperties, getHomeCompareHighlights } from './propertySearchApi';
 import { getNeighborhoods } from './neighborhoodApi';
+import { getRecommendations } from './recommendationApi';
 import { formatManwon } from '../utils/propertyPrice';
 import type { PropertySearchItem } from '../types/PropertySearch';
 import type { NeighborhoodResponse } from '../types/Neighborhood';
+import type { RecommendationItem } from '../types/Recommendation';
+import type { User } from '../types/User';
 
 // 예시 이미지. 실제 매물 사진이 붙기 전까지 화면 확인용으로만 쓴다.
 const PHOTO = (id: string, w = 800) =>
@@ -22,36 +25,7 @@ const PHOTO = (id: string, w = 800) =>
 
 // weeklyLowCount·weeklyProperties·neighborhoods 는 실제 API(searchProperties·getNeighborhoods)로 채우므로
 // 목업에는 없다. 아래는 아직 대응하는 백엔드가 없는 구역만 남긴 예시 데이터다.
-const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'neighborhoods' | 'compare'> = {
-    // 맞춤 추천 미리보기.
-    // 추천 모델이 붙기 전이라 취향 태그를 만족한 매물을 손으로 골라 둔 예시다.
-    recommendations: [
-        {
-            id: 11,
-            imageUrl: PHOTO('1493809842364-78817add7ffb'),
-            priceLabel: '전세 3억 6,000',
-            summary: '서초구 방배동 · 59㎡ · 4층',
-            reason: '역 도보 5분 · 신축 5년 이내 · 주차 가능',
-            fitScore: 94,
-        },
-        {
-            id: 12,
-            imageUrl: PHOTO('1554995207-c18c203602cb'),
-            priceLabel: '전세 4억 1,000',
-            summary: '서초구 서초동 · 66㎡ · 9층',
-            reason: '조용한 동네 · 남향 채광 · 공원 인접',
-            fitScore: 88,
-        },
-        {
-            id: 13,
-            imageUrl: PHOTO('1486406146926-c627a92ad1ab'),
-            priceLabel: '월세 2,000 / 85',
-            summary: '서초구 반포동 · 42㎡ · 7층',
-            reason: '반려동물 가능 · 마트 도보 6분 · 낮은 관리비',
-            fitScore: 81,
-        },
-    ],
-
+const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'neighborhoods' | 'compare'| 'recommendations'> = {
     voices: [
         {
             id: 1,
@@ -76,6 +50,7 @@ const MOCK_HOME_DATA: Omit<HomeData, 'weeklyLowCount' | 'weeklyProperties' | 'ne
 
 const WEEKLY_CARD_LIMIT = 4;
 const HOME_NEIGHBORHOOD_LIMIT = 3;
+const HOME_RECOMMEND_LIMIT = 3;
 
 function toWeeklyProperty(item: PropertySearchItem): WeeklyProperty {
     const summary = [
@@ -93,6 +68,27 @@ function toWeeklyProperty(item: PropertySearchItem): WeeklyProperty {
         transit: '',
         // 이 함수는 이미 priceEvaluation === 'UNDERVALUED'로 걸러진 매물만 받는다(getHomeData 참고).
         priceEvaluation: 'UNDERVALUED',
+    };
+}
+
+// 맞춤 추천 결과 한 건을 메인 화면 카드 모양으로 줄인다.
+// 지도 검색 카드(PropertySearchItem)와 같은 요약 규칙(구·동·평수·층)을 그대로 쓴다.
+function toHomeRecommendation(item: RecommendationItem): HomeRecommendation {
+    const property = item.property;
+    const summary = [
+        [property.gu, property.dong].filter(Boolean).join(' '),
+        property.areaLabel,
+        property.floor ? `${property.floor}층` : null,
+    ].filter(Boolean).join(' · ');
+
+    return {
+        id: item.propertyId,
+        imageUrl: property.thumbnailUrl ?? '',
+        priceLabel: property.priceLabel,
+        summary,
+        // 추천 이유가 여러 개면 한 줄로 이어 붙인다. 서버가 하나도 안 주는 경우를 대비해 기본 문구를 둔다.
+        reason: item.reasons.length > 0 ? item.reasons.join(' · ') : '취향 조건에 맞는 매물입니다.',
+        fitScore: item.score,
     };
 }
 
@@ -116,12 +112,21 @@ function toHomeNeighborhood(neighborhood: NeighborhoodResponse): HomeNeighborhoo
 
 // 메인 홈페이지에 필요한 데이터를 한 번에 받아온다.
 // weeklyLowCount·weeklyProperties·neighborhoods 는 실제 API를 조합해서 채우고,
-// 나머지(맞춤 추천·매물 비교·한줄평·워드클라우드)는 대응하는 백엔드가 생기기 전까지 예시 데이터를 쓴다.
-export async function getHomeData(): Promise<HomeData> {
-    const [propertyResult, neighborhoodResult, compareResult] = await Promise.all([
+// 나머지(한줄평·워드클라우드)는 대응하는 백엔드가 생기기 전까지 예시 데이터를 쓴다.
+export async function getHomeData(user: User | null): Promise<HomeData> {
+    // 맞춤 추천은 일반 사용자(USER) 전용 API
+    const wantsRecommendations = user?.role === 'USER';
+
+    const [propertyResult, neighborhoodResult, compareResult, recommendationResult] = await Promise.all([
         searchProperties({ sort: 'LATEST' }),
         getNeighborhoods({ sort: 'POPULAR' }),
         getHomeCompareHighlights(),
+        wantsRecommendations
+            ? getRecommendations().catch((error) => {
+                console.error('맞춤 추천 미리보기 조회 실패:', error);
+                return null;
+            })
+            : Promise.resolve(null),
     ]);
 
     // "시세보다 싸게 나온 집" = 관리자가 저평가(UNDERVALUED)로 평가한 매물.
@@ -129,11 +134,16 @@ export async function getHomeData(): Promise<HomeData> {
     const lowItems = propertyResult.content
         .filter((item) => item.priceEvaluation === 'UNDERVALUED');
 
+    const recommendations = recommendationResult
+        ? recommendationResult.items.slice(0, HOME_RECOMMEND_LIMIT).map(toHomeRecommendation)
+        : [];
+
     return {
         ...MOCK_HOME_DATA,
         weeklyLowCount: lowItems.length,
         weeklyProperties: lowItems.slice(0, WEEKLY_CARD_LIMIT).map(toWeeklyProperty),
         neighborhoods: neighborhoodResult.content.slice(0, HOME_NEIGHBORHOOD_LIMIT).map(toHomeNeighborhood),
         compare: compareResult,
+        recommendations,
     };
 }
